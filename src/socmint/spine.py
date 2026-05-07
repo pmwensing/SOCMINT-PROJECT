@@ -3,6 +3,7 @@ from collections import defaultdict
 from datetime import datetime, UTC
 
 from . import database as db
+from .archivebox_adapter import capture_url
 from .artifacts import write_json_artifact
 from .scoring import confidence_band, score_observation
 from .seeds import normalize_seed
@@ -119,18 +120,7 @@ def run_connector_for_seed(
 
 def execute_connector(connector_key: str, seed) -> dict:
     if connector_key == "archivebox":
-        return {
-            "connector": "archivebox",
-            "status": "dry_run",
-            "findings": [
-                {
-                    "type": "archive_candidate",
-                    "value": seed.normalized_value,
-                    "source": "archivebox",
-                    "confidence": 0.82,
-                }
-            ],
-        }
+        return capture_url(seed.normalized_value)
 
     try:
         from .connectors import run_connector
