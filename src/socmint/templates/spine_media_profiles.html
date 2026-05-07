@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Media/Profile Enrichment</h1>
+
+<section class="card">
+  <h2>Enrichments</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Type</th><th>Status</th>
+        <th>Source</th><th>Artifact</th><th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in payload.enrichments %}
+      <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.type }}</td>
+        <td>{{ item.status }}</td>
+        <td class="mono">{{ item.source_value }}</td>
+        <td class="mono">{{ item.artifact_ref }}</td>
+        <td>{{ item.created_at }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No media/profile enrichments yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
