@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Assertion Conflict Panel</h1>
+
+<section class="card">
+  <h2>Contradictions</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Severity</th><th>Type</th>
+        <th>Status</th><th>Summary</th><th>Assertions</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in payload.contradictions %}
+      <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.severity }}</td>
+        <td>{{ item.type }}</td>
+        <td>{{ item.status }}</td>
+        <td>{{ item.summary }}</td>
+        <td class="mono">{{ item.assertion_ids }}</td>
+        <td>
+          <form
+            method="post"
+            action="{{ url_for('dashboard.spine_contradiction_resolve',
+            contradiction_id=item.id) }}"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="status">
+              <option value="open">Open</option>
+              <option value="needs_review">Needs review</option>
+              <option value="resolved">Resolved</option>
+              <option value="ignored">Ignored</option>
+            </select>
+            <input name="note" placeholder="Optional note">
+            <button type="submit">Apply</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7">No contradictions detected.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Conflict rule</h2>
+  <p>
+    Contradictions are review prompts, not automatic truth judgments. They show
+    where the dossier contains competing assertions, conflicting review states,
+    or large confidence gaps that need analyst validation.
+  </p>
+</section>
+{% endblock %}
