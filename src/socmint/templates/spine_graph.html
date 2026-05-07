@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Identity Graph</h1>
+
+<section class="card">
+  <h2>Graph</h2>
+  <p><strong>ID:</strong> {{ graph.graph.id }}</p>
+  <p><strong>Subject:</strong> {{ graph.graph.subject_id }}</p>
+  <p><strong>Label:</strong> {{ graph.graph.label or "Untitled" }}</p>
+</section>
+
+<section class="card">
+  <h2>Nodes</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Type</th><th>Value</th>
+        <th>Confidence</th><th>Validation</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for node in graph.nodes %}
+      <tr>
+        <td>{{ node.id }}</td>
+        <td>{{ node.type }}</td>
+        <td class="mono">{{ node.value }}</td>
+        <td>{{ "%.3f"|format(node.confidence) }}</td>
+        <td>{{ node.validation_state }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">No nodes yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Edges</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>From</th><th>To</th>
+        <th>Type</th><th>Confidence</th><th>Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for edge in graph.edges %}
+      <tr>
+        <td>{{ edge.id }}</td>
+        <td>{{ edge.from }}</td>
+        <td>{{ edge.to }}</td>
+        <td>{{ edge.type }}</td>
+        <td>{{ "%.3f"|format(edge.confidence) }}</td>
+        <td class="mono">{{ edge.evidence_ref }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No edges yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Merge candidates</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Type</th><th>Value</th>
+        <th>Nodes</th><th>State</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for candidate in graph.merge_candidates %}
+      <tr>
+        <td>{{ candidate.id }}</td>
+        <td>{{ candidate.type }}</td>
+        <td class="mono">{{ candidate.value }}</td>
+        <td>{{ candidate.node_ids }}</td>
+        <td>{{ candidate.state }}</td>
+        <td>
+          <form
+            method="post"
+            action="{{ url_for('dashboard.spine_merge_candidate_review',
+            candidate_id=candidate.id) }}"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="action">
+              <option value="merged">Merge</option>
+              <option value="rejected">Reject</option>
+              <option value="unreviewed">Unreview</option>
+            </select>
+            <button type="submit">Apply</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No merge candidates.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

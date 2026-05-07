@@ -1168,3 +1168,277 @@ def list_all_spine_assertions(limit=10000):
         return _detach_all(session, items)
     finally:
         session.close()
+
+
+class IdentityGraph(Base):
+    __tablename__ = "identity_graphs"
+    id = Column(Integer, primary_key=True)
+    subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
+    label = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class IdentityNode(Base):
+    __tablename__ = "identity_nodes"
+    id = Column(Integer, primary_key=True)
+    graph_id = Column(Integer, ForeignKey("identity_graphs.id"), nullable=False)
+    entity_type = Column(String, nullable=False)
+    normalized_value = Column(Text, nullable=False)
+    display_value = Column(Text, nullable=True)
+    confidence = Column(String, nullable=False, default="0.5")
+    validation_state = Column(String, nullable=False, default="unreviewed")
+    payload_json = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class IdentityEdge(Base):
+    __tablename__ = "identity_edges"
+    id = Column(Integer, primary_key=True)
+    graph_id = Column(Integer, ForeignKey("identity_graphs.id"), nullable=False)
+    from_node_id = Column(Integer, ForeignKey("identity_nodes.id"), nullable=False)
+    to_node_id = Column(Integer, ForeignKey("identity_nodes.id"), nullable=False)
+    edge_type = Column(String, nullable=False)
+    confidence = Column(String, nullable=False, default="0.5")
+    evidence_ref = Column(Text, nullable=True)
+    validation_state = Column(String, nullable=False, default="unreviewed")
+    payload_json = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class IdentityMergeCandidate(Base):
+    __tablename__ = "identity_merge_candidates"
+    id = Column(Integer, primary_key=True)
+    graph_id = Column(Integer, ForeignKey("identity_graphs.id"), nullable=False)
+    entity_type = Column(String, nullable=False)
+    normalized_value = Column(Text, nullable=False)
+    node_ids_json = Column(Text, nullable=False)
+    confidence = Column(String, nullable=False, default="0.5")
+    state = Column(String, nullable=False, default="unreviewed")
+    reason = Column(Text, nullable=True)
+    actor = Column(String, nullable=True)
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+def create_identity_graph(subject_id, label=None):
+    ensure_configured()
+    session = Session()
+    try:
+        graph = IdentityGraph(subject_id=subject_id, label=label)
+        session.add(graph)
+        session.commit()
+        session.refresh(graph)
+        return graph.id
+    finally:
+        session.close()
+
+
+def get_identity_graph(graph_id):
+    ensure_configured()
+    session = Session()
+    try:
+        item = session.query(IdentityGraph).filter_by(id=graph_id).first()
+        if item:
+            session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
+def get_latest_identity_graph(subject_id):
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(IdentityGraph)
+            .filter_by(subject_id=subject_id)
+            .order_by(IdentityGraph.created_at.desc())
+            .first()
+        )
+        if item:
+            session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
+def upsert_identity_node(
+    graph_id,
+    entity_type,
+    normalized_value,
+    display_value,
+    confidence,
+    payload,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(IdentityNode)
+            .filter_by(
+                graph_id=graph_id,
+                entity_type=entity_type,
+                normalized_value=normalized_value,
+            )
+            .first()
+        )
+        if not item:
+            item = IdentityNode(
+                graph_id=graph_id,
+                entity_type=entity_type,
+                normalized_value=normalized_value,
+                display_value=display_value,
+                confidence=confidence,
+                payload_json=json.dumps(payload),
+            )
+            session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item.id
+    finally:
+        session.close()
+
+
+def list_identity_nodes(graph_id):
+    ensure_configured()
+    session = Session()
+    try:
+        items = (
+            session.query(IdentityNode)
+            .filter_by(graph_id=graph_id)
+            .order_by(IdentityNode.id.asc())
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def upsert_identity_edge(
+    graph_id,
+    from_node_id,
+    to_node_id,
+    edge_type,
+    confidence,
+    evidence_ref,
+    payload,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(IdentityEdge)
+            .filter_by(
+                graph_id=graph_id,
+                from_node_id=from_node_id,
+                to_node_id=to_node_id,
+                edge_type=edge_type,
+            )
+            .first()
+        )
+        if not item:
+            item = IdentityEdge(
+                graph_id=graph_id,
+                from_node_id=from_node_id,
+                to_node_id=to_node_id,
+                edge_type=edge_type,
+                confidence=confidence,
+                evidence_ref=evidence_ref,
+                payload_json=json.dumps(payload),
+            )
+            session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item.id
+    finally:
+        session.close()
+
+
+def list_identity_edges(graph_id):
+    ensure_configured()
+    session = Session()
+    try:
+        items = (
+            session.query(IdentityEdge)
+            .filter_by(graph_id=graph_id)
+            .order_by(IdentityEdge.id.asc())
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def create_identity_merge_candidate(
+    graph_id,
+    entity_type,
+    normalized_value,
+    node_ids,
+    confidence,
+    reason,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        existing = (
+            session.query(IdentityMergeCandidate)
+            .filter_by(
+                graph_id=graph_id,
+                entity_type=entity_type,
+                normalized_value=normalized_value,
+            )
+            .first()
+        )
+        if existing:
+            return existing.id
+        item = IdentityMergeCandidate(
+            graph_id=graph_id,
+            entity_type=entity_type,
+            normalized_value=normalized_value,
+            node_ids_json=json.dumps(node_ids),
+            confidence=confidence,
+            reason=reason,
+        )
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item.id
+    finally:
+        session.close()
+
+
+def list_identity_merge_candidates(graph_id):
+    ensure_configured()
+    session = Session()
+    try:
+        items = (
+            session.query(IdentityMergeCandidate)
+            .filter_by(graph_id=graph_id)
+            .order_by(IdentityMergeCandidate.id.asc())
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def update_identity_merge_candidate(candidate_id, state, actor=None, note=None):
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(IdentityMergeCandidate)
+            .filter_by(id=candidate_id)
+            .first()
+        )
+        if not item:
+            return None
+        item.state = state
+        item.actor = actor
+        item.note = note
+        item.updated_at = utc_now()
+        session.commit()
+        return item.id
+    finally:
+        session.close()
