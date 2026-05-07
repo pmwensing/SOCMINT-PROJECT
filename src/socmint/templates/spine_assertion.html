@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Assertion Evidence</h1>
+
+<section class="card">
+  <h2>Assertion</h2>
+  <p><strong>ID:</strong> {{ evidence.assertion.id }}</p>
+  <p><strong>Type:</strong> {{ evidence.assertion.type }}</p>
+  <p><strong>Value:</strong> <span class="mono">{{ evidence.assertion.value }}</span></p>
+  <p><strong>Confidence:</strong> {{ "%.3f"|format(evidence.assertion.confidence) }}</p>
+  <p><strong>Band:</strong> {{ evidence.assertion.band }}</p>
+  <p><strong>Validation:</strong> {{ evidence.assertion.validation_state }}</p>
+</section>
+
+<section class="card">
+  <h2>Confidence explanation</h2>
+  <ul>
+    {% for factor in evidence.confidence_explanation.factors %}
+    <li>{{ factor }}</li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Supporting observations</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Type</th><th>Value</th>
+        <th>Confidence</th><th>Source</th><th>Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for obs in evidence.observations %}
+      <tr>
+        <td>{{ obs.id }}</td>
+        <td>{{ obs.type }}</td>
+        <td class="mono">{{ obs.value }}</td>
+        <td>{{ "%.3f"|format(obs.confidence) }}</td>
+        <td class="mono">{{ obs.source_ref }}</td>
+        <td class="mono">{{ obs.evidence_ref }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No supporting observations found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Connector runs</h2>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Connector</th><th>Status</th><th>Created</th></tr>
+    </thead>
+    <tbody>
+      {% for run in evidence.connector_runs %}
+      <tr>
+        <td>{{ run.id }}</td>
+        <td>{{ run.connector }}</td>
+        <td>{{ run.status }}</td>
+        <td>{{ run.created_at }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No connector runs found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Raw artifacts</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Kind</th><th>SHA-256</th>
+        <th>MIME</th><th>Bytes</th><th>Path</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for artifact in evidence.raw_artifacts %}
+      <tr>
+        <td>{{ artifact.id }}</td>
+        <td>{{ artifact.kind }}</td>
+        <td class="mono">{{ artifact.sha256 }}</td>
+        <td>{{ artifact.mime_type }}</td>
+        <td>{{ artifact.size_bytes }}</td>
+        <td class="mono">{{ artifact.path }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No raw artifacts found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

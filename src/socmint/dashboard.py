@@ -25,6 +25,8 @@ from werkzeug.utils import safe_join
 
 from . import database as db
 from .config import configure_logging, load_settings
+from .evidence import connector_quality_metrics
+from .evidence import get_assertion_evidence
 from .spine import build_dossier
 from .spine import create_subject as spine_create_subject
 from .spine import run_spine_for_subject
@@ -640,6 +642,38 @@ def api_spine_run(subject_id):
 @login_required
 def api_spine_dossier(subject_id):
     return jsonify(build_dossier(subject_id))
+
+
+
+@dashboard_bp.route("/spine/assertions/<int:assertion_id>")
+@login_required
+def spine_assertion_detail(assertion_id):
+    evidence = get_assertion_evidence(assertion_id)
+    if not evidence:
+        abort(404)
+    return render_template("spine_assertion.html", evidence=evidence)
+
+
+@dashboard_bp.route("/api/v1/spine/assertions/<int:assertion_id>")
+@login_required
+def api_spine_assertion_detail(assertion_id):
+    evidence = get_assertion_evidence(assertion_id)
+    if not evidence:
+        abort(404)
+    return jsonify(evidence)
+
+
+@dashboard_bp.route("/spine/connectors/quality")
+@login_required
+def spine_connector_quality():
+    metrics = connector_quality_metrics()
+    return render_template("spine_connector_quality.html", metrics=metrics)
+
+
+@dashboard_bp.route("/api/v1/spine/connectors/quality")
+@login_required
+def api_spine_connector_quality():
+    return jsonify({"connectors": connector_quality_metrics()})
 
 
 @dashboard_bp.route("/about")

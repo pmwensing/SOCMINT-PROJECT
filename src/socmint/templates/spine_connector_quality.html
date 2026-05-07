@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Connector Quality Gate</h1>
+
+<section class="card">
+  <h2>Connector quality metrics</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Connector</th>
+        <th>Runs</th>
+        <th>Success</th>
+        <th>Dry-run</th>
+        <th>Fail</th>
+        <th>Obs.</th>
+        <th>Assertions</th>
+        <th>Confirmed</th>
+        <th>Rejected</th>
+        <th>Avg conf.</th>
+        <th>Evidence coverage</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in metrics %}
+      <tr>
+        <td>{{ item.connector }}</td>
+        <td>{{ item.runs }}</td>
+        <td>{{ item.successes }}</td>
+        <td>{{ item.dry_runs }}</td>
+        <td>{{ item.failures }}</td>
+        <td>{{ item.observations }}</td>
+        <td>{{ item.assertions }}</td>
+        <td>{{ item.confirmed_assertions }}</td>
+        <td>{{ item.rejected_assertions }}</td>
+        <td>{{ "%.3f"|format(item.average_confidence) }}</td>
+        <td>{{ "%.3f"|format(item.evidence_coverage) }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="11">No connector metrics yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Quality rule</h2>
+  <p>
+    A connector stays in the high-value spine only if it improves seed
+    expansion, corroboration, evidence preservation, entity resolution,
+    profile/media enrichment, contradiction detection, or validated dossier
+    quality.
+  </p>
+</section>
+{% endblock %}

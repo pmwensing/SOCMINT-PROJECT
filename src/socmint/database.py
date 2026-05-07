@@ -1071,3 +1071,100 @@ def validate_spine_assertion(assertion_id, actor, action, note=None):
         return item.id
     finally:
         session.close()
+
+
+def get_spine_assertion(assertion_id):
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(SpineDossierAssertion)
+            .filter_by(id=assertion_id)
+            .first()
+        )
+        if item:
+            session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
+def get_spine_observations_by_ids(observation_ids):
+    ensure_configured()
+    if not observation_ids:
+        return []
+    session = Session()
+    try:
+        items = (
+            session.query(SpineObservation)
+            .filter(SpineObservation.id.in_(observation_ids))
+            .order_by(SpineObservation.id.asc())
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def get_spine_connector_runs_by_ids(run_ids):
+    ensure_configured()
+    if not run_ids:
+        return []
+    session = Session()
+    try:
+        items = (
+            session.query(SpineConnectorRun)
+            .filter(SpineConnectorRun.id.in_(run_ids))
+            .order_by(SpineConnectorRun.id.asc())
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def list_spine_raw_artifacts(run_id=None, limit=1000):
+    ensure_configured()
+    session = Session()
+    try:
+        query = session.query(SpineRawArtifact)
+        if run_id is not None:
+            query = query.filter_by(run_id=run_id)
+        items = (
+            query.order_by(SpineRawArtifact.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def list_all_spine_observations(limit=10000):
+    ensure_configured()
+    session = Session()
+    try:
+        items = (
+            session.query(SpineObservation)
+            .order_by(SpineObservation.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def list_all_spine_assertions(limit=10000):
+    ensure_configured()
+    session = Session()
+    try:
+        items = (
+            session.query(SpineDossierAssertion)
+            .order_by(SpineDossierAssertion.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()
