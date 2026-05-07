@@ -162,27 +162,28 @@ assert b"rehearsal-user" in jobs.data
 
 
 def process_and_verify_job(env_file):
-    compose_command(
-        env_file,
-        "exec",
-        "-T",
-        "app",
-        "python",
-        "-m",
-        "src.socmint.main",
-        "process-jobs",
-        "--max-jobs=1",
-    )
+    compose_command(env_file, "up", "-d", "worker")
     code = r"""
+import time
 from src.socmint import database as db
 from src.socmint.config import load_settings
 
 db.configure_database(load_settings(require_secret=False).database_url)
-jobs = db.list_scan_jobs(limit=5)
-assert jobs
-assert jobs[0].target_value == "rehearsal-user"
-assert jobs[0].status == "completed"
-assert db.get_dossier("rehearsal-user") is not None
+deadline = time.monotonic() + 60
+while time.monotonic() < deadline:
+    jobs = db.list_scan_jobs(limit=5)
+    if (
+        jobs
+        and jobs[0].target_value == "rehearsal-user"
+        and jobs[0].status == "completed"
+        and db.get_dossier("rehearsal-user") is not None
+    ):
+        break
+    time.sleep(2)
+else:
+    jobs = db.list_scan_jobs(limit=5)
+    status = jobs[0].status if jobs else "missing"
+    raise AssertionError(f"queued worker job did not complete: {status}")
 """
     run_app_python(env_file, code)
 

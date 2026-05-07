@@ -18,6 +18,28 @@ services:
       timeout: 5s
       retries: 3
 
+  worker:
+    build: .
+    restart: unless-stopped
+    profiles: ["worker"]
+    env_file: ${SOCMINT_ENV_FILE:-.env}
+    environment:
+      SOCMINT_DATA_DIR: /var/lib/socmint
+      SOCMINT_TOR_PROXY: ${SOCMINT_TOR_PROXY:-}
+      SOCMINT_WORKER_INTERVAL: ${SOCMINT_WORKER_INTERVAL:-60}
+      SOCMINT_WORKER_MAX_JOBS: ${SOCMINT_WORKER_MAX_JOBS:-1}
+    volumes:
+      - socmint-data:/var/lib/socmint
+    depends_on:
+      app:
+        condition: service_healthy
+    command: >
+      sh -c 'while true; do
+        python -m src.socmint.main process-jobs --max-jobs="$${SOCMINT_WORKER_MAX_JOBS:-1}";
+        sleep "$${SOCMINT_WORKER_INTERVAL:-60}";
+      done'
+    network_mode: service:tor
+
   tor:
     build:
       context: ./deploy/tor

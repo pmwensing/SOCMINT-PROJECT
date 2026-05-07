@@ -116,6 +116,33 @@ class AuditLog(Base):
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 
+class ConnectorRun(Base):
+    __tablename__ = "connector_runs"
+    id = Column(Integer, primary_key=True)
+    target_id = Column(Integer, ForeignKey("targets.id"), nullable=True)
+    target_value = Column(String, nullable=False)
+    target_type = Column(String, nullable=False)
+    connector = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    command = Column(Text, nullable=True)
+    raw_result = Column(Text, nullable=False)
+    error = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class Finding(Base):
+    __tablename__ = "findings"
+    id = Column(Integer, primary_key=True)
+    connector_run_id = Column(Integer, ForeignKey("connector_runs.id"), nullable=False)
+    target_id = Column(Integer, ForeignKey("targets.id"), nullable=True)
+    source = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    value = Column(Text, nullable=False)
+    confidence = Column(String, nullable=False, default="0.5")
+    context = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
 class ScanJob(Base):
     __tablename__ = "scan_jobs"
     id = Column(Integer, primary_key=True)
@@ -142,6 +169,16 @@ Index("ix_audit_logs_created_at", AuditLog.created_at)
 Index("ix_audit_logs_actor_action", AuditLog.actor, AuditLog.action)
 Index("ix_targets_created_at", Target.created_at)
 Index("ix_scan_jobs_status_created_at", ScanJob.status, ScanJob.created_at)
+Index(
+    "ix_connector_runs_connector_created_at",
+    ConnectorRun.connector,
+    ConnectorRun.created_at,
+)
+Index(
+    "ix_findings_type_created_at",
+    Finding.type,
+    Finding.created_at,
+)
 
 
 def get_engine(database_url=None):
@@ -535,6 +572,17 @@ def save_dossier(dossier):
             )
 
         session.commit()
+
+        for tool_name, data in dossier.get("data", {}).items():
+            if isinstance(data, dict) and data.get("connector"):
+                record_connector_run(
+                    target_value=dossier["target"],
+                    target_type=dossier.get("type"),
+                    connector=tool_name,
+                    raw_result=data,
+                    target_id=target.id,
+                )
+
         return target.id
     except Exception:
         session.rollback()
@@ -582,5 +630,93 @@ def get_dossier(target_value):
             )
 
         return dossier
+    finally:
+        session.close()
+
+
+def record_connector_run(
+    target_value,
+    target_type,
+    connector,
+    raw_result,
+    target_id=None,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        if isinstance(raw_result, dict):
+            status = raw_result.get("status", "unknown")
+        else:
+            status = "unknown"
+        if isinstance(raw_result, dict):
+            command = raw_result.get("command")
+        else:
+            command = None
+        if isinstance(raw_result, dict):
+            error = raw_result.get("stderr")
+        else:
+            error = None
+        run = ConnectorRun(
+            target_id=target_id,
+            target_value=target_value,
+            target_type=target_type,
+            connector=connector,
+            status=status,
+            command=json.dumps(command or []),
+            raw_result=json.dumps(raw_result),
+            error=error,
+        )
+        session.add(run)
+        session.commit()
+        session.refresh(run)
+
+        findings = []
+        if isinstance(raw_result, dict):
+            findings = raw_result.get("findings", []) or []
+        for item in findings:
+            session.add(
+                Finding(
+                    connector_run_id=run.id,
+                    target_id=target_id,
+                    source=item.get("source", connector),
+                    type=item.get("type", "unknown"),
+                    value=str(item.get("value", "")),
+                    confidence=str(item.get("confidence", 0.5)),
+                    context=json.dumps(item.get("context", {})),
+                )
+            )
+        session.commit()
+        return run.id
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def list_connector_runs(limit=100, connector=None, target_value=None):
+    ensure_configured()
+    session = Session()
+    try:
+        query = session.query(ConnectorRun)
+        if connector:
+            query = query.filter(ConnectorRun.connector == connector)
+        if target_value:
+            query = query.filter(ConnectorRun.target_value == target_value)
+        return query.order_by(ConnectorRun.created_at.desc()).limit(limit).all()
+    finally:
+        session.close()
+
+
+def list_findings(limit=200, target_id=None, finding_type=None):
+    ensure_configured()
+    session = Session()
+    try:
+        query = session.query(Finding)
+        if target_id:
+            query = query.filter(Finding.target_id == target_id)
+        if finding_type:
+            query = query.filter(Finding.type == finding_type)
+        return query.order_by(Finding.created_at.desc()).limit(limit).all()
     finally:
         session.close()

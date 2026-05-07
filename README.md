@@ -26,6 +26,7 @@ SOCMINT_DATA_DIR=/var/lib/socmint
 SOCMINT_ALLOW_SIGNUP=false
 SOCMINT_HTTPS=false
 SOCMINT_LOG_FORMAT=json
+SOCMINT_LOG_FILE=/var/log/socmint/socmint.log
 ```
 
 Optional outbound Tor proxy for enrichment/media HTTP requests:
@@ -173,11 +174,15 @@ The app service runs `alembic upgrade head` before Gunicorn on container startup
 python -m src.socmint.main process-jobs --max-jobs 1
 ```
 
-For systemd deployments, run the same command from a separate worker service or timer. For Docker deployments, use:
+For Docker deployments, run the dedicated worker profile:
 
 ```bash
-docker compose exec app python -m src.socmint.main process-jobs --max-jobs 1
+docker compose --profile worker up -d worker
 ```
+
+For systemd deployments, install and enable
+`deploy/systemd/socmint-worker.service` plus
+`deploy/systemd/socmint-worker.timer`.
 
 ## Backup And Restore Drills
 
@@ -207,6 +212,10 @@ Admin users can export/delete dossiers, manage users at `/admin/users`, assign `
 - Every response includes `X-Request-ID`; incoming `X-Request-ID` values are preserved.
 - Set `SOCMINT_LOG_FORMAT=json` for structured request logs with method, path,
   status, duration, remote address, and request ID.
+- Set `SOCMINT_LOG_FILE=/var/log/socmint/socmint.log` when you want file logs;
+  install `deploy/logrotate/socmint` as `/etc/logrotate.d/socmint`.
+- For systemd file logs, install `deploy/tmpfiles/socmint.conf` as
+  `/etc/tmpfiles.d/socmint.conf` to create `/var/log/socmint`.
 - See `RUNBOOK.md` for deployment, rollback, backup, and incident procedures.
 
 ## Dependency And CI Checks
@@ -245,3 +254,7 @@ CI runs:
 - `make serve-prod` - launch Gunicorn on `127.0.0.1:5000`
 - `make process-jobs` - process queued scan jobs; set `MAX_JOBS=5` to process more
 - `make clean` - remove Python caches
+
+## Release Notes
+
+See `CHANGELOG.md` for the current production candidate notes.

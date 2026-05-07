@@ -26,15 +26,20 @@ def test_deployment_assets_document_hidden_service_mapping():
     assert "gunicorn --workers 2 --bind 127.0.0.1:5000 src.socmint.wsgi:app" in service
     assert "ProtectHome=true" in service
     assert "MemoryDenyWriteExecute=true" in service
+    assert "/var/log/socmint" in service
     assert "HiddenServicePort 80 127.0.0.1:5000" in Path("deploy/tor/torrc").read_text()
     assert "postgres:" in compose
     assert "context: ./deploy/tor" in compose
     assert "network_mode: service:tor" in compose
     assert "/readyz" in compose
+    assert "profiles: [\"worker\"]" in compose
+    assert "SOCMINT_WORKER_INTERVAL" in compose
     assert "requirements.lock" in dockerfile
     assert "requirements.txt" not in dockerfile
     assert "FROM python:3.13-slim AS builder" in dockerfile
     assert "--no-index --find-links=/wheels" in dockerfile
+    assert "/var/log/socmint" in dockerfile
+    assert "/readyz" in dockerfile
     assert "pytest" not in lockfile
     assert Path("requirements-prod.txt").exists()
     assert Path("requirements-scanners.txt").exists()
@@ -45,4 +50,9 @@ def test_deployment_assets_document_hidden_service_mapping():
     assert "pip-audit -r requirements.lock" in workflow
     assert "python scripts/backup_restore_smoke.py" in workflow
     assert Path("deploy/systemd/socmint-backup.timer").exists()
+    assert Path("deploy/systemd/socmint-worker.service").exists()
+    assert Path("deploy/systemd/socmint-worker.timer").exists()
+    assert Path("deploy/logrotate/socmint").exists()
+    assert Path("deploy/tmpfiles/socmint.conf").exists()
     assert Path("RUNBOOK.md").exists()
+    assert Path("CHANGELOG.md").exists()

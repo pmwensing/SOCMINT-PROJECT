@@ -75,6 +75,7 @@ ci: install
 	@if [ ! -f .env ]; then cp .env.example .env; rm_env=1; fi; \
 	 docker compose --env-file .env.example config; \
 	 docker compose --env-file .env.example --profile postgres config; \
+	 docker compose --env-file .env.example --profile worker config; \
 	 if [ "$$rm_env" = "1" ]; then rm -f .env; fi
 	rm -rf /tmp/socmint-ci
 	mkdir -p /tmp/socmint-ci

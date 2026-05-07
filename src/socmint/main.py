@@ -28,6 +28,7 @@ from .database import (
 )
 from .enrichment import enrich_dossier
 from .dashboard import create_app
+from .connectors import CONNECTORS, run_connector
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +189,39 @@ def should_run_tool(tool_name, enabled_tools):
     return enabled_tools is None or tool_name in enabled_tools
 
 
+def run_registered_connector(tool_name, target, target_type):
+    if tool_name in CONNECTORS:
+        return run_connector(tool_name, target, target_type, allow_dry_run=True)
+
+    # Backward-compatible fallback for legacy tools not yet in the registry.
+    if target_type == "email":
+        username = target.split("@")[0]
+        domain = target.split("@")[1]
+        legacy_target = {
+            "theharvester": domain,
+            "socialscan": username,
+            "social_analyzer": username,
+            "instaloader": username,
+            "spiderfoot": target,
+            "recon_ng": domain,
+        }.get(tool_name, target)
+    else:
+        legacy_target = target
+
+    legacy_functions = {
+        "theharvester": run_theharvester,
+        "socialscan": run_socialscan,
+        "social_analyzer": run_social_analyzer,
+        "instaloader": run_instaloader,
+        "spiderfoot": run_spiderfoot,
+        "recon_ng": run_recon_ng,
+        "phoneinfoga": run_phoneinfoga,
+    }
+    if tool_name in legacy_functions:
+        return legacy_functions[tool_name](legacy_target)
+    return f"Unknown connector: {tool_name}"
+
+
 def build_dossier(target, target_type, enabled_tools=None):
     dossier = {"target": target, "data": {}}
 
@@ -199,13 +233,23 @@ def build_dossier(target, target_type, enabled_tools=None):
             {"type": "email", "email": email, "username": username, "domain": domain}
         )
         if should_run_tool("holehe", enabled_tools):
-            dossier["data"]["holehe"] = run_holehe(email)
+            dossier["data"]["holehe"] = run_registered_connector(
+                "holehe", email, "email"
+            )
+        if should_run_tool("h8mail", enabled_tools):
+            dossier["data"]["h8mail"] = run_registered_connector(
+                "h8mail", email, "email"
+            )
         if should_run_tool("theharvester", enabled_tools):
             dossier["data"]["theharvester"] = run_theharvester(domain)
         if should_run_tool("sherlock", enabled_tools):
-            dossier["data"]["sherlock"] = run_sherlock(username)
+            dossier["data"]["sherlock"] = run_registered_connector(
+                "sherlock", email, "email"
+            )
         if should_run_tool("maigret", enabled_tools):
-            dossier["data"]["maigret"] = run_maigret(username)
+            dossier["data"]["maigret"] = run_registered_connector(
+                "maigret", email, "email"
+            )
         if should_run_tool("socialscan", enabled_tools):
             dossier["data"]["socialscan"] = run_socialscan(username)
         if should_run_tool("social_analyzer", enabled_tools):
@@ -223,9 +267,13 @@ def build_dossier(target, target_type, enabled_tools=None):
     elif target_type == "username":
         dossier.update({"type": "username", "username": target})
         if should_run_tool("sherlock", enabled_tools):
-            dossier["data"]["sherlock"] = run_sherlock(target)
+            dossier["data"]["sherlock"] = run_registered_connector(
+                "sherlock", target, "username"
+            )
         if should_run_tool("maigret", enabled_tools):
-            dossier["data"]["maigret"] = run_maigret(target)
+            dossier["data"]["maigret"] = run_registered_connector(
+                "maigret", target, "username"
+            )
         if should_run_tool("socialscan", enabled_tools):
             dossier["data"]["socialscan"] = run_socialscan(target)
         if should_run_tool("social_analyzer", enabled_tools):

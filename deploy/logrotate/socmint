@@ -1,0 +1,13 @@
+/var/log/socmint/*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 socmint socmint
+    sharedscripts
+    postrotate
+        systemctl kill -s HUP socmint.service >/dev/null 2>&1 || true
+    endscript
+}
