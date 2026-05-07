@@ -116,6 +116,33 @@ class AuditLog(Base):
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 
+class ConnectorRun(Base):
+    __tablename__ = "connector_runs"
+    id = Column(Integer, primary_key=True)
+    target_id = Column(Integer, ForeignKey("targets.id"), nullable=True)
+    target_value = Column(String, nullable=False)
+    target_type = Column(String, nullable=False)
+    connector = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    command = Column(Text, nullable=True)
+    raw_result = Column(Text, nullable=False)
+    error = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class Finding(Base):
+    __tablename__ = "findings"
+    id = Column(Integer, primary_key=True)
+    connector_run_id = Column(Integer, ForeignKey("connector_runs.id"), nullable=False)
+    target_id = Column(Integer, ForeignKey("targets.id"), nullable=True)
+    source = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    value = Column(Text, nullable=False)
+    confidence = Column(String, nullable=False, default="0.5")
+    context = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
 class ScanJob(Base):
     __tablename__ = "scan_jobs"
     id = Column(Integer, primary_key=True)
@@ -142,6 +169,16 @@ Index("ix_audit_logs_created_at", AuditLog.created_at)
 Index("ix_audit_logs_actor_action", AuditLog.actor, AuditLog.action)
 Index("ix_targets_created_at", Target.created_at)
 Index("ix_scan_jobs_status_created_at", ScanJob.status, ScanJob.created_at)
+Index(
+    "ix_connector_runs_connector_created_at",
+    ConnectorRun.connector,
+    ConnectorRun.created_at,
+)
+Index(
+    "ix_findings_type_created_at",
+    Finding.type,
+    Finding.created_at,
+)
 
 
 def get_engine(database_url=None):
@@ -535,6 +572,17 @@ def save_dossier(dossier):
             )
 
         session.commit()
+
+        for tool_name, data in dossier.get("data", {}).items():
+            if isinstance(data, dict) and data.get("connector"):
+                record_connector_run(
+                    target_value=dossier["target"],
+                    target_type=dossier.get("type"),
+                    connector=tool_name,
+                    raw_result=data,
+                    target_id=target.id,
+                )
+
         return target.id
     except Exception:
         session.rollback()
@@ -582,5 +630,444 @@ def get_dossier(target_value):
             )
 
         return dossier
+    finally:
+        session.close()
+
+
+def record_connector_run(
+    target_value,
+    target_type,
+    connector,
+    raw_result,
+    target_id=None,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        if isinstance(raw_result, dict):
+            status = raw_result.get("status", "unknown")
+        else:
+            status = "unknown"
+        if isinstance(raw_result, dict):
+            command = raw_result.get("command")
+        else:
+            command = None
+        if isinstance(raw_result, dict):
+            error = raw_result.get("stderr")
+        else:
+            error = None
+        run = ConnectorRun(
+            target_id=target_id,
+            target_value=target_value,
+            target_type=target_type,
+            connector=connector,
+            status=status,
+            command=json.dumps(command or []),
+            raw_result=json.dumps(raw_result),
+            error=error,
+        )
+        session.add(run)
+        session.commit()
+        session.refresh(run)
+
+        findings = []
+        if isinstance(raw_result, dict):
+            findings = raw_result.get("findings", []) or []
+        for item in findings:
+            session.add(
+                Finding(
+                    connector_run_id=run.id,
+                    target_id=target_id,
+                    source=item.get("source", connector),
+                    type=item.get("type", "unknown"),
+                    value=str(item.get("value", "")),
+                    confidence=str(item.get("confidence", 0.5)),
+                    context=json.dumps(item.get("context", {})),
+                )
+            )
+        session.commit()
+        return run.id
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def list_connector_runs(limit=100, connector=None, target_value=None):
+    ensure_configured()
+    session = Session()
+    try:
+        query = session.query(ConnectorRun)
+        if connector:
+            query = query.filter(ConnectorRun.connector == connector)
+        if target_value:
+            query = query.filter(ConnectorRun.target_value == target_value)
+        return query.order_by(ConnectorRun.created_at.desc()).limit(limit).all()
+    finally:
+        session.close()
+
+
+def list_findings(limit=200, target_id=None, finding_type=None):
+    ensure_configured()
+    session = Session()
+    try:
+        query = session.query(Finding)
+        if target_id:
+            query = query.filter(Finding.target_id == target_id)
+        if finding_type:
+            query = query.filter(Finding.type == finding_type)
+        return query.order_by(Finding.created_at.desc()).limit(limit).all()
+    finally:
+        session.close()
+
+class SpineSubject(Base):
+    __tablename__ = "spine_subjects"
+    id = Column(Integer, primary_key=True)
+    label = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class SpineSeed(Base):
+    __tablename__ = "spine_seeds"
+    id = Column(Integer, primary_key=True)
+    subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
+    seed_type = Column(String, nullable=False)
+    raw_value = Column(Text, nullable=False)
+    normalized_value = Column(Text, nullable=False)
+    pii_hash = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class SpineConnectorRun(Base):
+    __tablename__ = "spine_connector_runs"
+    id = Column(Integer, primary_key=True)
+    subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
+    connector_key = Column(String, nullable=False)
+    seed_id = Column(Integer, ForeignKey("spine_seeds.id"), nullable=True)
+    status = Column(String, nullable=False)
+    raw_result_json = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class SpineRawArtifact(Base):
+    __tablename__ = "spine_raw_artifacts"
+    id = Column(Integer, primary_key=True)
+    run_id = Column(Integer, ForeignKey("spine_connector_runs.id"), nullable=False)
+    kind = Column(String, nullable=False)
+    path = Column(Text, nullable=False)
+    sha256 = Column(String, nullable=False)
+    mime_type = Column(String, nullable=True)
+    size_bytes = Column(Integer, nullable=True)
+    meta_json = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class SpineObservation(Base):
+    __tablename__ = "spine_observations"
+    id = Column(Integer, primary_key=True)
+    subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
+    run_id = Column(Integer, ForeignKey("spine_connector_runs.id"), nullable=False)
+    observation_type = Column(String, nullable=False)
+    normalized_value = Column(Text, nullable=True)
+    confidence = Column(String, nullable=False, default="0.5")
+    source_ref = Column(Text, nullable=True)
+    evidence_ref = Column(Text, nullable=True)
+    payload_json = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class SpineDossierAssertion(Base):
+    __tablename__ = "spine_dossier_assertions"
+    id = Column(Integer, primary_key=True)
+    subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
+    assertion_type = Column(String, nullable=False)
+    normalized_value = Column(Text, nullable=True)
+    confidence = Column(String, nullable=False, default="0.5")
+    validation_state = Column(String, nullable=False, default="unreviewed")
+    payload_json = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class SpineValidationEvent(Base):
+    __tablename__ = "spine_validation_events"
+    id = Column(Integer, primary_key=True)
+    assertion_id = Column(
+        Integer,
+        ForeignKey("spine_dossier_assertions.id"),
+        nullable=False,
+    )
+    actor = Column(String, nullable=True)
+    action = Column(String, nullable=False)
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+def _detach_all(session, items):
+    for item in items:
+        session.expunge(item)
+    return items
+
+
+def create_spine_subject(label=None):
+    ensure_configured()
+    session = Session()
+    try:
+        subject = SpineSubject(label=label)
+        session.add(subject)
+        session.commit()
+        session.refresh(subject)
+        return subject.id
+    finally:
+        session.close()
+
+
+def get_spine_subject(subject_id):
+    ensure_configured()
+    session = Session()
+    try:
+        subject = session.query(SpineSubject).filter_by(id=subject_id).first()
+        if subject:
+            session.expunge(subject)
+        return subject
+    finally:
+        session.close()
+
+
+def list_spine_subjects(limit=100):
+    ensure_configured()
+    session = Session()
+    try:
+        items = session.query(SpineSubject).order_by(
+            SpineSubject.created_at.desc()
+        ).limit(limit).all()
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def add_spine_seed(subject_id, seed_type, raw_value, normalized_value, pii_hash):
+    ensure_configured()
+    session = Session()
+    try:
+        existing = session.query(SpineSeed).filter_by(
+            subject_id=subject_id,
+            seed_type=seed_type,
+            pii_hash=pii_hash,
+        ).first()
+        if existing:
+            return existing.id
+        seed = SpineSeed(
+            subject_id=subject_id,
+            seed_type=seed_type,
+            raw_value=raw_value,
+            normalized_value=normalized_value,
+            pii_hash=pii_hash,
+        )
+        session.add(seed)
+        session.commit()
+        session.refresh(seed)
+        return seed.id
+    finally:
+        session.close()
+
+
+def list_spine_seeds(subject_id):
+    ensure_configured()
+    session = Session()
+    try:
+        items = session.query(SpineSeed).filter_by(
+            subject_id=subject_id
+        ).order_by(SpineSeed.id.asc()).all()
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def create_spine_connector_run(
+    subject_id,
+    connector_key,
+    seed_id,
+    status,
+    raw_result,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        run = SpineConnectorRun(
+            subject_id=subject_id,
+            connector_key=connector_key,
+            seed_id=seed_id,
+            status=status,
+            raw_result_json=json.dumps(raw_result),
+        )
+        session.add(run)
+        session.commit()
+        session.refresh(run)
+        return run.id
+    finally:
+        session.close()
+
+
+def list_spine_connector_runs(subject_id=None, limit=100):
+    ensure_configured()
+    session = Session()
+    try:
+        query = session.query(SpineConnectorRun)
+        if subject_id is not None:
+            query = query.filter_by(subject_id=subject_id)
+        items = query.order_by(
+            SpineConnectorRun.created_at.desc()
+        ).limit(limit).all()
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def create_spine_raw_artifact(
+    run_id,
+    kind,
+    path,
+    sha256,
+    mime_type=None,
+    size_bytes=None,
+    meta=None,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        artifact = SpineRawArtifact(
+            run_id=run_id,
+            kind=kind,
+            path=path,
+            sha256=sha256,
+            mime_type=mime_type,
+            size_bytes=size_bytes,
+            meta_json=json.dumps(meta or {}),
+        )
+        session.add(artifact)
+        session.commit()
+        session.refresh(artifact)
+        return artifact.id
+    finally:
+        session.close()
+
+
+def create_spine_observation(
+    subject_id,
+    run_id,
+    observation_type,
+    normalized_value,
+    confidence,
+    source_ref,
+    evidence_ref,
+    payload,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = SpineObservation(
+            subject_id=subject_id,
+            run_id=run_id,
+            observation_type=observation_type,
+            normalized_value=normalized_value,
+            confidence=confidence,
+            source_ref=source_ref,
+            evidence_ref=evidence_ref,
+            payload_json=json.dumps(payload),
+        )
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item.id
+    finally:
+        session.close()
+
+
+def list_spine_observations(subject_id, limit=1000):
+    ensure_configured()
+    session = Session()
+    try:
+        items = session.query(SpineObservation).filter_by(
+            subject_id=subject_id
+        ).order_by(SpineObservation.created_at.desc()).limit(limit).all()
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def upsert_spine_assertion(
+    subject_id,
+    assertion_type,
+    normalized_value,
+    confidence,
+    validation_state,
+    payload,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = session.query(SpineDossierAssertion).filter_by(
+            subject_id=subject_id,
+            assertion_type=assertion_type,
+            normalized_value=normalized_value,
+        ).first()
+        if not item:
+            item = SpineDossierAssertion(
+                subject_id=subject_id,
+                assertion_type=assertion_type,
+                normalized_value=normalized_value,
+                confidence=confidence,
+                validation_state=validation_state,
+                payload_json=json.dumps(payload),
+            )
+            session.add(item)
+        else:
+            item.confidence = confidence
+            item.payload_json = json.dumps(payload)
+            item.updated_at = utc_now()
+        session.commit()
+        session.refresh(item)
+        return item.id
+    finally:
+        session.close()
+
+
+def list_spine_assertions(subject_id, limit=1000):
+    ensure_configured()
+    session = Session()
+    try:
+        items = session.query(SpineDossierAssertion).filter_by(
+            subject_id=subject_id
+        ).order_by(SpineDossierAssertion.confidence.desc()).limit(limit).all()
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def validate_spine_assertion(assertion_id, actor, action, note=None):
+    ensure_configured()
+    session = Session()
+    try:
+        item = session.query(SpineDossierAssertion).filter_by(
+            id=assertion_id
+        ).first()
+        if not item:
+            return None
+        if action not in {"confirmed", "rejected", "suppressed", "unreviewed"}:
+            raise ValueError("Invalid validation action.")
+        item.validation_state = action
+        item.updated_at = utc_now()
+        session.add(
+            SpineValidationEvent(
+                assertion_id=assertion_id,
+                actor=actor,
+                action=action,
+                note=note,
+            )
+        )
+        session.commit()
+        return item.id
     finally:
         session.close()

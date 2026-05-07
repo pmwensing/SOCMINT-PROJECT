@@ -32,12 +32,13 @@ COPY alembic.ini ./alembic.ini
 COPY migrations ./migrations
 
 RUN useradd --system --create-home --home-dir /var/lib/socmint socmint \
-    && chown -R socmint:socmint /var/lib/socmint /app
+    && mkdir -p /var/log/socmint \
+    && chown -R socmint:socmint /var/lib/socmint /var/log/socmint /app
 
 USER socmint
 
 EXPOSE 5000
 
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/healthz', timeout=3).read()"
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/readyz', timeout=3).read()"
 
 CMD ["gunicorn", "--bind", "127.0.0.1:5000", "src.socmint.wsgi:app"]

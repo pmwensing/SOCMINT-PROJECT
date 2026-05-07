@@ -1,16 +1,16 @@
 [Unit]
-Description=SOCMINT dashboard
-After=network.target
+Description=SOCMINT queued scan worker
+After=network.target socmint.service
+Wants=socmint.service
 
 [Service]
-Type=simple
+Type=oneshot
 User=socmint
 Group=socmint
 WorkingDirectory=/opt/socmint
 EnvironmentFile=/etc/socmint/socmint.env
-ExecStart=/opt/socmint/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:5000 src.socmint.wsgi:app
-Restart=on-failure
-RestartSec=5
+Environment=SOCMINT_WORKER_MAX_JOBS=1
+ExecStart=/opt/socmint/venv/bin/python -m src.socmint.main process-jobs --max-jobs=${SOCMINT_WORKER_MAX_JOBS}
 NoNewPrivileges=true
 PrivateTmp=true
 PrivateDevices=true
@@ -20,6 +20,3 @@ ReadWritePaths=/var/lib/socmint /var/log/socmint
 RestrictSUIDSGID=true
 LockPersonality=true
 MemoryDenyWriteExecute=true
-
-[Install]
-WantedBy=multi-user.target

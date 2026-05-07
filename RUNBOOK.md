@@ -9,6 +9,7 @@ Before deploying a release candidate:
 3. Run `make production-docker-smoke`.
 4. Run `make backup-restore-smoke`.
 5. Confirm every production secret differs from `.env.example`.
+6. Confirm `CHANGELOG.md` includes the release candidate notes.
 
 `make production-docker-smoke` is the deployment rehearsal. It builds the app and
 Tor images, boots the Compose stack, waits for `/readyz`, verifies the Tor hidden
@@ -26,6 +27,7 @@ For Docker Compose:
 4. Run `docker compose exec app alembic current`.
 5. Run `docker compose exec tor cat /var/lib/tor/socmint/hostname`.
 6. Visit the onion URL, log in as the bootstrap admin, and rotate the password.
+7. Start a worker with `docker compose --profile worker up -d worker`.
 
 For systemd:
 
@@ -35,8 +37,13 @@ For systemd:
 4. Run `/opt/socmint/venv/bin/alembic -c /opt/socmint/alembic.ini upgrade head`.
 5. Install `deploy/systemd/socmint.service`.
 6. Install the Tor hidden-service configuration.
-7. Run `sudo systemctl daemon-reload`.
-8. Run `sudo systemctl enable --now socmint tor`.
+7. Install `deploy/systemd/socmint-worker.service` and
+   `deploy/systemd/socmint-worker.timer`.
+8. Install `deploy/tmpfiles/socmint.conf` to `/etc/tmpfiles.d/socmint.conf` and
+   run `sudo systemd-tmpfiles --create /etc/tmpfiles.d/socmint.conf`.
+9. Install `deploy/logrotate/socmint` to `/etc/logrotate.d/socmint`.
+10. Run `sudo systemctl daemon-reload`.
+11. Run `sudo systemctl enable --now socmint socmint-worker.timer tor`.
 
 ## Rollback
 
@@ -76,11 +83,17 @@ dossier, and verify media links.
 - Both endpoints are only exposed to local requests.
 - Responses include `X-Request-ID`; incoming `X-Request-ID` is preserved.
 - Set `SOCMINT_LOG_FORMAT=json` for structured logs.
+- Set `SOCMINT_LOG_FILE=/var/log/socmint/socmint.log` for file logs; otherwise
+  rely on journald or container logs.
 - Use `SOCMINT_LOG_LEVEL=INFO` in production and `DEBUG` only during targeted
   troubleshooting.
 - Review `/admin/audit` after admin changes, exports, deletes, failed logins, and
   signup activity.
 - Process queued scans with `python -m src.socmint.main process-jobs --max-jobs=1`.
+- For Docker, keep `docker compose --profile worker up -d worker` running.
+- For systemd, keep `socmint-worker.timer` enabled.
+- Tune worker cadence with `SOCMINT_WORKER_INTERVAL` for Docker and
+  `OnUnitActiveSec` in `deploy/systemd/socmint-worker.timer` for systemd.
 
 ## Incident Checklist
 
