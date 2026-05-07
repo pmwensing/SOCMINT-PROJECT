@@ -25,6 +25,9 @@ from werkzeug.utils import safe_join
 
 from . import database as db
 from .config import configure_logging, load_settings
+from .contradictions import contradiction_payload
+from .contradictions import detect_subject_contradictions
+from .contradictions import resolve_contradiction
 from .evidence import connector_quality_metrics
 from .evidence import get_assertion_evidence
 from .identity_graph import apply_merge_candidate
@@ -777,6 +780,74 @@ def api_spine_media_profiles(subject_id):
 def api_spine_media_profiles_run(subject_id):
     payload = enrich_subject_media_profiles(subject_id)
     return jsonify(payload), 202
+
+
+
+@dashboard_bp.route("/spine/<int:subject_id>/contradictions")
+@login_required
+def spine_contradictions_view(subject_id):
+    payload = contradiction_payload(subject_id)
+    return render_template("spine_contradictions.html", payload=payload)
+
+
+@dashboard_bp.route("/spine/<int:subject_id>/contradictions/run", methods=["POST"])
+@run_required
+def spine_contradictions_run(subject_id):
+    try:
+        result = detect_subject_contradictions(subject_id)
+        audit("spine_contradictions_run", details=result)
+        flash(
+            f"Detected {len(result['contradiction_ids'])} contradictions.",
+            "success",
+        )
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(
+        url_for(
+            "dashboard.spine_contradictions_view",
+            subject_id=subject_id,
+        )
+    )
+
+
+@dashboard_bp.route(
+    "/spine/contradictions/<int:contradiction_id>/resolve",
+    methods=["POST"],
+)
+@run_required
+def spine_contradiction_resolve(contradiction_id):
+    status = request.form.get("status", "open").strip()
+    note = request.form.get("note", "").strip() or None
+    try:
+        resolve_contradiction(
+            contradiction_id,
+            status,
+            actor=session.get("user"),
+            note=note,
+        )
+        audit(
+            "spine_contradiction_resolve",
+            details={"contradiction_id": contradiction_id, "status": status},
+        )
+        flash(f"Contradiction marked {status}.", "success")
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(request.referrer or url_for("dashboard.spine_subjects"))
+
+
+@dashboard_bp.route("/api/v1/spine/subjects/<int:subject_id>/contradictions")
+@login_required
+def api_spine_contradictions(subject_id):
+    return jsonify(contradiction_payload(subject_id))
+
+
+@dashboard_bp.route(
+    "/api/v1/spine/subjects/<int:subject_id>/contradictions/run",
+    methods=["POST"],
+)
+@run_required
+def api_spine_contradictions_run(subject_id):
+    return jsonify(detect_subject_contradictions(subject_id)), 202
 
 
 @dashboard_bp.route("/about")

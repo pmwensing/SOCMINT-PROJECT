@@ -1500,3 +1500,118 @@ def list_media_profile_enrichments(subject_id, limit=1000):
         return _detach_all(session, items)
     finally:
         session.close()
+
+
+class SpineContradiction(Base):
+    __tablename__ = "spine_contradictions"
+    id = Column(Integer, primary_key=True)
+    subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
+    conflict_type = Column(String, nullable=False)
+    severity = Column(String, nullable=False, default="medium")
+    status = Column(String, nullable=False, default="open")
+    assertion_ids_json = Column(Text, nullable=False)
+    summary = Column(Text, nullable=False)
+    payload_json = Column(Text, nullable=False)
+    actor = Column(String, nullable=True)
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+def clear_spine_contradictions(subject_id):
+    ensure_configured()
+    session = Session()
+    try:
+        session.query(SpineContradiction).filter_by(
+            subject_id=subject_id
+        ).delete()
+        session.commit()
+    finally:
+        session.close()
+
+
+def create_spine_contradiction(
+    subject_id,
+    conflict_type,
+    severity,
+    status,
+    assertion_ids,
+    summary,
+    payload,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = SpineContradiction(
+            subject_id=subject_id,
+            conflict_type=conflict_type,
+            severity=severity,
+            status=status,
+            assertion_ids_json=json.dumps(assertion_ids),
+            summary=summary,
+            payload_json=json.dumps(payload),
+        )
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item.id
+    finally:
+        session.close()
+
+
+def list_spine_contradictions(subject_id, limit=1000):
+    ensure_configured()
+    session = Session()
+    try:
+        items = (
+            session.query(SpineContradiction)
+            .filter_by(subject_id=subject_id)
+            .order_by(SpineContradiction.severity.desc())
+            .limit(limit)
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def get_spine_contradiction(contradiction_id):
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(SpineContradiction)
+            .filter_by(id=contradiction_id)
+            .first()
+        )
+        if item:
+            session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
+def update_spine_contradiction(
+    contradiction_id,
+    status,
+    actor=None,
+    note=None,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(SpineContradiction)
+            .filter_by(id=contradiction_id)
+            .first()
+        )
+        if not item:
+            return None
+        item.status = status
+        item.actor = actor
+        item.note = note
+        item.updated_at = utc_now()
+        session.commit()
+        return item.id
+    finally:
+        session.close()
