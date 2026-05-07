@@ -1,0 +1,43 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: ${SOCMINT_ENV_FILE:-.env}
+    environment:
+      SOCMINT_DATA_DIR: /var/lib/socmint
+      SOCMINT_TOR_PROXY: ${SOCMINT_TOR_PROXY:-}
+    volumes:
+      - socmint-data:/var/lib/socmint
+    depends_on:
+      - tor
+    command: sh -c "alembic upgrade head && exec gunicorn --bind 127.0.0.1:5000 src.socmint.wsgi:app"
+    network_mode: service:tor
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/healthz', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  tor:
+    build:
+      context: ./deploy/tor
+    restart: unless-stopped
+    volumes:
+      - ./deploy/tor/torrc:/etc/tor/torrc:ro
+      - tor-hidden-service:/var/lib/tor/socmint
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-socmint}
+      POSTGRES_USER: ${POSTGRES_USER:-socmint}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-this-postgres-password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  socmint-data:
+  tor-hidden-service:
+  postgres-data:

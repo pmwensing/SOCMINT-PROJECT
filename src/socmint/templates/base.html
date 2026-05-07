@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title | default('SOCMINT Dashboard') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-inner">
+            <a href="{{ url_for('dashboard.index') }}" class="brand">SOCMINT</a>
+            <nav>
+                <a href="{{ url_for('dashboard.index') }}">Dashboard</a>
+                <a href="{{ url_for('dashboard.about') }}">About</a>
+                {% if session.get('user') %}
+                {% if session.get('is_admin') %}
+                <a href="{{ url_for('dashboard.audit_log') }}">Audit</a>
+                {% endif %}
+                <a href="{{ url_for('dashboard.logout') }}">Logout</a>
+                {% else %}
+                <a href="{{ url_for('dashboard.login') }}">Login</a>
+                {% if config.get('SOCMINT_ALLOW_SIGNUP') %}
+                <a href="{{ url_for('dashboard.signup') }}">Sign up</a>
+                {% endif %}
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+    <main class="app-main">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="app-footer">
+        <p>SOCMINT profile enrichment dashboard</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="panel">
+    <h1>Saved Targets</h1>
+    <div class="card-grid">
+        {% for target in targets %}
+        <article class="card">
+            <h2>{{ target.value }}</h2>
+            <p>Type: {{ target.type }}</p>
+            <p>Created: {{ target.created_at }}</p>
+            <a class="card-link" href="{{ url_for('dashboard.target_detail', target_id=target.id) }}">View details</a>
+        </article>
+        {% else %}
+        <p>No targets stored yet. Run the CLI to generate a dossier.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

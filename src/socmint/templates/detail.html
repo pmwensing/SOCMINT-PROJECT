@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="panel">
+    <h1>Target: {{ target.value }}</h1>
+    <p>Type: {{ target.type }}</p>
+    <p>Created: {{ target.created_at }}</p>
+    {% if session.get('is_admin') %}
+    <div class="admin-actions">
+        <a class="button-link" href="{{ url_for('dashboard.export_dossier', target_id=target.id) }}">Export JSON</a>
+        <form method="post" action="{{ url_for('dashboard.delete_dossier', target_id=target.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="danger-button" type="submit">Delete dossier</button>
+        </form>
+    </div>
+    {% endif %}
+</section>
+<section class="panel">
+    <h2>Profiles</h2>
+    {% if profiles %}
+        <div class="metadata-table">
+            <table>
+                <thead><tr><th>Source</th><th>Title</th><th>Description</th><th>URL</th></tr></thead>
+                <tbody>
+                    {% for profile in profiles %}
+                    <tr>
+                        <td>{{ profile.source }}</td>
+                        <td>{{ profile.normalized.title or 'N/A' }}</td>
+                        <td>{{ profile.normalized.description or 'N/A' }}</td>
+                        <td><a target="_blank" href="{{ profile.normalized.url or profile.source }}">Open</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No enriched profiles stored for this target.</p>
+    {% endif %}
+</section>
+<section class="panel">
+    <h2>Media</h2>
+    {% if media %}
+        <div class="media-grid">
+            {% for item in media %}
+            <div class="media-item">
+                <p><a target="_blank" href="{{ item.source_url }}">{{ item.source_url }}</a></p>
+                {% if item.download_url %}
+                    <img src="{{ item.download_url }}" alt="Media for {{ target.value }}" />
+                {% else %}
+                    <p>Local path: {{ item.path }}</p>
+                {% endif %}
+                <p>Checksum: {{ item.checksum }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No media downloaded yet for this target.</p>
+    {% endif %}
+</section>
+{% endblock %}

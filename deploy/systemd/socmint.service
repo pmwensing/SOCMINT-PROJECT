@@ -1,0 +1,20 @@
+[Unit]
+Description=SOCMINT dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=socmint
+Group=socmint
+WorkingDirectory=/opt/socmint
+EnvironmentFile=/etc/socmint/socmint.env
+ExecStart=/opt/socmint/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:5000 src.socmint.wsgi:app
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/var/lib/socmint
+
+[Install]
+WantedBy=multi-user.target

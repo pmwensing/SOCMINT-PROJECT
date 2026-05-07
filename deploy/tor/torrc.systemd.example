@@ -1,0 +1,5 @@
+SocksPort 9050
+
+HiddenServiceDir /var/lib/tor/socmint
+HiddenServiceVersion 3
+HiddenServicePort 80 127.0.0.1:5000

@@ -1,0 +1,15 @@
+[Unit]
+Description=SOCMINT encrypted backup
+
+[Service]
+Type=oneshot
+User=socmint
+Group=socmint
+WorkingDirectory=/opt/socmint
+EnvironmentFile=/etc/socmint/socmint.env
+ExecStartPre=/usr/bin/mkdir -p /var/backups/socmint
+ExecStart=/opt/socmint/venv/bin/python -m src.socmint.main backup /var/backups/socmint/socmint-latest.enc
+ExecStartPost=/usr/bin/find /var/backups/socmint -name 'socmint-*.enc' -type f -mtime +30 -delete
+ReadWritePaths=/var/backups/socmint /var/lib/socmint
+NoNewPrivileges=true
+PrivateTmp=true
