@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="panel">
+    <h1>User Management</h1>
+    <form method="post" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required>
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+        <label class="checkbox-label">
+            <input type="checkbox" name="is_admin" value="1">
+            Admin
+        </label>
+        <label for="role">Role</label>
+        <select id="role" name="role">
+            <option value="viewer">Viewer</option>
+            <option value="analyst">Analyst</option>
+            <option value="admin">Admin</option>
+        </select>
+        <button type="submit">Create User</button>
+    </form>
+</section>
+<section class="panel">
+    <h2>Users</h2>
+    <div class="metadata-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Created</th>
+                    <th>Admin</th>
+                    <th>Role</th>
+                    <th>Active</th>
+                    <th>Rotate Password</th>
+                    <th>Save</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <form method="post" action="{{ url_for('dashboard.update_admin_user', user_id=user.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.created_at }}</td>
+                        <td><input type="checkbox" name="is_admin" value="1" {% if user.is_admin %}checked{% endif %}></td>
+                        <td>
+                            <select name="role">
+                                <option value="viewer" {% if user.role == 'viewer' %}selected{% endif %}>Viewer</option>
+                                <option value="analyst" {% if user.role == 'analyst' %}selected{% endif %}>Analyst</option>
+                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                            </select>
+                        </td>
+                        <td><input type="checkbox" name="is_active" value="1" {% if user.is_active %}checked{% endif %}></td>
+                        <td><input type="password" name="password" placeholder="Leave unchanged"></td>
+                        <td><button type="submit">Save</button></td>
+                    </form>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

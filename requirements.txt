@@ -1,26 +1,2 @@
-requests
-beautifulsoup4
-tweepy
-facebook-sdk
-selenium
-instaloader
-social-analyzer
-socialscan
-phoneinfoga
-sqlalchemy
-flask
-flask-cors
-flask-sqlalchemy
-python-dotenv
-requests-cache
-email-validator
-phonenumbers
-flask-httpauth
-gunicorn
-alembic
-psycopg[binary]
-PySocks
-pytest
-pytest-mock
-# Twint is excluded due to cchardet build issues on Python 3.13
-# Install twint separately if you use a Python 3.11/3.12 virtualenv.
+# Backwards-compatible local development install.
+-r requirements-dev.txt

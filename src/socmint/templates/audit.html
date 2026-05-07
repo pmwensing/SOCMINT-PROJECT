@@ -2,6 +2,15 @@
 {% block content %}
 <section class="panel">
     <h1>Audit Log</h1>
+    <form method="get" class="inline-form">
+        <label for="actor">Actor</label>
+        <input type="text" id="actor" name="actor" value="{{ actor }}">
+        <label for="action">Action</label>
+        <input type="text" id="action" name="action" value="{{ action }}">
+        <button type="submit">Filter</button>
+        <a class="button-link secondary" href="{{ url_for('dashboard.audit_log') }}">Clear</a>
+    </form>
+    <p>{{ total }} events</p>
     {% if events %}
     <div class="metadata-table">
         <table>
@@ -29,6 +38,15 @@
             </tbody>
         </table>
     </div>
+    <nav class="pager">
+        {% if page > 1 %}
+        <a href="{{ url_for('dashboard.audit_log', actor=actor, action=action, page=page - 1) }}">Previous</a>
+        {% endif %}
+        <span>Page {{ page }} of {{ pages }}</span>
+        {% if page < pages %}
+        <a href="{{ url_for('dashboard.audit_log', actor=actor, action=action, page=page + 1) }}">Next</a>
+        {% endif %}
+    </nav>
     {% else %}
     <p>No audit events recorded yet.</p>
     {% endif %}

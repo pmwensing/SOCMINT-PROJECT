@@ -1,0 +1,10 @@
+# Optional scanner integrations for Kali/operator workstations.
+tweepy
+facebook-sdk
+selenium
+instaloader
+social-analyzer
+socialscan
+phoneinfoga
+# Twint is excluded due to cchardet build issues on Python 3.13.
+# Install twint separately if you use a Python 3.11/3.12 virtualenv.

@@ -1,3 +1,19 @@
+FROM python:3.13-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.lock ./
+
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.lock
+
+
 FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -6,16 +22,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential \
-    && rm -rf /var/lib/apt/lists/*
+COPY requirements.lock pyproject.toml ./
+COPY --from=builder /wheels /wheels
+RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.lock \
+    && rm -rf /wheels
 
-COPY requirements.txt pyproject.toml ./
 COPY src ./src
 COPY alembic.ini ./alembic.ini
 COPY migrations ./migrations
-
-RUN pip install --no-cache-dir -r requirements.txt
 
 RUN useradd --system --create-home --home-dir /var/lib/socmint socmint \
     && chown -R socmint:socmint /var/lib/socmint /app

@@ -9,6 +9,8 @@
         <a class="button-link" href="{{ url_for('dashboard.export_dossier', target_id=target.id) }}">Export JSON</a>
         <form method="post" action="{{ url_for('dashboard.delete_dossier', target_id=target.id) }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label class="confirm-label" for="confirm_target">Confirm target name</label>
+            <input class="confirm-input" type="text" id="confirm_target" name="confirm_target" autocomplete="off" required>
             <button class="danger-button" type="submit">Delete dossier</button>
         </form>
     </div>
@@ -26,7 +28,7 @@
                         <td>{{ profile.source }}</td>
                         <td>{{ profile.normalized.title or 'N/A' }}</td>
                         <td>{{ profile.normalized.description or 'N/A' }}</td>
-                        <td><a target="_blank" href="{{ profile.normalized.url or profile.source }}">Open</a></td>
+                        <td><a target="_blank" rel="noopener noreferrer" href="{{ profile.normalized.url or profile.source }}">Open</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -42,7 +44,7 @@
         <div class="media-grid">
             {% for item in media %}
             <div class="media-item">
-                <p><a target="_blank" href="{{ item.source_url }}">{{ item.source_url }}</a></p>
+                <p><a target="_blank" rel="noopener noreferrer" href="{{ item.source_url }}">{{ item.source_url }}</a></p>
                 {% if item.download_url %}
                     <img src="{{ item.download_url }}" alt="Media for {{ target.value }}" />
                 {% else %}

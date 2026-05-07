@@ -1,5 +1,22 @@
 {% extends 'base.html' %}
 {% block content %}
+{% if session.get('is_admin') or session.get('role') == 'analyst' %}
+<section class="panel">
+    <h1>Run Dossier</h1>
+    <form method="post" action="{{ url_for('dashboard.run_target') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="target">Target</label>
+        <input type="text" id="target" name="target" placeholder="username, email, or phone" required>
+        <label for="tools">Tools</label>
+        <input type="text" id="tools" name="tools" placeholder="sherlock,maigret">
+        <label class="checkbox-label">
+            <input type="checkbox" name="enrich" value="1">
+            Enrich discovered profiles
+        </label>
+        <button type="submit">Run</button>
+    </form>
+</section>
+{% endif %}
 <section class="panel">
     <h1>Saved Targets</h1>
     <div class="card-grid">

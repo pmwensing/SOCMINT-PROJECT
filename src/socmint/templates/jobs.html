@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="panel">
+    <h1>Scan Jobs</h1>
+    {% if jobs %}
+    <div class="metadata-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Target</th>
+                    <th>Status</th>
+                    <th>Requested By</th>
+                    <th>Created</th>
+                    <th>Finished</th>
+                    <th>Error</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td>{{ job.id }}</td>
+                    <td>{{ job.target_value }}</td>
+                    <td><span class="status-pill {{ job.status }}">{{ job.status }}</span></td>
+                    <td>{{ job.requested_by or 'N/A' }}</td>
+                    <td>{{ job.created_at }}</td>
+                    <td>{{ job.finished_at or 'N/A' }}</td>
+                    <td>{{ job.error or '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>No scan jobs queued yet.</p>
+    {% endif %}
+</section>
+{% endblock %}

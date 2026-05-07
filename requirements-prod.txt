@@ -1,0 +1,2 @@
+# Production dashboard/deployment dependencies.
+-r requirements.lock

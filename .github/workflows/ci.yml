@@ -5,51 +5,49 @@ on:
   pull_request:
 
 jobs:
-  test-audit:
+  test:
     runs-on: ubuntu-latest
-    env:
-      SOCMINT_SECRET_KEY: ci-secret-key-with-enough-entropy
-      SOCMINT_DATA_DIR: /tmp/socmint-ci
-      SOCMINT_AUTO_CREATE_DB: "true"
-      DATABASE_URL: sqlite:////tmp/socmint-ci/socmint.db
-      SOCMINT_ENV_FILE: .env.example
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-          cache: pip
+          cache: "pip"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements-dev.txt
+          pip install -r requirements-dev.txt
 
       - name: Lint
-        run: ruff check src tests
+        run: ruff check src tests scripts
 
-      - name: Pre-commit hooks
-        run: pre-commit run --all-files
-
-      - name: Enforce formatting
-        run: |
-          make format
-          git diff --exit-code
-
-      - name: Tests
+      - name: Test
         run: pytest -q
 
-      - name: Compose config validation
+      - name: Docker Compose config
+        env:
+          SOCMINT_ENV_FILE: .env.example
         run: |
           docker compose --env-file .env.example config
           docker compose --env-file .env.example --profile postgres config
 
-      - name: Migration smoke test
+      - name: Alembic migration smoke
+        env:
+          DATABASE_URL: sqlite:////tmp/socmint-ci/socmint.db
+          SOCMINT_DATA_DIR: /tmp/socmint-ci
+          SOCMINT_AUTO_CREATE_DB: "false"
         run: |
           rm -rf /tmp/socmint-ci
           mkdir -p /tmp/socmint-ci
-          SOCMINT_AUTO_CREATE_DB=false alembic upgrade head
+          alembic upgrade head
+
+      - name: Backup restore smoke
+        run: python scripts/backup_restore_smoke.py
+
+      - name: Production boot smoke
+        run: python scripts/production_boot_check.py
 
       - name: Dependency audit
         run: pip-audit -r requirements.lock

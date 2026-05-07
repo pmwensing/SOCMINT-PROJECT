@@ -1,4 +1,7 @@
--r requirements.txt
+-r requirements-prod.txt
+-r requirements-scanners.txt
 pip-audit==2.9.0
 ruff==0.9.7
 pre-commit==3.4.0
+pytest==9.0.3
+pytest-mock==3.15.1
