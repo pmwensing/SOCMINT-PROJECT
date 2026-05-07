@@ -1615,3 +1615,45 @@ def update_spine_contradiction(
         return item.id
     finally:
         session.close()
+
+
+class DossierExport(Base):
+    __tablename__ = "dossier_exports"
+    id = Column(Integer, primary_key=True)
+    subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
+    export_dir = Column(Text, nullable=False)
+    files_json = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+def create_dossier_export_record(subject_id, export_dir, files):
+    ensure_configured()
+    session = Session()
+    try:
+        item = DossierExport(
+            subject_id=subject_id,
+            export_dir=export_dir,
+            files_json=json.dumps(files),
+        )
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item.id
+    finally:
+        session.close()
+
+
+def list_dossier_exports(subject_id, limit=100):
+    ensure_configured()
+    session = Session()
+    try:
+        items = (
+            session.query(DossierExport)
+            .filter_by(subject_id=subject_id)
+            .order_by(DossierExport.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()

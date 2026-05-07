@@ -30,6 +30,24 @@
 
 
 
+
+<section class="card">
+  <h2>Dossier export</h2>
+  <form
+    method="post"
+    action="{{ url_for('dashboard.spine_exports_run',
+    subject_id=dossier.subject.id) }}"
+  >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label><input type="checkbox" name="formats" value="json" checked> JSON</label>
+    <label><input type="checkbox" name="formats" value="html" checked> HTML</label>
+    <label><input type="checkbox" name="formats" value="pdf" checked> PDF</label>
+    <button type="submit">Export dossier</button>
+    <a href="{{ url_for('dashboard.spine_exports_view',
+    subject_id=dossier.subject.id) }}">Open exports</a>
+  </form>
+</section>
+
 <section class="card">
   <h2>Contradiction detection</h2>
   <form
