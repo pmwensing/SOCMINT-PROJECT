@@ -59,7 +59,7 @@
     <thead>
       <tr>
         <th>Confidence</th><th>Band</th><th>Type</th>
-        <th>Value</th><th>Validation</th><th>Action</th>
+        <th>Value</th><th>Validation</th><th>Evidence</th><th>Action</th>
       </tr>
     </thead>
     <tbody>
@@ -70,6 +70,7 @@
         <td>{{ assertion.type }}</td>
         <td class="mono">{{ assertion.value }}</td>
         <td>{{ assertion.validation_state }}</td>
+<td><a href="{{ url_for('dashboard.spine_assertion_detail', assertion_id=assertion.id) }}">Evidence</a></td>
         <td>
           <form
             method="post"
@@ -88,7 +89,7 @@
         </td>
       </tr>
       {% else %}
-      <tr><td colspan="6">No assertions yet. Run the high-value spine.</td></tr>
+      <tr><td colspan="7">No assertions yet. Run the high-value spine.</td></tr>
       {% endfor %}
     </tbody>
   </table>
