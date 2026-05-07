@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Policy Gates + Retention</h1>
+
+<section class="card">
+  <h2>Retention</h2>
+  <form method="post" action="{{ url_for('dashboard.workbench_retention_run') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <select name="mode">
+      <option value="dry_run">Dry run</option>
+      <option value="delete">Delete gated</option>
+    </select>
+    <button type="submit">Run retention</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Policy events</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Action</th><th>Allowed</th>
+        <th>Reasons</th><th>Actor</th><th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for event in events %}
+      <tr>
+        <td>{{ event.id }}</td>
+        <td>{{ event.action }}</td>
+        <td>{{ event.allowed }}</td>
+        <td>{{ event.reasons }}</td>
+        <td>{{ event.actor }}</td>
+        <td>{{ event.created_at }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No policy gate events yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

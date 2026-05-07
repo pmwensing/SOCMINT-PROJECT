@@ -1657,3 +1657,216 @@ def list_dossier_exports(subject_id, limit=100):
         return _detach_all(session, items)
     finally:
         session.close()
+
+
+class WorkbenchJob(Base):
+    __tablename__ = "workbench_jobs"
+    id = Column(Integer, primary_key=True)
+    subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
+    job_type = Column(String, nullable=False)
+    status = Column(String, nullable=False, default="queued")
+    priority = Column(Integer, nullable=False, default=100)
+    attempts = Column(Integer, nullable=False, default=0)
+    payload_json = Column(Text, nullable=False)
+    result_json = Column(Text, nullable=True)
+    error = Column(Text, nullable=True)
+    actor = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    finished_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class PolicyGateEvent(Base):
+    __tablename__ = "policy_gate_events"
+    id = Column(Integer, primary_key=True)
+    action = Column(String, nullable=False)
+    allowed = Column(Integer, nullable=False)
+    reasons_json = Column(Text, nullable=False)
+    payload_json = Column(Text, nullable=False)
+    actor = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class RetentionRun(Base):
+    __tablename__ = "retention_runs"
+    id = Column(Integer, primary_key=True)
+    mode = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    result_json = Column(Text, nullable=False)
+    actor = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+def create_workbench_job(
+    subject_id,
+    job_type,
+    status,
+    priority,
+    payload,
+    actor=None,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = WorkbenchJob(
+            subject_id=subject_id,
+            job_type=job_type,
+            status=status,
+            priority=priority,
+            payload_json=json.dumps(payload or {}),
+            actor=actor,
+        )
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item.id
+    finally:
+        session.close()
+
+
+def get_workbench_job(job_id):
+    ensure_configured()
+    session = Session()
+    try:
+        item = session.query(WorkbenchJob).filter_by(id=job_id).first()
+        if item:
+            session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
+def get_next_queued_workbench_job():
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(WorkbenchJob)
+            .filter_by(status="queued")
+            .order_by(WorkbenchJob.priority.asc(), WorkbenchJob.created_at.asc())
+            .first()
+        )
+        if item:
+            session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
+def list_workbench_jobs(limit=100):
+    ensure_configured()
+    session = Session()
+    try:
+        items = (
+            session.query(WorkbenchJob)
+            .order_by(WorkbenchJob.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def update_workbench_job(
+    job_id,
+    status=None,
+    result=None,
+    error=None,
+    started_at=None,
+    finished_at=None,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = session.query(WorkbenchJob).filter_by(id=job_id).first()
+        if not item:
+            return None
+
+        if status is not None:
+            item.status = status
+        if result is not None:
+            item.result_json = json.dumps(result)
+        if error is not None:
+            item.error = error
+        if started_at is not None:
+            item.started_at = started_at
+        if finished_at is not None:
+            item.finished_at = finished_at
+
+        if status == "running":
+            item.attempts += 1
+
+        item.updated_at = utc_now()
+        session.commit()
+        return item.id
+    finally:
+        session.close()
+
+
+def record_policy_gate_event(action, allowed, reasons, payload, actor=None):
+    ensure_configured()
+    session = Session()
+    try:
+        item = PolicyGateEvent(
+            action=action,
+            allowed=1 if allowed else 0,
+            reasons_json=json.dumps(reasons),
+            payload_json=json.dumps(payload or {}),
+            actor=actor,
+        )
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item.id
+    finally:
+        session.close()
+
+
+def list_policy_gate_events(limit=100):
+    ensure_configured()
+    session = Session()
+    try:
+        items = (
+            session.query(PolicyGateEvent)
+            .order_by(PolicyGateEvent.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def create_retention_run(mode, status, result, actor=None):
+    ensure_configured()
+    session = Session()
+    try:
+        item = RetentionRun(
+            mode=mode,
+            status=status,
+            result_json=json.dumps(result),
+            actor=actor,
+        )
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item.id
+    finally:
+        session.close()
+
+
+def list_retention_runs(limit=100):
+    ensure_configured()
+    session = Session()
+    try:
+        items = (
+            session.query(RetentionRun)
+            .order_by(RetentionRun.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()

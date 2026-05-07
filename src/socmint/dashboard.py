@@ -25,6 +25,14 @@ from werkzeug.utils import safe_join
 
 from . import database as db
 from .config import configure_logging, load_settings
+from .workbench import create_workbench_job
+from .workbench import evaluate_policy
+from .workbench import list_workbench_jobs_payload
+from .workbench import policy_events_payload
+from .workbench import run_next_workbench_job
+from .workbench import run_retention
+from .workbench import run_workbench_job
+from .workbench import workbench_status
 from .dossier_export import export_dossier as run_dossier_export
 from .contradictions import contradiction_payload
 from .contradictions import detect_subject_contradictions
@@ -910,6 +918,148 @@ def api_spine_exports_run(subject_id):
     payload = request.get_json(silent=True) or {}
     formats = payload.get("formats") or ["json", "html", "pdf"]
     result = run_dossier_export(subject_id, formats=formats)
+    return jsonify(result), 202
+
+
+
+@dashboard_bp.route("/workbench/jobs", methods=["GET", "POST"])
+@run_required
+def workbench_jobs_view():
+    if request.method == "POST":
+        try:
+            subject_id = int(request.form.get("subject_id", "0"))
+            job_type = request.form.get("job_type", "").strip()
+            priority = int(request.form.get("priority", "100"))
+            job_id = create_workbench_job(
+                job_type=job_type,
+                subject_id=subject_id,
+                payload={},
+                actor=session.get("user"),
+                priority=priority,
+            )
+            audit("workbench_job_create", details={"job_id": job_id})
+            flash(f"Created workbench job {job_id}.", "success")
+        except Exception as exc:
+            flash(str(exc), "error")
+        return redirect(url_for("dashboard.workbench_jobs_view"))
+
+    return render_template(
+        "workbench_jobs.html",
+        status=workbench_status(),
+        jobs=list_workbench_jobs_payload(limit=100)["jobs"],
+    )
+
+
+@dashboard_bp.route("/workbench/jobs/<int:job_id>/run", methods=["POST"])
+@run_required
+def workbench_job_run(job_id):
+    try:
+        result = run_workbench_job(job_id, actor=session.get("user"))
+        audit("workbench_job_run", details={"job_id": job_id, "result": result})
+        flash(f"Ran workbench job {job_id}.", "success")
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("dashboard.workbench_jobs_view"))
+
+
+@dashboard_bp.route("/workbench/jobs/run-next", methods=["POST"])
+@run_required
+def workbench_run_next():
+    try:
+        result = run_next_workbench_job(actor=session.get("user"))
+        audit("workbench_run_next", details={"result": result})
+        flash("Processed next queued job.", "success")
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("dashboard.workbench_jobs_view"))
+
+
+@dashboard_bp.route("/workbench/policy")
+@login_required
+def workbench_policy_view():
+    return render_template(
+        "workbench_policy.html",
+        events=policy_events_payload(limit=100)["events"],
+    )
+
+
+@dashboard_bp.route("/workbench/retention/run", methods=["POST"])
+@run_required
+def workbench_retention_run():
+    mode = request.form.get("mode", "dry_run").strip()
+    try:
+        result = run_retention(mode=mode, actor=session.get("user"))
+        audit("workbench_retention_run", details=result)
+        flash(f"Retention run {result['retention_run_id']} completed.", "success")
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("dashboard.workbench_policy_view"))
+
+
+@dashboard_bp.route("/api/v1/workbench/status")
+@login_required
+def api_workbench_status():
+    return jsonify(workbench_status())
+
+
+@dashboard_bp.route("/api/v1/workbench/jobs")
+@login_required
+def api_workbench_jobs():
+    return jsonify(list_workbench_jobs_payload(limit=250))
+
+
+@dashboard_bp.route("/api/v1/workbench/jobs", methods=["POST"])
+@run_required
+def api_workbench_job_create():
+    payload = request.get_json(silent=True) or {}
+    job_id = create_workbench_job(
+        job_type=payload.get("job_type"),
+        subject_id=int(payload.get("subject_id")),
+        payload=payload.get("payload") or {},
+        actor=session.get("user"),
+        priority=int(payload.get("priority", 100)),
+    )
+    return jsonify({"job_id": job_id}), 201
+
+
+@dashboard_bp.route("/api/v1/workbench/jobs/<int:job_id>/run", methods=["POST"])
+@run_required
+def api_workbench_job_run(job_id):
+    return jsonify(run_workbench_job(job_id, actor=session.get("user"))), 202
+
+
+@dashboard_bp.route("/api/v1/workbench/jobs/run-next", methods=["POST"])
+@run_required
+def api_workbench_run_next():
+    return jsonify({"result": run_next_workbench_job(actor=session.get("user"))})
+
+
+@dashboard_bp.route("/api/v1/workbench/policy/evaluate", methods=["POST"])
+@run_required
+def api_workbench_policy_evaluate():
+    payload = request.get_json(silent=True) or {}
+    result = evaluate_policy(
+        payload.get("action", ""),
+        payload.get("payload") or {},
+        actor=session.get("user"),
+    )
+    return jsonify(result)
+
+
+@dashboard_bp.route("/api/v1/workbench/policy/events")
+@login_required
+def api_workbench_policy_events():
+    return jsonify(policy_events_payload(limit=250))
+
+
+@dashboard_bp.route("/api/v1/workbench/retention/run", methods=["POST"])
+@run_required
+def api_workbench_retention_run():
+    payload = request.get_json(silent=True) or {}
+    result = run_retention(
+        mode=payload.get("mode", "dry_run"),
+        actor=session.get("user"),
+    )
     return jsonify(result), 202
 
 
