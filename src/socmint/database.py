@@ -12,6 +12,7 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    text,
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -168,6 +169,16 @@ def configure_database(database_url=None, create_schema=True):
 def ensure_configured():
     if Session is None:
         configure_database()
+
+
+def check_ready():
+    ensure_configured()
+    session = Session()
+    try:
+        session.execute(text("SELECT 1"))
+        return True
+    finally:
+        session.close()
 
 
 def get_user_by_username(username):

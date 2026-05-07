@@ -1,8 +1,11 @@
 import functools
 import json
+import logging
 import os
 import re
 import secrets
+import time
+import uuid
 
 from flask import (
     Blueprint,
@@ -37,6 +40,7 @@ LOGIN_MAX_ATTEMPTS = 5
 SIGNUP_WINDOW_SECONDS = 60 * 60
 SIGNUP_MAX_ATTEMPTS = 3
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_.-]{3,64}$")
+logger = logging.getLogger(__name__)
 
 dashboard_bp = Blueprint(
     "dashboard", __name__, template_folder="templates", static_folder="static"
@@ -139,6 +143,9 @@ def csp_nonce():
 
 
 def init_request_security():
+    supplied_request_id = request.headers.get("X-Request-ID", "").strip()
+    g.request_id = supplied_request_id[:128] or uuid.uuid4().hex
+    g.request_started_at = time.perf_counter()
     csp_nonce()
     return None
 
@@ -560,6 +567,14 @@ def healthz():
     return {"status": "ok"}
 
 
+@dashboard_bp.route("/readyz")
+def readyz():
+    if request.remote_addr not in {"127.0.0.1", "::1", "localhost"}:
+        abort(404)
+    db.check_ready()
+    return {"database": "ok", "status": "ready"}
+
+
 def add_security_headers(response):
     nonce = getattr(g, "csp_nonce", "")
     csp_value = (
@@ -574,6 +589,20 @@ def add_security_headers(response):
     response.headers.setdefault("Referrer-Policy", "no-referrer")
     response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
     response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
+    response.headers.setdefault("X-Request-ID", getattr(g, "request_id", ""))
+    started_at = getattr(g, "request_started_at", None)
+    if started_at is not None:
+        logger.info(
+            "request completed",
+            extra={
+                "request_id": getattr(g, "request_id", None),
+                "method": request.method,
+                "path": request.path,
+                "status_code": response.status_code,
+                "duration_ms": round((time.perf_counter() - started_at) * 1000, 2),
+                "remote_addr": request.remote_addr,
+            },
+        )
     return response
 
 

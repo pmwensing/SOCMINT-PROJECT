@@ -84,6 +84,18 @@ def test_create_app_requires_secret(monkeypatch):
         create_app()
 
 
+def test_health_and_readyz_include_request_id(app):
+    with app.test_client() as client:
+        response = client.get("/healthz", headers={"X-Request-ID": "test-request"})
+        assert response.status_code == 200
+        assert response.headers["X-Request-ID"] == "test-request"
+
+        response = client.get("/readyz")
+        assert response.status_code == 200
+        assert response.json == {"database": "ok", "status": "ready"}
+        assert response.headers["X-Request-ID"]
+
+
 def test_create_app_rejects_placeholder_secret(monkeypatch):
     monkeypatch.setenv("SOCMINT_SECRET_KEY", "replace-with-a-long-random-secret")
     with pytest.raises(RuntimeError, match="placeholder"):

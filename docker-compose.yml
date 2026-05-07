@@ -13,7 +13,7 @@ services:
     command: sh -c "alembic upgrade head && exec gunicorn --bind 127.0.0.1:5000 src.socmint.wsgi:app"
     network_mode: service:tor
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/healthz', timeout=3).read()"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/readyz', timeout=3).read()"]
       interval: 30s
       timeout: 5s
       retries: 3

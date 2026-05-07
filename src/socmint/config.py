@@ -1,3 +1,5 @@
+import datetime
+import json
 import logging
 import os
 import sys
@@ -37,6 +39,7 @@ class Settings:
     https: bool
     tor_proxy: str | None
     log_level: str
+    log_format: str
     admin_user: str | None
     admin_password: str | None
     log_file: str | None
@@ -111,6 +114,7 @@ def load_settings(require_secret=True, database_url=None):
         https=env_bool("SOCMINT_HTTPS", False),
         tor_proxy=os.getenv("SOCMINT_TOR_PROXY") or None,
         log_level=os.getenv("SOCMINT_LOG_LEVEL", "INFO").upper(),
+        log_format=os.getenv("SOCMINT_LOG_FORMAT", "text").lower(),
         admin_user=os.getenv("SOCMINT_ADMIN_USER") or None,
         admin_password=os.getenv("SOCMINT_ADMIN_PASSWORD") or None,
         log_file=os.getenv("SOCMINT_LOG_FILE") or None,
@@ -122,15 +126,46 @@ def load_settings(require_secret=True, database_url=None):
     return settings
 
 
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        payload = {
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        for field in (
+            "request_id",
+            "method",
+            "path",
+            "status_code",
+            "duration_ms",
+            "remote_addr",
+        ):
+            value = getattr(record, field, None)
+            if value is not None:
+                payload[field] = value
+        if record.exc_info:
+            payload["exception"] = self.formatException(record.exc_info)
+        return json.dumps(payload, separators=(",", ":"))
+
+
 def configure_logging(settings=None):
     settings = settings or load_settings(require_secret=False)
     handlers = [logging.StreamHandler(sys.stdout)]
     if settings.log_file:
         handlers.append(logging.FileHandler(settings.log_file))
 
+    formatter = (
+        JsonFormatter()
+        if settings.log_format == "json"
+        else logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+    )
+    for handler in handlers:
+        handler.setFormatter(formatter)
+
     logging.basicConfig(
         level=getattr(logging, settings.log_level, logging.INFO),
-        format="%(asctime)s %(levelname)s %(name)s %(message)s",
         handlers=handlers,
         force=True,
     )

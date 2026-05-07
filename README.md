@@ -25,6 +25,7 @@ DATABASE_URL=sqlite:////var/lib/socmint/socmint.db
 SOCMINT_DATA_DIR=/var/lib/socmint
 SOCMINT_ALLOW_SIGNUP=false
 SOCMINT_HTTPS=false
+SOCMINT_LOG_FORMAT=json
 ```
 
 Optional outbound Tor proxy for enrichment/media HTTP requests:
@@ -75,6 +76,11 @@ make production-smoke
 make production-docker-smoke
 make backup-restore-smoke
 ```
+
+`make production-docker-smoke` is the deployment rehearsal: it builds and boots
+the app/Tor stack, waits for readiness, confirms the hidden-service hostname,
+logs in as the bootstrap admin, queues and processes a scan job, verifies the
+saved dossier, and tears everything down.
 
 Generate and retrieve dossiers:
 
@@ -192,6 +198,16 @@ Postgres drill:
 5. Run `alembic current` and perform the same dashboard checks.
 
 Admin users can export/delete dossiers, manage users at `/admin/users`, assign `viewer`, `analyst`, or `admin` roles, and review filtered/paginated events at `/admin/audit`. Analysts can queue dashboard scan jobs but cannot manage users or export/delete dossiers. All users can rotate their own password at `/account/password`. Job status is available at `/jobs`.
+
+## Observability
+
+- `/healthz` confirms the Flask process is alive.
+- `/readyz` confirms Flask can reach the configured database.
+- Health and readiness endpoints are local-only.
+- Every response includes `X-Request-ID`; incoming `X-Request-ID` values are preserved.
+- Set `SOCMINT_LOG_FORMAT=json` for structured request logs with method, path,
+  status, duration, remote address, and request ID.
+- See `RUNBOOK.md` for deployment, rollback, backup, and incident procedures.
 
 ## Dependency And CI Checks
 

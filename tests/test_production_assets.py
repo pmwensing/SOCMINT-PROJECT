@@ -30,6 +30,7 @@ def test_deployment_assets_document_hidden_service_mapping():
     assert "postgres:" in compose
     assert "context: ./deploy/tor" in compose
     assert "network_mode: service:tor" in compose
+    assert "/readyz" in compose
     assert "requirements.lock" in dockerfile
     assert "requirements.txt" not in dockerfile
     assert "FROM python:3.13-slim AS builder" in dockerfile
@@ -44,3 +45,4 @@ def test_deployment_assets_document_hidden_service_mapping():
     assert "pip-audit -r requirements.lock" in workflow
     assert "python scripts/backup_restore_smoke.py" in workflow
     assert Path("deploy/systemd/socmint-backup.timer").exists()
+    assert Path("RUNBOOK.md").exists()
