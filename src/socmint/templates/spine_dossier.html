@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Enrichment-Validated Profile Dossier</h1>
+
+<section class="card">
+  <h2>Subject</h2>
+  <p><strong>ID:</strong> {{ dossier.subject.id }}</p>
+  <p><strong>Label:</strong> {{ dossier.subject.label or "Untitled subject" }}</p>
+  <p><strong>Created:</strong> {{ dossier.subject.created_at }}</p>
+</section>
+
+<section class="card">
+  <h2>Run high-value spine</h2>
+  <form
+    method="post"
+    action="{{ url_for('dashboard.spine_run', subject_id=dossier.subject.id) }}"
+  >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label><input type="checkbox" name="connectors" value="maigret" checked> Maigret</label>
+    <label><input type="checkbox" name="connectors" value="sherlock" checked> Sherlock</label>
+    <label><input type="checkbox" name="connectors" value="socialscan" checked> SocialScan</label>
+    <label><input type="checkbox" name="connectors" value="holehe"> Holehe</label>
+    <label><input type="checkbox" name="connectors" value="h8mail"> h8mail</label>
+    <label><input type="checkbox" name="connectors" value="phoneinfoga" checked> PhoneInfoga</label>
+    <label><input type="checkbox" name="connectors" value="archivebox" checked> ArchiveBox</label>
+    <button type="submit">Run spine</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Seeds</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Normalized value</th><th>Hash</th></tr></thead>
+    <tbody>
+      {% for seed in dossier.seeds %}
+      <tr>
+        <td>{{ seed.type }}</td>
+        <td class="mono">{{ seed.value }}</td>
+        <td class="mono">{{ seed.hash[:16] }}...</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Dossier metrics</h2>
+  <ul>
+    <li>Connector runs: {{ dossier.summary.connector_runs }}</li>
+    <li>Observations: {{ dossier.summary.observations }}</li>
+    <li>Assertions: {{ dossier.summary.assertions }}</li>
+    <li>Validated assertions: {{ dossier.summary.validated_assertions }}</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Evidence-backed assertions</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Confidence</th><th>Band</th><th>Type</th>
+        <th>Value</th><th>Validation</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for assertion in dossier.assertions %}
+      <tr>
+        <td>{{ "%.3f"|format(assertion.confidence) }}</td>
+        <td>{{ assertion.band }}</td>
+        <td>{{ assertion.type }}</td>
+        <td class="mono">{{ assertion.value }}</td>
+        <td>{{ assertion.validation_state }}</td>
+        <td>
+          <form
+            method="post"
+            action="{{ url_for('dashboard.spine_validate_assertion',
+            assertion_id=assertion.id) }}"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="action">
+              <option value="confirmed">Confirm</option>
+              <option value="rejected">Reject</option>
+              <option value="suppressed">Suppress</option>
+              <option value="unreviewed">Unreview</option>
+            </select>
+            <button type="submit">Apply</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No assertions yet. Run the high-value spine.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

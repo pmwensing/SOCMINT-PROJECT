@@ -25,6 +25,9 @@ from werkzeug.utils import safe_join
 
 from . import database as db
 from .config import configure_logging, load_settings
+from .spine import build_dossier
+from .spine import create_subject as spine_create_subject
+from .spine import run_spine_for_subject
 
 COMMON_PASSWORDS = {
     "password",
@@ -552,6 +555,91 @@ def media_file(media_id, filename):
     if not safe_path or os.path.abspath(safe_path) != os.path.abspath(media.path):
         abort(404)
     return send_from_directory(stored_directory, filename)
+
+
+
+@dashboard_bp.route("/spine", methods=["GET", "POST"])
+@run_required
+def spine_subjects():
+    if request.method == "POST":
+        label = request.form.get("label", "").strip() or None
+        seeds = []
+        for idx in range(1, 5):
+            value = request.form.get(f"seed_{idx}", "").strip()
+            seed_type = request.form.get(f"seed_type_{idx}", "").strip()
+            if value:
+                seeds.append({"type": seed_type or None, "value": value})
+        if not seeds:
+            flash("At least one seed is required.", "error")
+            return redirect(url_for("dashboard.spine_subjects"))
+        try:
+            subject_id = spine_create_subject(label, seeds)
+            audit("spine_subject_create", details={"subject_id": subject_id})
+            flash(f"Created dossier subject {subject_id}.", "success")
+            return redirect(url_for("dashboard.spine_dossier", subject_id=subject_id))
+        except Exception as exc:
+            flash(str(exc), "error")
+
+    subjects = db.list_spine_subjects(limit=100)
+    return render_template("spine.html", subjects=subjects)
+
+
+@dashboard_bp.route("/spine/<int:subject_id>")
+@login_required
+def spine_dossier(subject_id):
+    dossier = build_dossier(subject_id)
+    return render_template("spine_dossier.html", dossier=dossier)
+
+
+@dashboard_bp.route("/spine/<int:subject_id>/run", methods=["POST"])
+@run_required
+def spine_run(subject_id):
+    connectors = request.form.getlist("connectors")
+    try:
+        result = run_spine_for_subject(subject_id, connectors or None)
+        audit("spine_run", details=result)
+        flash(f"Ran {len(result['run_ids'])} spine connector runs.", "success")
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("dashboard.spine_dossier", subject_id=subject_id))
+
+
+@dashboard_bp.route(
+    "/spine/assertions/<int:assertion_id>/validate",
+    methods=["POST"],
+)
+@run_required
+def spine_validate_assertion(assertion_id):
+    action = request.form.get("action", "unreviewed").strip()
+    note = request.form.get("note", "").strip() or None
+    try:
+        db.validate_spine_assertion(assertion_id, session.get("user"), action, note)
+        flash(f"Assertion marked {action}.", "success")
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(request.referrer or url_for("dashboard.spine_subjects"))
+
+
+@dashboard_bp.route("/api/v1/spine/subjects", methods=["POST"])
+@run_required
+def api_spine_create_subject():
+    payload = request.get_json(silent=True) or {}
+    subject_id = spine_create_subject(payload.get("label"), payload.get("seeds", []))
+    return jsonify({"subject_id": subject_id}), 201
+
+
+@dashboard_bp.route("/api/v1/spine/subjects/<int:subject_id>/run", methods=["POST"])
+@run_required
+def api_spine_run(subject_id):
+    payload = request.get_json(silent=True) or {}
+    result = run_spine_for_subject(subject_id, payload.get("connectors") or None)
+    return jsonify(result), 202
+
+
+@dashboard_bp.route("/api/v1/spine/subjects/<int:subject_id>/dossier")
+@login_required
+def api_spine_dossier(subject_id):
+    return jsonify(build_dossier(subject_id))
 
 
 @dashboard_bp.route("/about")

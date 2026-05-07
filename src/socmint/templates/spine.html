@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Validated Dossier Spine</h1>
+
+<section class="card">
+  <h2>Create subject from sparse seeds</h2>
+  <form method="post" action="{{ url_for('dashboard.spine_subjects') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Subject label</label>
+    <input name="label" placeholder="Optional label">
+
+    {% for idx in range(1, 5) %}
+    <div class="seed-row">
+      <select name="seed_type_{{ idx }}">
+        <option value="">Auto-detect</option>
+        <option value="username">Username</option>
+        <option value="email">Email</option>
+        <option value="phone">Phone</option>
+        <option value="url">URL</option>
+      </select>
+      <input name="seed_{{ idx }}" placeholder="username / email / phone / URL">
+    </div>
+    {% endfor %}
+
+    <button type="submit">Create dossier subject</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Recent subjects</h2>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Label</th><th>Created</th><th>Dossier</th></tr>
+    </thead>
+    <tbody>
+      {% for subject in subjects %}
+      <tr>
+        <td>{{ subject.id }}</td>
+        <td>{{ subject.label or "Untitled subject" }}</td>
+        <td>{{ subject.created_at }}</td>
+        <td>
+          <a href="{{ url_for('dashboard.spine_dossier',
+          subject_id=subject.id) }}">Open</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No dossier subjects yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
