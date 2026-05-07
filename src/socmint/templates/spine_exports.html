@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dossier Exports</h1>
+
+<section class="card">
+  <h2>Export history</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Directory</th><th>Files</th><th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in exports %}
+      <tr>
+        <td>{{ item.id }}</td>
+        <td class="mono">{{ item.export_dir }}</td>
+        <td class="mono">{{ item.files_json }}</td>
+        <td>{{ item.created_at }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No exports yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Export rule</h2>
+  <p>
+    JSON is the canonical machine-readable dossier. HTML is the review copy.
+    PDF is the portable human-readable snapshot.
+  </p>
+</section>
+{% endblock %}

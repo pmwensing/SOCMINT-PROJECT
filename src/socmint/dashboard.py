@@ -25,6 +25,7 @@ from werkzeug.utils import safe_join
 
 from . import database as db
 from .config import configure_logging, load_settings
+from .dossier_export import export_dossier as run_dossier_export
 from .contradictions import contradiction_payload
 from .contradictions import detect_subject_contradictions
 from .contradictions import resolve_contradiction
@@ -848,6 +849,68 @@ def api_spine_contradictions(subject_id):
 @run_required
 def api_spine_contradictions_run(subject_id):
     return jsonify(detect_subject_contradictions(subject_id)), 202
+
+
+
+@dashboard_bp.route("/spine/<int:subject_id>/exports")
+@login_required
+def spine_exports_view(subject_id):
+    exports = db.list_dossier_exports(subject_id)
+    return render_template(
+        "spine_exports.html",
+        subject_id=subject_id,
+        exports=exports,
+    )
+
+
+@dashboard_bp.route("/spine/<int:subject_id>/exports/run", methods=["POST"])
+@run_required
+def spine_exports_run(subject_id):
+    formats = request.form.getlist("formats") or ["json", "html", "pdf"]
+    try:
+        result = run_dossier_export(subject_id, formats=formats)
+        audit("spine_dossier_export", details=result)
+        flash(
+            f"Exported dossier package {result['export_id']}.",
+            "success",
+        )
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("dashboard.spine_exports_view", subject_id=subject_id))
+
+
+@dashboard_bp.route("/api/v1/spine/subjects/<int:subject_id>/exports")
+@login_required
+def api_spine_exports(subject_id):
+    exports = db.list_dossier_exports(subject_id)
+    return jsonify(
+        {
+            "subject_id": subject_id,
+            "exports": [
+                {
+                    "id": item.id,
+                    "export_dir": item.export_dir,
+                    "files": json.loads(item.files_json or "[]"),
+                    "created_at": item.created_at.isoformat()
+                    if item.created_at
+                    else None,
+                }
+                for item in exports
+            ],
+        }
+    )
+
+
+@dashboard_bp.route(
+    "/api/v1/spine/subjects/<int:subject_id>/exports/run",
+    methods=["POST"],
+)
+@run_required
+def api_spine_exports_run(subject_id):
+    payload = request.get_json(silent=True) or {}
+    formats = payload.get("formats") or ["json", "html", "pdf"]
+    result = run_dossier_export(subject_id, formats=formats)
+    return jsonify(result), 202
 
 
 @dashboard_bp.route("/about")
