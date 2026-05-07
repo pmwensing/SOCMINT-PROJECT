@@ -1442,3 +1442,61 @@ def update_identity_merge_candidate(candidate_id, state, actor=None, note=None):
         return item.id
     finally:
         session.close()
+
+
+class MediaProfileEnrichment(Base):
+    __tablename__ = "media_profile_enrichments"
+    id = Column(Integer, primary_key=True)
+    subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
+    observation_id = Column(Integer, ForeignKey("spine_observations.id"), nullable=True)
+    enrichment_type = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    source_value = Column(Text, nullable=True)
+    artifact_ref = Column(Text, nullable=True)
+    payload_json = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+def create_media_profile_enrichment(
+    subject_id,
+    observation_id,
+    enrichment_type,
+    status,
+    source_value,
+    artifact_ref,
+    payload,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = MediaProfileEnrichment(
+            subject_id=subject_id,
+            observation_id=observation_id,
+            enrichment_type=enrichment_type,
+            status=status,
+            source_value=source_value,
+            artifact_ref=artifact_ref,
+            payload_json=json.dumps(payload),
+        )
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item.id
+    finally:
+        session.close()
+
+
+def list_media_profile_enrichments(subject_id, limit=1000):
+    ensure_configured()
+    session = Session()
+    try:
+        items = (
+            session.query(MediaProfileEnrichment)
+            .filter_by(subject_id=subject_id)
+            .order_by(MediaProfileEnrichment.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()

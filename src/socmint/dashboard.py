@@ -30,6 +30,8 @@ from .evidence import get_assertion_evidence
 from .identity_graph import apply_merge_candidate
 from .identity_graph import build_identity_graph
 from .identity_graph import graph_payload
+from .enrichment import enrich_subject_media_profiles
+from .enrichment import media_profile_payload
 from .spine import build_dossier
 from .spine import create_subject as spine_create_subject
 from .spine import run_spine_for_subject
@@ -728,6 +730,53 @@ def spine_merge_candidate_review(candidate_id):
     except Exception as exc:
         flash(str(exc), "error")
     return redirect(request.referrer or url_for("dashboard.spine_subjects"))
+
+
+
+@dashboard_bp.route("/spine/<int:subject_id>/media-profiles")
+@login_required
+def spine_media_profile_view(subject_id):
+    payload = media_profile_payload(subject_id)
+    return render_template("spine_media_profiles.html", payload=payload)
+
+
+@dashboard_bp.route("/spine/<int:subject_id>/media-profiles/run", methods=["POST"])
+@run_required
+def spine_media_profile_run(subject_id):
+    try:
+        result = enrich_subject_media_profiles(subject_id)
+        audit("spine_media_profile_enrichment", details=result)
+        flash(
+            f"Created {len(result['enrichment_ids'])} enrichment records.",
+            "success",
+        )
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(
+        url_for(
+            "dashboard.spine_media_profile_view",
+            subject_id=subject_id,
+        )
+    )
+
+
+@dashboard_bp.route(
+    "/api/v1/spine/subjects/<int:subject_id>/media-profiles"
+)
+@login_required
+def api_spine_media_profiles(subject_id):
+    payload = media_profile_payload(subject_id)
+    return jsonify(payload)
+
+
+@dashboard_bp.route(
+    "/api/v1/spine/subjects/<int:subject_id>/media-profiles/run",
+    methods=["POST"],
+)
+@run_required
+def api_spine_media_profiles_run(subject_id):
+    payload = enrich_subject_media_profiles(subject_id)
+    return jsonify(payload), 202
 
 
 @dashboard_bp.route("/about")

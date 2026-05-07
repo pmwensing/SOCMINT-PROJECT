@@ -28,6 +28,21 @@
 </section>
 
 
+
+<section class="card">
+  <h2>Media/profile enrichment</h2>
+  <form
+    method="post"
+    action="{{ url_for('dashboard.spine_media_profile_run',
+    subject_id=dossier.subject.id) }}"
+  >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Run media/profile enrichment</button>
+    <a href="{{ url_for('dashboard.spine_media_profile_view',
+    subject_id=dossier.subject.id) }}">Open media/profile enrichments</a>
+  </form>
+</section>
+
 <section class="card">
   <h2>Identity graph</h2>
   <form
