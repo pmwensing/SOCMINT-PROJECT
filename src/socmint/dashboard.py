@@ -27,6 +27,9 @@ from . import database as db
 from .config import configure_logging, load_settings
 from .evidence import connector_quality_metrics
 from .evidence import get_assertion_evidence
+from .identity_graph import apply_merge_candidate
+from .identity_graph import build_identity_graph
+from .identity_graph import graph_payload
 from .spine import build_dossier
 from .spine import create_subject as spine_create_subject
 from .spine import run_spine_for_subject
@@ -674,6 +677,57 @@ def spine_connector_quality():
 @login_required
 def api_spine_connector_quality():
     return jsonify({"connectors": connector_quality_metrics()})
+
+
+
+@dashboard_bp.route("/spine/<int:subject_id>/graph")
+@login_required
+def spine_graph_view(subject_id):
+    payload = graph_payload(subject_id)
+    return render_template("spine_graph.html", graph=payload)
+
+
+@dashboard_bp.route("/spine/<int:subject_id>/graph/build", methods=["POST"])
+@run_required
+def spine_graph_build(subject_id):
+    try:
+        graph_id = build_identity_graph(subject_id)
+        audit("spine_graph_build", details={"graph_id": graph_id})
+        flash(f"Built identity graph {graph_id}.", "success")
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("dashboard.spine_graph_view", subject_id=subject_id))
+
+
+@dashboard_bp.route("/api/v1/spine/subjects/<int:subject_id>/graph")
+@login_required
+def api_spine_graph(subject_id):
+    return jsonify(graph_payload(subject_id))
+
+
+@dashboard_bp.route(
+    "/spine/merge-candidates/<int:candidate_id>/review",
+    methods=["POST"],
+)
+@run_required
+def spine_merge_candidate_review(candidate_id):
+    action = request.form.get("action", "unreviewed").strip()
+    note = request.form.get("note", "").strip() or None
+    try:
+        apply_merge_candidate(
+            candidate_id,
+            action,
+            actor=session.get("user"),
+            note=note,
+        )
+        audit(
+            "spine_merge_candidate_review",
+            details={"candidate_id": candidate_id, "action": action},
+        )
+        flash(f"Merge candidate marked {action}.", "success")
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(request.referrer or url_for("dashboard.spine_subjects"))
 
 
 @dashboard_bp.route("/about")

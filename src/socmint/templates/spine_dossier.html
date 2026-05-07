@@ -27,6 +27,21 @@
   </form>
 </section>
 
+
+<section class="card">
+  <h2>Identity graph</h2>
+  <form
+    method="post"
+    action="{{ url_for('dashboard.spine_graph_build',
+    subject_id=dossier.subject.id) }}"
+  >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Build identity graph</button>
+    <a href="{{ url_for('dashboard.spine_graph_view',
+    subject_id=dossier.subject.id) }}">Open graph</a>
+  </form>
+</section>
+
 <section class="card">
   <h2>Seeds</h2>
   <table>
