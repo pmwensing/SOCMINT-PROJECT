@@ -74,3 +74,25 @@ def media_profile_payload(subject_id: int) -> dict:
             for item in enrichments
         ],
     }
+
+
+
+def enrich_dossier(dossier):
+    """Backward-compatible enrichment hook for legacy CLI generation.
+
+    The v6+ production spine uses subject-level enrichment via
+    enrich_subject_media_profiles().  The older CLI path still imports and
+    calls enrich_dossier(), so keep this lightweight compatibility wrapper to
+    prevent dashboard startup/import failures.
+    """
+    if not isinstance(dossier, dict):
+        return dossier
+
+    enriched = dict(dossier)
+    enriched.setdefault("enrichment", {})
+    enriched["enrichment"].setdefault("status", "legacy_compat")
+    enriched["enrichment"].setdefault(
+        "note",
+        "Use the v6+ dossier spine/workbench for production enrichment.",
+    )
+    return enriched
