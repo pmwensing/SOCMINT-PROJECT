@@ -1930,3 +1930,17 @@ class ReviewDecision(Base):
     reviewer = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=utc_now, nullable=False)
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+class ReviewDecisionAudit(Base):
+    __tablename__ = "review_decision_audit"
+
+    id = Column(Integer, primary_key=True)
+    decision_id = Column(Integer, nullable=True, index=True)
+    item_id = Column(String(512), nullable=False, index=True)
+    action = Column(String(64), nullable=False, index=True)
+    old_status = Column(String(32), nullable=True)
+    new_status = Column(String(32), nullable=True, index=True)
+    note = Column(Text, nullable=True)
+    reviewer = Column(String(255), nullable=True)
+    batch_id = Column(String(128), nullable=True, index=True)
+    created_at = Column(DateTime, default=utc_now, nullable=False)

@@ -111,3 +111,12 @@ test721:
 
 migrate721:
 	PYTHONPATH=$(PWD)/src python3 -m socmint.deployment_db migrate
+
+test722:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_2_2.sh
+
+migrate722:
+	PYTHONPATH=$(PWD)/src python3 -m socmint.deployment_db migrate
+
+test73:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_3.sh

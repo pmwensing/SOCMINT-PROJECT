@@ -28,6 +28,10 @@ from .config import configure_logging, load_settings
 from .report_review import report_runs_payload
 from .report_review import review_items_payload
 from .report_review import review_summary
+from .report_export_center import export_center_payload
+from .report_export_center import review_gated_export_payload
+from .report_review import bulk_set_review_status
+from .report_review import review_audit_payload
 from .report_review import set_review_status
 from .workbench import create_workbench_job
 from .workbench import evaluate_policy
@@ -1129,6 +1133,73 @@ def api_workbench_retention_run():
 
 
 
+
+
+
+@dashboard_bp.route("/reports/export-center")
+@login_required
+def report_export_center_view():
+    return render_template(
+        "report_export_center.html",
+        payload=export_center_payload(),
+    )
+
+
+@dashboard_bp.route("/api/v1/reports/export-center")
+@login_required
+def api_report_export_center():
+    return jsonify(export_center_payload())
+
+
+@dashboard_bp.route("/api/v1/reports/export-center/review-gated", methods=["POST"])
+@run_required
+def api_review_gated_export():
+    payload = request.get_json(silent=True) or {}
+    subject_id_raw = payload.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw not in (None, "") else None
+    gate_mode = payload.get("gate_mode") or "approved_and_uncertain"
+    title = payload.get("title")
+
+    result = review_gated_export_payload(
+        subject_id=subject_id,
+        gate_mode=gate_mode,
+        title=title,
+    )
+    manifest = result.get("manifest", {})
+    audit(
+        "review_gated_export",
+        details={
+            "subject_id": subject_id,
+            "gate_mode": gate_mode,
+            "manifest_path": manifest.get("manifest_path"),
+            "included_count": manifest.get("included_count"),
+            "excluded_count": manifest.get("excluded_count"),
+        },
+    )
+    return jsonify(result), 202
+
+
+@dashboard_bp.route("/reports/export-center/review-gated/run", methods=["POST"])
+@run_required
+def report_review_gated_export_run():
+    subject_id_raw = request.form.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    gate_mode = request.form.get("gate_mode") or "approved_and_uncertain"
+    title = request.form.get("title") or None
+
+    result = review_gated_export_payload(
+        subject_id=subject_id,
+        gate_mode=gate_mode,
+        title=title,
+    )
+    manifest = result.get("manifest", {})
+    flash(
+        "Review-gated export complete: "
+        + str(manifest.get("manifest_path", "")),
+        "success",
+    )
+    return redirect(url_for("dashboard.report_export_center_view"))
+
 @dashboard_bp.route("/reports/review")
 @login_required
 def report_review_console():
@@ -1263,3 +1334,41 @@ def create_app(database_url=None):
     app.after_request(add_security_headers)
     app.register_blueprint(dashboard_bp)
     return app
+
+
+@dashboard_bp.route("/api/v1/reports/review/bulk", methods=["POST"])
+@run_required
+def api_bulk_report_review_status():
+    payload = request.get_json(silent=True) or {}
+    item_ids = payload.get("item_ids") or []
+    status = payload.get("status", "needs_review")
+    note = payload.get("note")
+    reviewer = None
+    try:
+        reviewer = getattr(g, "user", None) or session.get("username")
+    except Exception:
+        reviewer = None
+
+    result = bulk_set_review_status(
+        item_ids=item_ids,
+        status=status,
+        note=note,
+        reviewer=reviewer,
+    )
+    audit(
+        "bulk_report_review_decision",
+        details={
+            "batch_id": result.get("batch_id"),
+            "status": status,
+            "count": len(item_ids),
+        },
+    )
+    return jsonify(result)
+
+
+@dashboard_bp.route("/api/v1/reports/review/audit")
+@login_required
+def api_report_review_audit():
+    item_id = request.args.get("item_id")
+    batch_id = request.args.get("batch_id")
+    return jsonify(review_audit_payload(item_id=item_id, batch_id=batch_id))

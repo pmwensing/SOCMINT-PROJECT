@@ -82,4 +82,22 @@
     </tbody>
   </table>
 </section>
+
+<section class="card">
+  <h2>Bulk analyst actions</h2>
+  <p>
+    Use the JSON API endpoint for batch approve/reject/uncertain decisions:
+    <code>POST /api/v1/reports/review/bulk</code>
+  </p>
+  <pre>{
+  "item_ids": ["findings:1", "spine_observations:2"],
+  "status": "approved",
+  "note": "batch-reviewed"
+}</pre>
+  <p>
+    Audit trail endpoint:
+    <code>GET /api/v1/reports/review/audit</code>
+  </p>
+</section>
+
 {% endblock %}

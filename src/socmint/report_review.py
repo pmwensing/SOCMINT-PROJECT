@@ -609,3 +609,223 @@ def set_review_status(
         return merged
 
     return legacy_result
+
+
+def review_decision_audit_table_available() -> bool:
+    return table_exists("review_decision_audit")
+
+
+def write_review_decision_audit(
+    item_id: str,
+    action: str,
+    old_status: str | None = None,
+    new_status: str | None = None,
+    note: str | None = None,
+    reviewer: str | None = None,
+    decision_id: int | None = None,
+    batch_id: str | None = None,
+) -> dict[str, Any]:
+    if not review_decision_audit_table_available():
+        out_dir = Path("var/socmint/review_audit")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        safe_item = item_id.replace(":", "_").replace("/", "_")
+        safe_batch = batch_id or "single"
+        path = out_dir / f"{safe_batch}_{safe_item}_{utc_now()}.json"
+        path = Path(str(path).replace(":", "-"))
+        payload = {
+            "schema": "socmint.review_decision_audit.v7_2_2",
+            "item_id": item_id,
+            "action": action,
+            "old_status": old_status,
+            "new_status": new_status,
+            "note": note,
+            "reviewer": reviewer,
+            "decision_id": decision_id,
+            "batch_id": batch_id,
+            "created_at": utc_now(),
+        }
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+        return {"written": True, "sidecar": True, "path": str(path)}
+
+    try:
+        db.ensure_configured()
+        now = datetime.now(UTC).replace(tzinfo=None)
+
+        with db.engine.begin() as conn:
+            result = conn.execute(
+                text(
+                    """
+                    INSERT INTO review_decision_audit (
+                        decision_id,
+                        item_id,
+                        action,
+                        old_status,
+                        new_status,
+                        note,
+                        reviewer,
+                        batch_id,
+                        created_at
+                    )
+                    VALUES (
+                        :decision_id,
+                        :item_id,
+                        :action,
+                        :old_status,
+                        :new_status,
+                        :note,
+                        :reviewer,
+                        :batch_id,
+                        :created_at
+                    )
+                    """
+                ),
+                {
+                    "decision_id": decision_id,
+                    "item_id": item_id,
+                    "action": action,
+                    "old_status": old_status,
+                    "new_status": new_status,
+                    "note": note,
+                    "reviewer": reviewer,
+                    "batch_id": batch_id,
+                    "created_at": now,
+                },
+            )
+            audit_id = getattr(result, "lastrowid", None)
+    except Exception as exc:
+        return {"written": False, "error": str(exc)}
+
+    return {
+        "written": True,
+        "native": True,
+        "audit_id": audit_id,
+        "item_id": item_id,
+        "action": action,
+        "batch_id": batch_id,
+    }
+
+
+def list_review_decision_audit(
+    item_id: str | None = None,
+    batch_id: str | None = None,
+    limit: int = 200,
+) -> list[dict[str, Any]]:
+    if not review_decision_audit_table_available():
+        return []
+
+    where = []
+    params: dict[str, Any] = {"limit": limit}
+
+    if item_id:
+        where.append("item_id = :item_id")
+        params["item_id"] = item_id
+
+    if batch_id:
+        where.append("batch_id = :batch_id")
+        params["batch_id"] = batch_id
+
+    where_sql = "WHERE " + " AND ".join(where) if where else ""
+
+    return safe_rows(
+        f"""
+        SELECT *
+        FROM review_decision_audit
+        {where_sql}
+        ORDER BY id DESC
+        LIMIT :limit
+        """,
+        params,
+    )
+
+
+_legacy_set_review_status_v722 = set_review_status
+
+
+def set_review_status(
+    item_id: str,
+    status: str,
+    note: str | None = None,
+    reviewer: str | None = None,
+    batch_id: str | None = None,
+) -> dict[str, Any]:
+    old_status = None
+
+    try:
+        decisions = latest_native_decisions()
+        if item_id in decisions:
+            old_status = decisions[item_id].get("status")
+    except Exception:
+        old_status = None
+
+    try:
+        result = _legacy_set_review_status_v722(item_id, status, note)
+    except TypeError:
+        result = _legacy_set_review_status_v722(item_id, status, note)
+
+    audit_result = write_review_decision_audit(
+        item_id=item_id,
+        action="set_status",
+        old_status=old_status,
+        new_status=status,
+        note=note,
+        reviewer=reviewer,
+        decision_id=result.get("decision_id"),
+        batch_id=batch_id,
+    )
+
+    result["audit"] = audit_result
+    return result
+
+
+def bulk_set_review_status(
+    item_ids: list[str],
+    status: str,
+    note: str | None = None,
+    reviewer: str | None = None,
+) -> dict[str, Any]:
+    if status not in REVIEW_STATUSES:
+        raise ValueError(f"Invalid review status: {status}")
+
+    batch_id = f"batch-{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"
+    results = []
+
+    for item_id in item_ids:
+        try:
+            result = set_review_status(
+                item_id=item_id,
+                status=status,
+                note=note,
+                reviewer=reviewer,
+                batch_id=batch_id,
+            )
+        except Exception as exc:
+            result = {
+                "updated": False,
+                "item_id": item_id,
+                "status": status,
+                "error": str(exc),
+            }
+        results.append(result)
+
+    updated = sum(1 for item in results if item.get("updated"))
+
+    return {
+        "schema": "socmint.bulk_review_decision.v7_2_2",
+        "batch_id": batch_id,
+        "status": status,
+        "requested": len(item_ids),
+        "updated": updated,
+        "failed": len(item_ids) - updated,
+        "results": results,
+    }
+
+
+def review_audit_payload(
+    item_id: str | None = None,
+    batch_id: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "schema": "socmint.review_decision_audit.items.v7_2_2",
+        "generated_at": utc_now(),
+        "items": list_review_decision_audit(item_id=item_id, batch_id=batch_id),
+    }
