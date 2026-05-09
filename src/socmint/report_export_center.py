@@ -206,14 +206,6 @@ def list_review_gated_exports(limit: int = 100) -> list[GatedExport]:
     return exports
 
 
-def export_center_payload() -> dict[str, Any]:
-    return {
-        "schema": "socmint.report_export_center.v7_3",
-        "generated_at": utc_now(),
-        "gate_modes": sorted(ALLOWED_GATE_MODES),
-        "review_summary": review_summary(),
-        "exports": [asdict(item) for item in list_review_gated_exports()],
-    }
 
 
 def review_gated_export_payload(
@@ -230,4 +222,79 @@ def review_gated_export_payload(
         "schema": "socmint.review_gated_export_result.v7_3",
         "generated_at": utc_now(),
         "manifest": manifest,
+    }
+
+
+def safe_export_artifact_path(relative_or_name: str) -> Path:
+    root = export_root().resolve()
+    candidate = Path(relative_or_name)
+
+    if candidate.is_absolute():
+        path = candidate.resolve()
+    else:
+        path = (root / candidate).resolve()
+
+    if root not in path.parents and path != root:
+        raise ValueError("Export artifact path escapes export root")
+
+    if not path.exists() or not path.is_file():
+        raise FileNotFoundError(str(path))
+
+    return path
+
+
+def export_artifact_metadata(path: Path) -> dict[str, Any]:
+    stat = path.stat()
+    return {
+        "name": path.name,
+        "path": str(path),
+        "size_bytes": stat.st_size,
+        "modified_at": datetime.fromtimestamp(stat.st_mtime, UTC).isoformat(),
+        "download_url": f"/reports/export-center/artifacts/{path.name}/download",
+        "view_url": f"/reports/export-center/manifests/{path.name}",
+    }
+
+
+def list_export_artifacts(limit: int = 200) -> list[dict[str, Any]]:
+    root = export_root()
+    artifacts = sorted(
+        [
+            p
+            for p in root.glob("review-gated-*")
+            if p.is_file() and p.suffix.lower() in {".json", ".md", ".txt"}
+        ],
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    return [export_artifact_metadata(path) for path in artifacts[:limit]]
+
+
+def load_manifest_view(name: str) -> dict[str, Any]:
+    path = safe_export_artifact_path(name)
+    text = path.read_text(errors="replace")
+
+    parsed = None
+    if path.suffix.lower() == ".json":
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            parsed = None
+
+    return {
+        "schema": "socmint.export_artifact_view.v7_3_1",
+        "artifact": export_artifact_metadata(path),
+        "is_json": path.suffix.lower() == ".json",
+        "is_markdown": path.suffix.lower() == ".md",
+        "parsed": parsed,
+        "text": text,
+    }
+
+def export_center_payload() -> dict[str, Any]:
+    return {
+        "schema": "socmint.report_export_center.v7_3_1",
+        "generated_at": utc_now(),
+        "gate_modes": sorted(ALLOWED_GATE_MODES),
+        "review_summary": review_summary(),
+        "exports": [asdict(item) for item in list_review_gated_exports()],
+        "artifacts": list_export_artifacts(),
     }

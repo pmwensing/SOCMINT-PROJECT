@@ -29,6 +29,8 @@ from .report_review import report_runs_payload
 from .report_review import review_items_payload
 from .report_review import review_summary
 from .report_export_center import export_center_payload
+from .report_export_center import load_manifest_view
+from .report_export_center import safe_export_artifact_path
 from .report_export_center import review_gated_export_payload
 from .report_review import bulk_set_review_status
 from .report_review import review_audit_payload
@@ -1199,6 +1201,36 @@ def report_review_gated_export_run():
         "success",
     )
     return redirect(url_for("dashboard.report_export_center_view"))
+
+
+
+
+@dashboard_bp.route("/reports/export-center/manifests/<path:name>")
+@login_required
+def report_export_manifest_view(name):
+    payload = load_manifest_view(name)
+    return render_template(
+        "report_manifest_viewer.html",
+        payload=payload,
+    )
+
+
+@dashboard_bp.route("/api/v1/reports/export-center/artifacts/<path:name>")
+@login_required
+def api_report_export_artifact_view(name):
+    return jsonify(load_manifest_view(name))
+
+
+@dashboard_bp.route("/reports/export-center/artifacts/<path:name>/download")
+@login_required
+def report_export_artifact_download(name):
+    path = safe_export_artifact_path(name)
+    return send_from_directory(
+        path.parent,
+        path.name,
+        as_attachment=True,
+        download_name=path.name,
+    )
 
 @dashboard_bp.route("/reports/review")
 @login_required

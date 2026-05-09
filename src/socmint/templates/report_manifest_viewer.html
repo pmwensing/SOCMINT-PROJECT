@@ -1,0 +1,86 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h1>Export Manifest Viewer</h1>
+
+<section class="card">
+  <h2>{{ payload.artifact.name }}</h2>
+  <p><strong>Size:</strong> {{ payload.artifact.size_bytes }} bytes</p>
+  <p><strong>Modified:</strong> {{ payload.artifact.modified_at }}</p>
+  <p>
+    <a href="{{ payload.artifact.download_url }}">Download artifact</a>
+    |
+    <a href="{{ url_for('dashboard.report_export_center_view') }}">Back to Export Center</a>
+  </p>
+</section>
+
+{% if payload.parsed %}
+<section class="card">
+  <h2>Manifest summary</h2>
+  <p><strong>Schema:</strong> {{ payload.parsed.schema or "" }}</p>
+  <p><strong>Export ID:</strong> {{ payload.parsed.export_id or "" }}</p>
+  <p><strong>Gate mode:</strong> {{ payload.parsed.gate_mode or "" }}</p>
+  <p><strong>Included:</strong> {{ payload.parsed.included_count or 0 }}</p>
+  <p><strong>Excluded:</strong> {{ payload.parsed.excluded_count or 0 }}</p>
+</section>
+
+<section class="card">
+  <h2>Included items</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Status</th>
+        <th>Quality</th>
+        <th>Source</th>
+        <th>Label</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in payload.parsed.included_items or [] %}
+      <tr>
+        <td><code>{{ item.id }}</code></td>
+        <td>{{ item.status }}</td>
+        <td>{{ item.quality }}</td>
+        <td>{{ item.source }}</td>
+        <td>{{ item.label }}</td>
+        <td><code>{{ item.value }}</code></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No included items.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Excluded items</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Status</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in payload.parsed.excluded_items or [] %}
+      <tr>
+        <td><code>{{ item.id }}</code></td>
+        <td>{{ item.status }}</td>
+        <td>Excluded by gate mode <code>{{ payload.parsed.gate_mode }}</code></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3">No excluded items.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Raw artifact</h2>
+  <pre>{{ payload.text }}</pre>
+</section>
+{% endblock %}

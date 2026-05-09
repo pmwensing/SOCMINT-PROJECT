@@ -120,3 +120,6 @@ migrate722:
 
 test73:
 	PYTHONPATH=$(PWD)/src ./scripts/test_v7_3.sh
+
+test731:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_3_1.sh

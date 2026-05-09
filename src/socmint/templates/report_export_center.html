@@ -86,4 +86,41 @@
   <p><code>GET /api/v1/reports/export-center</code></p>
   <p><code>POST /api/v1/reports/export-center/review-gated</code></p>
 </section>
+
+<section class="card">
+  <h2>Artifact browser</h2>
+  <p>Browse generated manifests and summaries, or download them directly.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Size</th>
+        <th>Modified</th>
+        <th>View</th>
+        <th>Download</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for artifact in payload.artifacts %}
+      <tr>
+        <td><code>{{ artifact.name }}</code></td>
+        <td>{{ artifact.size_bytes }}</td>
+        <td>{{ artifact.modified_at }}</td>
+        <td>
+          <a href="{{ artifact.view_url }}">View</a>
+        </td>
+        <td>
+          <a href="{{ artifact.download_url }}">Download</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5">No export artifacts found yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
 {% endblock %}
