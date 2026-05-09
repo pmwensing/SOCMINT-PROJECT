@@ -49,3 +49,5 @@ var/
 .env.before_*
 var/
 *.log
+
+.env.deployment.local

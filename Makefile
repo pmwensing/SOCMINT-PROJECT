@@ -90,3 +90,12 @@ test71:
 
 zip71:
 	cd .. && zip -r SOCMINT-PROJECT-v7.1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
+
+
+test711:
+	PYTHONPATH=$(PWD)/src pytest -q tests/test_deployment_db_v7_1_1.py
+	PYTHONPATH=$(PWD)/src ./scripts/v7_1_1_migration_runner.sh
+
+
+migrate711:
+	PYTHONPATH=$(PWD)/src python3 -m socmint.deployment_db migrate
