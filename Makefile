@@ -84,3 +84,9 @@ ci: install
 
 clean:
 	rm -rf __pycache__ src/socmint/__pycache__ tests/__pycache__ .pytest_cache
+
+test71:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_1.sh
+
+zip71:
+	cd .. && zip -r SOCMINT-PROJECT-v7.1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
