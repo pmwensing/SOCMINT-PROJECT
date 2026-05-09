@@ -135,6 +135,69 @@ def test_subject_media_profile_enrichment_quarantines_drift(
     assert finding["correlation"]["state"] == "quarantined"
 
 
+def test_sensitive_enrichment_with_context_link_requires_review(
+    configured_db,
+    monkeypatch,
+):
+    def fake_execute_connector(connector_key, seed):
+        return {
+            "connector": connector_key,
+            "status": "dry_run",
+            "findings": [
+                {
+                    "type": "account_presence",
+                    "value": f"https://example.com/{seed.normalized_value}",
+                    "source": connector_key,
+                    "confidence": 0.61,
+                }
+            ],
+        }
+
+    def fake_enrich_url_observation(url):
+        return {
+            "adapter": "profile_enrichment",
+            "status": "completed",
+            "url": url,
+            "artifact": {"sha256": "fake-sensitive-artifact"},
+            "findings": [
+                {
+                    "type": "profile_email",
+                    "value": "other@example.net",
+                    "source": "profile_enrichment",
+                    "confidence": 0.66,
+                    "context": {
+                        "display_name": "Example User",
+                        "location": "Portland",
+                    },
+                }
+            ],
+        }
+
+    monkeypatch.setattr("src.socmint.spine.execute_connector", fake_execute_connector)
+    monkeypatch.setattr(
+        "src.socmint.enrichment.enrich_url_observation",
+        fake_enrich_url_observation,
+    )
+
+    subject_id = create_subject(
+        "Sensitive Review Subject",
+        [{"type": "username", "value": "exampleuser"}],
+    )
+    run_spine_for_subject(subject_id, ["sherlock"])
+
+    before = build_dossier(subject_id)["summary"]["observations"]
+    result = enrich_subject_media_profiles(subject_id)
+    after = build_dossier(subject_id)["summary"]["observations"]
+    payload = media_profile_payload(subject_id)
+    finding = payload["enrichments"][0]["payload"]["findings"][0]
+
+    assert result["promoted_findings"] == 0
+    assert result["review_required_findings"] == 1
+    assert before == after
+    assert finding["correlation"]["state"] == "needs_human_review"
+    assert finding["correlation"]["requires_human_review"] is True
+
+
 def test_media_profile_api(tmp_path, monkeypatch):
     from src.socmint.dashboard import create_app
 

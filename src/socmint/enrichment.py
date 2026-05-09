@@ -32,6 +32,21 @@ IMAGE_EXT_RE = re.compile(
     r'https?://[^\s"]+\.(?:jpg|jpeg|png|gif|webp)', re.IGNORECASE
 )
 ENRICHMENT_PROMOTION_THRESHOLD = 0.55
+SENSITIVE_EXPANSION_TYPES = {
+    "email",
+    "phone",
+    "profile_email",
+    "profile_phone",
+}
+CONTEXT_LINK_KEYS = {
+    "name",
+    "display_name",
+    "location",
+    "address",
+    "city",
+    "region",
+    "country",
+}
 
 
 def _json_loads(value, default=None):
@@ -187,6 +202,50 @@ def _normalized_text(value):
     return str(value or "").strip().lower()
 
 
+def _compact_text(value):
+    return re.sub(r"[^a-z0-9]+", "", _normalized_text(value))
+
+
+def _context_values(finding):
+    context = finding.get("context") if isinstance(finding, dict) else None
+    if not isinstance(context, dict):
+        return []
+
+    values = []
+    for key, value in context.items():
+        if str(key).lower() not in CONTEXT_LINK_KEYS:
+            continue
+        if isinstance(value, (str, int, float)):
+            values.append(_normalized_text(value))
+    return [value for value in values if value]
+
+
+def _has_contextual_seed_link(finding, parent_observation, seeds):
+    context_values = _context_values(finding)
+    if not context_values:
+        return False, []
+
+    parent_value = _normalized_text(parent_observation.normalized_value)
+    reasons = []
+    for seed in seeds:
+        seed_value = _normalized_text(seed.normalized_value)
+        compact_seed = _compact_text(seed.normalized_value)
+        if not seed_value:
+            continue
+        compact_context_values = [_compact_text(value) for value in context_values]
+        if any(seed_value in value or value in seed_value for value in context_values):
+            reasons.append(f"context_links_to_{seed.seed_type}_seed")
+        elif compact_seed and any(
+            compact_seed in value or value in compact_seed
+            for value in compact_context_values
+        ):
+            reasons.append(f"context_name_links_to_{seed.seed_type}_seed")
+        if any(value and value in parent_value for value in context_values):
+            reasons.append("context_links_to_parent_observation")
+
+    return bool(reasons), sorted(set(reasons))
+
+
 def score_enrichment_correlation(finding, parent_observation, seeds) -> dict:
     """Score whether an enrichment finding still belongs to the subject seed."""
     value = str(finding.get("value") or "").strip()
@@ -247,19 +306,33 @@ def score_enrichment_correlation(finding, parent_observation, seeds) -> dict:
         reasons.append("parent_observation_confidence_contributes")
 
     score = round(min(score, 1.0), 3)
+    state = (
+        "promoted"
+        if score >= ENRICHMENT_PROMOTION_THRESHOLD
+        else "quarantined"
+    )
+    review_reasons = []
+    if finding_type in SENSITIVE_EXPANSION_TYPES and state == "quarantined":
+        has_context_link, review_reasons = _has_contextual_seed_link(
+            finding,
+            parent_observation,
+            seeds,
+        )
+        if has_context_link:
+            state = "needs_human_review"
+            reasons.extend(review_reasons)
+
     return {
         "score": score,
         "threshold": ENRICHMENT_PROMOTION_THRESHOLD,
-        "state": (
-            "promoted"
-            if score >= ENRICHMENT_PROMOTION_THRESHOLD
-            else "quarantined"
-        ),
+        "state": state,
         "reasons": sorted(set(reasons)),
+        "review_reasons": review_reasons,
         "parent_observation_id": parent_observation.id,
         "parent_observation_value": parent_value,
         "seed_ids": [seed.id for seed in seeds],
         "expansion_depth": 2,
+        "requires_human_review": state == "needs_human_review",
     }
 
 
@@ -271,6 +344,7 @@ def enrich_subject_media_profiles(subject_id: int) -> dict:
     created = []
     promoted = 0
     quarantined = 0
+    review_required = 0
     for obs in db.list_spine_observations(subject_id):
         value = obs.normalized_value or ""
         if not value.startswith(("http://", "https://")):
@@ -311,6 +385,8 @@ def enrich_subject_media_profiles(subject_id: int) -> dict:
         for finding in correlated_findings:
             correlation = finding.get("correlation") or {}
             if correlation.get("state") != "promoted":
+                if correlation.get("state") == "needs_human_review":
+                    review_required += 1
                 quarantined += 1
                 continue
             promoted += 1
@@ -338,6 +414,7 @@ def enrich_subject_media_profiles(subject_id: int) -> dict:
         "enrichment_ids": created,
         "promoted_findings": promoted,
         "quarantined_findings": quarantined,
+        "review_required_findings": review_required,
         "assertion_ids": assertion_ids,
     }
 
