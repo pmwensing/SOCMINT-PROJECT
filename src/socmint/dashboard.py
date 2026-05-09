@@ -31,6 +31,8 @@ from .report_review import review_summary
 from .report_export_center import export_center_payload
 from .report_export_center import load_manifest_view
 from .report_export_center import safe_export_artifact_path
+from .report_export_center import export_zip_bundle_payload
+from .report_export_center import safe_export_bundle_path
 from .report_export_center import review_gated_export_payload
 from .report_review import bulk_set_review_status
 from .report_review import review_audit_payload
@@ -1225,6 +1227,64 @@ def api_report_export_artifact_view(name):
 @login_required
 def report_export_artifact_download(name):
     path = safe_export_artifact_path(name)
+    return send_from_directory(
+        path.parent,
+        path.name,
+        as_attachment=True,
+        download_name=path.name,
+    )
+
+
+
+
+@dashboard_bp.route("/api/v1/reports/export-center/zip", methods=["POST"])
+@run_required
+def api_report_export_zip_bundle():
+    payload = request.get_json(silent=True) or {}
+    subject_id_raw = payload.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw not in (None, "") else None
+    gate_mode = payload.get("gate_mode") or "approved_and_uncertain"
+    title = payload.get("title")
+
+    result = export_zip_bundle_payload(
+        subject_id=subject_id,
+        gate_mode=gate_mode,
+        title=title,
+    )
+    bundle = result.get("result", {}).get("bundle", {})
+    audit(
+        "review_gated_zip_bundle",
+        details={
+            "subject_id": subject_id,
+            "gate_mode": gate_mode,
+            "bundle_path": bundle.get("path"),
+        },
+    )
+    return jsonify(result), 202
+
+
+@dashboard_bp.route("/reports/export-center/zip/run", methods=["POST"])
+@run_required
+def report_export_zip_bundle_run():
+    subject_id_raw = request.form.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    gate_mode = request.form.get("gate_mode") or "approved_and_uncertain"
+    title = request.form.get("title") or None
+
+    result = export_zip_bundle_payload(
+        subject_id=subject_id,
+        gate_mode=gate_mode,
+        title=title,
+    )
+    bundle = result.get("result", {}).get("bundle", {})
+    flash("ZIP bundle complete: " + str(bundle.get("path", "")), "success")
+    return redirect(url_for("dashboard.report_export_center_view"))
+
+
+@dashboard_bp.route("/reports/export-center/bundles/<path:name>/download")
+@login_required
+def report_export_bundle_download(name):
+    path = safe_export_bundle_path(name)
     return send_from_directory(
         path.parent,
         path.name,
