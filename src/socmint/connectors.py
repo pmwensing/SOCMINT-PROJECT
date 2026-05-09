@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -80,6 +81,11 @@ def executable_available(command):
     return shutil.which(command[0]) is not None
 
 
+def connector_dry_run_forced():
+    value = os.environ.get("SOCMINT_CONNECTOR_DRY_RUN", "")
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def dry_run_payload(name, target, target_type, command):
     return {
         "connector": name,
@@ -114,6 +120,9 @@ def run_connector(name, target, target_type, allow_dry_run=True):
         }
 
     command = render_command(spec, target, target_type)
+    if allow_dry_run and connector_dry_run_forced():
+        return dry_run_payload(name, target, target_type, command)
+
     if not executable_available(command):
         if allow_dry_run:
             return dry_run_payload(name, target, target_type, command)
