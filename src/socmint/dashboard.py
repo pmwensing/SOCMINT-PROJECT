@@ -29,6 +29,9 @@ from .report_review import report_runs_payload
 from .report_review import review_items_payload
 from .report_review import review_summary
 from .report_export_center import export_center_payload
+from .entity_dossier_v2 import build_full_entity_dossier_v2
+from .entity_dossier_v2 import export_full_entity_dossier_v2
+from .entity_dossier_v2 import safe_dossier_path
 from .evidence_intake import attachment_manifest_for_export
 from .evidence_intake import build_attachment_zip
 from .evidence_intake import evidence_intake_payload
@@ -1167,6 +1170,64 @@ def api_workbench_retention_run():
 
 
 
+
+
+
+
+@dashboard_bp.route("/api/v1/spine/subjects/<int:subject_id>/dossier-v2")
+@login_required
+def api_subject_dossier_v2(subject_id):
+    return jsonify(build_full_entity_dossier_v2(subject_id))
+
+
+@dashboard_bp.route(
+    "/api/v1/spine/subjects/<int:subject_id>/dossier-v2/export",
+    methods=["POST"],
+)
+@run_required
+def api_subject_dossier_v2_export(subject_id):
+    result = export_full_entity_dossier_v2(subject_id)
+    audit(
+        "full_entity_dossier_v2_export",
+        details={"subject_id": subject_id, "zip_path": result.get("zip_path")},
+    )
+    return jsonify(result), 202
+
+
+@dashboard_bp.route("/spine/subjects/<int:subject_id>/dossier")
+@login_required
+def subject_dossier_v2_view(subject_id):
+    return render_template(
+        "entity_dossier_v2.html",
+        payload=build_full_entity_dossier_v2(subject_id),
+    )
+
+
+@dashboard_bp.route(
+    "/spine/subjects/<int:subject_id>/dossier-v2/export/run",
+    methods=["POST"],
+)
+@run_required
+def subject_dossier_v2_export_run(subject_id):
+    result = export_full_entity_dossier_v2(subject_id)
+    flash("Dossier v2 export complete: " + str(result.get("zip_path")), "success")
+    return redirect(
+        url_for("dashboard.subject_dossier_v2_view", subject_id=subject_id)
+    )
+
+
+@dashboard_bp.route(
+    "/spine/subjects/<int:subject_id>/dossier-v2/export/<path:name>/download"
+)
+@login_required
+def subject_dossier_v2_download(subject_id, name):
+    path = safe_dossier_path(name)
+    return send_from_directory(
+        path.parent,
+        path.name,
+        as_attachment=True,
+        download_name=path.name,
+    )
 
 @dashboard_bp.route("/evidence/integrity")
 @login_required
