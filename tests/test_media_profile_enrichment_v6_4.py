@@ -7,6 +7,7 @@ from src.socmint.enrichment import enrich_subject_media_profiles
 from src.socmint.enrichment import media_profile_payload
 from src.socmint.media_profile import enrich_media_path
 from src.socmint.media_profile import enrich_profile_url
+from src.socmint.spine import build_dossier
 from src.socmint.spine import create_subject, run_spine_for_subject
 
 
@@ -66,9 +67,72 @@ def test_subject_media_profile_enrichment(configured_db, monkeypatch):
 
     result = enrich_subject_media_profiles(subject_id)
     payload = media_profile_payload(subject_id)
+    dossier = build_dossier(subject_id)
 
     assert result["enrichment_ids"]
+    assert result["promoted_findings"] > 0
+    assert any(item["type"] == "profile_profile_url" for item in dossier["assertions"])
     assert payload["enrichments"]
+    finding = payload["enrichments"][0]["payload"]["findings"][0]
+    assert finding["correlation"]["state"] == "promoted"
+
+
+def test_subject_media_profile_enrichment_quarantines_drift(
+    configured_db,
+    monkeypatch,
+):
+    def fake_execute_connector(connector_key, seed):
+        return {
+            "connector": connector_key,
+            "status": "dry_run",
+            "findings": [
+                {
+                    "type": "account_presence",
+                    "value": f"https://example.com/{seed.normalized_value}",
+                    "source": connector_key,
+                    "confidence": 0.61,
+                }
+            ],
+        }
+
+    def fake_enrich_url_observation(url):
+        return {
+            "adapter": "profile_enrichment",
+            "status": "completed",
+            "url": url,
+            "artifact": {"sha256": "fake-drift-artifact"},
+            "findings": [
+                {
+                    "type": "profile_username",
+                    "value": "unrelated_person",
+                    "source": "profile_enrichment",
+                    "confidence": 0.66,
+                }
+            ],
+        }
+
+    monkeypatch.setattr("src.socmint.spine.execute_connector", fake_execute_connector)
+    monkeypatch.setattr(
+        "src.socmint.enrichment.enrich_url_observation",
+        fake_enrich_url_observation,
+    )
+
+    subject_id = create_subject(
+        "Drift Subject",
+        [{"type": "username", "value": "exampleuser"}],
+    )
+    run_spine_for_subject(subject_id, ["sherlock"])
+
+    before = build_dossier(subject_id)["summary"]["observations"]
+    result = enrich_subject_media_profiles(subject_id)
+    after = build_dossier(subject_id)["summary"]["observations"]
+    payload = media_profile_payload(subject_id)
+    finding = payload["enrichments"][0]["payload"]["findings"][0]
+
+    assert result["promoted_findings"] == 0
+    assert result["quarantined_findings"] == 1
+    assert before == after
+    assert finding["correlation"]["state"] == "quarantined"
 
 
 def test_media_profile_api(tmp_path, monkeypatch):

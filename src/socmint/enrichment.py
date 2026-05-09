@@ -2,6 +2,7 @@ import json
 import logging
 import re
 import time
+from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -30,6 +31,7 @@ URL_RE = re.compile(r"https?://[\w\-.$%&?=/#+:]+")
 IMAGE_EXT_RE = re.compile(
     r'https?://[^\s"]+\.(?:jpg|jpeg|png|gif|webp)', re.IGNORECASE
 )
+ENRICHMENT_PROMOTION_THRESHOLD = 0.55
 
 
 def _json_loads(value, default=None):
@@ -164,11 +166,111 @@ def parse_tool_output(tool_name, raw_output):
     return parsed
 
 
+def _host(value):
+    parsed = urlparse(value or "")
+    return (parsed.hostname or "").lower().removeprefix("www.")
+
+
+def _domain_match(left, right):
+    left_host = _host(left)
+    right_host = _host(right)
+    if not left_host or not right_host:
+        return False
+    return (
+        left_host == right_host
+        or left_host.endswith(f".{right_host}")
+        or right_host.endswith(f".{left_host}")
+    )
+
+
+def _normalized_text(value):
+    return str(value or "").strip().lower()
+
+
+def score_enrichment_correlation(finding, parent_observation, seeds) -> dict:
+    """Score whether an enrichment finding still belongs to the subject seed."""
+    value = str(finding.get("value") or "").strip()
+    finding_type = str(finding.get("type") or "")
+    parent_value = parent_observation.normalized_value or ""
+    parent_confidence = float(parent_observation.confidence or 0.0)
+    score = 0.0
+    reasons = []
+
+    if value and value == parent_value:
+        score += 0.35
+        reasons.append("finding_value_matches_parent_observation")
+
+    if _domain_match(value, parent_value):
+        score += 0.3
+        reasons.append("finding_domain_matches_parent_observation")
+
+    if finding_type == "profile_platform" and _host(parent_value):
+        platform = _normalized_text(value)
+        if platform and platform in _host(parent_value):
+            score += 0.3
+            reasons.append("platform_matches_parent_observation_host")
+
+    for seed in seeds:
+        seed_value = _normalized_text(seed.normalized_value)
+        finding_value = _normalized_text(value)
+        parent_text = _normalized_text(parent_value)
+        if not seed_value:
+            continue
+
+        if seed.seed_type in {"username", "email", "phone"}:
+            if finding_value == seed_value:
+                score += 0.45
+                reasons.append(f"finding_matches_{seed.seed_type}_seed")
+            elif seed_value in finding_value:
+                score += 0.3
+                reasons.append(f"finding_contains_{seed.seed_type}_seed")
+            if seed_value in parent_text:
+                score += 0.25
+                reasons.append(f"parent_observation_contains_{seed.seed_type}_seed")
+
+        if seed.seed_type == "url":
+            if value == seed.normalized_value:
+                score += 0.45
+                reasons.append("finding_matches_url_seed")
+            if parent_value == seed.normalized_value:
+                score += 0.3
+                reasons.append("parent_observation_matches_url_seed")
+            if _domain_match(value, seed.normalized_value):
+                score += 0.25
+                reasons.append("finding_domain_matches_url_seed")
+            if _domain_match(parent_value, seed.normalized_value):
+                score += 0.25
+                reasons.append("parent_domain_matches_url_seed")
+
+    if parent_confidence:
+        score += min(0.2, parent_confidence * 0.2)
+        reasons.append("parent_observation_confidence_contributes")
+
+    score = round(min(score, 1.0), 3)
+    return {
+        "score": score,
+        "threshold": ENRICHMENT_PROMOTION_THRESHOLD,
+        "state": (
+            "promoted"
+            if score >= ENRICHMENT_PROMOTION_THRESHOLD
+            else "quarantined"
+        ),
+        "reasons": sorted(set(reasons)),
+        "parent_observation_id": parent_observation.id,
+        "parent_observation_value": parent_value,
+        "seed_ids": [seed.id for seed in seeds],
+        "expansion_depth": 2,
+    }
+
+
 def enrich_subject_media_profiles(subject_id: int) -> dict:
     if not db.get_spine_subject(subject_id):
         raise ValueError("Subject not found.")
 
+    seeds = db.list_spine_seeds(subject_id)
     created = []
+    promoted = 0
+    quarantined = 0
     for obs in db.list_spine_observations(subject_id):
         value = obs.normalized_value or ""
         if not value.startswith(("http://", "https://")):
@@ -177,6 +279,24 @@ def enrich_subject_media_profiles(subject_id: int) -> dict:
         result = enrich_url_observation(value)
         artifact = result.get("artifact") or {}
         enrichment_type = result.get("adapter", "profile_media_enrichment")
+        correlated_findings = []
+        for finding in result.get("findings", []):
+            annotated = dict(finding)
+            annotated["correlation"] = score_enrichment_correlation(
+                finding,
+                obs,
+                seeds,
+            )
+            correlated_findings.append(annotated)
+
+        result["findings"] = correlated_findings
+        result["correlation_policy"] = {
+            "threshold": ENRICHMENT_PROMOTION_THRESHOLD,
+            "promotion_rule": (
+                "Only findings correlated to subject seeds or parent observations "
+                "are promoted into spine observations."
+            ),
+        }
         enrichment_id = db.create_media_profile_enrichment(
             subject_id=subject_id,
             observation_id=obs.id,
@@ -188,7 +308,12 @@ def enrich_subject_media_profiles(subject_id: int) -> dict:
         )
         created.append(enrichment_id)
 
-        for finding in result.get("findings", []):
+        for finding in correlated_findings:
+            correlation = finding.get("correlation") or {}
+            if correlation.get("state") != "promoted":
+                quarantined += 1
+                continue
+            promoted += 1
             db.create_spine_observation(
                 subject_id=subject_id,
                 run_id=obs.run_id,
@@ -202,7 +327,19 @@ def enrich_subject_media_profiles(subject_id: int) -> dict:
                 payload=finding,
             )
 
-    return {"subject_id": subject_id, "enrichment_ids": created}
+    assertion_ids = []
+    if promoted:
+        from .spine import correlate_subject
+
+        assertion_ids = correlate_subject(subject_id)
+
+    return {
+        "subject_id": subject_id,
+        "enrichment_ids": created,
+        "promoted_findings": promoted,
+        "quarantined_findings": quarantined,
+        "assertion_ids": assertion_ids,
+    }
 
 
 def media_profile_payload(subject_id: int) -> dict:
