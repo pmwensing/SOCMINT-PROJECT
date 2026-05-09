@@ -425,3 +425,187 @@ def report_runs_payload(subject_id: int | None = None) -> dict[str, Any]:
         "generated_at": utc_now(),
         "reports": [asdict(run) for run in list_report_runs(subject_id=subject_id)],
     }
+
+
+def review_decision_table_available() -> bool:
+    return table_exists("review_decisions")
+
+
+def parse_review_item_id(item_id: str) -> tuple[str, str]:
+    if ":" not in item_id:
+        raise ValueError("item_id must be formatted as table:id")
+    return item_id.split(":", 1)
+
+
+def write_native_review_decision(
+    item_id: str,
+    status: str,
+    note: str | None = None,
+    reviewer: str | None = None,
+    subject_id: int | None = None,
+) -> dict[str, Any]:
+    if not review_decision_table_available():
+        return write_sidecar_review(item_id, status, note)
+
+    source_table, source_id = parse_review_item_id(item_id)
+
+    try:
+        db.ensure_configured()
+        now = datetime.now(UTC).replace(tzinfo=None)
+
+        with db.engine.begin() as conn:
+            existing = conn.execute(
+                text(
+                    """
+                    SELECT id
+                    FROM review_decisions
+                    WHERE item_id = :item_id
+                    ORDER BY id DESC
+                    LIMIT 1
+                    """
+                ),
+                {"item_id": item_id},
+            ).first()
+
+            params = {
+                "item_id": item_id,
+                "subject_id": subject_id,
+                "source_table": source_table,
+                "source_id": source_id,
+                "status": status,
+                "note": note,
+                "reviewer": reviewer,
+                "now": now,
+            }
+
+            if existing:
+                conn.execute(
+                    text(
+                        """
+                        UPDATE review_decisions
+                        SET status = :status,
+                            note = :note,
+                            reviewer = :reviewer,
+                            updated_at = :now
+                        WHERE id = :id
+                        """
+                    ),
+                    {**params, "id": existing.id},
+                )
+                decision_id = existing.id
+            else:
+                result = conn.execute(
+                    text(
+                        """
+                        INSERT INTO review_decisions (
+                            item_id,
+                            subject_id,
+                            source_table,
+                            source_id,
+                            status,
+                            note,
+                            reviewer,
+                            created_at,
+                            updated_at
+                        )
+                        VALUES (
+                            :item_id,
+                            :subject_id,
+                            :source_table,
+                            :source_id,
+                            :status,
+                            :note,
+                            :reviewer,
+                            :now,
+                            :now
+                        )
+                        """
+                    ),
+                    params,
+                )
+                decision_id = getattr(result, "lastrowid", None)
+
+                if decision_id is None:
+                    row = conn.execute(
+                        text(
+                            """
+                            SELECT id
+                            FROM review_decisions
+                            WHERE item_id = :item_id
+                            ORDER BY id DESC
+                            LIMIT 1
+                            """
+                        ),
+                        {"item_id": item_id},
+                    ).first()
+                    decision_id = row.id if row else None
+
+    except Exception as exc:
+        fallback = write_sidecar_review(item_id, status, note)
+        fallback["native_error"] = str(exc)
+        return fallback
+
+    return {
+        "updated": True,
+        "native": True,
+        "decision_id": decision_id,
+        "item_id": item_id,
+        "status": status,
+        "note": note,
+        "reviewer": reviewer,
+    }
+
+
+def latest_native_decisions() -> dict[str, dict[str, Any]]:
+    if not review_decision_table_available():
+        return {}
+
+    rows = safe_rows(
+        """
+        SELECT *
+        FROM review_decisions
+        ORDER BY updated_at DESC, id DESC
+        """,
+        {},
+    )
+
+    decisions: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        item_id = str(row.get("item_id"))
+        if item_id and item_id not in decisions:
+            decisions[item_id] = row
+
+    return decisions
+
+
+_legacy_set_review_status_v721 = set_review_status
+
+
+def set_review_status(
+    item_id: str,
+    status: str,
+    note: str | None = None,
+) -> dict[str, Any]:
+    if status not in REVIEW_STATUSES:
+        raise ValueError(f"Invalid review status: {status}")
+
+    if ":" not in item_id:
+        raise ValueError("item_id must be formatted as table:id")
+
+    native_result = None
+    if review_decision_table_available():
+        native_result = write_native_review_decision(item_id, status, note)
+
+    legacy_result = _legacy_set_review_status_v721(item_id, status, note)
+
+    if native_result and native_result.get("updated"):
+        merged = dict(legacy_result)
+        merged["native"] = native_result.get("native", False)
+        merged["decision_id"] = native_result.get("decision_id")
+        merged["item_id"] = item_id
+        merged["status"] = status
+        merged["note"] = note
+        merged["updated"] = True
+        return merged
+
+    return legacy_result

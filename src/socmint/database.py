@@ -1916,3 +1916,17 @@ def list_retention_runs(limit=100):
         return _detach_all(session, items)
     finally:
         session.close()
+
+class ReviewDecision(Base):
+    __tablename__ = "review_decisions"
+
+    id = Column(Integer, primary_key=True)
+    item_id = Column(String(512), nullable=False, index=True)
+    subject_id = Column(Integer, nullable=True, index=True)
+    source_table = Column(String(128), nullable=False, index=True)
+    source_id = Column(String(128), nullable=True, index=True)
+    status = Column(String(32), nullable=False, default="needs_review", index=True)
+    note = Column(Text, nullable=True)
+    reviewer = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)

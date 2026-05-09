@@ -103,3 +103,11 @@ migrate711:
 
 test72:
 	PYTHONPATH=$(PWD)/src ./scripts/test_v7_2.sh
+
+
+test721:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_2_1.sh
+
+
+migrate721:
+	PYTHONPATH=$(PWD)/src python3 -m socmint.deployment_db migrate
