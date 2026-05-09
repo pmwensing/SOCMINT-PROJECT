@@ -126,3 +126,15 @@ test731:
 
 test732:
 	PYTHONPATH=$(PWD)/src ./scripts/test_v7_3_2.sh
+
+test74:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_4.sh
+
+test741:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_4_1.sh
+
+test742:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_4_2.sh
+
+test743:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_4_3.sh

@@ -1,0 +1,66 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h1>Evidence Chain of Custody</h1>
+
+<section class="card">
+  <h2>Hash verification report</h2>
+  <form method="post" action="{{ url_for('dashboard.evidence_verify_run') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label>
+      Case ID
+      <input type="text" name="case_id" placeholder="optional">
+    </label>
+
+    <label>
+      Subject ID
+      <input type="number" name="subject_id" placeholder="optional">
+    </label>
+
+    <button type="submit">Run hash verification</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Custody events</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Evidence</th>
+        <th>Action</th>
+        <th>Status</th>
+        <th>SHA-256</th>
+        <th>Actor</th>
+        <th>Note</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for event in payload.events %}
+      <tr>
+        <td>{{ event.created_at }}</td>
+        <td><code>{{ event.evidence_id }}</code></td>
+        <td>{{ event.action }}</td>
+        <td>{{ event.status or "" }}</td>
+        <td><code>{{ event.sha256 or "" }}</code></td>
+        <td>{{ event.actor or "" }}</td>
+        <td>{{ event.note or "" }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="7">No custody events recorded yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>API</h2>
+  <p><code>GET /api/v1/evidence/custody</code></p>
+  <p><code>POST /api/v1/evidence/custody</code></p>
+  <p><code>GET /api/v1/evidence/verify</code></p>
+  <p><code>GET /api/v1/evidence/custody/report</code></p>
+</section>
+{% endblock %}
