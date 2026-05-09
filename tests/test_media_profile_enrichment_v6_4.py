@@ -3,10 +3,13 @@ from pathlib import Path
 import pytest
 
 from src.socmint import database as db
+from src.socmint.enrichment import enrichment_review_queue
 from src.socmint.enrichment import enrich_subject_media_profiles
 from src.socmint.enrichment import media_profile_payload
+from src.socmint.enrichment import review_enrichment_finding
 from src.socmint.media_profile import enrich_media_path
 from src.socmint.media_profile import enrich_profile_url
+from src.socmint.media_profile import enrich_url_observation
 from src.socmint.spine import build_dossier
 from src.socmint.spine import create_subject, run_spine_for_subject
 
@@ -41,6 +44,35 @@ def test_media_path_enrichment_hashes_file(tmp_path, monkeypatch):
     assert result["status"] == "completed"
     assert result["media"]["sha256"]
     assert result["findings"][0]["type"] == "media_asset"
+
+
+def test_remote_media_url_enrichment_downloads_when_enabled(tmp_path, monkeypatch):
+    monkeypatch.setenv("SOCMINT_ARTIFACT_DIR", str(tmp_path / "artifacts"))
+    monkeypatch.setenv("SOCMINT_REMOTE_MEDIA_DOWNLOAD_ENABLED", "1")
+    sample = tmp_path / "remote.jpg"
+    sample.write_bytes(b"remote image bytes")
+
+    monkeypatch.setattr(
+        "src.socmint.media.download_media",
+        lambda target, url: {
+            "target": target,
+            "url": url,
+            "path": str(sample),
+            "checksum": "abc",
+            "status": "downloaded",
+            "content_type": "image/jpeg",
+            "size_bytes": sample.stat().st_size,
+        },
+    )
+
+    result = enrich_url_observation(
+        "https://example.com/photo.jpg",
+        target="exampleuser",
+    )
+
+    assert result["status"] == "completed"
+    assert result["remote_download_enabled"] is True
+    assert result["download"]["target"] == "exampleuser"
 
 
 def test_subject_media_profile_enrichment(configured_db, monkeypatch):
@@ -95,7 +127,7 @@ def test_subject_media_profile_enrichment_quarantines_drift(
             ],
         }
 
-    def fake_enrich_url_observation(url):
+    def fake_enrich_url_observation(url, target=None):
         return {
             "adapter": "profile_enrichment",
             "status": "completed",
@@ -153,7 +185,7 @@ def test_sensitive_enrichment_with_context_link_requires_review(
             ],
         }
 
-    def fake_enrich_url_observation(url):
+    def fake_enrich_url_observation(url, target=None):
         return {
             "adapter": "profile_enrichment",
             "status": "completed",
@@ -196,6 +228,26 @@ def test_sensitive_enrichment_with_context_link_requires_review(
     assert before == after
     assert finding["correlation"]["state"] == "needs_human_review"
     assert finding["correlation"]["requires_human_review"] is True
+
+    queue = enrichment_review_queue(subject_id)
+    assert len(queue["findings"]) == 1
+
+    promoted = review_enrichment_finding(
+        queue["findings"][0]["enrichment_id"],
+        queue["findings"][0]["finding_index"],
+        "promote",
+        actor="analyst",
+        note="Context matches subject name.",
+    )
+    promoted_payload = media_profile_payload(subject_id)
+    promoted_finding = promoted_payload["enrichments"][0]["payload"]["findings"][0]
+    promoted_dossier = build_dossier(subject_id)
+
+    assert promoted["observation_id"]
+    assert promoted["assertion_ids"]
+    assert promoted_finding["correlation"]["state"] == "promoted"
+    assert promoted_finding["correlation"]["human_review"]["actor"] == "analyst"
+    assert promoted_dossier["summary"]["observations"] == before + 1
 
 
 def test_media_profile_api(tmp_path, monkeypatch):

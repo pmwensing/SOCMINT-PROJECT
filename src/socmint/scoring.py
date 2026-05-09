@@ -9,6 +9,7 @@ def score_observation(
     exact_identifier_match: bool = False,
     contradiction_count: int = 0,
     analyst_validated: bool = False,
+    connector_quality_delta: float = 0.0,
 ) -> float:
     score = base
     if source_count >= 2:
@@ -21,6 +22,7 @@ def score_observation(
         score += 0.08
     if analyst_validated:
         score += 0.12
+    score += connector_quality_delta
     score -= min(0.25, contradiction_count * 0.08)
     return round(clamp(score), 3)
 

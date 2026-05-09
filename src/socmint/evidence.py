@@ -31,6 +31,7 @@ def explain_confidence(assertion):
     payload = _json_loads(assertion.payload_json)
     source_count = int(payload.get("source_count") or 0)
     evidence_refs = payload.get("evidence_refs") or []
+    connector_quality_delta = float(payload.get("connector_quality_delta") or 0.0)
 
     factors = []
     if source_count >= 3:
@@ -44,6 +45,11 @@ def explain_confidence(assertion):
         factors.append("Evidence references are attached to the assertion.")
     else:
         factors.append("No evidence references were attached.")
+
+    if connector_quality_delta > 0:
+        factors.append("Connector quality history increased this score.")
+    elif connector_quality_delta < 0:
+        factors.append("Connector rejection history reduced this score.")
 
     if assertion.validation_state == "confirmed":
         factors.append("Analyst confirmed this assertion.")
@@ -60,6 +66,7 @@ def explain_confidence(assertion):
         "source_count": source_count,
         "evidence_ref_count": len(evidence_refs),
         "validation_state": assertion.validation_state,
+        "connector_quality_delta": connector_quality_delta,
         "factors": factors,
     }
 

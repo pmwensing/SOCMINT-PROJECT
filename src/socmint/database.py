@@ -997,6 +997,18 @@ def list_spine_observations(subject_id, limit=1000):
         session.close()
 
 
+def get_spine_observation(observation_id):
+    ensure_configured()
+    session = Session()
+    try:
+        item = session.query(SpineObservation).filter_by(id=observation_id).first()
+        if item:
+            session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
 def upsert_spine_assertion(
     subject_id,
     assertion_type,
@@ -1498,6 +1510,40 @@ def list_media_profile_enrichments(subject_id, limit=1000):
             .all()
         )
         return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def get_media_profile_enrichment(enrichment_id):
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(MediaProfileEnrichment)
+            .filter_by(id=enrichment_id)
+            .first()
+        )
+        if item:
+            session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
+def update_media_profile_enrichment_payload(enrichment_id, payload):
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(MediaProfileEnrichment)
+            .filter_by(id=enrichment_id)
+            .first()
+        )
+        if not item:
+            return None
+        item.payload_json = json.dumps(payload)
+        session.commit()
+        return item.id
     finally:
         session.close()
 

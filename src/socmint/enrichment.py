@@ -337,10 +337,12 @@ def score_enrichment_correlation(finding, parent_observation, seeds) -> dict:
 
 
 def enrich_subject_media_profiles(subject_id: int) -> dict:
-    if not db.get_spine_subject(subject_id):
+    subject = db.get_spine_subject(subject_id)
+    if not subject:
         raise ValueError("Subject not found.")
 
     seeds = db.list_spine_seeds(subject_id)
+    target_label = subject.label or "-".join(seed.normalized_value for seed in seeds)
     created = []
     promoted = 0
     quarantined = 0
@@ -350,7 +352,7 @@ def enrich_subject_media_profiles(subject_id: int) -> dict:
         if not value.startswith(("http://", "https://")):
             continue
 
-        result = enrich_url_observation(value)
+        result = enrich_url_observation(value, target=target_label or None)
         artifact = result.get("artifact") or {}
         enrichment_type = result.get("adapter", "profile_media_enrichment")
         correlated_findings = []
@@ -404,10 +406,16 @@ def enrich_subject_media_profiles(subject_id: int) -> dict:
             )
 
     assertion_ids = []
+    contradiction_ids = []
     if promoted:
+        from .contradictions import detect_subject_contradictions
         from .spine import correlate_subject
 
         assertion_ids = correlate_subject(subject_id)
+        contradiction_ids = detect_subject_contradictions(subject_id).get(
+            "contradiction_ids",
+            [],
+        )
 
     return {
         "subject_id": subject_id,
@@ -416,13 +424,156 @@ def enrich_subject_media_profiles(subject_id: int) -> dict:
         "quarantined_findings": quarantined,
         "review_required_findings": review_required,
         "assertion_ids": assertion_ids,
+        "contradiction_ids": contradiction_ids,
+    }
+
+
+def _media_enrichment_payload(enrichment):
+    return _json_loads(enrichment.payload_json)
+
+
+def enrichment_review_queue(subject_id=None) -> dict:
+    subject_ids = [subject_id] if subject_id else [
+        subject.id for subject in db.list_spine_subjects(limit=10000)
+    ]
+    findings = []
+    for current_subject_id in subject_ids:
+        for enrichment in db.list_media_profile_enrichments(current_subject_id):
+            payload = _media_enrichment_payload(enrichment)
+            for index, finding in enumerate(payload.get("findings", [])):
+                correlation = finding.get("correlation") or {}
+                if correlation.get("state") != "needs_human_review":
+                    continue
+                findings.append(
+                    {
+                        "subject_id": current_subject_id,
+                        "enrichment_id": enrichment.id,
+                        "finding_index": index,
+                        "type": finding.get("type"),
+                        "value": finding.get("value"),
+                        "confidence": finding.get("confidence"),
+                        "source_value": enrichment.source_value,
+                        "artifact_ref": enrichment.artifact_ref,
+                        "correlation": correlation,
+                        "context": finding.get("context") or {},
+                        "created_at": enrichment.created_at.isoformat()
+                        if enrichment.created_at
+                        else None,
+                    }
+                )
+    return {"subject_id": subject_id, "findings": findings}
+
+
+def review_enrichment_finding(
+    enrichment_id,
+    finding_index,
+    action,
+    actor=None,
+    note=None,
+):
+    if action not in {"promote", "reject", "unreview"}:
+        raise ValueError("Invalid enrichment review action.")
+
+    enrichment = db.get_media_profile_enrichment(enrichment_id)
+    if not enrichment:
+        raise ValueError("Enrichment not found.")
+
+    payload = _media_enrichment_payload(enrichment)
+    findings = payload.get("findings", [])
+    try:
+        finding = findings[int(finding_index)]
+    except (IndexError, TypeError, ValueError) as exc:
+        raise ValueError("Finding not found.") from exc
+
+    correlation = finding.setdefault("correlation", {})
+    review = {
+        "action": action,
+        "actor": actor,
+        "note": note,
+        "finding_index": int(finding_index),
+    }
+    observation_id = None
+
+    if action == "promote":
+        parent = db.get_spine_observation(enrichment.observation_id)
+        if not parent:
+            raise ValueError("Parent observation not found.")
+        source_ref = (
+            f"enrichment:{enrichment.id}:{enrichment.enrichment_type}:"
+            f"finding:{int(finding_index)}"
+        )
+        existing = [
+            obs for obs in db.list_spine_observations(enrichment.subject_id)
+            if obs.source_ref == source_ref
+        ]
+        if existing:
+            observation_id = existing[0].id
+        else:
+            observation_id = db.create_spine_observation(
+                subject_id=enrichment.subject_id,
+                run_id=parent.run_id,
+                observation_type=finding.get("type", "enrichment_finding"),
+                normalized_value=str(finding.get("value", "")),
+                confidence=str(finding.get("confidence", 0.5)),
+                source_ref=source_ref,
+                evidence_ref=(
+                    f"sha256:{enrichment.artifact_ref}"
+                    if enrichment.artifact_ref
+                    else parent.evidence_ref
+                ),
+                payload=finding,
+            )
+        correlation["state"] = "promoted"
+        correlation["requires_human_review"] = False
+        correlation["human_review"] = review
+
+        from .contradictions import detect_subject_contradictions
+        from .spine import correlate_subject
+
+        assertion_ids = correlate_subject(enrichment.subject_id)
+        contradiction_result = detect_subject_contradictions(enrichment.subject_id)
+    elif action == "reject":
+        correlation["state"] = "rejected_by_human"
+        correlation["requires_human_review"] = False
+        correlation["human_review"] = review
+        assertion_ids = []
+        contradiction_result = {"contradiction_ids": []}
+    else:
+        correlation["state"] = "needs_human_review"
+        correlation["requires_human_review"] = True
+        correlation["human_review"] = review
+        assertion_ids = []
+        contradiction_result = {"contradiction_ids": []}
+
+    db.update_media_profile_enrichment_payload(enrichment.id, payload)
+    return {
+        "subject_id": enrichment.subject_id,
+        "enrichment_id": enrichment.id,
+        "finding_index": int(finding_index),
+        "action": action,
+        "observation_id": observation_id,
+        "assertion_ids": assertion_ids,
+        "contradiction_ids": contradiction_result.get("contradiction_ids", []),
+        "finding": finding,
     }
 
 
 def media_profile_payload(subject_id: int) -> dict:
     enrichments = db.list_media_profile_enrichments(subject_id)
+    review_count = 0
+    for item in enrichments:
+        payload = _json_loads(item.payload_json)
+        review_count += len(
+            [
+                finding
+                for finding in payload.get("findings", [])
+                if (finding.get("correlation") or {}).get("state")
+                == "needs_human_review"
+            ]
+        )
     return {
         "subject_id": subject_id,
+        "review_required_findings": review_count,
         "enrichments": [
             {
                 "id": item.id,

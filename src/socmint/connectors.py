@@ -36,6 +36,16 @@ CONNECTORS = {
         target_types=("email",),
         command=("h8mail", "-t", "{email}", "-j"),
     ),
+    "socialscan": ConnectorSpec(
+        name="socialscan",
+        target_types=("username", "email"),
+        command=("socialscan", "{target}"),
+    ),
+    "phoneinfoga": ConnectorSpec(
+        name="phoneinfoga",
+        target_types=("phone",),
+        command=("phoneinfoga", "scan", "-n", "{phone}"),
+    ),
 }
 
 
@@ -65,6 +75,7 @@ def split_target(target, target_type):
         "email": target,
         "username": target,
         "domain": target,
+        "phone": target,
     }
 
 

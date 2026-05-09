@@ -43,7 +43,9 @@ from .identity_graph import apply_merge_candidate
 from .identity_graph import build_identity_graph
 from .identity_graph import graph_payload
 from .enrichment import enrich_subject_media_profiles
+from .enrichment import enrichment_review_queue
 from .enrichment import media_profile_payload
+from .enrichment import review_enrichment_finding
 from .spine import build_dossier
 from .spine import create_subject as spine_create_subject
 from .spine import run_spine_for_subject
@@ -752,6 +754,39 @@ def spine_media_profile_view(subject_id):
     return render_template("spine_media_profiles.html", payload=payload)
 
 
+@dashboard_bp.route("/spine/enrichment-review")
+@run_required
+def spine_enrichment_review():
+    subject_id = request.args.get("subject_id", type=int)
+    payload = enrichment_review_queue(subject_id=subject_id)
+    return render_template("spine_enrichment_review.html", payload=payload)
+
+
+@dashboard_bp.route(
+    "/spine/enrichments/<int:enrichment_id>/findings/<int:finding_index>/review",
+    methods=["POST"],
+)
+@run_required
+def spine_enrichment_finding_review(enrichment_id, finding_index):
+    action = request.form.get("action", "").strip()
+    note = request.form.get("note", "").strip() or None
+    try:
+        result = review_enrichment_finding(
+            enrichment_id,
+            finding_index,
+            action,
+            actor=session.get("user"),
+            note=note,
+        )
+        audit("spine_enrichment_finding_review", details=result)
+        flash(f"Enrichment finding marked {action}.", "success")
+        if result.get("contradiction_ids"):
+            flash("Contradictions were refreshed after promotion.", "success")
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(request.referrer or url_for("dashboard.spine_enrichment_review"))
+
+
 @dashboard_bp.route("/spine/<int:subject_id>/media-profiles/run", methods=["POST"])
 @run_required
 def spine_media_profile_run(subject_id):
@@ -789,6 +824,31 @@ def api_spine_media_profiles(subject_id):
 def api_spine_media_profiles_run(subject_id):
     payload = enrich_subject_media_profiles(subject_id)
     return jsonify(payload), 202
+
+
+@dashboard_bp.route("/api/v1/spine/enrichment-review")
+@run_required
+def api_spine_enrichment_review():
+    return jsonify(enrichment_review_queue(request.args.get("subject_id", type=int)))
+
+
+@dashboard_bp.route(
+    "/api/v1/spine/enrichments/<int:enrichment_id>/findings/"
+    "<int:finding_index>/review",
+    methods=["POST"],
+)
+@run_required
+def api_spine_enrichment_finding_review(enrichment_id, finding_index):
+    payload = request.get_json(silent=True) or {}
+    result = review_enrichment_finding(
+        enrichment_id,
+        finding_index,
+        payload.get("action", ""),
+        actor=session.get("user"),
+        note=payload.get("note"),
+    )
+    audit("spine_enrichment_finding_review", details=result)
+    return jsonify(result), 202
 
 
 

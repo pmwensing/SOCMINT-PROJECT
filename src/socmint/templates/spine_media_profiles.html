@@ -3,12 +3,19 @@
 <h1>Media/Profile Enrichment</h1>
 
 <section class="card">
+  <p>
+    Review-required findings:
+    <a href="{{ url_for('dashboard.spine_enrichment_review',
+    subject_id=payload.subject_id) }}">
+      {{ payload.review_required_findings }}
+    </a>
+  </p>
   <h2>Enrichments</h2>
   <table>
     <thead>
       <tr>
         <th>ID</th><th>Type</th><th>Status</th>
-        <th>Source</th><th>Artifact</th><th>Created</th>
+        <th>Source</th><th>Artifact</th><th>Findings</th><th>Created</th>
       </tr>
     </thead>
     <tbody>
@@ -19,10 +26,24 @@
         <td>{{ item.status }}</td>
         <td class="mono">{{ item.source_value }}</td>
         <td class="mono">{{ item.artifact_ref }}</td>
+        <td>
+          {% for finding in item.payload.findings %}
+          <div>
+            <strong>{{ finding.type }}</strong>:
+            <span class="mono">{{ finding.value }}</span>
+            {% if finding.correlation %}
+            <span>
+              {{ finding.correlation.state }}
+              ({{ "%.3f"|format(finding.correlation.score) }})
+            </span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </td>
         <td>{{ item.created_at }}</td>
       </tr>
       {% else %}
-      <tr><td colspan="6">No media/profile enrichments yet.</td></tr>
+      <tr><td colspan="7">No media/profile enrichments yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>

@@ -20,6 +20,9 @@
                 <a href="{{ url_for('dashboard.audit_log') }}">Audit</a>
                 {% endif %}
                 <a href="{{ url_for('dashboard.change_password') }}">Password</a>
+                {% if session.get('is_admin') or session.get('role') == 'analyst' %}
+                <a href="{{ url_for('dashboard.spine_enrichment_review') }}">Review</a>
+                {% endif %}
                 <a href="{{ url_for('dashboard.logout') }}">Logout</a>
                 {% else %}
                 <a href="{{ url_for('dashboard.login') }}">Login</a>
