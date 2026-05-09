@@ -25,6 +25,10 @@ from werkzeug.utils import safe_join
 
 from . import database as db
 from .config import configure_logging, load_settings
+from .report_review import report_runs_payload
+from .report_review import review_items_payload
+from .report_review import review_summary
+from .report_review import set_review_status
 from .workbench import create_workbench_job
 from .workbench import evaluate_policy
 from .workbench import list_workbench_jobs_payload
@@ -1121,6 +1125,72 @@ def api_workbench_retention_run():
         actor=session.get("user"),
     )
     return jsonify(result), 202
+
+
+
+
+@dashboard_bp.route("/reports/review")
+@login_required
+def report_review_console():
+    payload = {
+        "summary": review_summary(),
+        "items": review_items_payload().get("items", []),
+        "reports": report_runs_payload().get("reports", []),
+    }
+    return render_template("report_review_console.html", payload=payload)
+
+
+@dashboard_bp.route("/api/v1/reports/review/summary")
+@login_required
+def api_report_review_summary():
+    return jsonify(review_summary())
+
+
+@dashboard_bp.route("/api/v1/reports/review/items")
+@login_required
+def api_report_review_items():
+    subject_id_raw = request.args.get("subject_id")
+    status = request.args.get("status")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    return jsonify(review_items_payload(subject_id=subject_id, status=status))
+
+
+@dashboard_bp.route("/api/v1/reports/runs")
+@login_required
+def api_report_runs():
+    subject_id_raw = request.args.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    return jsonify(report_runs_payload(subject_id=subject_id))
+
+
+@dashboard_bp.route("/api/v1/reports/review/items/<path:item_id>", methods=["POST"])
+@run_required
+def api_set_report_review_status(item_id):
+    payload = request.get_json(silent=True) or {}
+    status = payload.get("status", "needs_review")
+    note = payload.get("note")
+    result = set_review_status(item_id, status, note)
+    audit(
+        "report_review_decision",
+        details={
+            "item_id": item_id,
+            "status": status,
+            "note": note,
+        },
+    )
+    return jsonify(result)
+
+
+@dashboard_bp.route("/reports/review/items/<path:item_id>/<status>", methods=["POST"])
+@run_required
+def report_review_decision(item_id, status):
+    note = request.form.get("note")
+    result = set_review_status(item_id, status, note)
+    if result.get("updated"):
+        flash(f"Review item marked {status}: {item_id}", "success")
+    else:
+        flash(result.get("reason", "Review update failed"), "error")
+    return redirect(url_for("dashboard.report_review_console"))
 
 
 @dashboard_bp.route("/about")

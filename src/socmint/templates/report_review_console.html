@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Report UX + Enrichment Review Console</h1>
+
+<section class="card">
+  <h2>Summary</h2>
+  <p><strong>Review items:</strong> {{ payload.summary.review_item_count }}</p>
+  <p><strong>Report runs:</strong> {{ payload.summary.report_run_count }}</p>
+</section>
+
+<section class="card">
+  <h2>Enrichment review queue</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Quality</th>
+        <th>Confidence</th>
+        <th>Source</th>
+        <th>Label</th>
+        <th>Value</th>
+        <th>Decision</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in payload.items %}
+      <tr>
+        <td>{{ item.status }}</td>
+        <td>{{ item.quality }}</td>
+        <td>{{ item.confidence if item.confidence is not none else "unknown" }}</td>
+        <td>{{ item.source }}</td>
+        <td>{{ item.label }}</td>
+        <td><code>{{ item.value }}</code></td>
+        <td>
+          <form method="post" action="{{ url_for('dashboard.report_review_decision', item_id=item.id, status='approved') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit">Approve</button>
+          </form>
+          <form method="post" action="{{ url_for('dashboard.report_review_decision', item_id=item.id, status='rejected') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit">Reject</button>
+          </form>
+          <form method="post" action="{{ url_for('dashboard.report_review_decision', item_id=item.id, status='uncertain') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit">Uncertain</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7">No enrichment review items found yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Full-report run history</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Subject</th>
+        <th>Title</th>
+        <th>Manifest / path</th>
+        <th>Files</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for report in payload.reports %}
+      <tr>
+        <td>{{ report.status }}</td>
+        <td>{{ report.subject_id or "" }}</td>
+        <td>{{ report.title }}</td>
+        <td><code>{{ report.manifest_path }}</code></td>
+        <td>{{ report.file_count }}</td>
+        <td>{{ report.created_at or "" }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No report runs found yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
