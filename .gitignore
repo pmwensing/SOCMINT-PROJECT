@@ -43,3 +43,9 @@ Thumbs.db
 .env.before_*
 var/
 *.log
+
+# Local SOCMINT runtime/secrets
+.env
+.env.before_*
+var/
+*.log
