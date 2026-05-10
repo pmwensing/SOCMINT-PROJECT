@@ -28,7 +28,7 @@
       <p class="muted">Follow the guided v7.5.x flow: subject → enrichment/connectors → review → full report → retention.</p>
     </div>
     {% if session.get('is_admin') or session.get('role') == 'analyst' %}
-    <form method="post" action="{{ url_for('dashboard.command_center_process_jobs') }}">
+    <form method="post" action="{{ url_for('command_center_process_jobs') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit">Process queued jobs now</button>
     </form>
