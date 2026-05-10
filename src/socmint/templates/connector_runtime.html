@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Connector Runtime</p>
+    <h1>Tool install health, dry-run status, and runtime readiness.</h1>
+    <p class="muted">This page separates connector wiring from actual external tool availability so enrichment does not look stronger than it is.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="{{ url_for('dashboard.index') }}">Command Center</a>
+    <a class="button-link secondary" href="{{ url_for('connector_runtime_health_api') }}">JSON Health</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>Ready</span><strong>{{ payload.summary.ready }}</strong></article>
+  <article class="metric-card"><span>Missing</span><strong>{{ payload.summary.missing }}</strong></article>
+  <article class="metric-card"><span>Disabled</span><strong>{{ payload.summary.disabled }}</strong></article>
+  <article class="metric-card"><span>Forced dry-run</span><strong>{{ 'Yes' if payload.dry_run_forced else 'No' }}</strong></article>
+</section>
+
+<section class="panel">
+  <h2>Connector Health</h2>
+  <div class="metadata-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Connector</th>
+          <th>Status</th>
+          <th>Version</th>
+          <th>Executable</th>
+          <th>Target types</th>
+          <th>Sample command</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in payload.connectors %}
+        <tr>
+          <td><strong>{{ item.name }}</strong></td>
+          <td><span class="status-pill {{ 'completed' if item.status == 'ready' else 'failed' if item.status == 'missing' else 'queued' }}">{{ item.status }}</span></td>
+          <td>{{ item.version or '' }}</td>
+          <td><code>{{ item.executable or '' }}</code></td>
+          <td>{{ item.target_types | join(', ') }}</td>
+          <td><code>{{ item.sample_command | join(' ') }}</code></td>
+          <td>{{ item.notes }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Install/runtime interpretation</h2>
+  <p><strong>Ready</strong> means the executable/version probe is available and the app can attempt a real run.</p>
+  <p><strong>Missing</strong> means the app will record dry-run payloads unless that tool is installed in the runtime.</p>
+  <p><strong>Disabled</strong> currently applies to ArchiveBox when installed but not enabled with <code>SOCMINT_ARCHIVEBOX_ENABLED=true</code>.</p>
+</section>
+{% endblock %}
