@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import html
 import json
 import zipfile
@@ -12,6 +13,8 @@ from sqlalchemy import inspect, text
 from . import database as db
 
 DOSSIER_SCHEMA = "socmint.full_entity_profile_dossier.v7_5"
+EXPORT_SCHEMA = "socmint.full_entity_profile_dossier_export.v7_5_1"
+MANIFEST_SCHEMA = "socmint.full_entity_profile_dossier_manifest.v7_5_1"
 
 
 def utc_now() -> str:
@@ -34,6 +37,24 @@ def safe_dossier_path(name: str) -> Path:
     return path
 
 
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _manifest_entry(path: Path, role: str) -> dict[str, Any]:
+    return {
+        "role": role,
+        "name": path.name,
+        "path": str(path),
+        "size_bytes": path.stat().st_size,
+        "sha256": sha256_file(path),
+    }
+
+
 def _table_names() -> set[str]:
     try:
         return set(inspect(db.engine).get_table_names())
@@ -48,32 +69,18 @@ def _columns_for(table: str) -> set[str]:
         return set()
 
 
-def _rows_for_subject(
-    table: str,
-    subject_id: int,
-    limit: int = 200,
-) -> list[dict[str, Any]]:
+def _rows_for_subject(table: str, subject_id: int, limit: int = 200) -> list[dict[str, Any]]:
     if table not in _table_names():
         return []
-
     columns = _columns_for(table)
     keys = ["subject_id", "spine_subject_id", "entity_id", "target_id", "id"]
     where_key = next((key for key in keys if key in columns), None)
     if where_key is None:
         return []
-
-    query = text(
-        f"select * from {table} "
-        f"where {where_key} = :subject_id "
-        f"limit :limit"
-    )
-
+    query = text(f"select * from {table} where {where_key} = :subject_id limit :limit")
     try:
         with db.engine.begin() as conn:
-            rows = conn.execute(
-                query,
-                {"subject_id": subject_id, "limit": limit},
-            )
+            rows = conn.execute(query, {"subject_id": subject_id, "limit": limit})
             return [dict(row._mapping) for row in rows]
     except Exception:
         return []
@@ -86,27 +93,19 @@ def _first_subject_row(subject_id: int) -> dict[str, Any]:
             row = rows[0]
             row["_source_table"] = table
             return row
-
-    return {
-        "id": subject_id,
-        "name": f"Subject {subject_id}",
-        "_source_table": "fallback",
-    }
+    return {"id": subject_id, "name": f"Subject {subject_id}", "_source_table": "fallback"}
 
 
 def _safe_payload(loader_name: str, fallback: dict[str, Any]) -> dict[str, Any]:
     try:
         if loader_name == "review":
             from .report_review import review_summary
-
             return review_summary()
         if loader_name == "links":
             from .evidence_links import evidence_links_payload
-
             return evidence_links_payload()
         if loader_name == "custody":
             from .evidence_custody import custody_payload
-
             return custody_payload()
     except Exception as exc:
         fallback["error"] = str(exc)
@@ -116,7 +115,6 @@ def _safe_payload(loader_name: str, fallback: dict[str, Any]) -> dict[str, Any]:
 def _evidence_payload(subject_id: int) -> dict[str, Any]:
     try:
         from .evidence_intake import evidence_intake_payload
-
         return evidence_intake_payload(subject_id=subject_id)
     except Exception as exc:
         return {"count": 0, "items": [], "error": str(exc)}
@@ -125,42 +123,21 @@ def _evidence_payload(subject_id: int) -> dict[str, Any]:
 def _integrity_payload(subject_id: int) -> dict[str, Any]:
     try:
         from .evidence_integrity import integrity_dashboard_payload
-
         return integrity_dashboard_payload(subject_id=subject_id)
     except Exception as exc:
-        return {
-            "evidence_count": 0,
-            "custody_event_count": 0,
-            "link_count": 0,
-            "error": str(exc),
-        }
+        return {"evidence_count": 0, "custody_event_count": 0, "link_count": 0, "error": str(exc)}
 
 
 def _section(title: str, rows: list[dict[str, Any]], summary: str) -> dict[str, Any]:
-    return {
-        "title": title,
-        "summary": summary,
-        "count": len(rows),
-        "items": rows,
-    }
+    return {"title": title, "summary": summary, "count": len(rows), "items": rows}
 
 
 def build_full_entity_dossier_v2(subject_id: int) -> dict[str, Any]:
     subject = _first_subject_row(subject_id)
-    observations = (
-        _rows_for_subject("spine_observations", subject_id)
-        or _rows_for_subject("observations", subject_id)
-    )
+    observations = _rows_for_subject("spine_observations", subject_id) or _rows_for_subject("observations", subject_id)
     findings = _rows_for_subject("findings", subject_id)
-    identities = (
-        _rows_for_subject("identity_graphs", subject_id)
-        + _rows_for_subject("identity_edges", subject_id)
-    )
-    enrichments = (
-        _rows_for_subject("media_profiles", subject_id)
-        + _rows_for_subject("enrichment_profiles", subject_id)
-        + _rows_for_subject("enrichment_runs", subject_id)
-    )
+    identities = _rows_for_subject("identity_graphs", subject_id) + _rows_for_subject("identity_edges", subject_id)
+    enrichments = _rows_for_subject("media_profiles", subject_id) + _rows_for_subject("enrichment_profiles", subject_id) + _rows_for_subject("enrichment_runs", subject_id)
     contradictions = _rows_for_subject("contradictions", subject_id)
     dossier_exports = _rows_for_subject("dossier_exports", subject_id)
 
@@ -171,75 +148,24 @@ def build_full_entity_dossier_v2(subject_id: int) -> dict[str, Any]:
     integrity = _integrity_payload(subject_id)
 
     evidence_items = evidence.get("items", [])
-    evidence_ids = {
-        item.get("evidence_id")
-        for item in evidence_items
-        if item.get("evidence_id")
-    }
+    evidence_ids = {item.get("evidence_id") for item in evidence_items if item.get("evidence_id")}
     linked_evidence = [
-        item
-        for item in links.get("links", [])
-        if item.get("evidence_id") in evidence_ids
-        or item.get("evidence", {}).get("subject_id") == subject_id
+        item for item in links.get("links", [])
+        if item.get("evidence_id") in evidence_ids or item.get("evidence", {}).get("subject_id") == subject_id
     ]
 
     sections = {
-        "identity_summary": _section(
-            "Identity Summary",
-            [subject],
-            "Primary subject/entity record and source table.",
-        ),
-        "identity_graph": _section(
-            "Identity Graph",
-            identities,
-            "Identity graph records, aliases, handles, and edges.",
-        ),
-        "observations": _section(
-            "Timeline / Observations",
-            observations,
-            "Subject-scoped observations and timeline facts.",
-        ),
-        "findings": _section(
-            "Findings",
-            findings,
-            "Analyst or system findings associated with this subject.",
-        ),
-        "enrichment": _section(
-            "Enrichment Summary",
-            enrichments,
-            "Open-source enrichment outputs and profile records.",
-        ),
-        "contradictions": _section(
-            "Contradictions",
-            contradictions,
-            "Assertion conflicts detected for this subject.",
-        ),
-        "review_decisions": {
-            "title": "Analyst Review Decisions",
-            "summary": "Review and quality gate payload.",
-            "payload": review,
-        },
-        "linked_evidence": {
-            "title": "Linked Evidence",
-            "summary": "Evidence files and review-item links.",
-            "evidence_count": len(evidence_items),
-            "link_count": len(linked_evidence),
-            "evidence": evidence_items,
-            "links": linked_evidence,
-        },
-        "custody_hash_status": {
-            "title": "Chain-of-Custody / Hash Status",
-            "summary": "Integrity and custody status.",
-            "integrity": integrity,
-            "custody_event_count": custody.get("event_count", 0),
-        },
-        "prior_exports": _section(
-            "Prior Dossier Exports",
-            dossier_exports,
-            "Existing dossier/export history for this subject.",
-        ),
+        "identity_summary": _section("Identity Summary", [subject], "Primary subject/entity record and source table."),
+        "identity_graph": _section("Identity Graph", identities, "Identity graph records, aliases, handles, and edges."),
+        "observations": _section("Timeline / Observations", observations, "Subject-scoped observations and timeline facts."),
+        "findings": _section("Findings", findings, "Analyst or system findings associated with this subject."),
+        "enrichment": _section("Enrichment Summary", enrichments, "Open-source enrichment outputs and profile records."),
+        "contradictions": _section("Contradictions", contradictions, "Assertion conflicts detected for this subject."),
+        "review_decisions": {"title": "Analyst Review Decisions", "summary": "Review and quality gate payload.", "payload": review},
+        "linked_evidence": {"title": "Linked Evidence", "summary": "Evidence files and review-item links.", "evidence_count": len(evidence_items), "link_count": len(linked_evidence), "evidence": evidence_items, "links": linked_evidence},
+        "custody_hash_status": {"title": "Chain-of-Custody / Hash Status", "summary": "Integrity and custody status.", "integrity": integrity, "custody_event_count": custody.get("event_count", 0)},
+        "prior_exports": _section("Prior Dossier Exports", dossier_exports, "Existing dossier/export history for this subject."),
     }
-
     score = {
         "finding_count": len(findings),
         "observation_count": len(observations),
@@ -247,26 +173,12 @@ def build_full_entity_dossier_v2(subject_id: int) -> dict[str, Any]:
         "linked_evidence_count": len(linked_evidence),
         "custody_event_count": custody.get("event_count", 0),
     }
-
-    return {
-        "schema": DOSSIER_SCHEMA,
-        "generated_at": utc_now(),
-        "subject_id": subject_id,
-        "subject": subject,
-        "score": score,
-        "sections": sections,
-    }
+    return {"schema": DOSSIER_SCHEMA, "generated_at": utc_now(), "subject_id": subject_id, "subject": subject, "score": score, "sections": sections}
 
 
 def render_dossier_markdown(payload: dict[str, Any]) -> str:
     subject = payload.get("subject") or {}
-    name = (
-        subject.get("name")
-        or subject.get("label")
-        or subject.get("username")
-        or f"Subject {payload.get('subject_id')}"
-    )
-
+    name = subject.get("name") or subject.get("label") or subject.get("username") or f"Subject {payload.get('subject_id')}"
     lines = [
         "# Full Entity Profile Dossier v2",
         "",
@@ -278,49 +190,31 @@ def render_dossier_markdown(payload: dict[str, Any]) -> str:
         "## Dossier Score",
         "",
     ]
-
     for key, value in (payload.get("score") or {}).items():
         lines.append(f"- {key}: `{value}`")
-
     for key, section in (payload.get("sections") or {}).items():
         lines.extend(["", f"## {section.get('title', key)}", ""])
         if section.get("summary"):
             lines.extend([section["summary"], ""])
         if "count" in section:
             lines.extend([f"- Count: `{section.get('count')}`", ""])
-
         for idx, item in enumerate(section.get("items", [])[:25], start=1):
-            label = (
-                item.get("name")
-                or item.get("label")
-                or item.get("title")
-                or item.get("value")
-                or item.get("id")
-                or f"item-{idx}"
-            )
+            label = item.get("name") or item.get("label") or item.get("title") or item.get("value") or item.get("id") or f"item-{idx}"
             lines.extend([f"### {idx}. {label}", ""])
             for item_key, item_value in sorted(item.items()):
                 if not str(item_key).startswith("_"):
                     lines.append(f"- {item_key}: `{item_value}`")
             lines.append("")
-
         if key == "linked_evidence":
             lines.append(f"- Evidence count: `{section.get('evidence_count')}`")
             lines.append(f"- Link count: `{section.get('link_count')}`")
             lines.append("")
-
         if key == "custody_hash_status":
             integrity = section.get("integrity") or {}
-            lines.append(
-                f"- Integrity evidence count: `{integrity.get('evidence_count')}`"
-            )
-            lines.append(
-                "- Integrity custody events: "
-                f"`{integrity.get('custody_event_count')}`"
-            )
+            lines.append(f"- Integrity evidence count: `{integrity.get('evidence_count')}`")
+            lines.append(f"- Integrity custody events: `{integrity.get('custody_event_count')}`")
             lines.append(f"- Integrity links: `{integrity.get('link_count')}`")
             lines.append("")
-
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -330,10 +224,8 @@ def render_dossier_html(payload: dict[str, Any]) -> str:
     return (
         "<!doctype html><html><head><meta charset='utf-8'>"
         f"<title>{html.escape(title)}</title>"
-        "<style>body{font-family:system-ui,sans-serif;max-width:1100px;"
-        "margin:2rem auto;line-height:1.5;padding:0 1rem}"
-        "pre{white-space:pre-wrap;background:#f6f6f6;padding:1rem;"
-        "border-radius:10px}</style></head><body>"
+        "<style>body{font-family:system-ui,sans-serif;max-width:1100px;margin:2rem auto;line-height:1.5;padding:0 1rem}"
+        "pre{white-space:pre-wrap;background:#f6f6f6;padding:1rem;border-radius:10px}</style></head><body>"
         f"<h1>{html.escape(title)}</h1><pre>{body}</pre></body></html>\n"
     )
 
@@ -347,43 +239,63 @@ def export_full_entity_dossier_v2(subject_id: int) -> dict[str, Any]:
     json_path = root / f"{base}.json"
     md_path = root / f"{base}.md"
     html_path = root / f"{base}.html"
+    manifest_path = root / f"{base}-export_manifest.json"
     zip_path = root / f"{base}.zip"
 
     json_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
     md_path.write_text(render_dossier_markdown(payload))
     html_path.write_text(render_dossier_html(payload))
 
+    files = [
+        _manifest_entry(json_path, "dossier_json"),
+        _manifest_entry(md_path, "dossier_markdown"),
+        _manifest_entry(html_path, "dossier_html"),
+    ]
+    manifest = {
+        "schema": MANIFEST_SCHEMA,
+        "generated_at": utc_now(),
+        "subject_id": subject_id,
+        "artifact_count": len(files) + 1,
+        "files": files,
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+    manifest["files"].append(_manifest_entry(manifest_path, "export_manifest"))
+    manifest["artifact_count"] = len(manifest["files"])
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        for path in (json_path, md_path, html_path):
+        for path in (json_path, md_path, html_path, manifest_path):
             zf.write(path, arcname=path.name)
         zf.writestr(
             "README.txt",
-            "\n".join(
-                [
-                    "SOCMINT Full Entity Profile Dossier v2",
-                    f"Subject ID: {subject_id}",
-                    f"Generated: {payload.get('generated_at')}",
-                    "",
-                    "Includes JSON, Markdown, and HTML dossier outputs.",
-                ]
-            ),
+            "\n".join([
+                "SOCMINT Full Entity Profile Dossier v2",
+                f"Subject ID: {subject_id}",
+                f"Generated: {payload.get('generated_at')}",
+                "",
+                "Includes JSON, Markdown, HTML, and export_manifest.json with SHA-256 hashes.",
+            ]),
         )
 
+    zip_entry = _manifest_entry(zip_path, "zip_bundle")
+    manifest["files"].append(zip_entry)
+    manifest["artifact_count"] = len(manifest["files"])
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+
     result = {
-        "schema": "socmint.full_entity_profile_dossier_export.v7_5",
+        "schema": EXPORT_SCHEMA,
         "generated_at": utc_now(),
         "subject_id": subject_id,
         "json_path": str(json_path),
         "markdown_path": str(md_path),
         "html_path": str(html_path),
+        "manifest_path": str(manifest_path),
         "zip_path": str(zip_path),
-        "download_url": (
-            f"/spine/subjects/{subject_id}/dossier-v2/export/"
-            f"{zip_path.name}/download"
-        ),
+        "manifest": manifest,
+        "download_url": f"/spine/subjects/{subject_id}/dossier-v2/export/{zip_path.name}/download",
+        "full_report_download_url": f"/api/v1/spine/subjects/{subject_id}/full-report/download?name={zip_path.name}",
         "dossier": payload,
     }
-
     result_path = root / f"{base}-EXPORT.json"
     result_path.write_text(json.dumps(result, indent=2, sort_keys=True))
     result["result_path"] = str(result_path)
