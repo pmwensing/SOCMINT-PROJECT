@@ -4,7 +4,7 @@
   <div>
     <p class="eyebrow">Finding Promotion Queue</p>
     <h1>Review normalized connector findings before they enter a dossier.</h1>
-    <p class="muted">Promote findings into a Spine subject, reject noise, or mark uncertain for later review.</p>
+    <p class="muted">Default view shows only unreviewed findings. Use filters to audit promoted, rejected, uncertain, or all findings.</p>
   </div>
   <div class="hero-actions">
     <a class="button-link" href="{{ url_for('connector_runs_view') }}">Connector Runs</a>
@@ -12,20 +12,40 @@
   </div>
 </section>
 
+<section class="metric-grid">
+  <article class="metric-card"><span>Unreviewed</span><strong>{{ payload.counts.unreviewed }}</strong></article>
+  <article class="metric-card"><span>Promoted</span><strong>{{ payload.counts.promote }}</strong></article>
+  <article class="metric-card"><span>Rejected</span><strong>{{ payload.counts.rejected }}</strong></article>
+  <article class="metric-card"><span>Uncertain</span><strong>{{ payload.counts.uncertain }}</strong></article>
+</section>
+
 <section class="panel">
-  <h2>Findings</h2>
+  <h2>Filters</h2>
+  <div class="hero-actions">
+    <a class="button-link {{ 'secondary' if payload.status_filter != 'unreviewed' else '' }}" href="{{ url_for('connector_finding_queue_view', status='unreviewed') }}">Unreviewed</a>
+    <a class="button-link {{ 'secondary' if payload.status_filter != 'promote' else '' }}" href="{{ url_for('connector_finding_queue_view', status='promote') }}">Promoted</a>
+    <a class="button-link {{ 'secondary' if payload.status_filter != 'rejected' else '' }}" href="{{ url_for('connector_finding_queue_view', status='rejected') }}">Rejected</a>
+    <a class="button-link {{ 'secondary' if payload.status_filter != 'uncertain' else '' }}" href="{{ url_for('connector_finding_queue_view', status='uncertain') }}">Uncertain</a>
+    <a class="button-link {{ 'secondary' if payload.status_filter != 'all' else '' }}" href="{{ url_for('connector_finding_queue_view', status='all') }}">All</a>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Findings — {{ payload.status_filter }}</h2>
   <div class="card-grid">
     {% for finding in payload.findings %}
     <article class="card">
       <h3>{{ finding.type }}</h3>
+      <p><span class="status-pill {{ 'completed' if finding.review_state == 'promote' else 'failed' if finding.review_state == 'rejected' else 'queued' if finding.review_state == 'uncertain' else '' }}">{{ finding.review_state }}</span></p>
       <p><strong>Value:</strong> {{ finding.value }}</p>
       <p><strong>Confidence:</strong> {{ finding.confidence }}</p>
       <p><strong>Source:</strong> {{ finding.source }} · <a href="{{ url_for('connector_run_detail_view', run_id=finding.connector_run_id) }}">Run {{ finding.connector_run_id }}</a></p>
       {% if finding.run %}<p class="muted">{{ finding.run.connector }} → {{ finding.run.target_value }} ({{ finding.run.status }})</p>{% endif %}
+      {% if finding.review.reviewed_at %}<p class="muted">Reviewed by {{ finding.review.actor or 'unknown' }} at {{ finding.review.reviewed_at }}{% if finding.review.assertion_id %} · Assertion {{ finding.review.assertion_id }}{% endif %}</p>{% endif %}
       <form method="post" action="{{ url_for('connector_finding_review_action', finding_id=finding.id) }}" class="inline-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <select name="subject_id">
-          <option value="">No subject</option>
+          <option value="">Select subject for promotion</option>
           {% for subject in payload.subjects %}<option value="{{ subject.id }}">{{ subject.label }}</option>{% endfor %}
         </select>
         <input type="text" name="note" placeholder="Analyst note">
@@ -35,7 +55,7 @@
       </form>
     </article>
     {% else %}
-    <p>No connector findings are waiting for review.</p>
+    <p>No connector findings match this filter.</p>
     {% endfor %}
   </div>
 </section>
