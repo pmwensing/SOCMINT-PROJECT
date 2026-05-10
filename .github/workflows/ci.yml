@@ -26,6 +26,7 @@ jobs:
       - name: Test
         run: |
           set +e
+          set -o pipefail
           pytest -q --junitxml=/tmp/pytest.xml 2>&1 | tee /tmp/pytest.out
           status=$?
           if [ "$status" -ne 0 ]; then
