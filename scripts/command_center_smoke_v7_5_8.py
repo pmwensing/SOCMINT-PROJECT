@@ -7,6 +7,7 @@ from socmint import database as db
 from socmint.command_center import command_center_payload
 from socmint.command_center import tool_compatibility
 from socmint.command_center_routes import register_command_center_routes
+from socmint.connector_runtime_routes import register_connector_runtime_routes
 from socmint.dashboard import create_app
 from socmint.full_report_alias import register_full_report_aliases
 from socmint.full_report_browser import register_full_report_browser_flow
@@ -55,6 +56,7 @@ def main() -> None:
         register_full_report_history_routes(app)
         register_full_report_retention_routes(app)
         register_command_center_routes(app)
+        register_connector_runtime_routes(app)
 
         with app.test_client() as client:
             csrf = "command-center-csrf-token"
@@ -74,6 +76,7 @@ def main() -> None:
             assert "Email targets do not work well" in text
             assert "Full Dossier v2" in text
             assert "Legacy local target scan" in text
+            assert "Connector Runtime" in text
 
             api = client.get("/api/v1/command-center")
             assert api.status_code == 200
