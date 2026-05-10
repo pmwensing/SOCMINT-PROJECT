@@ -1,0 +1,17 @@
+services:
+  app:
+    environment:
+      SOCMINT_CONNECTOR_TOOLS_DIR: /app/.connector-tools
+      PATH: /app/.connector-tools/venv/bin:/app/.connector-tools/bin:${PATH}
+    volumes:
+      - connector-tools:/app/.connector-tools
+    command: >
+      sh -c "
+        if [ ! -x /app/.connector-tools/venv/bin/python ]; then
+          bash scripts/install_connector_runtime_v7_6_0.sh || true;
+        fi;
+        alembic upgrade head && gunicorn --bind 0.0.0.0:5000 src.socmint.wsgi:app
+      "
+
+volumes:
+  connector-tools:

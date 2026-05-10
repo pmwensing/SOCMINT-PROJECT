@@ -14,7 +14,7 @@ from .archivebox_adapter import archivebox_enabled
 from .connectors import CONNECTORS
 from .connectors import render_command
 
-RUNTIME_SCHEMA = "socmint.connector_runtime.v7_5_9"
+RUNTIME_SCHEMA = "socmint.connector_runtime.v7_6_0"
 
 VERSION_COMMANDS: dict[str, list[str]] = {
     "sherlock": ["sherlock", "--version"],
@@ -33,6 +33,52 @@ SAMPLE_TARGETS: dict[str, tuple[str, str]] = {
     "h8mail": ("test@example.com", "email"),
     "phoneinfoga": ("+15555550123", "phone"),
 }
+
+INSTALL_HINTS: dict[str, dict[str, Any]] = {
+    "maigret": {
+        "install_command": "python -m pip install --upgrade maigret",
+        "check_command": "python -m maigret --version",
+        "runtime_note": "Python module connector. Installed into the SOCMINT scanner venv by the v7.6.0 installer.",
+    },
+    "sherlock": {
+        "install_command": "python -m pip install --upgrade sherlock-project",
+        "check_command": "sherlock --version || python -m sherlock --help",
+        "runtime_note": "Package/executable naming varies by distribution; health check looks for the sherlock CLI.",
+    },
+    "socialscan": {
+        "install_command": "python -m pip install --upgrade socialscan",
+        "check_command": "socialscan --version",
+        "runtime_note": "Python CLI connector for username/email account checks.",
+    },
+    "holehe": {
+        "install_command": "python -m pip install --upgrade holehe",
+        "check_command": "holehe --version || holehe --help",
+        "runtime_note": "Python CLI connector for email account presence checks.",
+    },
+    "h8mail": {
+        "install_command": "python -m pip install --upgrade h8mail",
+        "check_command": "h8mail --version || h8mail -h",
+        "runtime_note": "Python CLI connector for email exposure checks.",
+    },
+    "phoneinfoga": {
+        "install_command": "Download/install PhoneInfoga binary, then ensure phoneinfoga is on PATH.",
+        "check_command": "phoneinfoga version || phoneinfoga --help",
+        "runtime_note": "Binary connector; v7.6.0 verifies presence and provides manual activation guidance.",
+    },
+    "archivebox": {
+        "install_command": "python -m pip install --upgrade archivebox && export SOCMINT_ARCHIVEBOX_ENABLED=true",
+        "check_command": "archivebox version || archivebox --version",
+        "runtime_note": "Requires SOCMINT_ARCHIVEBOX_ENABLED=true before real captures are attempted.",
+    },
+}
+
+
+def install_hint(name: str) -> dict[str, Any]:
+    return INSTALL_HINTS.get(name, {
+        "install_command": "No installer hint available.",
+        "check_command": f"{name} --version",
+        "runtime_note": "Unknown connector install profile.",
+    })
 
 
 def _which_for_connector(name: str) -> str | None:
@@ -93,7 +139,6 @@ def normalize_connector_output(name: str, payload: dict[str, Any]) -> list[dict[
             item["context"] = context
         findings.append(item)
 
-    # Generic URL/email/phone patterns are useful across all tools.
     for value in re.findall(r"https?://[^\s\"'<>]+", text, flags=re.I):
         add("url", value, 0.74)
     for value in re.findall(r"[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}", text):
@@ -101,7 +146,6 @@ def normalize_connector_output(name: str, payload: dict[str, Any]) -> list[dict[
     for value in re.findall(r"(?<!\d)(?:\+?\d[\d\s().-]{7,}\d)(?!\d)", text):
         add("phone", value, 0.58)
 
-    # Try JSON-native outputs.
     for candidate in (payload.get("stdout"), payload.get("raw")):
         try:
             data = json.loads(candidate or "")
@@ -142,6 +186,7 @@ def _extract_json_findings(name: str, data: Any, add) -> None:
 
 
 def connector_health(name: str) -> dict[str, Any]:
+    hint = install_hint(name)
     if name == "archivebox":
         available = archivebox_available()
         enabled = archivebox_enabled()
@@ -155,6 +200,9 @@ def connector_health(name: str) -> dict[str, Any]:
             "data_dir": archivebox_data_dir(),
             "sample_command": ["archivebox", "add", "--json", "https://example.com"],
             "target_types": ["url"],
+            "install_hint": hint,
+            "install_command": hint["install_command"],
+            "check_command": hint["check_command"],
             "notes": "Set SOCMINT_ARCHIVEBOX_ENABLED=true to perform real captures." if not enabled else "ArchiveBox capture enabled.",
         }
 
@@ -175,6 +223,9 @@ def connector_health(name: str) -> dict[str, Any]:
         "sample_command": sample_command,
         "target_types": list(spec.target_types),
         "timeout": spec.timeout,
+        "install_hint": hint,
+        "install_command": hint["install_command"],
+        "check_command": hint["check_command"],
         "notes": "Connector will dry-run until the executable is installed." if not installed else "Connector executable detected.",
     }
 
@@ -193,4 +244,9 @@ def connector_runtime_health() -> dict[str, Any]:
         "dry_run_forced": os.environ.get("SOCMINT_CONNECTOR_DRY_RUN", "").lower() in {"1", "true", "yes", "on"},
         "summary": counts,
         "connectors": connectors,
+        "installer": {
+            "script": "scripts/install_connector_runtime_v7_6_0.sh",
+            "scanner_compose": "docker-compose.scanners.yml",
+            "health_command": "make connectors-health",
+        },
     }

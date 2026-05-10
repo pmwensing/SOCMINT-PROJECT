@@ -19,6 +19,18 @@
   <article class="metric-card"><span>Forced dry-run</span><strong>{{ 'Yes' if payload.dry_run_forced else 'No' }}</strong></article>
 </section>
 
+{% if payload.summary.missing > 0 %}
+<section class="panel warning-panel">
+  <h2>Install/activate connector toolchain</h2>
+  <p class="warning-text">Some connectors are missing. The app will keep recording safe dry-runs until tools are installed in this runtime.</p>
+  <pre>bash {{ payload.installer.script }}
+source .connector-tools/bin/socmint-connectors-env
+make connectors-health</pre>
+  <p>Docker scanner profile:</p>
+  <pre>docker compose -f docker-compose.yml -f docker-compose.local-web.yml -f {{ payload.installer.scanner_compose }} up --build app</pre>
+</section>
+{% endif %}
+
 <section class="panel">
   <h2>Connector Health</h2>
   <div class="metadata-table">
@@ -31,6 +43,7 @@
           <th>Executable</th>
           <th>Target types</th>
           <th>Sample command</th>
+          <th>Install / check</th>
           <th>Notes</th>
         </tr>
       </thead>
@@ -43,7 +56,11 @@
           <td><code>{{ item.executable or '' }}</code></td>
           <td>{{ item.target_types | join(', ') }}</td>
           <td><code>{{ item.sample_command | join(' ') }}</code></td>
-          <td>{{ item.notes }}</td>
+          <td>
+            <p><strong>Install:</strong> <code>{{ item.install_command }}</code></p>
+            <p><strong>Check:</strong> <code>{{ item.check_command }}</code></p>
+          </td>
+          <td>{{ item.notes }}<br><span class="muted">{{ item.install_hint.runtime_note }}</span></td>
         </tr>
         {% endfor %}
       </tbody>
