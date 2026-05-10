@@ -138,9 +138,18 @@ def main() -> None:
             api_review = client.post(
                 f"/api/v1/connectors/findings/{finding_id}/review",
                 json={"action": "promote", "subject_id": subject_id, "note": "api promotion"},
+                headers={"X-CSRF-Token": csrf},
             )
-            assert api_review.status_code == 202
+            assert api_review.status_code == 202, api_review.get_data(as_text=True)
             assert api_review.get_json()["assertion_id"]
+
+            form_review = client.post(
+                f"/connectors/findings/{finding_id}/review",
+                data={"csrf_token": csrf, "action": "uncertain", "note": "form review"},
+                follow_redirects=True,
+            )
+            assert form_review.status_code == 200
+            assert "Finding marked uncertain" in form_review.get_data(as_text=True)
 
             command_center = client.get("/")
             assert command_center.status_code == 200
