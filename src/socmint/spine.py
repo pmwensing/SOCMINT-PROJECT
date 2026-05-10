@@ -19,6 +19,8 @@ HIGH_VALUE_CONNECTORS = {
     "archivebox": {"seed_types": ["url"], "base": 0.82},
 }
 
+DIAGNOSTIC_OBSERVATION_TYPES = {"seed_expansion_candidate", "connector_no_result"}
+
 
 def create_subject(label: str | None, seeds: list[dict]) -> int:
     subject_id = db.create_spine_subject(label=label)
@@ -191,11 +193,14 @@ def extract_observations(connector_key, seed, raw_result, spec, artifact) -> lis
 
     for finding in findings:
         value = str(finding.get("value") or finding.get("url") or "").strip()
+        finding_type = finding.get("type", "connector_finding")
         if not value:
+            continue
+        if value.lower().strip() == str(seed.normalized_value).lower().strip() and finding_type in {"email", "username", "seed", "target"}:
             continue
         observations.append(
             {
-                "type": finding.get("type", "connector_finding"),
+                "type": finding_type,
                 "value": value,
                 "connector": connector_key,
                 "seed_type": seed.seed_type,
@@ -203,20 +208,23 @@ def extract_observations(connector_key, seed, raw_result, spec, artifact) -> lis
                 "confidence": float(finding.get("confidence", spec["base"])),
                 "artifact_sha256": artifact["sha256"],
                 "payload": finding,
+                "diagnostic": False,
             }
         )
 
     if not observations:
         observations.append(
             {
-                "type": "seed_expansion_candidate",
-                "value": seed.normalized_value,
+                "type": "connector_no_result",
+                "value": f"{connector_key}:{seed.seed_type}",
                 "connector": connector_key,
                 "seed_type": seed.seed_type,
                 "seed_hash": seed.pii_hash,
-                "confidence": spec["base"],
+                "confidence": 0.05,
                 "artifact_sha256": artifact["sha256"],
                 "payload": raw_result,
+                "diagnostic": True,
+                "note": "Connector completed but produced no normalized enrichment findings for this seed.",
             }
         )
 
@@ -229,6 +237,8 @@ def correlate_subject(subject_id: int) -> list[int]:
     runs = db.list_spine_connector_runs(subject_id=subject_id, limit=10000)
     run_connectors = {run.id: run.connector_key for run in runs}
     for obs in db.list_spine_observations(subject_id):
+        if obs.observation_type in DIAGNOSTIC_OBSERVATION_TYPES:
+            continue
         key = (obs.observation_type, (obs.normalized_value or "").lower().strip())
         grouped[key].append(obs)
 
