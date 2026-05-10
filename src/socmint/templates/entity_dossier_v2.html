@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Full Entity Profile Dossier v2</h1>
+{% set latest_export = latest_full_report_export(payload.subject_id) if latest_full_report_export is defined else {'available': false} %}
 
 <section class="card">
   <h2>Subject</h2>
@@ -12,13 +13,82 @@
     </tbody>
   </table>
 
-  <form method="post" action="{{ url_for(
-      'dashboard.subject_dossier_v2_export_run',
-      subject_id=payload.subject_id
-    ) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit">Export dossier ZIP</button>
-  </form>
+  <div class="actions">
+    <form method="post" action="{{ url_for(
+        'dashboard.subject_dossier_v2_export_run',
+        subject_id=payload.subject_id
+      ) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Export dossier ZIP</button>
+    </form>
+
+    <form method="post" action="{{ url_for(
+        'dashboard.subject_dossier_v2_export_run',
+        subject_id=payload.subject_id
+      ) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Run Full Report</button>
+    </form>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Latest Full Report Export</h2>
+  {% if latest_export.available %}
+  <table>
+    <tbody>
+      <tr><th>Generated</th><td>{{ latest_export.generated_at }}</td></tr>
+      <tr><th>Schema</th><td><code>{{ latest_export.schema }}</code></td></tr>
+      <tr><th>Result</th><td><code>{{ latest_export.result_name }}</code></td></tr>
+      <tr><th>Manifest artifacts</th><td>{{ latest_export.manifest.artifact_count }}</td></tr>
+    </tbody>
+  </table>
+
+  <p class="actions">
+    {% if latest_export.zip_name %}
+    <a class="button" href="{{ url_for(
+        'api_full_report_download',
+        subject_id=payload.subject_id,
+        name=latest_export.zip_name
+      ) }}">Download ZIP</a>
+    {% endif %}
+
+    {% if latest_export.manifest_name %}
+    <a class="button" href="{{ url_for(
+        'api_full_report_download',
+        subject_id=payload.subject_id,
+        name=latest_export.manifest_name
+      ) }}">Download Manifest</a>
+    {% endif %}
+
+    {% if latest_export.html_name %}
+    <a class="button" href="{{ url_for(
+        'api_full_report_download',
+        subject_id=payload.subject_id,
+        name=latest_export.html_name
+      ) }}">Download HTML</a>
+    {% endif %}
+  </p>
+
+  {% if latest_export.manifest.files %}
+  <table>
+    <thead><tr><th>Role</th><th>Name</th><th>Size</th><th>SHA-256</th></tr></thead>
+    <tbody>
+      {% for item in latest_export.manifest.files %}
+      <tr>
+        <td>{{ item.role }}</td>
+        <td><code>{{ item.name }}</code></td>
+        <td>{{ item.size_bytes }}</td>
+        <td><code>{{ item.sha256 }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  {% else %}
+  <p>No full-report export has been generated for this subject yet.</p>
+  <p>Use <strong>Run Full Report</strong> to create a ZIP, manifest, HTML, Markdown, and JSON export.</p>
+  {% endif %}
 </section>
 
 <section class="card">
