@@ -8,6 +8,7 @@ from socmint.entity_dossier_v2 import export_full_entity_dossier_v2
 from socmint.entity_dossier_v2 import safe_dossier_path
 from socmint.full_report_alias import latest_full_report_export
 from socmint.full_report_alias import register_full_report_aliases
+from socmint.full_report_browser import register_full_report_browser_flow
 
 
 def test_build_full_entity_dossier_v2_payload(tmp_path, monkeypatch):
@@ -121,6 +122,18 @@ def test_full_report_alias_routes_registered():
     assert "/spine/subjects/<int:subject_id>/full-report/run" in rules
 
 
+def test_full_report_browser_flow_routes_registered():
+    app = create_app()
+    register_full_report_aliases(app)
+    register_full_report_browser_flow(app)
+    register_full_report_browser_flow(app)
+    rules = {rule.rule for rule in app.url_map.iter_rules()}
+
+    assert "/spine/subjects/<int:subject_id>/full-report/view" in rules
+    assert "/spine/subjects/<int:subject_id>/full-report/open" in rules
+    assert "/spine/subjects/<int:subject_id>/full-report/artifact" in rules
+
+
 def test_entity_dossier_v2_template_has_v7_5_2_controls():
     template = Path("src/socmint/templates/entity_dossier_v2.html").read_text()
 
@@ -130,3 +143,14 @@ def test_entity_dossier_v2_template_has_v7_5_2_controls():
     assert "Download ZIP" in template
     assert "api_full_report_download" in template
     assert "latest_full_report_export" in template
+
+
+def test_entity_dossier_v2_template_has_v7_5_3_open_view_controls():
+    template = Path("src/socmint/templates/entity_dossier_v2.html").read_text()
+
+    assert "View Export Panel" in template
+    assert "Open Latest HTML Report" in template
+    assert "View Manifest" in template
+    assert "ui_full_report_view_panel" in template
+    assert "ui_full_report_open_latest" in template
+    assert "ui_full_report_view_artifact" in template

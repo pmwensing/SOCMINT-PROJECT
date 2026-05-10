@@ -45,6 +45,18 @@
   </table>
 
   <p class="actions">
+    <a class="button" href="{{ url_for(
+        'ui_full_report_view_panel',
+        subject_id=payload.subject_id
+      ) }}">View Export Panel</a>
+
+    {% if latest_export.html_name %}
+    <a class="button" href="{{ url_for(
+        'ui_full_report_open_latest',
+        subject_id=payload.subject_id
+      ) }}">Open Latest HTML Report</a>
+    {% endif %}
+
     {% if latest_export.zip_name %}
     <a class="button" href="{{ url_for(
         'api_full_report_download',
@@ -59,6 +71,11 @@
         subject_id=payload.subject_id,
         name=latest_export.manifest_name
       ) }}">Download Manifest</a>
+    <a class="button" href="{{ url_for(
+        'ui_full_report_view_artifact',
+        subject_id=payload.subject_id,
+        name=latest_export.manifest_name
+      ) }}">View Manifest</a>
     {% endif %}
 
     {% if latest_export.html_name %}
@@ -88,6 +105,12 @@
   {% else %}
   <p>No full-report export has been generated for this subject yet.</p>
   <p>Use <strong>Run Full Report</strong> to create a ZIP, manifest, HTML, Markdown, and JSON export.</p>
+  <p class="actions">
+    <a class="button" href="{{ url_for(
+        'ui_full_report_view_panel',
+        subject_id=payload.subject_id
+      ) }}">View Export Panel</a>
+  </p>
   {% endif %}
 </section>
 

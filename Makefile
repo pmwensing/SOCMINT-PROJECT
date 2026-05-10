@@ -156,3 +156,10 @@ test752:
 
 zip752:
 	cd .. && zip -r SOCMINT-PROJECT-v7.5.2.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
+
+
+test753:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_5_3.sh
+
+zip753:
+	cd .. && zip -r SOCMINT-PROJECT-v7.5.3.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
