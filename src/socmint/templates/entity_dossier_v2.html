@@ -56,6 +56,11 @@
       ) }}">Export History</a>
 
     <a class="button" href="{{ url_for(
+        'ui_full_report_retention',
+        subject_id=payload.subject_id
+      ) }}">Retention / Pins</a>
+
+    <a class="button" href="{{ url_for(
         'api_full_report_compare',
         subject_id=payload.subject_id
       ) }}">Compare Previous Reports</a>
@@ -124,6 +129,10 @@
         'ui_full_report_history',
         subject_id=payload.subject_id
       ) }}">Export History</a>
+    <a class="button" href="{{ url_for(
+        'ui_full_report_retention',
+        subject_id=payload.subject_id
+      ) }}">Retention / Pins</a>
   </p>
   {% endif %}
 </section>
