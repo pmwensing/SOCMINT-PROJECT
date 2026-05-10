@@ -4,9 +4,10 @@ import json
 from typing import Any
 
 from . import database as db
+from .spine import DIAGNOSTIC_OBSERVATION_TYPES
 from .spine import HIGH_VALUE_CONNECTORS
 
-INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v7_7_0"
+INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v7_7_1"
 VALID_ASSERTION_ACTIONS = {"confirmed", "rejected", "suppressed", "unreviewed"}
 
 
@@ -50,6 +51,7 @@ def _serialize_seed(seed) -> dict[str, Any]:
 def _serialize_run(run, artifacts_by_run: dict[int, list[dict[str, Any]]]) -> dict[str, Any]:
     raw = _safe_json(run.raw_result_json, {})
     result = raw.get("result", {}) if isinstance(raw, dict) else {}
+    findings = result.get("findings", []) if isinstance(result, dict) else []
     return {
         "id": run.id,
         "subject_id": run.subject_id,
@@ -60,7 +62,8 @@ def _serialize_run(run, artifacts_by_run: dict[int, list[dict[str, Any]]]) -> di
         "raw_result": raw,
         "stdout": result.get("stdout", "") if isinstance(result, dict) else "",
         "stderr": result.get("stderr", "") if isinstance(result, dict) else "",
-        "findings": result.get("findings", []) if isinstance(result, dict) else [],
+        "findings": findings,
+        "finding_count": len(findings),
         "artifacts": artifacts_by_run.get(run.id, []),
     }
 
@@ -81,6 +84,7 @@ def _serialize_artifact(artifact) -> dict[str, Any]:
 
 def _serialize_observation(observation) -> dict[str, Any]:
     payload = _safe_json(observation.payload_json, {})
+    diagnostic = observation.observation_type in DIAGNOSTIC_OBSERVATION_TYPES or bool(payload.get("diagnostic"))
     return {
         "id": observation.id,
         "subject_id": observation.subject_id,
@@ -91,6 +95,7 @@ def _serialize_observation(observation) -> dict[str, Any]:
         "source_ref": observation.source_ref,
         "evidence_ref": observation.evidence_ref,
         "payload": payload,
+        "diagnostic": diagnostic,
         "created_at": observation.created_at.isoformat() if observation.created_at else None,
     }
 
@@ -141,6 +146,9 @@ def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
     assertions = db.list_spine_assertions(subject_id, limit=5000)
     artifacts = _artifacts_by_run({run.id for run in runs})
 
+    serialized_observations = [_serialize_observation(item) for item in observations]
+    enrichment_observations = [item for item in serialized_observations if not item["diagnostic"]]
+    diagnostics = [item for item in serialized_observations if item["diagnostic"]]
     serialized_assertions = [_serialize_assertion(item) for item in assertions]
     validated = [item for item in serialized_assertions if item["validation_state"] == "confirmed"]
     rejected = [item for item in serialized_assertions if item["validation_state"] == "rejected"]
@@ -150,13 +158,16 @@ def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
         "seed_count": len(seeds),
         "connector_run_count": len(runs),
         "artifact_count": sum(len(items) for items in artifacts.values()),
-        "observation_count": len(observations),
+        "observation_count": len(enrichment_observations),
+        "diagnostic_count": len(diagnostics),
+        "raw_observation_count": len(serialized_observations),
         "assertion_count": len(assertions),
         "confirmed_assertions": len(validated),
         "rejected_assertions": len(rejected),
         "unreviewed_assertions": len(unreviewed),
         "dossier_ready": bool(assertions),
         "needs_review": bool(unreviewed),
+        "has_real_enrichment": bool(enrichment_observations or assertions),
     }
 
     return {
@@ -170,7 +181,8 @@ def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
         "seeds": [_serialize_seed(seed) for seed in seeds],
         "connector_options": _connector_options(seeds),
         "runs": [_serialize_run(run, artifacts) for run in runs],
-        "observations": [_serialize_observation(item) for item in observations],
+        "observations": enrichment_observations,
+        "diagnostics": diagnostics,
         "assertions": serialized_assertions,
         "dossier_url": f"/spine/subjects/{subject_id}/dossier",
         "classic_subject_url": f"/spine/{subject_id}",
@@ -184,6 +196,8 @@ def promote_observation_to_assertion(observation_id: int, actor: str | None = No
     if not observation:
         raise LookupError("Observation not found.")
     payload = _serialize_observation(observation)
+    if payload["diagnostic"]:
+        raise ValueError("Diagnostic observations cannot be promoted to dossier assertions.")
     assertion_id = db.upsert_spine_assertion(
         subject_id=observation.subject_id,
         assertion_type=observation.observation_type,
