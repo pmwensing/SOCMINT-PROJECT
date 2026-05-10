@@ -18,7 +18,10 @@ from socmint.spine import create_subject
 def main() -> None:
     with tempfile.TemporaryDirectory(prefix="socmint-command-v758-") as tmp:
         os.chdir(tmp)
-        db.configure_database(f"sqlite:///{tmp}/socmint.db")
+        db_url = f"sqlite:///{tmp}/socmint.db"
+        os.environ["DATABASE_URL"] = db_url
+        os.environ["SOCMINT_DATA_DIR"] = tmp
+        db.configure_database(db_url)
 
         subject_id = create_subject(
             "Command Center QA v7.5.8",
