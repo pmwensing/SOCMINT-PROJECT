@@ -149,6 +149,7 @@
 </section>
 
 {% for key, section in payload.sections.items() %}
+{% set section_items = section.get('items') %}
 <section class="card">
   <h2>{{ section.title }}</h2>
   <p>{{ section.summary }}</p>
@@ -157,11 +158,11 @@
   <p><strong>Count:</strong> {{ section.count }}</p>
   {% endif %}
 
-  {% if section['items'] is defined %}
+  {% if section_items is not none %}
   <table>
     <thead><tr><th>#</th><th>Record</th></tr></thead>
     <tbody>
-      {% for item in section['items'][:25] %}
+      {% for item in section_items[:25] %}
       <tr>
         <td>{{ loop.index }}</td>
         <td><pre>{{ item | tojson(indent=2) }}</pre></td>
