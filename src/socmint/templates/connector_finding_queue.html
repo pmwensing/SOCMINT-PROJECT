@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Finding Promotion Queue</p>
+    <h1>Review normalized connector findings before they enter a dossier.</h1>
+    <p class="muted">Promote findings into a Spine subject, reject noise, or mark uncertain for later review.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="{{ url_for('connector_runs_view') }}">Connector Runs</a>
+    <a class="button-link secondary" href="{{ url_for('dashboard.spine_subjects') }}">Subjects</a>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Findings</h2>
+  <div class="card-grid">
+    {% for finding in payload.findings %}
+    <article class="card">
+      <h3>{{ finding.type }}</h3>
+      <p><strong>Value:</strong> {{ finding.value }}</p>
+      <p><strong>Confidence:</strong> {{ finding.confidence }}</p>
+      <p><strong>Source:</strong> {{ finding.source }} · <a href="{{ url_for('connector_run_detail_view', run_id=finding.connector_run_id) }}">Run {{ finding.connector_run_id }}</a></p>
+      {% if finding.run %}<p class="muted">{{ finding.run.connector }} → {{ finding.run.target_value }} ({{ finding.run.status }})</p>{% endif %}
+      <form method="post" action="{{ url_for('connector_finding_review_action', finding_id=finding.id) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <select name="subject_id">
+          <option value="">No subject</option>
+          {% for subject in payload.subjects %}<option value="{{ subject.id }}">{{ subject.label }}</option>{% endfor %}
+        </select>
+        <input type="text" name="note" placeholder="Analyst note">
+        <button name="action" value="promote" type="submit">Promote</button>
+        <button name="action" value="uncertain" type="submit">Uncertain</button>
+        <button name="action" value="reject" type="submit">Reject</button>
+      </form>
+    </article>
+    {% else %}
+    <p>No connector findings are waiting for review.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
