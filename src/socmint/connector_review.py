@@ -5,8 +5,9 @@ from typing import Any
 
 from . import database as db
 
-REVIEW_SCHEMA = "socmint.connector_review.v7_6_2"
+REVIEW_SCHEMA = "socmint.connector_review.v7_6_2_1"
 VALID_ACTIONS = {"promote", "reject", "uncertain"}
+VALID_QUEUE_FILTERS = {"unreviewed", "promote", "rejected", "uncertain", "all"}
 
 
 def _safe_json(value: str | None, fallback: Any = None) -> Any:
@@ -37,8 +38,61 @@ def _serialize_run(run) -> dict[str, Any]:
     }
 
 
-def _serialize_finding(finding, run=None) -> dict[str, Any]:
+def _review_events_for_findings(finding_ids: list[int]) -> dict[int, dict[str, Any]]:
+    if not finding_ids:
+        return {}
+    db.ensure_configured()
+    session = db.Session()
+    latest: dict[int, dict[str, Any]] = {}
+    try:
+        events = (
+            session.query(db.AuditLog)
+            .filter(db.AuditLog.action == "connector_finding_review")
+            .order_by(db.AuditLog.created_at.asc())
+            .all()
+        )
+        wanted = set(finding_ids)
+        for event in events:
+            details = _safe_json(event.details, {})
+            finding_id = details.get("finding_id")
+            if finding_id not in wanted:
+                continue
+            action = details.get("action")
+            validation_state = details.get("validation_state") or (
+                "confirmed" if action == "promote" else action or "unreviewed"
+            )
+            queue_state = "promote" if action == "promote" else validation_state
+            latest[finding_id] = {
+                "state": queue_state,
+                "action": action,
+                "validation_state": validation_state,
+                "subject_id": details.get("subject_id"),
+                "assertion_id": details.get("assertion_id"),
+                "note": details.get("note"),
+                "actor": event.actor,
+                "reviewed_at": event.created_at.isoformat() if event.created_at else None,
+            }
+        return latest
+    finally:
+        session.close()
+
+
+def _default_review_state() -> dict[str, Any]:
+    return {
+        "state": "unreviewed",
+        "action": None,
+        "validation_state": "unreviewed",
+        "subject_id": None,
+        "assertion_id": None,
+        "note": None,
+        "actor": None,
+        "reviewed_at": None,
+    }
+
+
+def _serialize_finding(finding, run=None, review_state: dict[str, Any] | None = None) -> dict[str, Any]:
     context = _safe_json(finding.context, {})
+    state = review_state or _default_review_state()
     payload = {
         "id": finding.id,
         "connector_run_id": finding.connector_run_id,
@@ -49,6 +103,9 @@ def _serialize_finding(finding, run=None) -> dict[str, Any]:
         "confidence": finding.confidence,
         "context": context,
         "created_at": finding.created_at.isoformat() if finding.created_at else None,
+        "review": state,
+        "review_state": state.get("state", "unreviewed"),
+        "reviewed": state.get("state") != "unreviewed",
     }
     if run is not None:
         payload["run"] = {
@@ -83,11 +140,16 @@ def connector_run_detail_payload(run_id: int) -> dict[str, Any] | None:
             .order_by(db.Finding.created_at.desc())
             .all()
         )
+        finding_ids = [item.id for item in findings]
+        review_states = _review_events_for_findings(finding_ids)
         subjects = db.list_spine_subjects(limit=100)
         return {
             "schema": REVIEW_SCHEMA,
             "run": _serialize_run(run),
-            "findings": [_serialize_finding(item) for item in findings],
+            "findings": [
+                _serialize_finding(item, review_state=review_states.get(item.id))
+                for item in findings
+            ],
             "subjects": [
                 {"id": subject.id, "label": subject.label or f"Subject {subject.id}"}
                 for subject in subjects
@@ -97,22 +159,41 @@ def connector_run_detail_payload(run_id: int) -> dict[str, Any] | None:
         session.close()
 
 
-def finding_queue_payload(limit: int = 200) -> dict[str, Any]:
+def finding_queue_payload(limit: int = 200, status: str = "unreviewed") -> dict[str, Any]:
+    status = (status or "unreviewed").strip().lower()
+    if status not in VALID_QUEUE_FILTERS:
+        status = "unreviewed"
     db.ensure_configured()
     session = db.Session()
     try:
-        findings = (
+        rows = (
             session.query(db.Finding, db.ConnectorRun)
             .join(db.ConnectorRun, db.Finding.connector_run_id == db.ConnectorRun.id)
             .order_by(db.Finding.created_at.desc())
-            .limit(limit)
+            .limit(max(limit * 5, limit))
             .all()
         )
+        review_states = _review_events_for_findings([finding.id for finding, _run in rows])
+        serialized = [
+            _serialize_finding(finding, run, review_states.get(finding.id))
+            for finding, run in rows
+        ]
+        if status != "all":
+            serialized = [item for item in serialized if item["review_state"] == status]
+        serialized = serialized[:limit]
         subjects = db.list_spine_subjects(limit=100)
+        counts = {key: 0 for key in ["unreviewed", "promote", "rejected", "uncertain"]}
+        for item in [
+            _serialize_finding(finding, run, review_states.get(finding.id))
+            for finding, run in rows
+        ]:
+            counts[item["review_state"]] = counts.get(item["review_state"], 0) + 1
         return {
             "schema": REVIEW_SCHEMA,
-            "count": len(findings),
-            "findings": [_serialize_finding(finding, run) for finding, run in findings],
+            "count": len(serialized),
+            "status_filter": status,
+            "counts": counts,
+            "findings": serialized,
             "subjects": [
                 {"id": subject.id, "label": subject.label or f"Subject {subject.id}"}
                 for subject in subjects
@@ -122,10 +203,18 @@ def finding_queue_payload(limit: int = 200) -> dict[str, Any]:
         session.close()
 
 
-def review_finding(finding_id: int, action: str, actor: str | None = None, note: str | None = None, subject_id: int | None = None) -> dict[str, Any]:
+def review_finding(
+    finding_id: int,
+    action: str,
+    actor: str | None = None,
+    note: str | None = None,
+    subject_id: int | None = None,
+) -> dict[str, Any]:
     action = (action or "").strip().lower()
     if action not in VALID_ACTIONS:
         raise ValueError("Invalid finding review action.")
+    if action == "promote" and not subject_id:
+        raise ValueError("Promote requires a Spine subject.")
 
     db.ensure_configured()
     session = db.Session()
@@ -180,4 +269,5 @@ def review_finding(finding_id: int, action: str, actor: str | None = None, note:
         "subject_id": subject_id,
         "assertion_id": assertion_id,
         "validation_state": validation_state,
+        "review_state": "promote" if action == "promote" else validation_state,
     }
