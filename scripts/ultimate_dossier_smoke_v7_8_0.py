@@ -23,7 +23,7 @@ from socmint.ultimate_dossier_routes import register_ultimate_dossier_routes
 
 
 def _run_with_result(subject_id: int, connector: str, seed_type: str, seed_value: str, raw_result: dict) -> int:
-    seed = db.add_spine_seed(
+    seed_id = db.add_spine_seed(
         subject_id=subject_id,
         seed_type=seed_type,
         raw_value=seed_value,
@@ -41,7 +41,7 @@ def _run_with_result(subject_id: int, connector: str, seed_type: str, seed_value
     run_id = db.create_spine_connector_run(
         subject_id=subject_id,
         connector_key=connector,
-        seed_id=seed.id,
+        seed_id=seed_id,
         status=raw_result.get("status", "completed"),
         raw_result=payload,
     )
