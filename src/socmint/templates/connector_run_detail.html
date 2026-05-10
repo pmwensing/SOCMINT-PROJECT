@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Connector Run Detail</p>
+    <h1>{{ payload.run.connector }} → {{ payload.run.target_value }}</h1>
+    <p class="muted">Status: {{ payload.run.status }} · Target type: {{ payload.run.target_type }} · Run ID: {{ payload.run.id }}</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="{{ url_for('connector_finding_queue_view') }}">Finding Queue</a>
+    <a class="button-link secondary" href="{{ url_for('connector_runs_view') }}">All Runs</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>Findings</span><strong>{{ payload.findings|length }}</strong></article>
+  <article class="metric-card"><span>Status</span><strong>{{ payload.run.status }}</strong></article>
+  <article class="metric-card"><span>Connector</span><strong>{{ payload.run.connector }}</strong></article>
+</section>
+
+<section class="panel">
+  <h2>Command</h2>
+  <pre>{{ payload.run.command | join(' ') }}</pre>
+</section>
+
+<section class="panel">
+  <h2>Normalized Findings</h2>
+  <div class="card-grid">
+    {% for finding in payload.findings %}
+    <article class="card">
+      <h3>{{ finding.type }}</h3>
+      <p><strong>Value:</strong> {{ finding.value }}</p>
+      <p><strong>Confidence:</strong> {{ finding.confidence }}</p>
+      <form method="post" action="{{ url_for('connector_finding_review_action', finding_id=finding.id) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <select name="subject_id">
+          <option value="">No subject</option>
+          {% for subject in payload.subjects %}<option value="{{ subject.id }}">{{ subject.label }}</option>{% endfor %}
+        </select>
+        <input type="text" name="note" placeholder="Analyst note">
+        <button name="action" value="promote" type="submit">Promote</button>
+        <button name="action" value="uncertain" type="submit">Uncertain</button>
+        <button name="action" value="reject" type="submit">Reject</button>
+      </form>
+    </article>
+    {% else %}
+    <p>No normalized findings were extracted from this run.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Raw stdout</h2>
+  <pre>{{ payload.run.stdout or '' }}</pre>
+</section>
+
+<section class="panel">
+  <h2>Raw stderr</h2>
+  <pre>{{ payload.run.stderr or '' }}</pre>
+</section>
+
+<section class="panel">
+  <h2>Raw JSON</h2>
+  <pre>{{ payload.run.raw_result | tojson(indent=2) }}</pre>
+</section>
+{% endblock %}
