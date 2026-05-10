@@ -1,0 +1,83 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h1>Case Evidence Intake</h1>
+
+<section class="card">
+  <h2>Add local evidence file</h2>
+  <p>
+    Stores a copy under <code>var/socmint/evidence/</code> and records SHA-256,
+    size, MIME type, case ID, and subject ID.
+  </p>
+
+  <form method="post" action="{{ url_for('dashboard.evidence_intake_add_form') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label>
+      Source file path
+      <input type="text" name="source_path" placeholder="/path/to/file.pdf" required>
+    </label>
+
+    <label>
+      Case ID
+      <input type="text" name="case_id" placeholder="optional">
+    </label>
+
+    <label>
+      Subject ID
+      <input type="number" name="subject_id" placeholder="optional">
+    </label>
+
+    <label>
+      Source note
+      <input type="text" name="source_note" placeholder="optional">
+    </label>
+
+    <button type="submit">Store evidence</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Stored evidence</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Original</th>
+        <th>Case</th>
+        <th>Subject</th>
+        <th>SHA-256</th>
+        <th>Size</th>
+        <th>MIME</th>
+        <th>Download</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in payload.items %}
+      <tr>
+        <td>{{ item.original_name }}</td>
+        <td>{{ item.case_id or "" }}</td>
+        <td>{{ item.subject_id or "" }}</td>
+        <td><code>{{ item.sha256 }}</code></td>
+        <td>{{ item.size_bytes }}</td>
+        <td>{{ item.mime_type }}</td>
+        <td>
+          <a href="{{ url_for('dashboard.evidence_file_download', name=item.stored_name) }}">
+            Download
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="7">No evidence files have been stored yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Attachment builder API</h2>
+  <p><code>POST /api/v1/reports/export-center/attachments</code></p>
+  <p><code>POST /api/v1/reports/export-center/attachments/zip</code></p>
+</section>
+{% endblock %}

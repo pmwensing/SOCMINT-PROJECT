@@ -20,6 +20,9 @@
                 <a href="{{ url_for('dashboard.audit_log') }}">Audit</a>
                 {% endif %}
                 <a href="{{ url_for('dashboard.change_password') }}">Password</a>
+                {% if session.get('is_admin') or session.get('role') == 'analyst' %}
+                <a href="{{ url_for('dashboard.spine_enrichment_review') }}">Review</a>
+                {% endif %}
                 <a href="{{ url_for('dashboard.logout') }}">Logout</a>
                 {% else %}
                 <a href="{{ url_for('dashboard.login') }}">Login</a>
@@ -28,7 +31,12 @@
                 {% endif %}
                 {% endif %}
             <a href="{{ url_for('dashboard.workbench_jobs_view') }}">Workbench</a>
-</nav>
+<a href="{{ url_for('dashboard.report_review_console') }}">Report Review</a>
+<a href="{{ url_for('dashboard.report_export_center_view') }}">Export Center</a>
+<a href="{{ url_for('dashboard.evidence_intake_view') }}">Evidence Intake</a>
+<a href="{{ url_for('dashboard.evidence_links_view') }}">Evidence Linker</a>
+<a href="{{ url_for('dashboard.evidence_custody_view') }}">Custody Ledger</a>
+<a href="{{ url_for('dashboard.evidence_integrity_view') }}">Integrity Dashboard</a><a href="/spine/subjects/1/dossier">Full Dossier v2</a></nav>
         </div>
     </header>
     <main class="app-main">

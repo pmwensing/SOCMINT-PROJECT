@@ -25,6 +25,37 @@ from werkzeug.utils import safe_join
 
 from . import database as db
 from .config import configure_logging, load_settings
+from .report_review import report_runs_payload
+from .report_review import review_items_payload
+from .report_review import review_summary
+from .report_export_center import export_center_payload
+from .entity_dossier_v2 import build_full_entity_dossier_v2
+from .entity_dossier_v2 import export_full_entity_dossier_v2
+from .entity_dossier_v2 import safe_dossier_path
+from .evidence_intake import attachment_manifest_for_export
+from .evidence_intake import build_attachment_zip
+from .evidence_intake import evidence_intake_payload
+from .evidence_custody import chain_of_custody_report
+from .evidence_custody import custody_payload
+from .evidence_custody import record_custody_event
+from .evidence_custody import verify_all_evidence
+from .evidence_integrity import build_custody_export_pack
+from .evidence_integrity import integrity_dashboard_payload
+from .evidence_integrity import safe_integrity_pack_path
+from .evidence_links import evidence_links_payload
+from .evidence_links import link_evidence_to_review_item
+from .evidence_links import review_item_attachment_map
+from .evidence_links import unlink_evidence_from_review_item
+from .evidence_intake import intake_evidence_file
+from .evidence_intake import safe_evidence_path
+from .report_export_center import load_manifest_view
+from .report_export_center import safe_export_artifact_path
+from .report_export_center import export_zip_bundle_payload
+from .report_export_center import safe_export_bundle_path
+from .report_export_center import review_gated_export_payload
+from .report_review import bulk_set_review_status
+from .report_review import review_audit_payload
+from .report_review import set_review_status
 from .workbench import create_workbench_job
 from .workbench import evaluate_policy
 from .workbench import list_workbench_jobs_payload
@@ -43,7 +74,9 @@ from .identity_graph import apply_merge_candidate
 from .identity_graph import build_identity_graph
 from .identity_graph import graph_payload
 from .enrichment import enrich_subject_media_profiles
+from .enrichment import enrichment_review_queue
 from .enrichment import media_profile_payload
+from .enrichment import review_enrichment_finding
 from .spine import build_dossier
 from .spine import create_subject as spine_create_subject
 from .spine import run_spine_for_subject
@@ -752,6 +785,39 @@ def spine_media_profile_view(subject_id):
     return render_template("spine_media_profiles.html", payload=payload)
 
 
+@dashboard_bp.route("/spine/enrichment-review")
+@run_required
+def spine_enrichment_review():
+    subject_id = request.args.get("subject_id", type=int)
+    payload = enrichment_review_queue(subject_id=subject_id)
+    return render_template("spine_enrichment_review.html", payload=payload)
+
+
+@dashboard_bp.route(
+    "/spine/enrichments/<int:enrichment_id>/findings/<int:finding_index>/review",
+    methods=["POST"],
+)
+@run_required
+def spine_enrichment_finding_review(enrichment_id, finding_index):
+    action = request.form.get("action", "").strip()
+    note = request.form.get("note", "").strip() or None
+    try:
+        result = review_enrichment_finding(
+            enrichment_id,
+            finding_index,
+            action,
+            actor=session.get("user"),
+            note=note,
+        )
+        audit("spine_enrichment_finding_review", details=result)
+        flash(f"Enrichment finding marked {action}.", "success")
+        if result.get("contradiction_ids"):
+            flash("Contradictions were refreshed after promotion.", "success")
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(request.referrer or url_for("dashboard.spine_enrichment_review"))
+
+
 @dashboard_bp.route("/spine/<int:subject_id>/media-profiles/run", methods=["POST"])
 @run_required
 def spine_media_profile_run(subject_id):
@@ -789,6 +855,31 @@ def api_spine_media_profiles(subject_id):
 def api_spine_media_profiles_run(subject_id):
     payload = enrich_subject_media_profiles(subject_id)
     return jsonify(payload), 202
+
+
+@dashboard_bp.route("/api/v1/spine/enrichment-review")
+@run_required
+def api_spine_enrichment_review():
+    return jsonify(enrichment_review_queue(request.args.get("subject_id", type=int)))
+
+
+@dashboard_bp.route(
+    "/api/v1/spine/enrichments/<int:enrichment_id>/findings/"
+    "<int:finding_index>/review",
+    methods=["POST"],
+)
+@run_required
+def api_spine_enrichment_finding_review(enrichment_id, finding_index):
+    payload = request.get_json(silent=True) or {}
+    result = review_enrichment_finding(
+        enrichment_id,
+        finding_index,
+        payload.get("action", ""),
+        actor=session.get("user"),
+        note=payload.get("note"),
+    )
+    audit("spine_enrichment_finding_review", details=result)
+    return jsonify(result), 202
 
 
 
@@ -1063,6 +1154,639 @@ def api_workbench_retention_run():
     return jsonify(result), 202
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@dashboard_bp.route("/api/v1/spine/subjects/<int:subject_id>/dossier-v2")
+@login_required
+def api_subject_dossier_v2(subject_id):
+    return jsonify(build_full_entity_dossier_v2(subject_id))
+
+
+@dashboard_bp.route(
+    "/api/v1/spine/subjects/<int:subject_id>/dossier-v2/export",
+    methods=["POST"],
+)
+@run_required
+def api_subject_dossier_v2_export(subject_id):
+    result = export_full_entity_dossier_v2(subject_id)
+    audit(
+        "full_entity_dossier_v2_export",
+        details={"subject_id": subject_id, "zip_path": result.get("zip_path")},
+    )
+    return jsonify(result), 202
+
+
+@dashboard_bp.route("/spine/subjects/<int:subject_id>/dossier")
+@login_required
+def subject_dossier_v2_view(subject_id):
+    return render_template(
+        "entity_dossier_v2.html",
+        payload=build_full_entity_dossier_v2(subject_id),
+    )
+
+
+@dashboard_bp.route(
+    "/spine/subjects/<int:subject_id>/dossier-v2/export/run",
+    methods=["POST"],
+)
+@run_required
+def subject_dossier_v2_export_run(subject_id):
+    result = export_full_entity_dossier_v2(subject_id)
+    flash("Dossier v2 export complete: " + str(result.get("zip_path")), "success")
+    return redirect(
+        url_for("dashboard.subject_dossier_v2_view", subject_id=subject_id)
+    )
+
+
+@dashboard_bp.route(
+    "/spine/subjects/<int:subject_id>/dossier-v2/export/<path:name>/download"
+)
+@login_required
+def subject_dossier_v2_download(subject_id, name):
+    path = safe_dossier_path(name)
+    return send_from_directory(
+        path.parent,
+        path.name,
+        as_attachment=True,
+        download_name=path.name,
+    )
+
+@dashboard_bp.route("/evidence/integrity")
+@login_required
+def evidence_integrity_view():
+    case_id = request.args.get("case_id")
+    subject_id_raw = request.args.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    return render_template(
+        "evidence_integrity.html",
+        payload=integrity_dashboard_payload(
+            case_id=case_id,
+            subject_id=subject_id,
+        ),
+    )
+
+
+@dashboard_bp.route("/api/v1/evidence/integrity")
+@login_required
+def api_evidence_integrity():
+    case_id = request.args.get("case_id")
+    subject_id_raw = request.args.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    return jsonify(
+        integrity_dashboard_payload(
+            case_id=case_id,
+            subject_id=subject_id,
+        )
+    )
+
+
+@dashboard_bp.route("/api/v1/evidence/integrity/pack", methods=["POST"])
+@run_required
+def api_evidence_integrity_pack():
+    payload = request.get_json(silent=True) or {}
+    subject_id_raw = payload.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw not in (None, "") else None
+    result = build_custody_export_pack(
+        case_id=payload.get("case_id"),
+        subject_id=subject_id,
+        actor=session.get("username"),
+    )
+    audit("custody_export_pack", details=result)
+    return jsonify(result), 202
+
+
+@dashboard_bp.route("/evidence/integrity/pack/run", methods=["POST"])
+@run_required
+def evidence_integrity_pack_run():
+    case_id = request.form.get("case_id") or None
+    subject_id_raw = request.form.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    result = build_custody_export_pack(
+        case_id=case_id,
+        subject_id=subject_id,
+        actor=session.get("username"),
+    )
+    flash("Custody export pack created: " + str(result.get("zip_path")), "success")
+    return redirect(url_for("dashboard.evidence_integrity_view"))
+
+
+@dashboard_bp.route("/evidence/integrity/packs/<path:name>/download")
+@login_required
+def evidence_integrity_pack_download(name):
+    path = safe_integrity_pack_path(name)
+    return send_from_directory(
+        path.parent,
+        path.name,
+        as_attachment=True,
+        download_name=path.name,
+    )
+
+@dashboard_bp.route("/evidence/custody")
+@login_required
+def evidence_custody_view():
+    evidence_id = request.args.get("evidence_id")
+    action = request.args.get("action")
+    return render_template(
+        "evidence_custody.html",
+        payload=custody_payload(evidence_id=evidence_id, action=action),
+    )
+
+
+@dashboard_bp.route("/api/v1/evidence/custody")
+@login_required
+def api_evidence_custody():
+    evidence_id = request.args.get("evidence_id")
+    action = request.args.get("action")
+    return jsonify(custody_payload(evidence_id=evidence_id, action=action))
+
+
+@dashboard_bp.route("/api/v1/evidence/custody", methods=["POST"])
+@run_required
+def api_evidence_custody_add():
+    payload = request.get_json(silent=True) or {}
+    result = record_custody_event(
+        evidence_id=payload.get("evidence_id"),
+        action=payload.get("action") or "manual_review",
+        actor=session.get("username"),
+        sha256=payload.get("sha256"),
+        status=payload.get("status"),
+        note=payload.get("note"),
+        details=payload.get("details") or {},
+    )
+    audit("evidence_custody_event", details=result)
+    return jsonify(result), 201
+
+
+@dashboard_bp.route("/api/v1/evidence/verify")
+@login_required
+def api_evidence_verify_report():
+    case_id = request.args.get("case_id")
+    subject_id_raw = request.args.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    result = verify_all_evidence(
+        case_id=case_id,
+        subject_id=subject_id,
+        actor=session.get("username"),
+    )
+    return jsonify(result)
+
+
+@dashboard_bp.route("/evidence/verify/run", methods=["POST"])
+@run_required
+def evidence_verify_run():
+    case_id = request.form.get("case_id") or None
+    subject_id_raw = request.form.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    result = verify_all_evidence(
+        case_id=case_id,
+        subject_id=subject_id,
+        actor=session.get("username"),
+    )
+    flash(
+        "Hash verification complete: "
+        + str(result.get("markdown_path") or result.get("report_path")),
+        "success",
+    )
+    return redirect(url_for("dashboard.evidence_custody_view"))
+
+
+@dashboard_bp.route("/api/v1/evidence/custody/report")
+@login_required
+def api_evidence_custody_report():
+    evidence_id = request.args.get("evidence_id")
+    return jsonify(chain_of_custody_report(evidence_id=evidence_id))
+
+@dashboard_bp.route("/evidence/links")
+@login_required
+def evidence_links_view():
+    return render_template(
+        "evidence_links.html",
+        payload=evidence_links_payload(),
+    )
+
+
+@dashboard_bp.route("/api/v1/evidence/links")
+@login_required
+def api_evidence_links_list():
+    review_item_id = request.args.get("review_item_id")
+    evidence_id = request.args.get("evidence_id")
+    return jsonify(
+        evidence_links_payload(
+            review_item_id=review_item_id,
+            evidence_id=evidence_id,
+        )
+    )
+
+
+@dashboard_bp.route("/api/v1/evidence/links", methods=["POST"])
+@run_required
+def api_evidence_links_add():
+    payload = request.get_json(silent=True) or {}
+    result = link_evidence_to_review_item(
+        evidence_id=payload.get("evidence_id"),
+        review_item_id=payload.get("review_item_id"),
+        relation=payload.get("relation") or "supports",
+        confidence=payload.get("confidence"),
+        note=payload.get("note"),
+        created_by=session.get("username"),
+    )
+    audit("evidence_link_created", details=result)
+    return jsonify(result), 201
+
+
+@dashboard_bp.route("/api/v1/evidence/links/delete", methods=["POST"])
+@run_required
+def api_evidence_links_delete():
+    payload = request.get_json(silent=True) or {}
+    result = unlink_evidence_from_review_item(
+        evidence_id=payload.get("evidence_id"),
+        review_item_id=payload.get("review_item_id"),
+        relation=payload.get("relation"),
+    )
+    audit("evidence_link_deleted", details=result)
+    return jsonify(result)
+
+
+@dashboard_bp.route("/evidence/links/add", methods=["POST"])
+@run_required
+def evidence_links_add_form():
+    result = link_evidence_to_review_item(
+        evidence_id=request.form.get("evidence_id"),
+        review_item_id=request.form.get("review_item_id"),
+        relation=request.form.get("relation") or "supports",
+        confidence=(
+            float(request.form.get("confidence"))
+            if request.form.get("confidence")
+            else None
+        ),
+        note=request.form.get("note") or None,
+        created_by=session.get("username"),
+    )
+    flash("Evidence linked: " + str(result.get("link_id")), "success")
+    return redirect(url_for("dashboard.evidence_links_view"))
+
+
+@dashboard_bp.route("/api/v1/evidence/attachment-map")
+@login_required
+def api_review_item_attachment_map():
+    export_manifest_name = request.args.get("export_manifest_name")
+    return jsonify(review_item_attachment_map(export_manifest_name))
+
+@dashboard_bp.route("/evidence/intake")
+@login_required
+def evidence_intake_view():
+    return render_template(
+        "evidence_intake.html",
+        payload=evidence_intake_payload(),
+    )
+
+
+@dashboard_bp.route("/api/v1/evidence/intake")
+@login_required
+def api_evidence_intake_list():
+    case_id = request.args.get("case_id")
+    subject_id_raw = request.args.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    return jsonify(evidence_intake_payload(case_id=case_id, subject_id=subject_id))
+
+
+@dashboard_bp.route("/api/v1/evidence/intake", methods=["POST"])
+@run_required
+def api_evidence_intake_add():
+    payload = request.get_json(silent=True) or {}
+    source_path = payload.get("source_path")
+    case_id = payload.get("case_id")
+    subject_id_raw = payload.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw not in (None, "") else None
+    source_note = payload.get("source_note")
+
+    if not source_path:
+        return jsonify({"error": "source_path required"}), 400
+
+    result = intake_evidence_file(
+        source_path=source_path,
+        case_id=case_id,
+        subject_id=subject_id,
+        source_note=source_note,
+    )
+    audit(
+        "evidence_intake",
+        details={
+            "case_id": case_id,
+            "subject_id": subject_id,
+            "sha256": result.get("sha256"),
+            "stored_name": result.get("stored_name"),
+        },
+    )
+    return jsonify(result), 201
+
+
+@dashboard_bp.route("/evidence/intake/add", methods=["POST"])
+@run_required
+def evidence_intake_add_form():
+    source_path = request.form.get("source_path")
+    case_id = request.form.get("case_id") or None
+    subject_id_raw = request.form.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    source_note = request.form.get("source_note") or None
+
+    result = intake_evidence_file(
+        source_path=source_path,
+        case_id=case_id,
+        subject_id=subject_id,
+        source_note=source_note,
+    )
+    flash("Evidence stored: " + str(result.get("stored_name")), "success")
+    return redirect(url_for("dashboard.evidence_intake_view"))
+
+
+@dashboard_bp.route("/evidence/intake/files/<path:name>/download")
+@login_required
+def evidence_file_download(name):
+    path = safe_evidence_path(name)
+    return send_from_directory(
+        path.parent,
+        path.name,
+        as_attachment=True,
+        download_name=path.name,
+    )
+
+
+@dashboard_bp.route("/api/v1/reports/export-center/attachments", methods=["POST"])
+@run_required
+def api_export_attachment_manifest():
+    payload = request.get_json(silent=True) or {}
+    export_manifest_name = payload.get("export_manifest_name")
+    case_id = payload.get("case_id")
+    subject_id_raw = payload.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw not in (None, "") else None
+
+    if not export_manifest_name:
+        return jsonify({"error": "export_manifest_name required"}), 400
+
+    result = attachment_manifest_for_export(
+        export_manifest_name=export_manifest_name,
+        case_id=case_id,
+        subject_id=subject_id,
+    )
+    audit("export_attachment_manifest", details=result)
+    return jsonify(result), 202
+
+
+@dashboard_bp.route("/api/v1/reports/export-center/attachments/zip", methods=["POST"])
+@run_required
+def api_export_attachment_zip():
+    payload = request.get_json(silent=True) or {}
+    export_manifest_name = payload.get("export_manifest_name")
+    case_id = payload.get("case_id")
+    subject_id_raw = payload.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw not in (None, "") else None
+
+    if not export_manifest_name:
+        return jsonify({"error": "export_manifest_name required"}), 400
+
+    result = build_attachment_zip(
+        export_manifest_name=export_manifest_name,
+        case_id=case_id,
+        subject_id=subject_id,
+    )
+    audit("export_attachment_zip", details=result)
+    return jsonify(result), 202
+
+@dashboard_bp.route("/reports/export-center")
+@login_required
+def report_export_center_view():
+    return render_template(
+        "report_export_center.html",
+        payload=export_center_payload(),
+    )
+
+
+@dashboard_bp.route("/api/v1/reports/export-center")
+@login_required
+def api_report_export_center():
+    return jsonify(export_center_payload())
+
+
+@dashboard_bp.route("/api/v1/reports/export-center/review-gated", methods=["POST"])
+@run_required
+def api_review_gated_export():
+    payload = request.get_json(silent=True) or {}
+    subject_id_raw = payload.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw not in (None, "") else None
+    gate_mode = payload.get("gate_mode") or "approved_and_uncertain"
+    title = payload.get("title")
+
+    result = review_gated_export_payload(
+        subject_id=subject_id,
+        gate_mode=gate_mode,
+        title=title,
+    )
+    manifest = result.get("manifest", {})
+    audit(
+        "review_gated_export",
+        details={
+            "subject_id": subject_id,
+            "gate_mode": gate_mode,
+            "manifest_path": manifest.get("manifest_path"),
+            "included_count": manifest.get("included_count"),
+            "excluded_count": manifest.get("excluded_count"),
+        },
+    )
+    return jsonify(result), 202
+
+
+@dashboard_bp.route("/reports/export-center/review-gated/run", methods=["POST"])
+@run_required
+def report_review_gated_export_run():
+    subject_id_raw = request.form.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    gate_mode = request.form.get("gate_mode") or "approved_and_uncertain"
+    title = request.form.get("title") or None
+
+    result = review_gated_export_payload(
+        subject_id=subject_id,
+        gate_mode=gate_mode,
+        title=title,
+    )
+    manifest = result.get("manifest", {})
+    flash(
+        "Review-gated export complete: "
+        + str(manifest.get("manifest_path", "")),
+        "success",
+    )
+    return redirect(url_for("dashboard.report_export_center_view"))
+
+
+
+
+@dashboard_bp.route("/reports/export-center/manifests/<path:name>")
+@login_required
+def report_export_manifest_view(name):
+    payload = load_manifest_view(name)
+    return render_template(
+        "report_manifest_viewer.html",
+        payload=payload,
+    )
+
+
+@dashboard_bp.route("/api/v1/reports/export-center/artifacts/<path:name>")
+@login_required
+def api_report_export_artifact_view(name):
+    return jsonify(load_manifest_view(name))
+
+
+@dashboard_bp.route("/reports/export-center/artifacts/<path:name>/download")
+@login_required
+def report_export_artifact_download(name):
+    path = safe_export_artifact_path(name)
+    return send_from_directory(
+        path.parent,
+        path.name,
+        as_attachment=True,
+        download_name=path.name,
+    )
+
+
+
+
+@dashboard_bp.route("/api/v1/reports/export-center/zip", methods=["POST"])
+@run_required
+def api_report_export_zip_bundle():
+    payload = request.get_json(silent=True) or {}
+    subject_id_raw = payload.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw not in (None, "") else None
+    gate_mode = payload.get("gate_mode") or "approved_and_uncertain"
+    title = payload.get("title")
+
+    result = export_zip_bundle_payload(
+        subject_id=subject_id,
+        gate_mode=gate_mode,
+        title=title,
+    )
+    bundle = result.get("result", {}).get("bundle", {})
+    audit(
+        "review_gated_zip_bundle",
+        details={
+            "subject_id": subject_id,
+            "gate_mode": gate_mode,
+            "bundle_path": bundle.get("path"),
+        },
+    )
+    return jsonify(result), 202
+
+
+@dashboard_bp.route("/reports/export-center/zip/run", methods=["POST"])
+@run_required
+def report_export_zip_bundle_run():
+    subject_id_raw = request.form.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    gate_mode = request.form.get("gate_mode") or "approved_and_uncertain"
+    title = request.form.get("title") or None
+
+    result = export_zip_bundle_payload(
+        subject_id=subject_id,
+        gate_mode=gate_mode,
+        title=title,
+    )
+    bundle = result.get("result", {}).get("bundle", {})
+    flash("ZIP bundle complete: " + str(bundle.get("path", "")), "success")
+    return redirect(url_for("dashboard.report_export_center_view"))
+
+
+@dashboard_bp.route("/reports/export-center/bundles/<path:name>/download")
+@login_required
+def report_export_bundle_download(name):
+    path = safe_export_bundle_path(name)
+    return send_from_directory(
+        path.parent,
+        path.name,
+        as_attachment=True,
+        download_name=path.name,
+    )
+
+@dashboard_bp.route("/reports/review")
+@login_required
+def report_review_console():
+    payload = {
+        "summary": review_summary(),
+        "items": review_items_payload().get("items", []),
+        "reports": report_runs_payload().get("reports", []),
+    }
+    return render_template("report_review_console.html", payload=payload)
+
+
+@dashboard_bp.route("/api/v1/reports/review/summary")
+@login_required
+def api_report_review_summary():
+    return jsonify(review_summary())
+
+
+@dashboard_bp.route("/api/v1/reports/review/items")
+@login_required
+def api_report_review_items():
+    subject_id_raw = request.args.get("subject_id")
+    status = request.args.get("status")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    return jsonify(review_items_payload(subject_id=subject_id, status=status))
+
+
+@dashboard_bp.route("/api/v1/reports/runs")
+@login_required
+def api_report_runs():
+    subject_id_raw = request.args.get("subject_id")
+    subject_id = int(subject_id_raw) if subject_id_raw else None
+    return jsonify(report_runs_payload(subject_id=subject_id))
+
+
+@dashboard_bp.route("/api/v1/reports/review/items/<path:item_id>", methods=["POST"])
+@run_required
+def api_set_report_review_status(item_id):
+    payload = request.get_json(silent=True) or {}
+    status = payload.get("status", "needs_review")
+    note = payload.get("note")
+    result = set_review_status(item_id, status, note)
+    audit(
+        "report_review_decision",
+        details={
+            "item_id": item_id,
+            "status": status,
+            "note": note,
+        },
+    )
+    return jsonify(result)
+
+
+@dashboard_bp.route("/reports/review/items/<path:item_id>/<status>", methods=["POST"])
+@run_required
+def report_review_decision(item_id, status):
+    note = request.form.get("note")
+    result = set_review_status(item_id, status, note)
+    if result.get("updated"):
+        flash(f"Review item marked {status}: {item_id}", "success")
+    else:
+        flash(result.get("reason", "Review update failed"), "error")
+    return redirect(url_for("dashboard.report_review_console"))
+
+
 @dashboard_bp.route("/about")
 @login_required
 def about():
@@ -1133,3 +1857,41 @@ def create_app(database_url=None):
     app.after_request(add_security_headers)
     app.register_blueprint(dashboard_bp)
     return app
+
+
+@dashboard_bp.route("/api/v1/reports/review/bulk", methods=["POST"])
+@run_required
+def api_bulk_report_review_status():
+    payload = request.get_json(silent=True) or {}
+    item_ids = payload.get("item_ids") or []
+    status = payload.get("status", "needs_review")
+    note = payload.get("note")
+    reviewer = None
+    try:
+        reviewer = getattr(g, "user", None) or session.get("username")
+    except Exception:
+        reviewer = None
+
+    result = bulk_set_review_status(
+        item_ids=item_ids,
+        status=status,
+        note=note,
+        reviewer=reviewer,
+    )
+    audit(
+        "bulk_report_review_decision",
+        details={
+            "batch_id": result.get("batch_id"),
+            "status": status,
+            "count": len(item_ids),
+        },
+    )
+    return jsonify(result)
+
+
+@dashboard_bp.route("/api/v1/reports/review/audit")
+@login_required
+def api_report_review_audit():
+    item_id = request.args.get("item_id")
+    batch_id = request.args.get("batch_id")
+    return jsonify(review_audit_payload(item_id=item_id, batch_id=batch_id))

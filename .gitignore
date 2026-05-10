@@ -37,3 +37,17 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local SOCMINT runtime/secrets
+.env
+.env.before_*
+var/
+*.log
+
+# Local SOCMINT runtime/secrets
+.env
+.env.before_*
+var/
+*.log
+
+.env.deployment.local

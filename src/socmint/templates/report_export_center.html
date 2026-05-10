@@ -1,0 +1,191 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h1>Report Export Center</h1>
+
+<section class="card">
+  <h2>Review-gated dossier builder</h2>
+  <p>
+    Build export manifests that include or exclude enrichment findings based on
+    analyst review decisions.
+  </p>
+
+  <form method="post" action="{{ url_for('dashboard.report_review_gated_export_run') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label>
+      Subject ID
+      <input type="number" name="subject_id" placeholder="optional">
+    </label>
+
+    <label>
+      Gate mode
+      <select name="gate_mode">
+        {% for mode in payload.gate_modes %}
+        <option value="{{ mode }}" {% if mode == "approved_and_uncertain" %}selected{% endif %}>
+          {{ mode }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      Export title
+      <input type="text" name="title" placeholder="Review-gated dossier export">
+    </label>
+
+    <button type="submit">Build gated export</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Current review posture</h2>
+  <p><strong>Review items:</strong> {{ payload.review_summary.review_item_count }}</p>
+  <p><strong>Report runs:</strong> {{ payload.review_summary.report_run_count }}</p>
+
+  <h3>Status counts</h3>
+  <pre>{{ payload.review_summary.status_counts | tojson(indent=2) }}</pre>
+</section>
+
+<section class="card">
+  <h2>Export history</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Export ID</th>
+        <th>Gate</th>
+        <th>Subject</th>
+        <th>Included</th>
+        <th>Excluded</th>
+        <th>Manifest</th>
+        <th>Generated</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for export in payload.exports %}
+      <tr>
+        <td>{{ export.export_id }}</td>
+        <td>{{ export.gate_mode }}</td>
+        <td>{{ export.subject_id or "" }}</td>
+        <td>{{ export.included_count }}</td>
+        <td>{{ export.excluded_count }}</td>
+        <td><code>{{ export.manifest_path }}</code></td>
+        <td>{{ export.generated_at }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="7">No review-gated exports have been built yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>API</h2>
+  <p><code>GET /api/v1/reports/export-center</code></p>
+  <p><code>POST /api/v1/reports/export-center/review-gated</code></p>
+</section>
+
+<section class="card">
+  <h2>Artifact browser</h2>
+  <p>Browse generated manifests and summaries, or download them directly.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Size</th>
+        <th>Modified</th>
+        <th>View</th>
+        <th>Download</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for artifact in payload.artifacts %}
+      <tr>
+        <td><code>{{ artifact.name }}</code></td>
+        <td>{{ artifact.size_bytes }}</td>
+        <td>{{ artifact.modified_at }}</td>
+        <td>
+          <a href="{{ artifact.view_url }}">View</a>
+        </td>
+        <td>
+          <a href="{{ artifact.download_url }}">Download</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5">No export artifacts found yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+
+<section class="card">
+  <h2>ZIP bundle builder</h2>
+  <p>
+    Build a downloadable ZIP containing the review-gated manifest, summary, and
+    audit snapshot.
+  </p>
+
+  <form method="post" action="{{ url_for('dashboard.report_export_zip_bundle_run') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label>
+      Subject ID
+      <input type="number" name="subject_id" placeholder="optional">
+    </label>
+
+    <label>
+      Gate mode
+      <select name="gate_mode">
+        {% for mode in payload.gate_modes %}
+        <option value="{{ mode }}" {% if mode == "approved_and_uncertain" %}selected{% endif %}>
+          {{ mode }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      Bundle title
+      <input type="text" name="title" placeholder="Review-gated ZIP bundle">
+    </label>
+
+    <button type="submit">Build ZIP bundle</button>
+  </form>
+</section>
+
+
+<section class="card">
+  <h2>ZIP bundle history</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Size</th>
+        <th>Modified</th>
+        <th>Download</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for bundle in payload.bundles %}
+      <tr>
+        <td><code>{{ bundle.name }}</code></td>
+        <td>{{ bundle.size_bytes }}</td>
+        <td>{{ bundle.modified_at }}</td>
+        <td><a href="{{ bundle.download_url }}">Download ZIP</a></td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4">No ZIP bundles have been built yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% endblock %}

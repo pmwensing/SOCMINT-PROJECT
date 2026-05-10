@@ -1,0 +1,56 @@
+from pathlib import Path
+import zipfile
+
+from socmint.dashboard import create_app
+from socmint.entity_dossier_v2 import build_full_entity_dossier_v2
+from socmint.entity_dossier_v2 import export_full_entity_dossier_v2
+from socmint.entity_dossier_v2 import safe_dossier_path
+
+
+def test_build_full_entity_dossier_v2_payload(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    payload = build_full_entity_dossier_v2(1)
+
+    assert payload["schema"] == "socmint.full_entity_profile_dossier.v7_5"
+    assert payload["subject_id"] == 1
+    assert "identity_summary" in payload["sections"]
+    assert "linked_evidence" in payload["sections"]
+    assert "custody_hash_status" in payload["sections"]
+
+
+def test_export_full_entity_dossier_v2(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    result = export_full_entity_dossier_v2(22)
+
+    assert result["schema"] == "socmint.full_entity_profile_dossier_export.v7_5"
+    assert Path(result["json_path"]).exists()
+    assert Path(result["markdown_path"]).exists()
+    assert Path(result["html_path"]).exists()
+    assert Path(result["zip_path"]).exists()
+
+    safe = safe_dossier_path(Path(result["zip_path"]).name)
+    assert safe.exists()
+
+    with zipfile.ZipFile(result["zip_path"]) as zf:
+        names = set(zf.namelist())
+        assert "README.txt" in names
+        assert any(name.endswith(".json") for name in names)
+        assert any(name.endswith(".md") for name in names)
+        assert any(name.endswith(".html") for name in names)
+
+
+def test_dossier_v2_routes_registered():
+    app = create_app()
+    rules = {rule.rule for rule in app.url_map.iter_rules()}
+
+    assert "/api/v1/spine/subjects/<int:subject_id>/dossier-v2" in rules
+    assert "/api/v1/spine/subjects/<int:subject_id>/dossier-v2/export" in rules
+    assert "/spine/subjects/<int:subject_id>/dossier" in rules
+    assert "/spine/subjects/<int:subject_id>/dossier-v2/export/run" in rules
+    assert (
+        "/spine/subjects/<int:subject_id>/dossier-v2/export/"
+        "<path:name>/download"
+        in rules
+    )

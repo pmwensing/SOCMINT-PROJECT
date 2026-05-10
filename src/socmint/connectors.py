@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -35,6 +36,16 @@ CONNECTORS = {
         target_types=("email",),
         command=("h8mail", "-t", "{email}", "-j"),
     ),
+    "socialscan": ConnectorSpec(
+        name="socialscan",
+        target_types=("username", "email"),
+        command=("socialscan", "{target}"),
+    ),
+    "phoneinfoga": ConnectorSpec(
+        name="phoneinfoga",
+        target_types=("phone",),
+        command=("phoneinfoga", "scan", "-n", "{phone}"),
+    ),
 }
 
 
@@ -64,6 +75,7 @@ def split_target(target, target_type):
         "email": target,
         "username": target,
         "domain": target,
+        "phone": target,
     }
 
 
@@ -78,6 +90,11 @@ def executable_available(command):
     if command[0] == "python" and len(command) >= 3 and command[1] == "-m":
         return shutil.which("python") is not None
     return shutil.which(command[0]) is not None
+
+
+def connector_dry_run_forced():
+    value = os.environ.get("SOCMINT_CONNECTOR_DRY_RUN", "")
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def dry_run_payload(name, target, target_type, command):
@@ -114,6 +131,9 @@ def run_connector(name, target, target_type, allow_dry_run=True):
         }
 
     command = render_command(spec, target, target_type)
+    if allow_dry_run and connector_dry_run_forced():
+        return dry_run_payload(name, target, target_type, command)
+
     if not executable_available(command):
         if allow_dry_run:
             return dry_run_payload(name, target, target_type, command)

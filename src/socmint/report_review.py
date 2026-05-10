@@ -1,0 +1,831 @@
+from __future__ import annotations
+
+import json
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+from sqlalchemy import inspect, text
+
+from . import database as db
+
+REVIEW_STATUSES = {"needs_review", "approved", "rejected", "uncertain"}
+
+
+@dataclass
+class ReviewItem:
+    id: str
+    subject_id: int | None
+    source_table: str
+    source_id: int | str | None
+    label: str
+    value: str
+    source: str
+    confidence: float | None
+    quality: str
+    status: str
+    created_at: str | None
+
+
+@dataclass
+class ReportRun:
+    id: str
+    subject_id: int | None
+    manifest_path: str
+    title: str
+    status: str
+    created_at: str | None
+    file_count: int
+    files: list[str]
+
+
+def utc_now() -> str:
+    return datetime.now(UTC).isoformat()
+
+
+def table_exists(table: str) -> bool:
+    try:
+        db.ensure_configured()
+        return table in inspect(db.engine).get_table_names()
+    except Exception:
+        return False
+
+
+def columns(table: str) -> set[str]:
+    try:
+        db.ensure_configured()
+        return {c["name"] for c in inspect(db.engine).get_columns(table)}
+    except Exception:
+        return set()
+
+
+def safe_rows(sql: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    try:
+        db.ensure_configured()
+        with db.engine.connect() as conn:
+            result = conn.execute(text(sql), params or {})
+            return [dict(row._mapping) for row in result]
+    except Exception:
+        return []
+
+
+def quality_from_confidence(confidence: float | None) -> str:
+    if confidence is None:
+        return "unknown"
+    if confidence >= 0.85:
+        return "high"
+    if confidence >= 0.60:
+        return "medium"
+    if confidence >= 0.35:
+        return "low"
+    return "weak"
+
+
+def row_value(row: dict[str, Any], *names: str, default: Any = None) -> Any:
+    for name in names:
+        if name in row and row[name] not in (None, ""):
+            return row[name]
+    return default
+
+
+def list_enrichment_review_items(
+    subject_id: int | None = None,
+    status: str | None = None,
+    limit: int = 200,
+) -> list[ReviewItem]:
+    items: list[ReviewItem] = []
+
+    for table in ("spine_observations", "findings"):
+        if not table_exists(table):
+            continue
+
+        cols = columns(table)
+        where = []
+        params: dict[str, Any] = {"limit": limit}
+
+        if subject_id is not None and "subject_id" in cols:
+            where.append("subject_id = :subject_id")
+            params["subject_id"] = subject_id
+
+        where_sql = "WHERE " + " AND ".join(where) if where else ""
+        rows = safe_rows(
+            f"""
+            SELECT *
+            FROM {table}
+            {where_sql}
+            ORDER BY id DESC
+            LIMIT :limit
+            """,
+            params,
+        )
+
+        for row in rows:
+            confidence_raw = row_value(row, "confidence", "score", default=None)
+            try:
+                confidence = (
+                    float(confidence_raw) if confidence_raw is not None else None
+                )
+            except (TypeError, ValueError):
+                confidence = None
+
+            review_status = row_value(
+                row,
+                "review_status",
+                "analyst_status",
+                default="needs_review",
+            )
+
+            if status and review_status != status:
+                continue
+
+            if table == "spine_observations":
+                label = row_value(
+                    row,
+                    "kind",
+                    "observation_type",
+                    "type",
+                    "label",
+                    default="observation",
+                )
+                value = row_value(
+                    row,
+                    "value",
+                    "content",
+                    "raw_value",
+                    "summary",
+                    default="",
+                )
+            else:
+                label = row_value(
+                    row,
+                    "finding_type",
+                    "kind",
+                    "type",
+                    "label",
+                    default="finding",
+                )
+                value = row_value(
+                    row,
+                    "value",
+                    "content",
+                    "summary",
+                    default="",
+                )
+
+            items.append(
+                ReviewItem(
+                    id=f"{table}:{row.get('id')}",
+                    subject_id=row_value(row, "subject_id", default=subject_id),
+                    source_table=table,
+                    source_id=row.get("id"),
+                    label=str(label),
+                    value=str(value),
+                    source=str(
+                        row_value(
+                            row,
+                            "source",
+                            "connector",
+                            default="unknown",
+                        )
+                    ),
+                    confidence=confidence,
+                    quality=quality_from_confidence(confidence),
+                    status=str(review_status),
+                    created_at=str(row_value(row, "created_at", default="")),
+                )
+            )
+
+    return items[:limit]
+
+
+def write_sidecar_review(
+    item_id: str,
+    status: str,
+    note: str | None = None,
+) -> dict[str, Any]:
+    out_dir = Path("var/socmint/reviews")
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    safe_name = item_id.replace(":", "_").replace("/", "_")
+    path = out_dir / f"{safe_name}.json"
+
+    payload = {
+        "schema": "socmint.review_decision.v7_2",
+        "item_id": item_id,
+        "status": status,
+        "note": note,
+        "updated_at": utc_now(),
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+
+    return {
+        "updated": True,
+        "sidecar": True,
+        "path": str(path),
+        "item_id": item_id,
+        "status": status,
+        "note": note,
+    }
+
+
+def set_review_status(
+    item_id: str,
+    status: str,
+    note: str | None = None,
+) -> dict[str, Any]:
+    if status not in REVIEW_STATUSES:
+        raise ValueError(f"Invalid review status: {status}")
+
+    if ":" not in item_id:
+        raise ValueError("item_id must be formatted as table:id")
+
+    table, raw_id = item_id.split(":", 1)
+
+    if table not in {"spine_observations", "findings"}:
+        raise ValueError(f"Unsupported review table: {table}")
+
+    if not table_exists(table):
+        return write_sidecar_review(item_id, status, note)
+
+    cols = columns(table)
+    if "review_status" not in cols and "analyst_status" not in cols:
+        return write_sidecar_review(item_id, status, note)
+
+    status_col = "review_status" if "review_status" in cols else "analyst_status"
+    note_col = None
+    for candidate in ("review_note", "analyst_note", "notes"):
+        if candidate in cols:
+            note_col = candidate
+            break
+
+    assignments = [f"{status_col} = :status"]
+    params: dict[str, Any] = {"status": status, "id": raw_id}
+
+    if note_col and note is not None:
+        assignments.append(f"{note_col} = :note")
+        params["note"] = note
+
+    try:
+        db.ensure_configured()
+        with db.engine.begin() as conn:
+            conn.execute(
+                text(
+                    f"""
+                    UPDATE {table}
+                    SET {", ".join(assignments)}
+                    WHERE id = :id
+                    """
+                ),
+                params,
+            )
+    except Exception as exc:
+        return {
+            "updated": False,
+            "reason": str(exc),
+            "item_id": item_id,
+            "status": status,
+        }
+
+    return {
+        "updated": True,
+        "item_id": item_id,
+        "status": status,
+        "note": note,
+    }
+
+
+def list_report_runs(
+    subject_id: int | None = None,
+    limit: int = 100,
+) -> list[ReportRun]:
+    runs: list[ReportRun] = []
+
+    export_root = Path("var/socmint/exports")
+    if export_root.exists():
+        manifests = sorted(
+            export_root.glob("*FULL-REPORT-MANIFEST.json"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+
+        for path in manifests[:limit]:
+            try:
+                payload = json.loads(path.read_text(errors="replace"))
+            except json.JSONDecodeError:
+                payload = {}
+
+            sid = payload.get("subject_id")
+            if subject_id is not None and sid != subject_id:
+                continue
+
+            files = payload.get("files") or []
+            runs.append(
+                ReportRun(
+                    id=path.stem,
+                    subject_id=sid,
+                    manifest_path=str(path),
+                    title=path.name,
+                    status="complete",
+                    created_at=payload.get("generated_at"),
+                    file_count=len(files),
+                    files=[str(f) for f in files],
+                )
+            )
+
+    if table_exists("dossier_exports"):
+        cols = columns("dossier_exports")
+        where = []
+        params: dict[str, Any] = {"limit": limit}
+
+        if subject_id is not None and "subject_id" in cols:
+            where.append("subject_id = :subject_id")
+            params["subject_id"] = subject_id
+
+        where_sql = "WHERE " + " AND ".join(where) if where else ""
+        rows = safe_rows(
+            f"""
+            SELECT *
+            FROM dossier_exports
+            {where_sql}
+            ORDER BY id DESC
+            LIMIT :limit
+            """,
+            params,
+        )
+
+        for row in rows:
+            sid = row_value(row, "subject_id", default=subject_id)
+            manifest = str(row_value(row, "path", "file_path", default=""))
+
+            runs.append(
+                ReportRun(
+                    id=f"dossier_exports:{row.get('id')}",
+                    subject_id=sid,
+                    manifest_path=manifest,
+                    title=str(
+                        row_value(
+                            row,
+                            "title",
+                            "report_type",
+                            default=f"Dossier export {row.get('id')}",
+                        )
+                    ),
+                    status=str(row_value(row, "status", default="complete")),
+                    created_at=str(row_value(row, "created_at", default="")),
+                    file_count=1 if manifest else 0,
+                    files=[manifest] if manifest else [],
+                )
+            )
+
+    return runs[:limit]
+
+
+def review_summary() -> dict[str, Any]:
+    items = list_enrichment_review_items(limit=500)
+    reports = list_report_runs(limit=100)
+
+    status_counts: dict[str, int] = {}
+    quality_counts: dict[str, int] = {}
+
+    for item in items:
+        status_counts[item.status] = status_counts.get(item.status, 0) + 1
+        quality_counts[item.quality] = quality_counts.get(item.quality, 0) + 1
+
+    return {
+        "schema": "socmint.report_review.summary.v7_2",
+        "generated_at": utc_now(),
+        "review_item_count": len(items),
+        "report_run_count": len(reports),
+        "status_counts": status_counts,
+        "quality_counts": quality_counts,
+    }
+
+
+def review_items_payload(
+    subject_id: int | None = None,
+    status: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "schema": "socmint.report_review.items.v7_2",
+        "generated_at": utc_now(),
+        "items": [
+            asdict(item)
+            for item in list_enrichment_review_items(
+                subject_id=subject_id,
+                status=status,
+            )
+        ],
+    }
+
+
+def report_runs_payload(subject_id: int | None = None) -> dict[str, Any]:
+    return {
+        "schema": "socmint.report_review.runs.v7_2",
+        "generated_at": utc_now(),
+        "reports": [asdict(run) for run in list_report_runs(subject_id=subject_id)],
+    }
+
+
+def review_decision_table_available() -> bool:
+    return table_exists("review_decisions")
+
+
+def parse_review_item_id(item_id: str) -> tuple[str, str]:
+    if ":" not in item_id:
+        raise ValueError("item_id must be formatted as table:id")
+    return item_id.split(":", 1)
+
+
+def write_native_review_decision(
+    item_id: str,
+    status: str,
+    note: str | None = None,
+    reviewer: str | None = None,
+    subject_id: int | None = None,
+) -> dict[str, Any]:
+    if not review_decision_table_available():
+        return write_sidecar_review(item_id, status, note)
+
+    source_table, source_id = parse_review_item_id(item_id)
+
+    try:
+        db.ensure_configured()
+        now = datetime.now(UTC).replace(tzinfo=None)
+
+        with db.engine.begin() as conn:
+            existing = conn.execute(
+                text(
+                    """
+                    SELECT id
+                    FROM review_decisions
+                    WHERE item_id = :item_id
+                    ORDER BY id DESC
+                    LIMIT 1
+                    """
+                ),
+                {"item_id": item_id},
+            ).first()
+
+            params = {
+                "item_id": item_id,
+                "subject_id": subject_id,
+                "source_table": source_table,
+                "source_id": source_id,
+                "status": status,
+                "note": note,
+                "reviewer": reviewer,
+                "now": now,
+            }
+
+            if existing:
+                conn.execute(
+                    text(
+                        """
+                        UPDATE review_decisions
+                        SET status = :status,
+                            note = :note,
+                            reviewer = :reviewer,
+                            updated_at = :now
+                        WHERE id = :id
+                        """
+                    ),
+                    {**params, "id": existing.id},
+                )
+                decision_id = existing.id
+            else:
+                result = conn.execute(
+                    text(
+                        """
+                        INSERT INTO review_decisions (
+                            item_id,
+                            subject_id,
+                            source_table,
+                            source_id,
+                            status,
+                            note,
+                            reviewer,
+                            created_at,
+                            updated_at
+                        )
+                        VALUES (
+                            :item_id,
+                            :subject_id,
+                            :source_table,
+                            :source_id,
+                            :status,
+                            :note,
+                            :reviewer,
+                            :now,
+                            :now
+                        )
+                        """
+                    ),
+                    params,
+                )
+                decision_id = getattr(result, "lastrowid", None)
+
+                if decision_id is None:
+                    row = conn.execute(
+                        text(
+                            """
+                            SELECT id
+                            FROM review_decisions
+                            WHERE item_id = :item_id
+                            ORDER BY id DESC
+                            LIMIT 1
+                            """
+                        ),
+                        {"item_id": item_id},
+                    ).first()
+                    decision_id = row.id if row else None
+
+    except Exception as exc:
+        fallback = write_sidecar_review(item_id, status, note)
+        fallback["native_error"] = str(exc)
+        return fallback
+
+    return {
+        "updated": True,
+        "native": True,
+        "decision_id": decision_id,
+        "item_id": item_id,
+        "status": status,
+        "note": note,
+        "reviewer": reviewer,
+    }
+
+
+def latest_native_decisions() -> dict[str, dict[str, Any]]:
+    if not review_decision_table_available():
+        return {}
+
+    rows = safe_rows(
+        """
+        SELECT *
+        FROM review_decisions
+        ORDER BY updated_at DESC, id DESC
+        """,
+        {},
+    )
+
+    decisions: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        item_id = str(row.get("item_id"))
+        if item_id and item_id not in decisions:
+            decisions[item_id] = row
+
+    return decisions
+
+
+_legacy_set_review_status_v721 = set_review_status
+
+
+def set_review_status(
+    item_id: str,
+    status: str,
+    note: str | None = None,
+) -> dict[str, Any]:
+    if status not in REVIEW_STATUSES:
+        raise ValueError(f"Invalid review status: {status}")
+
+    if ":" not in item_id:
+        raise ValueError("item_id must be formatted as table:id")
+
+    native_result = None
+    if review_decision_table_available():
+        native_result = write_native_review_decision(item_id, status, note)
+
+    legacy_result = _legacy_set_review_status_v721(item_id, status, note)
+
+    if native_result and native_result.get("updated"):
+        merged = dict(legacy_result)
+        merged["native"] = native_result.get("native", False)
+        merged["decision_id"] = native_result.get("decision_id")
+        merged["item_id"] = item_id
+        merged["status"] = status
+        merged["note"] = note
+        merged["updated"] = True
+        return merged
+
+    return legacy_result
+
+
+def review_decision_audit_table_available() -> bool:
+    return table_exists("review_decision_audit")
+
+
+def write_review_decision_audit(
+    item_id: str,
+    action: str,
+    old_status: str | None = None,
+    new_status: str | None = None,
+    note: str | None = None,
+    reviewer: str | None = None,
+    decision_id: int | None = None,
+    batch_id: str | None = None,
+) -> dict[str, Any]:
+    if not review_decision_audit_table_available():
+        out_dir = Path("var/socmint/review_audit")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        safe_item = item_id.replace(":", "_").replace("/", "_")
+        safe_batch = batch_id or "single"
+        path = out_dir / f"{safe_batch}_{safe_item}_{utc_now()}.json"
+        path = Path(str(path).replace(":", "-"))
+        payload = {
+            "schema": "socmint.review_decision_audit.v7_2_2",
+            "item_id": item_id,
+            "action": action,
+            "old_status": old_status,
+            "new_status": new_status,
+            "note": note,
+            "reviewer": reviewer,
+            "decision_id": decision_id,
+            "batch_id": batch_id,
+            "created_at": utc_now(),
+        }
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+        return {"written": True, "sidecar": True, "path": str(path)}
+
+    try:
+        db.ensure_configured()
+        now = datetime.now(UTC).replace(tzinfo=None)
+
+        with db.engine.begin() as conn:
+            result = conn.execute(
+                text(
+                    """
+                    INSERT INTO review_decision_audit (
+                        decision_id,
+                        item_id,
+                        action,
+                        old_status,
+                        new_status,
+                        note,
+                        reviewer,
+                        batch_id,
+                        created_at
+                    )
+                    VALUES (
+                        :decision_id,
+                        :item_id,
+                        :action,
+                        :old_status,
+                        :new_status,
+                        :note,
+                        :reviewer,
+                        :batch_id,
+                        :created_at
+                    )
+                    """
+                ),
+                {
+                    "decision_id": decision_id,
+                    "item_id": item_id,
+                    "action": action,
+                    "old_status": old_status,
+                    "new_status": new_status,
+                    "note": note,
+                    "reviewer": reviewer,
+                    "batch_id": batch_id,
+                    "created_at": now,
+                },
+            )
+            audit_id = getattr(result, "lastrowid", None)
+    except Exception as exc:
+        return {"written": False, "error": str(exc)}
+
+    return {
+        "written": True,
+        "native": True,
+        "audit_id": audit_id,
+        "item_id": item_id,
+        "action": action,
+        "batch_id": batch_id,
+    }
+
+
+def list_review_decision_audit(
+    item_id: str | None = None,
+    batch_id: str | None = None,
+    limit: int = 200,
+) -> list[dict[str, Any]]:
+    if not review_decision_audit_table_available():
+        return []
+
+    where = []
+    params: dict[str, Any] = {"limit": limit}
+
+    if item_id:
+        where.append("item_id = :item_id")
+        params["item_id"] = item_id
+
+    if batch_id:
+        where.append("batch_id = :batch_id")
+        params["batch_id"] = batch_id
+
+    where_sql = "WHERE " + " AND ".join(where) if where else ""
+
+    return safe_rows(
+        f"""
+        SELECT *
+        FROM review_decision_audit
+        {where_sql}
+        ORDER BY id DESC
+        LIMIT :limit
+        """,
+        params,
+    )
+
+
+_legacy_set_review_status_v722 = set_review_status
+
+
+def set_review_status(
+    item_id: str,
+    status: str,
+    note: str | None = None,
+    reviewer: str | None = None,
+    batch_id: str | None = None,
+) -> dict[str, Any]:
+    old_status = None
+
+    try:
+        decisions = latest_native_decisions()
+        if item_id in decisions:
+            old_status = decisions[item_id].get("status")
+    except Exception:
+        old_status = None
+
+    try:
+        result = _legacy_set_review_status_v722(item_id, status, note)
+    except TypeError:
+        result = _legacy_set_review_status_v722(item_id, status, note)
+
+    audit_result = write_review_decision_audit(
+        item_id=item_id,
+        action="set_status",
+        old_status=old_status,
+        new_status=status,
+        note=note,
+        reviewer=reviewer,
+        decision_id=result.get("decision_id"),
+        batch_id=batch_id,
+    )
+
+    result["audit"] = audit_result
+    return result
+
+
+def bulk_set_review_status(
+    item_ids: list[str],
+    status: str,
+    note: str | None = None,
+    reviewer: str | None = None,
+) -> dict[str, Any]:
+    if status not in REVIEW_STATUSES:
+        raise ValueError(f"Invalid review status: {status}")
+
+    batch_id = f"batch-{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"
+    results = []
+
+    for item_id in item_ids:
+        try:
+            result = set_review_status(
+                item_id=item_id,
+                status=status,
+                note=note,
+                reviewer=reviewer,
+                batch_id=batch_id,
+            )
+        except Exception as exc:
+            result = {
+                "updated": False,
+                "item_id": item_id,
+                "status": status,
+                "error": str(exc),
+            }
+        results.append(result)
+
+    updated = sum(1 for item in results if item.get("updated"))
+
+    return {
+        "schema": "socmint.bulk_review_decision.v7_2_2",
+        "batch_id": batch_id,
+        "status": status,
+        "requested": len(item_ids),
+        "updated": updated,
+        "failed": len(item_ids) - updated,
+        "results": results,
+    }
+
+
+def review_audit_payload(
+    item_id: str | None = None,
+    batch_id: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "schema": "socmint.review_decision_audit.items.v7_2_2",
+        "generated_at": utc_now(),
+        "items": list_review_decision_audit(item_id=item_id, batch_id=batch_id),
+    }

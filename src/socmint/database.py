@@ -997,6 +997,18 @@ def list_spine_observations(subject_id, limit=1000):
         session.close()
 
 
+def get_spine_observation(observation_id):
+    ensure_configured()
+    session = Session()
+    try:
+        item = session.query(SpineObservation).filter_by(id=observation_id).first()
+        if item:
+            session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
 def upsert_spine_assertion(
     subject_id,
     assertion_type,
@@ -1502,6 +1514,40 @@ def list_media_profile_enrichments(subject_id, limit=1000):
         session.close()
 
 
+def get_media_profile_enrichment(enrichment_id):
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(MediaProfileEnrichment)
+            .filter_by(id=enrichment_id)
+            .first()
+        )
+        if item:
+            session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
+def update_media_profile_enrichment_payload(enrichment_id, payload):
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(MediaProfileEnrichment)
+            .filter_by(id=enrichment_id)
+            .first()
+        )
+        if not item:
+            return None
+        item.payload_json = json.dumps(payload)
+        session.commit()
+        return item.id
+    finally:
+        session.close()
+
+
 class SpineContradiction(Base):
     __tablename__ = "spine_contradictions"
     id = Column(Integer, primary_key=True)
@@ -1870,3 +1916,31 @@ def list_retention_runs(limit=100):
         return _detach_all(session, items)
     finally:
         session.close()
+
+class ReviewDecision(Base):
+    __tablename__ = "review_decisions"
+
+    id = Column(Integer, primary_key=True)
+    item_id = Column(String(512), nullable=False, index=True)
+    subject_id = Column(Integer, nullable=True, index=True)
+    source_table = Column(String(128), nullable=False, index=True)
+    source_id = Column(String(128), nullable=True, index=True)
+    status = Column(String(32), nullable=False, default="needs_review", index=True)
+    note = Column(Text, nullable=True)
+    reviewer = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+class ReviewDecisionAudit(Base):
+    __tablename__ = "review_decision_audit"
+
+    id = Column(Integer, primary_key=True)
+    decision_id = Column(Integer, nullable=True, index=True)
+    item_id = Column(String(512), nullable=False, index=True)
+    action = Column(String(64), nullable=False, index=True)
+    old_status = Column(String(32), nullable=True)
+    new_status = Column(String(32), nullable=True, index=True)
+    note = Column(Text, nullable=True)
+    reviewer = Column(String(255), nullable=True)
+    batch_id = Column(String(128), nullable=True, index=True)
+    created_at = Column(DateTime, default=utc_now, nullable=False)

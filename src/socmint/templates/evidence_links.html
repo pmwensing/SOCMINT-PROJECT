@@ -1,0 +1,115 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h1>Evidence Linker</h1>
+
+<section class="card">
+  <h2>Link evidence to review item</h2>
+  <p>
+    Connect stored evidence files to review items or findings. Linked evidence is
+    automatically included when building export attachment ZIPs for matching
+    review-gated manifests.
+  </p>
+
+  <form method="post" action="{{ url_for('dashboard.evidence_links_add_form') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label>
+      Evidence ID
+      <input type="text" name="evidence_id" required>
+    </label>
+
+    <label>
+      Review item ID
+      <input type="text" name="review_item_id" placeholder="findings:123" required>
+    </label>
+
+    <label>
+      Relation
+      <select name="relation">
+        {% for relation in payload.relations %}
+        <option value="{{ relation }}">{{ relation }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      Confidence
+      <input type="number" name="confidence" min="0" max="1" step="0.01" placeholder="optional">
+    </label>
+
+    <label>
+      Note
+      <input type="text" name="note" placeholder="optional">
+    </label>
+
+    <button type="submit">Link evidence</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Stored evidence IDs</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Evidence ID</th>
+        <th>Original</th>
+        <th>SHA-256</th>
+        <th>Case</th>
+        <th>Subject</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in payload.evidence %}
+      <tr>
+        <td><code>{{ item.evidence_id }}</code></td>
+        <td>{{ item.original_name }}</td>
+        <td><code>{{ item.sha256 }}</code></td>
+        <td>{{ item.case_id or "" }}</td>
+        <td>{{ item.subject_id or "" }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">No evidence stored yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Evidence links</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Review item</th>
+        <th>Evidence</th>
+        <th>Relation</th>
+        <th>Confidence</th>
+        <th>Note</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for link in payload.links %}
+      <tr>
+        <td><code>{{ link.review_item_id }}</code></td>
+        <td><code>{{ link.evidence_id }}</code></td>
+        <td>{{ link.relation }}</td>
+        <td>{{ link.confidence if link.confidence is not none else "" }}</td>
+        <td>{{ link.note or "" }}</td>
+        <td>{{ link.created_at }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No evidence links have been created yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>API</h2>
+  <p><code>GET /api/v1/evidence/links</code></p>
+  <p><code>POST /api/v1/evidence/links</code></p>
+  <p><code>POST /api/v1/evidence/links/delete</code></p>
+  <p><code>GET /api/v1/evidence/attachment-map</code></p>
+</section>
+{% endblock %}

@@ -37,13 +37,13 @@ def test_build_dossier_username(mock_sherlock, *_):
 
 
 @patch("src.socmint.main.run_recon_ng")
-@patch("src.socmint.main.run_sherlock", return_value="ok")
-def test_build_dossier_respects_enabled_tools(mock_sherlock, mock_recon_ng):
+@patch("src.socmint.main.run_registered_connector", return_value="ok")
+def test_build_dossier_respects_enabled_tools(mock_connector, mock_recon_ng):
     dossier = socmint_main.build_dossier(
         "testuser", "username", enabled_tools={"sherlock"}
     )
     assert dossier["data"] == {"sherlock": "ok"}
-    mock_sherlock.assert_called_once_with("testuser")
+    mock_connector.assert_called_once_with("sherlock", "testuser", "username")
     mock_recon_ng.assert_not_called()
 
 

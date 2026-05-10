@@ -1,5 +1,6 @@
 import json
 import mimetypes
+import os
 import shutil
 import subprocess
 from datetime import datetime, UTC
@@ -25,6 +26,15 @@ def classify_url(url: str) -> str:
     if path.endswith((".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".mov")):
         return "media"
     return "profile"
+
+
+def remote_media_download_enabled() -> bool:
+    return os.environ.get("SOCMINT_REMOTE_MEDIA_DOWNLOAD_ENABLED", "").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def normalize_profile_payload(payload: dict) -> dict:
@@ -175,9 +185,26 @@ def extract_exif_metadata(path: Path) -> dict:
     return payload
 
 
-def enrich_url_observation(url: str) -> dict:
+def enrich_url_observation(url: str, target: str | None = None) -> dict:
     kind = classify_url(url)
     if kind == "media":
+        if remote_media_download_enabled():
+            from .media import download_media
+
+            media_meta = download_media(target or "spine-media", url)
+            if not media_meta:
+                return {
+                    "adapter": "media_enrichment",
+                    "status": "failed",
+                    "url": url,
+                    "reason": "Remote media download failed safety or fetch checks.",
+                    "findings": [],
+                }
+            result = enrich_media_path(media_meta["path"], source_url=url)
+            result["download"] = media_meta
+            result["remote_download_enabled"] = True
+            return result
+
         return {
             "adapter": "media_enrichment",
             "status": "dry_run",

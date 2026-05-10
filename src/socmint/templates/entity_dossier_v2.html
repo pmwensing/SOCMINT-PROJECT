@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Full Entity Profile Dossier v2</h1>
+
+<section class="card">
+  <h2>Subject</h2>
+  <table>
+    <tbody>
+      <tr><th>Subject ID</th><td>{{ payload.subject_id }}</td></tr>
+      <tr><th>Generated</th><td>{{ payload.generated_at }}</td></tr>
+      <tr><th>Source</th><td>{{ payload.subject._source_table }}</td></tr>
+    </tbody>
+  </table>
+
+  <form method="post" action="{{ url_for(
+      'dashboard.subject_dossier_v2_export_run',
+      subject_id=payload.subject_id
+    ) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Export dossier ZIP</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Dossier Score</h2>
+  <table>
+    <tbody>
+      {% for key, value in payload.score.items() %}
+      <tr><th>{{ key }}</th><td>{{ value }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% for key, section in payload.sections.items() %}
+<section class="card">
+  <h2>{{ section.title }}</h2>
+  <p>{{ section.summary }}</p>
+
+  {% if section.count is defined %}
+  <p><strong>Count:</strong> {{ section.count }}</p>
+  {% endif %}
+
+  {% if section.items is defined %}
+  <table>
+    <thead><tr><th>#</th><th>Record</th></tr></thead>
+    <tbody>
+      {% for item in section.items[:25] %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><pre>{{ item | tojson(indent=2) }}</pre></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="2">No records found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% elif key == "linked_evidence" %}
+  <p><strong>Evidence:</strong> {{ section.evidence_count }}</p>
+  <p><strong>Links:</strong> {{ section.link_count }}</p>
+  {% elif key == "custody_hash_status" %}
+  <p><strong>Custody events:</strong> {{ section.custody_event_count }}</p>
+  {% else %}
+  <pre>{{ section | tojson(indent=2) }}</pre>
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

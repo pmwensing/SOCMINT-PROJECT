@@ -3,10 +3,14 @@ from pathlib import Path
 import pytest
 
 from src.socmint import database as db
+from src.socmint.enrichment import enrichment_review_queue
 from src.socmint.enrichment import enrich_subject_media_profiles
 from src.socmint.enrichment import media_profile_payload
+from src.socmint.enrichment import review_enrichment_finding
 from src.socmint.media_profile import enrich_media_path
 from src.socmint.media_profile import enrich_profile_url
+from src.socmint.media_profile import enrich_url_observation
+from src.socmint.spine import build_dossier
 from src.socmint.spine import create_subject, run_spine_for_subject
 
 
@@ -42,6 +46,35 @@ def test_media_path_enrichment_hashes_file(tmp_path, monkeypatch):
     assert result["findings"][0]["type"] == "media_asset"
 
 
+def test_remote_media_url_enrichment_downloads_when_enabled(tmp_path, monkeypatch):
+    monkeypatch.setenv("SOCMINT_ARTIFACT_DIR", str(tmp_path / "artifacts"))
+    monkeypatch.setenv("SOCMINT_REMOTE_MEDIA_DOWNLOAD_ENABLED", "1")
+    sample = tmp_path / "remote.jpg"
+    sample.write_bytes(b"remote image bytes")
+
+    monkeypatch.setattr(
+        "src.socmint.media.download_media",
+        lambda target, url: {
+            "target": target,
+            "url": url,
+            "path": str(sample),
+            "checksum": "abc",
+            "status": "downloaded",
+            "content_type": "image/jpeg",
+            "size_bytes": sample.stat().st_size,
+        },
+    )
+
+    result = enrich_url_observation(
+        "https://example.com/photo.jpg",
+        target="exampleuser",
+    )
+
+    assert result["status"] == "completed"
+    assert result["remote_download_enabled"] is True
+    assert result["download"]["target"] == "exampleuser"
+
+
 def test_subject_media_profile_enrichment(configured_db, monkeypatch):
     def fake_execute_connector(connector_key, seed):
         return {
@@ -66,9 +99,155 @@ def test_subject_media_profile_enrichment(configured_db, monkeypatch):
 
     result = enrich_subject_media_profiles(subject_id)
     payload = media_profile_payload(subject_id)
+    dossier = build_dossier(subject_id)
 
     assert result["enrichment_ids"]
+    assert result["promoted_findings"] > 0
+    assert any(item["type"] == "profile_profile_url" for item in dossier["assertions"])
     assert payload["enrichments"]
+    finding = payload["enrichments"][0]["payload"]["findings"][0]
+    assert finding["correlation"]["state"] == "promoted"
+
+
+def test_subject_media_profile_enrichment_quarantines_drift(
+    configured_db,
+    monkeypatch,
+):
+    def fake_execute_connector(connector_key, seed):
+        return {
+            "connector": connector_key,
+            "status": "dry_run",
+            "findings": [
+                {
+                    "type": "account_presence",
+                    "value": f"https://example.com/{seed.normalized_value}",
+                    "source": connector_key,
+                    "confidence": 0.61,
+                }
+            ],
+        }
+
+    def fake_enrich_url_observation(url, target=None):
+        return {
+            "adapter": "profile_enrichment",
+            "status": "completed",
+            "url": url,
+            "artifact": {"sha256": "fake-drift-artifact"},
+            "findings": [
+                {
+                    "type": "profile_username",
+                    "value": "unrelated_person",
+                    "source": "profile_enrichment",
+                    "confidence": 0.66,
+                }
+            ],
+        }
+
+    monkeypatch.setattr("src.socmint.spine.execute_connector", fake_execute_connector)
+    monkeypatch.setattr(
+        "src.socmint.enrichment.enrich_url_observation",
+        fake_enrich_url_observation,
+    )
+
+    subject_id = create_subject(
+        "Drift Subject",
+        [{"type": "username", "value": "exampleuser"}],
+    )
+    run_spine_for_subject(subject_id, ["sherlock"])
+
+    before = build_dossier(subject_id)["summary"]["observations"]
+    result = enrich_subject_media_profiles(subject_id)
+    after = build_dossier(subject_id)["summary"]["observations"]
+    payload = media_profile_payload(subject_id)
+    finding = payload["enrichments"][0]["payload"]["findings"][0]
+
+    assert result["promoted_findings"] == 0
+    assert result["quarantined_findings"] == 1
+    assert before == after
+    assert finding["correlation"]["state"] == "quarantined"
+
+
+def test_sensitive_enrichment_with_context_link_requires_review(
+    configured_db,
+    monkeypatch,
+):
+    def fake_execute_connector(connector_key, seed):
+        return {
+            "connector": connector_key,
+            "status": "dry_run",
+            "findings": [
+                {
+                    "type": "account_presence",
+                    "value": f"https://example.com/{seed.normalized_value}",
+                    "source": connector_key,
+                    "confidence": 0.61,
+                }
+            ],
+        }
+
+    def fake_enrich_url_observation(url, target=None):
+        return {
+            "adapter": "profile_enrichment",
+            "status": "completed",
+            "url": url,
+            "artifact": {"sha256": "fake-sensitive-artifact"},
+            "findings": [
+                {
+                    "type": "profile_email",
+                    "value": "other@example.net",
+                    "source": "profile_enrichment",
+                    "confidence": 0.66,
+                    "context": {
+                        "display_name": "Example User",
+                        "location": "Portland",
+                    },
+                }
+            ],
+        }
+
+    monkeypatch.setattr("src.socmint.spine.execute_connector", fake_execute_connector)
+    monkeypatch.setattr(
+        "src.socmint.enrichment.enrich_url_observation",
+        fake_enrich_url_observation,
+    )
+
+    subject_id = create_subject(
+        "Sensitive Review Subject",
+        [{"type": "username", "value": "exampleuser"}],
+    )
+    run_spine_for_subject(subject_id, ["sherlock"])
+
+    before = build_dossier(subject_id)["summary"]["observations"]
+    result = enrich_subject_media_profiles(subject_id)
+    after = build_dossier(subject_id)["summary"]["observations"]
+    payload = media_profile_payload(subject_id)
+    finding = payload["enrichments"][0]["payload"]["findings"][0]
+
+    assert result["promoted_findings"] == 0
+    assert result["review_required_findings"] == 1
+    assert before == after
+    assert finding["correlation"]["state"] == "needs_human_review"
+    assert finding["correlation"]["requires_human_review"] is True
+
+    queue = enrichment_review_queue(subject_id)
+    assert len(queue["findings"]) == 1
+
+    promoted = review_enrichment_finding(
+        queue["findings"][0]["enrichment_id"],
+        queue["findings"][0]["finding_index"],
+        "promote",
+        actor="analyst",
+        note="Context matches subject name.",
+    )
+    promoted_payload = media_profile_payload(subject_id)
+    promoted_finding = promoted_payload["enrichments"][0]["payload"]["findings"][0]
+    promoted_dossier = build_dossier(subject_id)
+
+    assert promoted["observation_id"]
+    assert promoted["assertion_ids"]
+    assert promoted_finding["correlation"]["state"] == "promoted"
+    assert promoted_finding["correlation"]["human_review"]["actor"] == "analyst"
+    assert promoted_dossier["summary"]["observations"] == before + 1
 
 
 def test_media_profile_api(tmp_path, monkeypatch):

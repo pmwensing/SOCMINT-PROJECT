@@ -140,6 +140,51 @@ def execute_connector(connector_key: str, seed) -> dict:
         }
 
 
+def _parse_run_id(source_ref):
+    parts = str(source_ref or "").split(":")
+    if len(parts) >= 2 and parts[0] == "run":
+        try:
+            return int(parts[1])
+        except ValueError:
+            return None
+    return None
+
+
+def connector_quality_adjustments() -> dict:
+    runs = db.list_spine_connector_runs(limit=10000)
+    assertions = db.list_all_spine_assertions(limit=10000)
+    run_connectors = {run.id: run.connector_key for run in runs}
+    stats = defaultdict(lambda: {"confirmed": 0, "rejected": 0})
+
+    for assertion in assertions:
+        payload = json.loads(assertion.payload_json or "{}")
+        connectors = set()
+        for ref in payload.get("source_refs") or []:
+            connector = run_connectors.get(_parse_run_id(ref))
+            if connector:
+                connectors.add(connector)
+
+        for connector in connectors:
+            if assertion.validation_state == "rejected":
+                stats[connector]["rejected"] += 1
+            elif assertion.validation_state == "confirmed":
+                stats[connector]["confirmed"] += 1
+
+    adjustments = {}
+    for connector, item in stats.items():
+        reviewed = item["confirmed"] + item["rejected"]
+        if not reviewed:
+            continue
+        rejection_rate = item["rejected"] / reviewed
+        confirmation_rate = item["confirmed"] / reviewed
+        adjustments[connector] = round(
+            min(0.05, confirmation_rate * 0.05)
+            - min(0.18, rejection_rate * 0.18),
+            3,
+        )
+    return adjustments
+
+
 def extract_observations(connector_key, seed, raw_result, spec, artifact) -> list[dict]:
     observations = []
     findings = raw_result.get("findings", []) if isinstance(raw_result, dict) else []
@@ -180,6 +225,9 @@ def extract_observations(connector_key, seed, raw_result, spec, artifact) -> lis
 
 def correlate_subject(subject_id: int) -> list[int]:
     grouped = defaultdict(list)
+    quality_adjustments = connector_quality_adjustments()
+    runs = db.list_spine_connector_runs(subject_id=subject_id, limit=10000)
+    run_connectors = {run.id: run.connector_key for run in runs}
     for obs in db.list_spine_observations(subject_id):
         key = (obs.observation_type, (obs.normalized_value or "").lower().strip())
         grouped[key].append(obs)
@@ -192,11 +240,26 @@ def correlate_subject(subject_id: int) -> list[int]:
         source_count = len({item.source_ref for item in group})
         archived = any("archive" in item.observation_type for item in group)
         base = max(float(item.confidence or 0.5) for item in group)
+        connectors = {
+            run_connectors[run_id]
+            for run_id in (_parse_run_id(item.source_ref) for item in group)
+            if run_id in run_connectors
+        }
+        quality_delta = (
+            round(
+                sum(quality_adjustments.get(connector, 0.0) for connector in connectors)
+                / len(connectors),
+                3,
+            )
+            if connectors
+            else 0.0
+        )
         score = score_observation(
             base=base,
             source_count=source_count,
             archived=archived,
             exact_identifier_match=source_count >= 2,
+            connector_quality_delta=quality_delta,
         )
 
         payload = {
@@ -208,6 +271,8 @@ def correlate_subject(subject_id: int) -> list[int]:
             "supporting_observation_ids": [item.id for item in group],
             "source_refs": [item.source_ref for item in group],
             "evidence_refs": [item.evidence_ref for item in group],
+            "connector_quality_delta": quality_delta,
+            "connectors": sorted(connectors),
         }
 
         assertion_ids.append(

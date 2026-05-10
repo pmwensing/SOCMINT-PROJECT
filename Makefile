@@ -84,3 +84,61 @@ ci: install
 
 clean:
 	rm -rf __pycache__ src/socmint/__pycache__ tests/__pycache__ .pytest_cache
+
+test71:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_1.sh
+
+zip71:
+	cd .. && zip -r SOCMINT-PROJECT-v7.1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
+
+
+test711:
+	PYTHONPATH=$(PWD)/src pytest -q tests/test_deployment_db_v7_1_1.py
+	PYTHONPATH=$(PWD)/src ./scripts/v7_1_1_migration_runner.sh
+
+
+migrate711:
+	PYTHONPATH=$(PWD)/src python3 -m socmint.deployment_db migrate
+
+
+test72:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_2.sh
+
+
+test721:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_2_1.sh
+
+
+migrate721:
+	PYTHONPATH=$(PWD)/src python3 -m socmint.deployment_db migrate
+
+test722:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_2_2.sh
+
+migrate722:
+	PYTHONPATH=$(PWD)/src python3 -m socmint.deployment_db migrate
+
+test73:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_3.sh
+
+test731:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_3_1.sh
+
+test732:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_3_2.sh
+
+test74:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_4.sh
+
+test741:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_4_1.sh
+
+test742:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_4_2.sh
+
+test743:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_4_3.sh
+
+
+test75:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_5.sh
