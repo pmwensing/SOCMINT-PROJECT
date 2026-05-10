@@ -86,10 +86,13 @@ def main() -> None:
         register_full_report_retention_routes(app)
 
         with app.test_client() as client:
+            csrf = "retention-smoke-csrf-token"
             with client.session_transaction() as session:
                 session["user"] = "retention-smoke"
                 session["is_admin"] = True
                 session["role"] = "admin"
+                session["_csrf_token"] = csrf
+            csrf_headers = {"X-CSRF-Token": csrf}
 
             retention_response = client.get(
                 f"/api/v1/spine/subjects/{subject_id}/full-report/retention?keep_latest=1"
@@ -100,6 +103,7 @@ def main() -> None:
             pin_response = client.post(
                 f"/api/v1/spine/subjects/{subject_id}/full-report/pin",
                 json={"name": first_name, "note": "route pin"},
+                headers=csrf_headers,
             )
             assert pin_response.status_code == 200
             assert pin_response.get_json()["ok"] is True
@@ -107,9 +111,18 @@ def main() -> None:
             delete_response = client.post(
                 f"/api/v1/spine/subjects/{subject_id}/full-report/delete",
                 json={"name": first_name},
+                headers=csrf_headers,
             )
             assert delete_response.status_code == 409
             assert delete_response.get_json()["error"] == "export_pinned"
+
+            apply_response = client.post(
+                f"/api/v1/spine/subjects/{subject_id}/full-report/apply-retention",
+                json={"keep_latest": 1, "dry_run": True},
+                headers=csrf_headers,
+            )
+            assert apply_response.status_code == 200
+            assert apply_response.get_json()["dry_run"] is True
 
             ui_response = client.get(
                 f"/spine/subjects/{subject_id}/full-report/retention"
