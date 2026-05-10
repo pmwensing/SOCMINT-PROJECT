@@ -157,11 +157,11 @@
   <p><strong>Count:</strong> {{ section.count }}</p>
   {% endif %}
 
-  {% if section.items is defined %}
+  {% if section['items'] is defined %}
   <table>
     <thead><tr><th>#</th><th>Record</th></tr></thead>
     <tbody>
-      {% for item in section.items[:25] %}
+      {% for item in section['items'][:25] %}
       <tr>
         <td>{{ loop.index }}</td>
         <td><pre>{{ item | tojson(indent=2) }}</pre></td>
