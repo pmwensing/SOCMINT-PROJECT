@@ -27,7 +27,8 @@ def annotate_junit(path):
     count = 0
     root = ET.parse(path).getroot()
     for case in root.iter("testcase"):
-        problem = case.find("failure") or case.find("error")
+        failure = case.find("failure")
+        problem = failure if failure is not None else case.find("error")
         if problem is None:
             continue
         name = f"{case.get('classname')}.{case.get('name')}"

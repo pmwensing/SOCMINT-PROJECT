@@ -6,6 +6,8 @@ from pathlib import Path
 os.environ.setdefault("PYTHON_DOTENV_DISABLED", "1")
 os.environ.setdefault("SOCMINT_CONNECTOR_DRY_RUN", "1")
 os.environ.setdefault("SOCMINT_SECRET_KEY", "test-secret-key-with-enough-entropy")
+os.environ.setdefault("SOCMINT_DATA_DIR", "/tmp/socmint-pytest")
+os.environ.setdefault("DATABASE_URL", "sqlite:////tmp/socmint-pytest/socmint.db")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = PROJECT_ROOT / "src"
