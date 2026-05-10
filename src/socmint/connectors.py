@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import shutil
@@ -97,8 +96,18 @@ def connector_dry_run_forced():
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def dry_run_payload(name, target, target_type, command):
-    return {
+def _with_normalized_findings(name, payload):
+    try:
+        from .connector_runtime import normalize_connector_output
+
+        payload["findings"] = normalize_connector_output(name, payload)
+    except Exception:
+        payload["findings"] = extract_findings(name, payload)
+    return payload
+
+
+def dry_run_payload(name, target, target_type, command, reason=None):
+    payload = {
         "connector": name,
         "target": target,
         "target_type": target_type,
@@ -106,11 +115,11 @@ def dry_run_payload(name, target, target_type, command):
         "status": "dry_run",
         "returncode": None,
         "stdout": "",
-        "stderr": f"{name} executable is not installed; dry-run recorded instead.",
+        "stderr": reason or f"{name} executable is not installed; dry-run recorded instead.",
         "started_at": datetime.now(UTC).isoformat(),
         "finished_at": datetime.now(UTC).isoformat(),
-        "findings": [],
     }
+    return _with_normalized_findings(name, payload)
 
 
 def run_connector(name, target, target_type, allow_dry_run=True):
@@ -119,20 +128,28 @@ def run_connector(name, target, target_type, allow_dry_run=True):
 
     spec = CONNECTORS[name]
     if target_type not in spec.target_types:
-        return {
-            "connector": name,
-            "target": target,
-            "target_type": target_type,
-            "status": "skipped",
-            "returncode": None,
-            "stdout": "",
-            "stderr": f"{name} does not support target type {target_type}",
-            "findings": [],
-        }
+        return _with_normalized_findings(
+            name,
+            {
+                "connector": name,
+                "target": target,
+                "target_type": target_type,
+                "status": "skipped",
+                "returncode": None,
+                "stdout": "",
+                "stderr": f"{name} does not support target type {target_type}",
+            },
+        )
 
     command = render_command(spec, target, target_type)
     if allow_dry_run and connector_dry_run_forced():
-        return dry_run_payload(name, target, target_type, command)
+        return dry_run_payload(
+            name,
+            target,
+            target_type,
+            command,
+            reason="SOCMINT_CONNECTOR_DRY_RUN is enabled; dry-run recorded instead.",
+        )
 
     if not executable_available(command):
         if allow_dry_run:
@@ -161,8 +178,7 @@ def run_connector(name, target, target_type, allow_dry_run=True):
             "started_at": started.isoformat(),
             "finished_at": finished.isoformat(),
         }
-        payload["findings"] = extract_findings(name, payload)
-        return payload
+        return _with_normalized_findings(name, payload)
     except subprocess.TimeoutExpired as exc:
         finished = datetime.now(UTC)
         payload = {
@@ -176,22 +192,17 @@ def run_connector(name, target, target_type, allow_dry_run=True):
             "stderr": exc.stderr or f"{name} timed out",
             "started_at": started.isoformat(),
             "finished_at": finished.isoformat(),
-            "findings": [],
         }
-        return payload
+        return _with_normalized_findings(name, payload)
 
 
 def extract_findings(connector_name, payload):
-    text = "\n".join(
-        str(payload.get(key) or "") for key in ("stdout", "stderr")
-    )
+    text = "\n".join(str(payload.get(key) or "") for key in ("stdout", "stderr"))
     findings = []
 
     url_pattern = re.compile(r"https?://[^\s\"'<>]+", re.I)
     email_pattern = re.compile(r"[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}")
-    username_pattern = re.compile(
-    r"(?i)(?:username|user|handle)[:=]\\s*([a-z0-9_.-]{3,})"
-)
+    username_pattern = re.compile(r"(?i)(?:username|user|handle)[:=]\s*([a-z0-9_.-]{3,})")
 
     seen = set()
 
@@ -200,59 +211,18 @@ def extract_findings(connector_name, payload):
         key = ("url", value)
         if key not in seen:
             seen.add(key)
-            findings.append(
-                {
-                    "type": "url",
-                    "value": value,
-                    "source": connector_name,
-                    "confidence": 0.75,
-                }
-            )
+            findings.append({"type": "url", "value": value, "source": connector_name, "confidence": 0.75})
 
     for match in email_pattern.findall(text):
         key = ("email", match)
         if key not in seen:
             seen.add(key)
-            findings.append(
-                {
-                    "type": "email",
-                    "value": match,
-                    "source": connector_name,
-                    "confidence": 0.7,
-                }
-            )
+            findings.append({"type": "email", "value": match, "source": connector_name, "confidence": 0.7})
 
     for match in username_pattern.findall(text):
         key = ("username", match)
         if key not in seen:
             seen.add(key)
-            findings.append(
-                {
-                    "type": "username",
-                    "value": match,
-                    "source": connector_name,
-                    "confidence": 0.55,
-                }
-            )
-
-    if not findings:
-        # Try JSON-native connector output.
-        try:
-            data = json.loads(payload.get("stdout") or "{}")
-        except json.JSONDecodeError:
-            data = None
-
-        if isinstance(data, dict):
-            for key, value in data.items():
-                if isinstance(value, str) and value.startswith("http"):
-                    findings.append(
-                        {
-                            "type": "url",
-                            "value": value,
-                            "source": connector_name,
-                            "confidence": 0.7,
-                            "context": key,
-                        }
-                    )
+            findings.append({"type": "username", "value": match, "source": connector_name, "confidence": 0.55})
 
     return findings
