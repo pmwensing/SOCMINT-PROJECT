@@ -50,6 +50,16 @@
         subject_id=payload.subject_id
       ) }}">View Export Panel</a>
 
+    <a class="button" href="{{ url_for(
+        'ui_full_report_history',
+        subject_id=payload.subject_id
+      ) }}">Export History</a>
+
+    <a class="button" href="{{ url_for(
+        'api_full_report_compare',
+        subject_id=payload.subject_id
+      ) }}">Compare Previous Reports</a>
+
     {% if latest_export.html_name %}
     <a class="button" href="{{ url_for(
         'ui_full_report_open_latest',
@@ -110,6 +120,10 @@
         'ui_full_report_view_panel',
         subject_id=payload.subject_id
       ) }}">View Export Panel</a>
+    <a class="button" href="{{ url_for(
+        'ui_full_report_history',
+        subject_id=payload.subject_id
+      ) }}">Export History</a>
   </p>
   {% endif %}
 </section>
