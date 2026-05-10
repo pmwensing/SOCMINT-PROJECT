@@ -14,7 +14,7 @@ from .archivebox_adapter import archivebox_enabled
 from .connectors import CONNECTORS
 from .connectors import render_command
 
-RUNTIME_SCHEMA = "socmint.connector_runtime.v7_6_0"
+RUNTIME_SCHEMA = "socmint.connector_runtime.v7_6_1"
 
 VERSION_COMMANDS: dict[str, list[str]] = {
     "sherlock": ["sherlock", "--version"],
@@ -34,11 +34,23 @@ SAMPLE_TARGETS: dict[str, tuple[str, str]] = {
     "phoneinfoga": ("+15555550123", "phone"),
 }
 
+NATIVE_DEPENDENCIES = {
+    "pkg-config": "pkg-config",
+    "cmake": "cmake",
+    "gcc/cc": "cc",
+}
+
+NATIVE_DEPENDENCY_INSTALL = (
+    "sudo apt update && sudo apt install -y pkg-config cmake build-essential "
+    "python3-dev libcairo2-dev libgirepository-2.0-dev gir1.2-gtk-3.0"
+)
+
 INSTALL_HINTS: dict[str, dict[str, Any]] = {
     "maigret": {
         "install_command": "python -m pip install --upgrade maigret",
         "check_command": "python -m maigret --version",
-        "runtime_note": "Python module connector. Installed into the SOCMINT scanner venv by the v7.6.0 installer.",
+        "runtime_note": "Python module connector. If pycairo/cairo fails, install native deps: " + NATIVE_DEPENDENCY_INSTALL,
+        "native_dependency_hint": NATIVE_DEPENDENCY_INSTALL,
     },
     "sherlock": {
         "install_command": "python -m pip install --upgrade sherlock-project",
@@ -63,14 +75,52 @@ INSTALL_HINTS: dict[str, dict[str, Any]] = {
     "phoneinfoga": {
         "install_command": "Download/install PhoneInfoga binary, then ensure phoneinfoga is on PATH.",
         "check_command": "phoneinfoga version || phoneinfoga --help",
-        "runtime_note": "Binary connector; v7.6.0 verifies presence and provides manual activation guidance.",
+        "runtime_note": "Binary connector; v7.6.1 shows manual activation guidance.",
+        "manual_steps": [
+            "mkdir -p .connector-tools/bin",
+            "Download the official PhoneInfoga Linux binary for your CPU architecture.",
+            "Place it at .connector-tools/bin/phoneinfoga",
+            "chmod +x .connector-tools/bin/phoneinfoga",
+            "source .connector-tools/bin/socmint-connectors-env",
+            "phoneinfoga version || phoneinfoga --help",
+        ],
     },
     "archivebox": {
         "install_command": "python -m pip install --upgrade archivebox && export SOCMINT_ARCHIVEBOX_ENABLED=true",
         "check_command": "archivebox version || archivebox --version",
-        "runtime_note": "Requires SOCMINT_ARCHIVEBOX_ENABLED=true before real captures are attempted.",
+        "runtime_note": "Heavy optional connector. Requires SOCMINT_ARCHIVEBOX_ENABLED=true before real captures are attempted. If pycairo/cairo fails, install native deps: " + NATIVE_DEPENDENCY_INSTALL,
+        "native_dependency_hint": NATIVE_DEPENDENCY_INSTALL,
     },
 }
+
+
+def native_dependency_status() -> dict[str, Any]:
+    items = []
+    missing = []
+    for label, executable in NATIVE_DEPENDENCIES.items():
+        path = shutil.which(executable)
+        ok = bool(path)
+        items.append({"name": label, "executable": executable, "path": path, "available": ok})
+        if not ok:
+            missing.append(label)
+    cairo_probe = subprocess.run(
+        ["pkg-config", "--exists", "cairo"],
+        capture_output=True,
+        text=True,
+        timeout=5,
+        check=False,
+    ) if shutil.which("pkg-config") else None
+    cairo_available = bool(cairo_probe and cairo_probe.returncode == 0)
+    items.append({"name": "cairo", "executable": "pkg-config --exists cairo", "path": None, "available": cairo_available})
+    if not cairo_available:
+        missing.append("cairo")
+    return {
+        "items": items,
+        "missing": missing,
+        "ready": not missing,
+        "install_command": NATIVE_DEPENDENCY_INSTALL,
+        "why": "Needed when pycairo/cairo is pulled by Maigret or ArchiveBox dependencies.",
+    }
 
 
 def install_hint(name: str) -> dict[str, Any]:
@@ -244,6 +294,7 @@ def connector_runtime_health() -> dict[str, Any]:
         "dry_run_forced": os.environ.get("SOCMINT_CONNECTOR_DRY_RUN", "").lower() in {"1", "true", "yes", "on"},
         "summary": counts,
         "connectors": connectors,
+        "native_dependencies": native_dependency_status(),
         "installer": {
             "script": "scripts/install_connector_runtime_v7_6_0.sh",
             "scanner_compose": "docker-compose.scanners.yml",
