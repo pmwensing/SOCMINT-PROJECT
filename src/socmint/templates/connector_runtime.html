@@ -21,8 +21,55 @@
 
 {% if payload.summary.missing > 0 %}
 <section class="panel warning-panel">
+  <h2>Missing connector repair</h2>
+  <p class="warning-text">These connectors are still missing. Each card includes its exact install/check command.</p>
+  <div class="card-grid">
+    {% for item in payload.connectors if item.status != 'ready' %}
+    <article class="card danger-card">
+      <h3>{{ item.name }} — {{ item.status }}</h3>
+      <p>{{ item.install_hint.runtime_note }}</p>
+      <p><strong>Install:</strong> <code>{{ item.install_command }}</code></p>
+      <p><strong>Check:</strong> <code>{{ item.check_command }}</code></p>
+      {% if item.install_hint.native_dependency_hint %}
+      <p><strong>Native deps:</strong> <code>{{ item.install_hint.native_dependency_hint }}</code></p>
+      {% endif %}
+      {% if item.install_hint.manual_steps %}
+      <ol>
+        {% for step in item.install_hint.manual_steps %}<li><code>{{ step }}</code></li>{% endfor %}
+      </ol>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if payload.native_dependencies and not payload.native_dependencies.ready %}
+<section class="panel warning-panel">
+  <h2>Native dependency diagnostics</h2>
+  <p class="warning-text">Maigret/ArchiveBox may fail when pycairo/cairo native dependencies are missing.</p>
+  <p><strong>Repair:</strong> <code>{{ payload.native_dependencies.install_command }}</code></p>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>Dependency</th><th>Status</th><th>Path</th></tr></thead>
+      <tbody>
+      {% for item in payload.native_dependencies.items %}
+        <tr>
+          <td>{{ item.name }}</td>
+          <td><span class="status-pill {{ 'completed' if item.available else 'failed' }}">{{ 'available' if item.available else 'missing' }}</span></td>
+          <td><code>{{ item.path or '' }}</code></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% if payload.summary.missing > 0 %}
+<section class="panel warning-panel">
   <h2>Install/activate connector toolchain</h2>
-  <p class="warning-text">Some connectors are missing. The app will keep recording safe dry-runs until tools are installed in this runtime.</p>
+  <p class="warning-text">The app will keep recording safe dry-runs until missing tools are installed in this runtime.</p>
   <pre>bash {{ payload.installer.script }}
 source .connector-tools/bin/socmint-connectors-env
 make connectors-health</pre>
