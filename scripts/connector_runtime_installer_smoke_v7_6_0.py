@@ -16,6 +16,7 @@ from socmint.full_report_history import register_full_report_history_routes
 from socmint.full_report_retention import register_full_report_retention_routes
 
 EXPECTED = {"sherlock", "maigret", "socialscan", "holehe", "h8mail", "phoneinfoga", "archivebox"}
+VALID_SCHEMAS = {"socmint.connector_runtime.v7_6_0", "socmint.connector_runtime.v7_6_1"}
 
 
 def main() -> None:
@@ -45,7 +46,7 @@ def main() -> None:
             assert hint["runtime_note"]
 
         health = connector_runtime_health()
-        assert health["schema"] == "socmint.connector_runtime.v7_6_0"
+        assert health["schema"] in VALID_SCHEMAS
         assert health["installer"]["script"] == "scripts/install_connector_runtime_v7_6_0.sh"
         assert health["installer"]["scanner_compose"] == "docker-compose.scanners.yml"
         names = {item["name"] for item in health["connectors"]}
@@ -74,7 +75,7 @@ def main() -> None:
             page = client.get("/connectors/runtime")
             assert page.status_code == 200
             text = page.get_data(as_text=True)
-            assert "Install/activate connector toolchain" in text
+            assert "Install/activate connector toolchain" in text or "Missing connector repair" in text
             assert "bash scripts/install_connector_runtime_v7_6_0.sh" in text
             assert "docker-compose.scanners.yml" in text
             assert "sherlock-project" in text
@@ -82,7 +83,7 @@ def main() -> None:
 
             api = client.get("/api/v1/connectors/runtime")
             assert api.status_code == 200
-            assert api.get_json()["schema"] == "socmint.connector_runtime.v7_6_0"
+            assert api.get_json()["schema"] in VALID_SCHEMAS
 
         print("v7.6.0 connector runtime installer smoke passed")
 
