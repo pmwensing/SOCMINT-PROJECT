@@ -23,7 +23,7 @@
     </form>
 
     <form method="post" action="{{ url_for(
-        'ui_full_report_run',
+        'dashboard.subject_dossier_v2_export_run',
         subject_id=payload.subject_id
       ) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
