@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Connector Runs</p>
+    <h1>Real connector execution history and raw output review.</h1>
+    <p class="muted">Open a run to inspect stdout, stderr, raw JSON, and normalized findings.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="{{ url_for('connector_finding_queue_view') }}">Finding Promotion Queue</a>
+    <a class="button-link secondary" href="{{ url_for('connector_runtime_health_view') }}">Connector Runtime</a>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Runs</h2>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>ID</th><th>Connector</th><th>Target</th><th>Status</th><th>Findings</th><th>Created</th><th>Open</th></tr></thead>
+      <tbody>
+      {% for run in payload.runs %}
+        <tr>
+          <td>{{ run.id }}</td>
+          <td>{{ run.connector }}</td>
+          <td>{{ run.target_value }} <span class="muted">({{ run.target_type }})</span></td>
+          <td><span class="status-pill {{ 'completed' if run.status == 'completed' else 'failed' if run.status in ['failed','timeout'] else 'queued' }}">{{ run.status }}</span></td>
+          <td>{{ run.normalized_findings|length }}</td>
+          <td>{{ run.created_at }}</td>
+          <td><a href="{{ url_for('connector_run_detail_view', run_id=run.id) }}">Open run</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7">No connector runs recorded yet. Process a queued job or run a Spine connector first.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
