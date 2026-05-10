@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+import time
 from pathlib import Path
 
 from socmint.dashboard import create_app
@@ -19,7 +20,13 @@ def main() -> None:
         subject_id = 755
 
         first = export_full_entity_dossier_v2(subject_id)
+        # Export filenames currently use second-level timestamps. Pause so the
+        # smoke creates two distinct export result files instead of overwriting
+        # the first one during fast local runs.
+        time.sleep(1.1)
         second = export_full_entity_dossier_v2(subject_id)
+
+        assert Path(first["result_path"]).name != Path(second["result_path"]).name
 
         history = full_report_export_history(subject_id)
         assert history["schema"] == "socmint.full_report_export_history.v7_5_5"
