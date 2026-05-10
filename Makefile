@@ -1,7 +1,7 @@
 PYTHON=./venv/bin/python
 PIP=./venv/bin/pip
 
-.PHONY: all venv install install-prod install-scanners test migrate serve serve-prod process-jobs clean lint format precommit-install secrets backup-restore-smoke production-smoke production-docker-smoke ci connectors-health install-connectors
+.PHONY: all venv install install-prod install-scanners test migrate serve serve-prod process-jobs clean lint format precommit-install secrets backup-restore-smoke production-smoke production-docker-smoke ci connectors-health connectors-health-json install-connectors
 
 all: install
 
@@ -34,7 +34,10 @@ process-jobs: install
 	$(PYTHON) -m src.socmint.main process-jobs --max-jobs=$${MAX_JOBS:-1}
 
 connectors-health:
-	PYTHONPATH=$(PWD)/src python3 -m socmint.connector_runtime_health_cli
+	@PYTHONPATH=$(PWD)/src python3 -m socmint.connector_runtime_health_cli
+
+connectors-health-json:
+	@PYTHONPATH=$(PWD)/src python3 -m socmint.connector_runtime_health_cli --json
 
 install-connectors:
 	bash ./scripts/install_connector_runtime_v7_6_0.sh
@@ -217,4 +220,11 @@ test760:
 	PYTHONPATH=$(PWD)/src bash ./scripts/test_v7_6_0.sh
 
 zip760:
-	cd .. && zip -r SOCMINT-PROJECT-v7.6.0.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env' -x 'SOCMINT-PROJECT/.connector-tools/*'
+	cd .. && zip -r SOCMINT-PROJECT-v7.6.0.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/.env' -x 'SOCMINT-PROJECT/.connector-tools/*'
+
+
+test761:
+	PYTHONPATH=$(PWD)/src bash ./scripts/test_v7_6_1.sh
+
+zip761:
+	cd .. && zip -r SOCMINT-PROJECT-v7.6.1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/.env' -x 'SOCMINT-PROJECT/.connector-tools/*'
