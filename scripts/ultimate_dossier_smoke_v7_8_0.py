@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import os
 import tempfile
+from datetime import UTC, datetime
 
 from socmint import database as db
+from socmint.artifacts import write_json_artifact
 from socmint.command_center_routes import register_command_center_routes
 from socmint.connector_normalizers import normalize_connector_output
 from socmint.connector_runtime_routes import register_connector_runtime_routes
@@ -28,10 +30,42 @@ def _run_with_result(subject_id: int, connector: str, seed_type: str, seed_value
         normalized_value=seed_value,
         pii_hash=f"smoke-{connector}-{seed_type}",
     )
-    from socmint.spine import run_connector_for_seed
-    from socmint.spine import HIGH_VALUE_CONNECTORS
-
-    return run_connector_for_seed(subject_id, seed, connector, HIGH_VALUE_CONNECTORS[connector])
+    payload = {
+        "connector": connector,
+        "seed_type": seed_type,
+        "seed_hash": f"smoke-{connector}-{seed_type}",
+        "result": raw_result,
+        "created_at": datetime.now(UTC).isoformat(),
+    }
+    artifact = write_json_artifact("connector-runs", payload, prefix=f"{connector}-{subject_id}")
+    run_id = db.create_spine_connector_run(
+        subject_id=subject_id,
+        connector_key=connector,
+        seed_id=seed.id,
+        status=raw_result.get("status", "completed"),
+        raw_result=payload,
+    )
+    db.create_spine_raw_artifact(
+        run_id=run_id,
+        kind=artifact["kind"],
+        path=artifact["path"],
+        sha256=artifact["sha256"],
+        mime_type=artifact["mime_type"],
+        size_bytes=artifact["size_bytes"],
+        meta=payload,
+    )
+    for finding in normalize_connector_output(connector, seed_value, seed_type, raw_result):
+        db.create_spine_observation(
+            subject_id=subject_id,
+            run_id=run_id,
+            observation_type=finding["type"],
+            normalized_value=finding["value"],
+            confidence=str(finding["confidence"]),
+            source_ref=f"run:{run_id}:{connector}",
+            evidence_ref=f"sha256:{artifact['sha256']}",
+            payload={**finding, "diagnostic": False, "artifact_sha256": artifact["sha256"]},
+        )
+    return run_id
 
 
 def main() -> None:
