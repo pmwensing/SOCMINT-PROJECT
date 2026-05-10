@@ -6,6 +6,7 @@ from socmint.dashboard import create_app
 from socmint.entity_dossier_v2 import build_full_entity_dossier_v2
 from socmint.entity_dossier_v2 import export_full_entity_dossier_v2
 from socmint.entity_dossier_v2 import safe_dossier_path
+from socmint.full_report_alias import latest_full_report_export
 from socmint.full_report_alias import register_full_report_aliases
 
 
@@ -78,6 +79,20 @@ def test_export_full_entity_dossier_v2_manifest_hashes(tmp_path, monkeypatch):
     )
 
 
+def test_latest_full_report_export_metadata(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    result = export_full_entity_dossier_v2(24)
+    latest = latest_full_report_export(24)
+
+    assert latest["available"] is True
+    assert latest["subject_id"] == 24
+    assert latest["zip_name"] == Path(result["zip_path"]).name
+    assert latest["manifest_name"] == Path(result["manifest_path"]).name
+    assert latest["html_name"] == Path(result["html_path"]).name
+    assert latest["manifest"]["artifact_count"] == len(latest["manifest"]["files"])
+
+
 def test_dossier_v2_routes_registered():
     app = create_app()
     rules = {rule.rule for rule in app.url_map.iter_rules()}
@@ -104,3 +119,14 @@ def test_full_report_alias_routes_registered():
     assert "/api/v1/spine/subjects/<int:subject_id>/full-report/latest" in rules
     assert "/api/v1/spine/subjects/<int:subject_id>/full-report/download" in rules
     assert "/spine/subjects/<int:subject_id>/full-report/run" in rules
+
+
+def test_entity_dossier_v2_template_has_v7_5_2_controls():
+    template = Path("src/socmint/templates/entity_dossier_v2.html").read_text()
+
+    assert "Run Full Report" in template
+    assert "Latest Full Report Export" in template
+    assert "Download Manifest" in template
+    assert "Download ZIP" in template
+    assert "api_full_report_download" in template
+    assert "latest_full_report_export" in template
