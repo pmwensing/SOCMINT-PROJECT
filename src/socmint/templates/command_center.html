@@ -11,6 +11,8 @@
     <a class="button-link secondary" href="{{ url_for('dashboard.jobs') }}">Review Jobs</a>
     <a class="button-link secondary" href="{{ url_for('dashboard.spine_enrichment_review') }}">Enrichment Review</a>
     <a class="button-link secondary" href="{{ url_for('connector_runtime_health_view') }}">Connector Runtime</a>
+    <a class="button-link secondary" href="{{ url_for('connector_runs_view') }}">Connector Runs</a>
+    <a class="button-link secondary" href="{{ url_for('connector_finding_queue_view') }}">Finding Queue</a>
   </div>
 </section>
 
@@ -42,6 +44,8 @@
     <a href="/spine/subjects/1/dossier"><strong>4</strong><span>Generate Full Report</span></a>
     <a href="{{ url_for('dashboard.report_export_center_view') }}"><strong>5</strong><span>Export / evidence readiness</span></a>
     <a href="{{ url_for('connector_runtime_health_view') }}"><strong>6</strong><span>Verify connector runtime</span></a>
+    <a href="{{ url_for('connector_runs_view') }}"><strong>7</strong><span>Inspect connector output</span></a>
+    <a href="{{ url_for('connector_finding_queue_view') }}"><strong>8</strong><span>Promote/reject findings</span></a>
   </div>
   <p class="status-banner {{ 'warning' if payload.summary.queued_jobs else 'ok' }}">{{ payload.summary.worker_hint }}</p>
 </section>
