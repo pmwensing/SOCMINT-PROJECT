@@ -21,7 +21,7 @@ def test_export_center_payload_shape(tmp_path, monkeypatch):
 
     payload = export_center_payload()
 
-    assert payload["schema"] == "socmint.report_export_center.v7_3"
+    assert payload["schema"] == "socmint.report_export_center.v7_3_1"
     assert "approved_and_uncertain" in payload["gate_modes"]
     assert "exports" in payload
 
