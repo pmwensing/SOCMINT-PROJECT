@@ -6,6 +6,7 @@ from socmint.dashboard import create_app
 from socmint.entity_dossier_v2 import build_full_entity_dossier_v2
 from socmint.entity_dossier_v2 import export_full_entity_dossier_v2
 from socmint.entity_dossier_v2 import safe_dossier_path
+from socmint.full_report_alias import register_full_report_aliases
 
 
 def test_build_full_entity_dossier_v2_payload(tmp_path, monkeypatch):
@@ -32,6 +33,7 @@ def test_export_full_entity_dossier_v2(tmp_path, monkeypatch):
     assert Path(result["json_path"]).exists()
     assert Path(result["markdown_path"]).exists()
     assert Path(result["html_path"]).exists()
+    assert Path(result["manifest_path"]).exists()
     assert Path(result["zip_path"]).exists()
 
     safe = safe_dossier_path(Path(result["zip_path"]).name)
@@ -40,6 +42,7 @@ def test_export_full_entity_dossier_v2(tmp_path, monkeypatch):
     with zipfile.ZipFile(result["zip_path"]) as zf:
         names = set(zf.namelist())
         assert "README.txt" in names
+        assert Path(result["manifest_path"]).name in names
         assert any(name.endswith(".json") for name in names)
         assert any(name.endswith(".md") for name in names)
         assert any(name.endswith(".html") for name in names)
@@ -88,3 +91,16 @@ def test_dossier_v2_routes_registered():
         "<path:name>/download"
         in rules
     )
+
+
+def test_full_report_alias_routes_registered():
+    app = create_app()
+    register_full_report_aliases(app)
+    register_full_report_aliases(app)
+    rules = {rule.rule for rule in app.url_map.iter_rules()}
+
+    assert "/api/v1/spine/subjects/<int:subject_id>/full-report" in rules
+    assert "/api/v1/spine/subjects/<int:subject_id>/full-report/run" in rules
+    assert "/api/v1/spine/subjects/<int:subject_id>/full-report/latest" in rules
+    assert "/api/v1/spine/subjects/<int:subject_id>/full-report/download" in rules
+    assert "/spine/subjects/<int:subject_id>/full-report/run" in rules
