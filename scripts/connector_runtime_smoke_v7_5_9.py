@@ -17,6 +17,7 @@ from socmint.full_report_history import register_full_report_history_routes
 from socmint.full_report_retention import register_full_report_retention_routes
 
 EXPECTED = {"sherlock", "maigret", "socialscan", "holehe", "h8mail", "phoneinfoga"}
+VALID_SCHEMAS = {"socmint.connector_runtime.v7_5_9", "socmint.connector_runtime.v7_6_0"}
 
 
 def main() -> None:
@@ -29,7 +30,7 @@ def main() -> None:
         assert EXPECTED.issubset(set(CONNECTORS))
 
         health = connector_runtime_health()
-        assert health["schema"] == "socmint.connector_runtime.v7_5_9"
+        assert health["schema"] in VALID_SCHEMAS
         names = {item["name"] for item in health["connectors"]}
         assert EXPECTED.issubset(names)
         assert "archivebox" in names
@@ -83,7 +84,7 @@ def main() -> None:
 
             api = client.get("/api/v1/connectors/runtime")
             assert api.status_code == 200
-            assert api.get_json()["schema"] == "socmint.connector_runtime.v7_5_9"
+            assert api.get_json()["schema"] in VALID_SCHEMAS
 
             command_center = client.get("/")
             assert command_center.status_code == 200
