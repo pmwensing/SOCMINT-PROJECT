@@ -20,6 +20,8 @@ HIGH_VALUE_CONNECTORS = {
 }
 
 DIAGNOSTIC_OBSERVATION_TYPES = {"seed_expansion_candidate", "connector_no_result"}
+NON_ENRICHMENT_STATUSES = {"dry_run", "skipped", "timeout", "failed"}
+SEED_ECHO_FINDING_TYPES = {"email", "username", "seed", "target", "archive_candidate", "url"}
 
 
 def create_subject(label: str | None, seeds: list[dict]) -> int:
@@ -187,16 +189,23 @@ def connector_quality_adjustments() -> dict:
     return adjustments
 
 
+def _same_as_seed(value, seed) -> bool:
+    return str(value or "").lower().strip() == str(seed.normalized_value or "").lower().strip()
+
+
 def extract_observations(connector_key, seed, raw_result, spec, artifact) -> list[dict]:
     observations = []
     findings = raw_result.get("findings", []) if isinstance(raw_result, dict) else []
+    status = str(raw_result.get("status") or "").strip().lower()
 
     for finding in findings:
         value = str(finding.get("value") or finding.get("url") or "").strip()
-        finding_type = finding.get("type", "connector_finding")
+        finding_type = str(finding.get("type", "connector_finding")).strip()
         if not value:
             continue
-        if value.lower().strip() == str(seed.normalized_value).lower().strip() and finding_type in {"email", "username", "seed", "target"}:
+        if _same_as_seed(value, seed) and finding_type in SEED_ECHO_FINDING_TYPES:
+            continue
+        if status in NON_ENRICHMENT_STATUSES and (_same_as_seed(value, seed) or finding_type == "archive_candidate"):
             continue
         observations.append(
             {
