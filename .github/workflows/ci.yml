@@ -26,26 +26,10 @@ jobs:
       - name: Test
         run: |
           set +e
-          pytest -q --junitxml=/tmp/pytest.xml
+          pytest -q --junitxml=/tmp/pytest.xml 2>&1 | tee /tmp/pytest.out
           status=$?
           if [ "$status" -ne 0 ]; then
-            python - <<'PY'
-          import xml.etree.ElementTree as ET
-
-          def escape(value):
-              return str(value or "").replace("%", "%25").replace("\n", "%0A").replace("\r", "%0D")
-
-          root = ET.parse("/tmp/pytest.xml").getroot()
-          for case in root.iter("testcase"):
-              problem = case.find("failure") or case.find("error")
-              if problem is None:
-                  continue
-              name = f"{case.get('classname')}.{case.get('name')}"
-              path = case.get("file") or ".github"
-              line = case.get("line") or "1"
-              message = problem.get("message") or problem.text or "pytest failure"
-              print(f"::error file={path},line={line},title={escape(name)}::{escape(message)}")
-          PY
+            python scripts/annotate_ci_output.py /tmp/pytest.out /tmp/pytest.xml
           fi
           exit "$status"
 
