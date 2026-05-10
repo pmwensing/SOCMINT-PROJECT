@@ -142,3 +142,10 @@ test743:
 
 test75:
 	PYTHONPATH=$(PWD)/src ./scripts/test_v7_5.sh
+
+
+test751:
+	PYTHONPATH=$(PWD)/src ./scripts/test_v7_5_1.sh
+
+zip751:
+	cd .. && zip -r SOCMINT-PROJECT-v7.5.1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
