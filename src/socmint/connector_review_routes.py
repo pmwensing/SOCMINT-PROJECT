@@ -27,7 +27,11 @@ def register_connector_review_routes(app) -> None:
 
     @run_required
     def connector_finding_queue_view():
-        return render_template("connector_finding_queue.html", payload=finding_queue_payload())
+        status = request.args.get("status", "unreviewed")
+        return render_template(
+            "connector_finding_queue.html",
+            payload=finding_queue_payload(status=status),
+        )
 
     @run_required
     def connector_finding_review_action(finding_id: int):
@@ -67,7 +71,7 @@ def register_connector_review_routes(app) -> None:
 
     @run_required
     def api_connector_finding_queue():
-        return jsonify(finding_queue_payload())
+        return jsonify(finding_queue_payload(status=request.args.get("status", "unreviewed")))
 
     @run_required
     def api_connector_finding_review(finding_id: int):
