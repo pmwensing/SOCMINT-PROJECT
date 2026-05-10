@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import html
 import json
 from pathlib import Path
 from typing import Any
 
-from flask import Response, jsonify, request
+from flask import Response, jsonify, redirect, request, url_for
 
 from .entity_dossier_v2 import dossier_root
 from .entity_dossier_v2 import safe_dossier_path
@@ -162,35 +163,137 @@ def apply_retention(subject_id: int, keep_latest: int = 5, dry_run: bool = True)
     return {**plan, "dry_run": False, "deleted": deleted, "blocked": blocked}
 
 
-def _retention_html(subject_id: int) -> str:
-    plan = retention_plan(subject_id)
-    delete_rows = []
-    for item in plan.get("delete", []):
-        delete_rows.append(
-            "<tr>"
-            f"<td><code>{item.get('name')}</code></td>"
-            f"<td>{item.get('generated_at')}</td>"
-            f"<td>{item.get('artifact_count')}</td>"
-            "</tr>"
-        )
+def _csrf_input() -> str:
+    from .dashboard import csrf_token
+
+    return f"<input type='hidden' name='csrf_token' value='{html.escape(csrf_token())}'>"
+
+
+def _hidden(name: str, value: Any) -> str:
+    return f"<input type='hidden' name='{html.escape(name)}' value='{html.escape(str(value or ''))}'>"
+
+
+def _button(label: str, danger: bool = False) -> str:
+    cls = " style='background:#7f1d1d;color:white'" if danger else ""
+    return f"<button type='submit'{cls}>{html.escape(label)}</button>"
+
+
+def _form(action: str, fields: dict[str, Any], label: str, *, danger: bool = False, extra: str = "") -> str:
+    inputs = [_csrf_input()]
+    inputs.extend(_hidden(key, value) for key, value in fields.items())
+    return (
+        f"<form method='post' action='{html.escape(action)}' style='display:inline-block;margin:0.15rem'>"
+        + "".join(inputs)
+        + extra
+        + _button(label, danger=danger)
+        + "</form>"
+    )
+
+
+def _retention_html(subject_id: int, keep_latest: int = 5, message: str = "") -> str:
+    plan = retention_plan(subject_id, keep_latest=keep_latest)
+    pin_action = url_for("ui_full_report_pin", subject_id=subject_id)
+    unpin_action = url_for("ui_full_report_unpin", subject_id=subject_id)
+    delete_action = url_for("ui_full_report_delete", subject_id=subject_id)
+    apply_action = url_for("ui_full_report_apply_retention", subject_id=subject_id)
+    retention_url = url_for("ui_full_report_retention", subject_id=subject_id)
+    history_url = url_for("ui_full_report_history", subject_id=subject_id)
+
     keep_rows = []
     for item in plan.get("keep", []):
+        name = item.get("name", "")
+        pinned = bool(item.get("pinned"))
+        pin_controls = (
+            _form(unpin_action, {"name": name, "keep_latest": keep_latest}, "Unpin")
+            if pinned
+            else _form(
+                pin_action,
+                {"name": name, "note": "Pinned from retention UI", "keep_latest": keep_latest},
+                "Pin important",
+            )
+        )
+        delete_extra = (
+            f"<label> Confirm: <input name='confirm_name' size='34' "
+            f"placeholder='{html.escape(name)}'></label>"
+        )
+        delete_control = _form(
+            delete_action,
+            {"name": name, "keep_latest": keep_latest},
+            "Delete export",
+            danger=True,
+            extra=delete_extra,
+        )
         keep_rows.append(
             "<tr>"
-            f"<td><code>{item.get('name')}</code></td>"
-            f"<td>{item.get('generated_at')}</td>"
-            f"<td>{'yes' if item.get('pinned') else 'no'}</td>"
+            f"<td><code>{html.escape(name)}</code></td>"
+            f"<td>{html.escape(str(item.get('generated_at') or ''))}</td>"
+            f"<td>{'yes' if pinned else 'no'}</td>"
+            f"<td>{pin_controls}{delete_control}</td>"
             "</tr>"
         )
+
+    delete_rows = []
+    for item in plan.get("delete", []):
+        name = item.get("name", "")
+        delete_extra = (
+            f"<label> Confirm: <input name='confirm_name' size='34' "
+            f"placeholder='{html.escape(name)}'></label>"
+        )
+        controls = (
+            _form(
+                pin_action,
+                {"name": name, "note": "Pinned from delete candidates", "keep_latest": keep_latest},
+                "Pin important",
+            )
+            + _form(
+                delete_action,
+                {"name": name, "keep_latest": keep_latest},
+                "Delete export",
+                danger=True,
+                extra=delete_extra,
+            )
+        )
+        delete_rows.append(
+            "<tr>"
+            f"<td><code>{html.escape(name)}</code></td>"
+            f"<td>{html.escape(str(item.get('generated_at') or ''))}</td>"
+            f"<td>{html.escape(str(item.get('artifact_count') or ''))}</td>"
+            f"<td>{controls}</td>"
+            "</tr>"
+        )
+
+    dry_run_form = _form(
+        apply_action,
+        {"keep_latest": keep_latest, "dry_run": "true"},
+        "Dry-run retention",
+    )
+    apply_form = _form(
+        apply_action,
+        {"keep_latest": keep_latest, "dry_run": "false"},
+        "Apply retention delete candidates",
+        danger=True,
+        extra="<label> Confirm apply: <input name='confirm_apply' placeholder='APPLY'></label>",
+    )
+
+    message_html = f"<p><strong>Status:</strong> {html.escape(message)}</p>" if message else ""
     return f"""
     <!doctype html><html><head><meta charset='utf-8'><title>Full Report Retention</title></head>
     <body>
       <h1>Full Report Retention — Subject {subject_id}</h1>
-      <p><strong>History:</strong> {plan['history_count']} | <strong>Keep:</strong> {plan['keep_count']} | <strong>Delete candidates:</strong> {plan['delete_count']}</p>
+      {message_html}
+      <p><a href='{history_url}'>Export History</a> | <a href='{retention_url}'>Refresh Retention</a></p>
+      <form method='get' action='{retention_url}'>
+        <label>Keep latest <input type='number' min='1' name='keep_latest' value='{keep_latest}'></label>
+        <button type='submit'>Recalculate retention</button>
+      </form>
+      <p><strong>History:</strong> {plan['history_count']} | <strong>Keep:</strong> {plan['keep_count']} | <strong>Delete candidates:</strong> {plan['delete_count']} | <strong>Pinned:</strong> {plan['pinned_count']}</p>
+      <h2>Retention Actions</h2>
+      <p>{dry_run_form}{apply_form}</p>
       <h2>Kept / Pinned Exports</h2>
-      <table border='1' cellpadding='6'><thead><tr><th>Export</th><th>Generated</th><th>Pinned</th></tr></thead><tbody>{''.join(keep_rows) or '<tr><td colspan="3">No kept exports.</td></tr>'}</tbody></table>
+      <table border='1' cellpadding='6'><thead><tr><th>Export</th><th>Generated</th><th>Pinned</th><th>Actions</th></tr></thead><tbody>{''.join(keep_rows) or '<tr><td colspan="4">No kept exports.</td></tr>'}</tbody></table>
       <h2>Delete Candidates</h2>
-      <table border='1' cellpadding='6'><thead><tr><th>Export</th><th>Generated</th><th>Artifacts</th></tr></thead><tbody>{''.join(delete_rows) or '<tr><td colspan="3">No delete candidates.</td></tr>'}</tbody></table>
+      <table border='1' cellpadding='6'><thead><tr><th>Export</th><th>Generated</th><th>Artifacts</th><th>Actions</th></tr></thead><tbody>{''.join(delete_rows) or '<tr><td colspan="4">No delete candidates.</td></tr>'}</tbody></table>
+      <p><strong>Delete safety:</strong> type the exact export filename into the Confirm field before deleting. Pinned exports are blocked unless force is used by API.</p>
     </body></html>
     """
 
@@ -200,6 +303,9 @@ def register_full_report_retention_routes(app) -> None:
         return
 
     from .dashboard import login_required, run_required
+
+    def _keep_latest_from_request(default: int = 5) -> int:
+        return int(request.values.get("keep_latest", default))
 
     @login_required
     def api_full_report_retention_plan(subject_id: int):
@@ -232,7 +338,43 @@ def register_full_report_retention_routes(app) -> None:
 
     @login_required
     def ui_full_report_retention(subject_id: int):
-        return Response(_retention_html(subject_id), mimetype="text/html; charset=utf-8")
+        keep_latest = int(request.args.get("keep_latest", 5))
+        message = request.args.get("message", "")
+        return Response(_retention_html(subject_id, keep_latest=keep_latest, message=message), mimetype="text/html; charset=utf-8")
+
+    @run_required
+    def ui_full_report_pin(subject_id: int):
+        keep_latest = _keep_latest_from_request()
+        result = pin_export(subject_id, request.form.get("name", ""), note=request.form.get("note", ""))
+        message = "Pinned export." if result.get("ok") else f"Pin failed: {result.get('error')}"
+        return redirect(url_for("ui_full_report_retention", subject_id=subject_id, keep_latest=keep_latest, message=message))
+
+    @run_required
+    def ui_full_report_unpin(subject_id: int):
+        keep_latest = _keep_latest_from_request()
+        unpin_export(subject_id, request.form.get("name", ""))
+        return redirect(url_for("ui_full_report_retention", subject_id=subject_id, keep_latest=keep_latest, message="Unpinned export."))
+
+    @run_required
+    def ui_full_report_delete(subject_id: int):
+        keep_latest = _keep_latest_from_request()
+        name = Path(request.form.get("name", "")).name
+        confirm = request.form.get("confirm_name", "")
+        if confirm != name:
+            return redirect(url_for("ui_full_report_retention", subject_id=subject_id, keep_latest=keep_latest, message="Delete blocked: confirmation did not match export filename."))
+        result = delete_export(subject_id, name, force=False)
+        message = f"Deleted {result.get('deleted_count', 0)} artifact(s)." if result.get("ok") else f"Delete blocked: {result.get('error')}"
+        return redirect(url_for("ui_full_report_retention", subject_id=subject_id, keep_latest=keep_latest, message=message))
+
+    @run_required
+    def ui_full_report_apply_retention(subject_id: int):
+        keep_latest = _keep_latest_from_request()
+        dry_run = str(request.form.get("dry_run", "true")).lower() not in {"0", "false", "no"}
+        if not dry_run and request.form.get("confirm_apply") != "APPLY":
+            return redirect(url_for("ui_full_report_retention", subject_id=subject_id, keep_latest=keep_latest, message="Apply blocked: type APPLY to confirm deletion."))
+        result = apply_retention(subject_id, keep_latest=keep_latest, dry_run=dry_run)
+        message = f"Dry-run complete: {result.get('delete_count', 0)} delete candidate(s)." if dry_run else f"Applied retention: {len(result.get('deleted', []))} export(s) deleted."
+        return redirect(url_for("ui_full_report_retention", subject_id=subject_id, keep_latest=keep_latest, message=message))
 
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/full-report/retention", endpoint="api_full_report_retention_plan", view_func=api_full_report_retention_plan, methods=["GET"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/full-report/pin", endpoint="api_full_report_pin", view_func=api_full_report_pin, methods=["POST"])
@@ -240,3 +382,7 @@ def register_full_report_retention_routes(app) -> None:
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/full-report/delete", endpoint="api_full_report_delete", view_func=api_full_report_delete, methods=["POST"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/full-report/apply-retention", endpoint="api_full_report_apply_retention", view_func=api_full_report_apply_retention, methods=["POST"])
     app.add_url_rule("/spine/subjects/<int:subject_id>/full-report/retention", endpoint="ui_full_report_retention", view_func=ui_full_report_retention, methods=["GET"])
+    app.add_url_rule("/spine/subjects/<int:subject_id>/full-report/pin", endpoint="ui_full_report_pin", view_func=ui_full_report_pin, methods=["POST"])
+    app.add_url_rule("/spine/subjects/<int:subject_id>/full-report/unpin", endpoint="ui_full_report_unpin", view_func=ui_full_report_unpin, methods=["POST"])
+    app.add_url_rule("/spine/subjects/<int:subject_id>/full-report/delete", endpoint="ui_full_report_delete", view_func=ui_full_report_delete, methods=["POST"])
+    app.add_url_rule("/spine/subjects/<int:subject_id>/full-report/apply-retention", endpoint="ui_full_report_apply_retention", view_func=ui_full_report_apply_retention, methods=["POST"])

@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import tempfile
 import time
-from pathlib import Path
 
 from socmint.dashboard import create_app
 from socmint.full_report_alias import register_full_report_aliases
