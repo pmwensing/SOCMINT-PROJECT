@@ -24,14 +24,33 @@ def sha256_file(path: Path) -> str:
 def assert_manifest_hashes(manifest: dict) -> None:
     files = manifest.get("files") or []
     assert files, "manifest has no files"
+    verified_roles = []
+
     for entry in files:
         role = entry["role"]
         path = Path(entry["path"])
         expected_hash = entry["sha256"]
         expected_size = entry["size_bytes"]
         assert path.exists(), f"{role} missing: {path}"
+
+        if role == "export_manifest":
+            # The manifest contains an entry for itself and is then rewritten
+            # after bundle metadata is appended. Exact self size/hash equality
+            # is therefore self-referential and not stable. Validate that the
+            # manifest is present, non-empty, parseable, and carries a digest.
+            assert path.stat().st_size > 0, "export_manifest is empty"
+            assert len(expected_hash) == 64, "export_manifest digest malformed"
+            assert json.loads(path.read_text())["schema"].endswith("v7_5_1")
+            continue
+
         assert path.stat().st_size == expected_size, f"{role} size mismatch"
         assert sha256_file(path) == expected_hash, f"{role} sha256 mismatch"
+        verified_roles.append(role)
+
+    assert "dossier_json" in verified_roles
+    assert "dossier_markdown" in verified_roles
+    assert "dossier_html" in verified_roles
+    assert "zip_bundle" in verified_roles
 
 
 def main() -> None:
