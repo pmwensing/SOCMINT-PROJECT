@@ -2,6 +2,14 @@
 {% block content %}
 <section class="panel">
     <h1>Scan Jobs</h1>
+    {% if health %}
+    <div class="metadata-grid">
+        <div><strong>Queue depth</strong><span>{{ health.queue_depth }}</span></div>
+        <div><strong>Running</strong><span>{{ health.running }}</span></div>
+        <div><strong>Failed</strong><span>{{ health.failed }}</span></div>
+        <div><strong>Needs attention</strong><span>{{ 'Yes' if health.needs_attention else 'No' }}</span></div>
+    </div>
+    {% endif %}
     {% if jobs %}
     <div class="metadata-table">
         <table>

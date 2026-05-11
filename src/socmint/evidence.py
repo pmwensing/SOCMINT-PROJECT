@@ -235,6 +235,77 @@ def connector_quality_metrics():
             if item["assertions"]
             else 0.0
         )
+        item["success_rate"] = (
+            round(item["successes"] / item["runs"], 3)
+            if item["runs"]
+            else 0.0
+        )
+        item["reliability_score"] = round(
+            max(
+                0.0,
+                min(
+                    1.0,
+                    item["success_rate"] * 0.35
+                    + item["evidence_coverage"] * 0.25
+                    + item["average_confidence"] * 0.25
+                    + (1 - item["rejection_rate"]) * 0.15,
+                ),
+            ),
+            3,
+        )
+        warnings = []
+        if item["runs"] and item["successes"] == 0 and item["dry_runs"] == item["runs"]:
+            warnings.append("dry_run_only")
+        if item["rejection_rate"] >= 0.25:
+            warnings.append("high_rejection_rate")
+        if item["observations"] and item["evidence_coverage"] < 0.5:
+            warnings.append("low_evidence_coverage")
+        if item["failures"] and item["failures"] >= item["successes"]:
+            warnings.append("failure_heavy")
+        item["warnings"] = warnings
         result.append(item)
 
     return sorted(result, key=lambda row: row["connector"] or "")
+
+
+def assertion_review_queue(limit=100):
+    assertions = db.list_all_spine_assertions(limit=10000)
+    queue = []
+    for assertion in assertions:
+        payload = _json_loads(assertion.payload_json)
+        confidence = float(assertion.confidence or 0)
+        state = assertion.validation_state or "unreviewed"
+        priority = 0
+        reasons = []
+        if state == "unreviewed":
+            priority += 50
+            reasons.append("unreviewed")
+        if confidence >= 0.8:
+            priority += 20
+            reasons.append("high_confidence")
+        if confidence < 0.45:
+            priority += 10
+            reasons.append("low_confidence")
+        if payload.get("connector_quality_delta", 0) < 0:
+            priority += 15
+            reasons.append("connector_quality_penalty")
+        if len(payload.get("source_refs") or []) <= 1:
+            priority += 10
+            reasons.append("single_source")
+        if state in {"confirmed", "rejected", "suppressed"} and priority < 25:
+            continue
+        queue.append(
+            {
+                "id": assertion.id,
+                "subject_id": assertion.subject_id,
+                "type": assertion.assertion_type,
+                "value": assertion.normalized_value,
+                "confidence": confidence,
+                "band": confidence_band(confidence),
+                "validation_state": state,
+                "priority": priority,
+                "reasons": reasons,
+                "source_count": len(payload.get("source_refs") or []),
+            }
+        )
+    return sorted(queue, key=lambda item: (-item["priority"], -item["confidence"], item["id"]))[:limit]

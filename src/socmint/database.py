@@ -489,6 +489,28 @@ def finish_scan_job(job_id, status, error=None, target_id=None):
         session.close()
 
 
+def update_scan_job_status(job_id, status, error=None):
+    ensure_configured()
+    session = Session()
+    try:
+        job = session.query(ScanJob).filter_by(id=job_id).first()
+        if not job:
+            return None
+        job.status = status
+        job.error = error
+        if status in {"queued", "running"}:
+            job.finished_at = None
+        else:
+            job.finished_at = utc_now()
+        if status == "queued":
+            job.started_at = None
+        session.commit()
+        session.refresh(job)
+        return job
+    finally:
+        session.close()
+
+
 def delete_dossier(target_id):
     ensure_configured()
     session = Session()

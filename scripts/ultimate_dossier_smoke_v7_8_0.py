@@ -18,6 +18,8 @@ from socmint.spine import create_subject
 from socmint.spine import correlate_subject
 from socmint.spine_intelligence_routes import register_spine_intelligence_routes
 from socmint.ultimate_dossier import assertions_csv
+from socmint.ultimate_dossier import dossier_export_manifest
+from socmint.ultimate_dossier import redacted_dossier_payload
 from socmint.ultimate_dossier import ultimate_dossier_payload
 from socmint.ultimate_dossier_routes import register_ultimate_dossier_routes
 
@@ -140,11 +142,17 @@ def main() -> None:
         assert payload["traceability"]
         assert payload["timeline"]
         assert payload["narrative"]["executive_summary"]
+        assert payload["readiness"]["state"] in {"ready", "needs_review", "blocked"}
         assert payload["exports"]["csv"].endswith("assertions.csv")
         csv_text = assertions_csv(payload)
         assert "profile_url" in csv_text
         assert "phone_country" in csv_text
         assert "exposure_indicator" in csv_text
+        manifest = dossier_export_manifest(payload)
+        assert manifest["parity"]["csv_matches_assertions"] is True
+        assert manifest["payload_sha256"]
+        redacted = redacted_dossier_payload(payload)
+        assert redacted["redaction"]["mode"] == "sensitive_identifiers"
 
         app = create_app()
         app.config.update(TESTING=True, SECRET_KEY="ultimate-dossier-smoke")
@@ -177,6 +185,18 @@ def main() -> None:
             api = client.get(f"/api/v1/spine/subjects/{subject_id}/ultimate-dossier")
             assert api.status_code == 200
             assert api.get_json()["schema"] == "socmint.ultimate_entity_human_dossier.v7_8_0"
+
+            redacted_api = client.get(
+                f"/api/v1/spine/subjects/{subject_id}/ultimate-dossier?redacted=1"
+            )
+            assert redacted_api.status_code == 200
+            assert redacted_api.get_json()["redaction"]["mode"] == "sensitive_identifiers"
+
+            manifest_api = client.get(
+                f"/api/v1/spine/subjects/{subject_id}/ultimate-dossier/manifest"
+            )
+            assert manifest_api.status_code == 200
+            assert manifest_api.get_json()["parity"]["csv_matches_assertions"] is True
 
             csv_response = client.get(f"/spine/subjects/{subject_id}/ultimate-dossier/assertions.csv")
             assert csv_response.status_code == 200

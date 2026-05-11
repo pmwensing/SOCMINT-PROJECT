@@ -68,6 +68,7 @@ from .dossier_export import export_dossier as run_dossier_export
 from .contradictions import contradiction_payload
 from .contradictions import detect_subject_contradictions
 from .contradictions import resolve_contradiction
+from .evidence import assertion_review_queue
 from .evidence import connector_quality_metrics
 from .evidence import get_assertion_evidence
 from .identity_graph import apply_merge_candidate
@@ -80,6 +81,9 @@ from .enrichment import review_enrichment_finding
 from .spine import build_dossier
 from .spine import create_subject as spine_create_subject
 from .spine import run_spine_for_subject
+from .jobs import cancel_scan_job
+from .jobs import requeue_scan_job
+from .jobs import scan_job_health
 
 COMMON_PASSWORDS = {
     "password",
@@ -386,7 +390,30 @@ def run_target():
 @login_required
 def jobs():
     jobs = db.list_scan_jobs(limit=100)
-    return render_template("jobs.html", jobs=jobs)
+    return render_template("jobs.html", jobs=jobs, health=scan_job_health())
+
+
+@dashboard_bp.route("/api/v1/jobs/health")
+@login_required
+def api_jobs_health():
+    return jsonify(scan_job_health())
+
+
+@dashboard_bp.route("/api/v1/jobs/<int:job_id>/requeue", methods=["POST"])
+@admin_required
+def api_jobs_requeue(job_id):
+    result = requeue_scan_job(job_id)
+    audit("scan_job_requeue", details=result)
+    return jsonify(result), 202
+
+
+@dashboard_bp.route("/api/v1/jobs/<int:job_id>/cancel", methods=["POST"])
+@admin_required
+def api_jobs_cancel(job_id):
+    payload = request.get_json(silent=True) or {}
+    result = cancel_scan_job(job_id, reason=payload.get("reason") or "Canceled by operator.")
+    audit("scan_job_cancel", details=result)
+    return jsonify(result), 202
 
 
 @dashboard_bp.route("/admin/audit")
@@ -724,6 +751,13 @@ def spine_connector_quality():
 @login_required
 def api_spine_connector_quality():
     return jsonify({"connectors": connector_quality_metrics()})
+
+
+@dashboard_bp.route("/api/v1/spine/assertions/review-queue")
+@login_required
+def api_spine_assertion_review_queue():
+    limit = min(max(request.args.get("limit", 100, type=int), 1), 500)
+    return jsonify({"assertions": assertion_review_queue(limit=limit)})
 
 
 

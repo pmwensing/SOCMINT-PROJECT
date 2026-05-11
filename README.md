@@ -97,6 +97,8 @@ authenticated dashboard:
 ```text
 /spine/subjects/<id>/ultimate-dossier
 /api/v1/spine/subjects/<id>/ultimate-dossier
+/api/v1/spine/subjects/<id>/ultimate-dossier?redacted=1
+/api/v1/spine/subjects/<id>/ultimate-dossier/manifest
 /spine/subjects/<id>/ultimate-dossier/assertions.csv
 ```
 
@@ -212,6 +214,11 @@ Postgres drill:
 5. Run `alembic current` and perform the same dashboard checks.
 
 Admin users can export/delete dossiers, manage users at `/admin/users`, assign `viewer`, `analyst`, or `admin` roles, and review filtered/paginated events at `/admin/audit`. Analysts can queue dashboard scan jobs but cannot manage users or export/delete dossiers. All users can rotate their own password at `/account/password`. Job status is available at `/jobs`.
+
+Operational review APIs include `/api/v1/spine/assertions/review-queue`,
+`/api/v1/spine/connectors/quality`, and `/api/v1/jobs/health`. Admin users can
+requeue or cancel scan jobs through `/api/v1/jobs/<id>/requeue` and
+`/api/v1/jobs/<id>/cancel`.
 
 ## Observability
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import json
 from collections import Counter, defaultdict
@@ -12,6 +13,13 @@ from .scoring import confidence_band
 from .spine_intelligence import spine_intelligence_payload
 
 ULTIMATE_DOSSIER_SCHEMA = "socmint.ultimate_entity_human_dossier.v7_8_0"
+ULTIMATE_DOSSIER_MANIFEST_SCHEMA = "socmint.ultimate_entity_human_dossier_manifest.v7_8_1"
+SENSITIVE_ASSERTION_TYPES = {
+    "email",
+    "exposure_email_reference",
+    "phone",
+    "profile_email",
+}
 
 HUMAN_IDENTIFIER_TYPES = {
     "email",
@@ -220,18 +228,54 @@ def narrative(payload: dict[str, Any], resolution: dict[str, Any], trace: list[d
     }
 
 
+def readiness_review(payload: dict[str, Any], resolution: dict[str, Any], trace: list[dict[str, Any]]) -> dict[str, Any]:
+    summary = payload["summary"]
+    assertions = payload["assertions"]
+    unreviewed = [item for item in assertions if item["validation_state"] == "unreviewed"]
+    rejected = [item for item in assertions if item["validation_state"] == "rejected"]
+    traceable_ids = {item["assertion_id"] for item in trace if item.get("source_refs") and item.get("evidence_refs")}
+    missing_trace = [item["id"] for item in assertions if item["id"] not in traceable_ids]
+    blockers = []
+    warnings = []
+
+    if not assertions:
+        blockers.append("No dossier-grade assertions exist yet.")
+    if unreviewed:
+        warnings.append(f"{len(unreviewed)} assertions still need analyst review.")
+    if rejected and len(rejected) == len(assertions):
+        blockers.append("All assertions are rejected.")
+    if missing_trace:
+        warnings.append(f"{len(missing_trace)} assertions lack complete source/evidence traceability.")
+    if summary.get("diagnostic_count", 0) and not summary.get("observation_count", 0):
+        warnings.append("Connector output is diagnostic-only; run additional enrichment before external use.")
+    if resolution.get("contradictions"):
+        warnings.append("Identity contradictions require analyst review.")
+
+    return {
+        "schema": "socmint.ultimate_dossier_readiness.v7_8_1",
+        "state": "blocked" if blockers else ("needs_review" if warnings else "ready"),
+        "blockers": blockers,
+        "warnings": warnings,
+        "unreviewed_assertion_count": len(unreviewed),
+        "rejected_assertion_count": len(rejected),
+        "missing_traceability_assertion_ids": missing_trace[:100],
+    }
+
+
 def ultimate_dossier_payload(subject_id: int) -> dict[str, Any]:
     intelligence = spine_intelligence_payload(subject_id)
     trace = source_traceability(subject_id)
     resolution = entity_human_resolution(intelligence["assertions"], intelligence["seeds"])
     events = timeline(intelligence["assertions"], intelligence["runs"], intelligence["observations"])
     story = narrative(intelligence, resolution, trace)
+    readiness = readiness_review(intelligence, resolution, trace)
     return {
         "schema": ULTIMATE_DOSSIER_SCHEMA,
         "generated_at": datetime.now(UTC).isoformat(),
         "subject": intelligence["subject"],
         "summary": intelligence["summary"],
         "resolution": resolution,
+        "readiness": readiness,
         "narrative": story,
         "seeds": intelligence["seeds"],
         "assertions": intelligence["assertions"],
@@ -245,6 +289,62 @@ def ultimate_dossier_payload(subject_id: int) -> dict[str, Any]:
             "json": f"/api/v1/spine/subjects/{subject_id}/ultimate-dossier",
             "csv": f"/spine/subjects/{subject_id}/ultimate-dossier/assertions.csv",
         },
+    }
+
+
+def _redact_value(value: Any) -> Any:
+    text = str(value or "")
+    if not text:
+        return text
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
+    return f"redacted:{digest}"
+
+
+def _redacted_item(item: dict[str, Any]) -> dict[str, Any]:
+    redacted = dict(item)
+    if redacted.get("type") in SENSITIVE_ASSERTION_TYPES:
+        redacted["value"] = _redact_value(redacted.get("value"))
+        redacted["redacted"] = True
+    return redacted
+
+
+def redacted_dossier_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    redacted = json.loads(json.dumps(payload))
+    redacted["assertions"] = [_redacted_item(item) for item in redacted.get("assertions", [])]
+    redacted["observations"] = [_redacted_item(item) for item in redacted.get("observations", [])]
+    redacted["diagnostics"] = [_redacted_item(item) for item in redacted.get("diagnostics", [])]
+    redacted["redaction"] = {
+        "schema": "socmint.ultimate_dossier_redaction.v7_8_1",
+        "mode": "sensitive_identifiers",
+        "sensitive_types": sorted(SENSITIVE_ASSERTION_TYPES),
+    }
+    return redacted
+
+
+def dossier_export_manifest(payload: dict[str, Any], redacted: bool = False) -> dict[str, Any]:
+    export_payload = redacted_dossier_payload(payload) if redacted else payload
+    stable_payload = dict(export_payload)
+    stable_payload.pop("generated_at", None)
+    json_bytes = json.dumps(stable_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    csv_text = assertions_csv(export_payload)
+    assertion_count = len(export_payload.get("assertions") or [])
+    csv_rows = max(0, len(csv_text.splitlines()) - 1)
+    return {
+        "schema": ULTIMATE_DOSSIER_MANIFEST_SCHEMA,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "subject_id": export_payload.get("subject", {}).get("id"),
+        "redacted": redacted,
+        "payload_sha256": hashlib.sha256(json_bytes).hexdigest(),
+        "assertions_csv_sha256": hashlib.sha256(csv_text.encode("utf-8")).hexdigest(),
+        "assertion_count": assertion_count,
+        "csv_assertion_count": csv_rows,
+        "parity": {
+            "csv_matches_assertions": csv_rows == assertion_count,
+            "traceability_entries": len(export_payload.get("traceability") or []),
+            "timeline_entries": len(export_payload.get("timeline") or []),
+        },
+        "readiness": export_payload.get("readiness", {}),
+        "exports": export_payload.get("exports", {}),
     }
 
 

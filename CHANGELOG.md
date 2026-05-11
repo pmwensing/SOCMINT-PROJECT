@@ -1,5 +1,26 @@
 # Changelog
 
+## v7.8.1
+
+Release hardening for the Ultimate Entity/Human dossier branch.
+
+### Added
+
+- Ultimate Dossier readiness review, export manifest, redacted JSON mode, and
+  CSV/assertion parity checks.
+- Connector reliability score and quality warning labels.
+- Prioritized assertion review queue API.
+- Scan job health, stale-running detection, requeue, and cancel APIs.
+- Manual GitHub Actions Docker/Tor production rehearsal.
+
+### Validation
+
+- `make ci`
+- `bash scripts/test_v7_8_0.sh`
+- `make production-smoke`
+- `make backup-restore-smoke`
+- `make production-docker-smoke`
+
 ## v0.1.0-rc1
 
 Production readiness candidate.

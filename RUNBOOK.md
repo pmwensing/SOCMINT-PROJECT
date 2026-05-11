@@ -10,6 +10,8 @@ Before deploying a release candidate:
 4. Run `make backup-restore-smoke`.
 5. Confirm every production secret differs from `.env.example`.
 6. Confirm `CHANGELOG.md` includes the release candidate notes.
+7. For GitHub-hosted deployment rehearsal, run the CI workflow manually with
+   `docker_smoke=true`.
 
 `make production-docker-smoke` is the deployment rehearsal. It builds the app and
 Tor images, boots the Compose stack, waits for `/readyz`, verifies the Tor hidden
@@ -94,6 +96,11 @@ dossier, and verify media links.
 - For systemd, keep `socmint-worker.timer` enabled.
 - Tune worker cadence with `SOCMINT_WORKER_INTERVAL` for Docker and
   `OnUnitActiveSec` in `deploy/systemd/socmint-worker.timer` for systemd.
+- Check `/api/v1/jobs/health` for queue depth, failed jobs, and stale-running
+  jobs. Admins can requeue or cancel jobs through the job action APIs.
+- Check `/api/v1/spine/connectors/quality` before relying on connector-heavy
+  assertions, and review `/api/v1/spine/assertions/review-queue` for prioritized
+  analyst decisions.
 
 ## Incident Checklist
 
