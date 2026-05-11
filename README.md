@@ -91,6 +91,15 @@ python -m src.socmint.main john_doe --retrieve
 python -m src.socmint.main john_doe --no-enrich --output-json --export exports/john_doe.json
 ```
 
+Spine subjects also expose an Ultimate Entity/Human dossier package through the
+authenticated dashboard:
+
+```text
+/spine/subjects/<id>/ultimate-dossier
+/api/v1/spine/subjects/<id>/ultimate-dossier
+/spine/subjects/<id>/ultimate-dossier/assertions.csv
+```
+
 Create an admin manually:
 
 ```bash

@@ -36,7 +36,7 @@ Normalizer coverage:
   - `phone_timezone`
 - ArchiveBox:
   - `archive_snapshot`
-  - skips dry-run `archive_candidate` as non-enrichment
+  - records dry-run `archive_candidate` as diagnostic non-enrichment
 - Generic fallback:
   - `external_url`
   - non-seed email/phone observations
@@ -125,6 +125,8 @@ bash scripts/test_v7_8_0.sh
 The v7.8.0 smoke test verifies:
 
 - connector normalizers produce structured observations
+- structured findings already present in connector payloads are preserved
+- dry-run seed echoes and archive candidates remain diagnostic non-enrichment
 - deterministic Spine runs, raw artifacts, observations, and assertions are created
 - source traceability is generated
 - entity/human resolution is generated
