@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Export Builder</h1>
+<section class="card"><pre>{{ manifest | tojson(indent=2) }}</pre></section>
+{% endblock %}

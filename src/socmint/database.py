@@ -1966,3 +1966,274 @@ class ReviewDecisionAudit(Base):
     reviewer = Column(String(255), nullable=True)
     batch_id = Column(String(128), nullable=True, index=True)
     created_at = Column(DateTime, default=utc_now, nullable=False)
+
+
+class CaseRecord(Base):
+    __tablename__ = "case_records"
+
+    id = Column(Integer, primary_key=True)
+    case_key = Column(String(128), unique=True, nullable=False, index=True)
+    title = Column(String(512), nullable=False)
+    status = Column(String(64), nullable=False, default="open", index=True)
+    priority = Column(String(64), nullable=False, default="normal", index=True)
+    review_state = Column(String(64), nullable=False, default="needs_review", index=True)
+    due_at = Column(String(64), nullable=True)
+    tags_json = Column(Text, nullable=False, default="[]")
+    payload_json = Column(Text, nullable=False, default="{}")
+    actor = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class CaseEvent(Base):
+    __tablename__ = "case_events"
+
+    id = Column(Integer, primary_key=True)
+    case_id = Column(Integer, ForeignKey("case_records.id"), nullable=False, index=True)
+    event_type = Column(String(64), nullable=False, index=True)
+    subject_id = Column(Integer, nullable=True, index=True)
+    note = Column(Text, nullable=True)
+    assignee = Column(String(255), nullable=True)
+    payload_json = Column(Text, nullable=False, default="{}")
+    actor = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class EvidenceCapture(Base):
+    __tablename__ = "evidence_captures"
+
+    id = Column(Integer, primary_key=True)
+    capture_id = Column(String(64), unique=True, nullable=False, index=True)
+    url = Column(Text, nullable=False)
+    case_key = Column(String(128), nullable=True, index=True)
+    subject_id = Column(Integer, nullable=True, index=True)
+    artifact_type = Column(String(64), nullable=False)
+    path = Column(Text, nullable=False)
+    sha256 = Column(String(64), nullable=False, index=True)
+    mime_type = Column(String(128), nullable=False)
+    size_bytes = Column(Integer, nullable=False, default=0)
+    headers_json = Column(Text, nullable=False, default="{}")
+    cookies_json = Column(Text, nullable=False, default="[]")
+    payload_json = Column(Text, nullable=False, default="{}")
+    actor = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class ResponsibleUseScope(Base):
+    __tablename__ = "responsible_use_scope"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(128), unique=True, nullable=False, default="default")
+    payload_json = Column(Text, nullable=False)
+    updated_by = Column(String(255), nullable=True)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+def _detach(session, item):
+    if item:
+        session.expunge(item)
+    return item
+
+
+def upsert_case_record(
+    case_key,
+    title,
+    tags=None,
+    status="open",
+    priority="normal",
+    review_state="needs_review",
+    due_at=None,
+    payload=None,
+    actor=None,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = session.query(CaseRecord).filter_by(case_key=case_key).first()
+        if not item:
+            item = CaseRecord(case_key=case_key, title=title, actor=actor)
+            session.add(item)
+        item.title = title
+        item.tags_json = json.dumps(tags or [])
+        item.status = status or item.status
+        item.priority = priority or item.priority
+        item.review_state = review_state or item.review_state
+        item.due_at = due_at
+        item.payload_json = json.dumps(payload or {})
+        item.updated_at = utc_now()
+        session.commit()
+        session.refresh(item)
+        return _detach(session, item)
+    finally:
+        session.close()
+
+
+def get_case_record(case_key):
+    ensure_configured()
+    session = Session()
+    try:
+        return _detach(session, session.query(CaseRecord).filter_by(case_key=case_key).first())
+    finally:
+        session.close()
+
+
+def list_case_records(limit=100):
+    ensure_configured()
+    session = Session()
+    try:
+        items = (
+            session.query(CaseRecord)
+            .order_by(CaseRecord.updated_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def add_case_event(
+    case_key,
+    event_type,
+    subject_id=None,
+    note=None,
+    assignee=None,
+    payload=None,
+    actor=None,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        case = session.query(CaseRecord).filter_by(case_key=case_key).first()
+        if not case:
+            raise ValueError("Case not found.")
+        item = CaseEvent(
+            case_id=case.id,
+            event_type=event_type,
+            subject_id=subject_id,
+            note=note,
+            assignee=assignee,
+            payload_json=json.dumps(payload or {}),
+            actor=actor,
+        )
+        case.updated_at = utc_now()
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return _detach(session, item)
+    finally:
+        session.close()
+
+
+def list_case_events(case_key=None, limit=200):
+    ensure_configured()
+    session = Session()
+    try:
+        query = session.query(CaseEvent)
+        if case_key:
+            case = session.query(CaseRecord).filter_by(case_key=case_key).first()
+            if not case:
+                return []
+            query = query.filter_by(case_id=case.id)
+        items = query.order_by(CaseEvent.created_at.desc()).limit(limit).all()
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def create_evidence_capture(
+    capture_id,
+    url,
+    artifact_type,
+    path,
+    sha256,
+    mime_type,
+    size_bytes,
+    case_key=None,
+    subject_id=None,
+    headers=None,
+    cookies=None,
+    payload=None,
+    actor=None,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = EvidenceCapture(
+            capture_id=capture_id,
+            url=url,
+            artifact_type=artifact_type,
+            path=path,
+            sha256=sha256,
+            mime_type=mime_type,
+            size_bytes=size_bytes,
+            case_key=case_key,
+            subject_id=subject_id,
+            headers_json=json.dumps(headers or {}),
+            cookies_json=json.dumps(cookies or []),
+            payload_json=json.dumps(payload or {}),
+            actor=actor,
+        )
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return _detach(session, item)
+    finally:
+        session.close()
+
+
+def list_evidence_captures(case_key=None, subject_id=None, limit=200):
+    ensure_configured()
+    session = Session()
+    try:
+        query = session.query(EvidenceCapture)
+        if case_key:
+            query = query.filter_by(case_key=case_key)
+        if subject_id is not None:
+            query = query.filter_by(subject_id=subject_id)
+        items = query.order_by(EvidenceCapture.created_at.desc()).limit(limit).all()
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def get_evidence_capture(capture_id):
+    ensure_configured()
+    session = Session()
+    try:
+        return _detach(
+            session,
+            session.query(EvidenceCapture).filter_by(capture_id=capture_id).first(),
+        )
+    finally:
+        session.close()
+
+
+def save_responsible_use_scope(payload, actor=None):
+    ensure_configured()
+    session = Session()
+    try:
+        item = session.query(ResponsibleUseScope).filter_by(name="default").first()
+        if not item:
+            item = ResponsibleUseScope(name="default", payload_json="{}")
+            session.add(item)
+        item.payload_json = json.dumps(payload or {})
+        item.updated_by = actor
+        item.updated_at = utc_now()
+        session.commit()
+        session.refresh(item)
+        return _detach(session, item)
+    finally:
+        session.close()
+
+
+def get_responsible_use_scope():
+    ensure_configured()
+    session = Session()
+    try:
+        return _detach(
+            session,
+            session.query(ResponsibleUseScope).filter_by(name="default").first(),
+        )
+    finally:
+        session.close()

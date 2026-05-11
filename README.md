@@ -220,6 +220,32 @@ Operational review APIs include `/api/v1/spine/assertions/review-queue`,
 requeue or cancel scan jobs through `/api/v1/jobs/<id>/requeue` and
 `/api/v1/jobs/<id>/cancel`.
 
+High-end analyst workflow surfaces include:
+
+```text
+/analyst/console
+/cases
+/evidence/capture
+/connectors/marketplace
+/responsible-use
+/exports/builder
+/spine/<id>/graph/canvas
+/spine/<id>/resolution-lab
+/api/v1/analyst/workbench
+/api/v1/evidence/capture
+/api/v1/evidence/captures
+/api/v1/cases
+/api/v1/connectors/marketplace
+/api/v1/responsible-use/scope
+/api/v1/responsible-use/gate
+/api/v1/exports/builder
+```
+
+These surfaces are database-backed through the v8 workflow tables for cases,
+case events, evidence captures, and responsible-use scope. Capture artifacts are
+stored under the evidence directory, hashed with SHA-256, and recorded in the
+chain-of-custody ledger.
+
 ## Observability
 
 - `/healthz` confirms the Flask process is alive.

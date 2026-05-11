@@ -154,7 +154,12 @@ def configure_logging(settings=None):
     settings = settings or load_settings(require_secret=False)
     handlers = [logging.StreamHandler(sys.stdout)]
     if settings.log_file:
-        handlers.append(logging.FileHandler(settings.log_file))
+        try:
+            handlers.append(logging.FileHandler(settings.log_file))
+        except OSError as exc:
+            sys.stderr.write(
+                f"warning: could not open SOCMINT_LOG_FILE={settings.log_file}: {exc}\n"
+            )
 
     formatter = (
         JsonFormatter()

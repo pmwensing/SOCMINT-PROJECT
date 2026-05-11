@@ -84,6 +84,25 @@ from .spine import run_spine_for_subject
 from .jobs import cancel_scan_job
 from .jobs import requeue_scan_job
 from .jobs import scan_job_health
+from .high_end_workflows import add_case_event as high_end_add_case_event
+from .high_end_workflows import analyst_workbench_payload as high_end_workbench
+from .high_end_workflows import build_export_manifest as high_end_export_manifest
+from .high_end_workflows import capture_automation_plan
+from .high_end_workflows import capture_snapshot
+from .high_end_workflows import case_payload as high_end_case_payload
+from .high_end_workflows import connector_marketplace_payload
+from .high_end_workflows import create_case as high_end_create_case
+from .high_end_workflows import entity_resolution_lab_payload
+from .high_end_workflows import gate_action
+from .high_end_workflows import graph_canvas_payload
+from .high_end_workflows import list_capture_artifacts
+from .high_end_workflows import list_cases as high_end_list_cases
+from .high_end_workflows import load_scope as high_end_load_scope
+from .high_end_workflows import policy_events_payload as high_end_policy_events
+from .high_end_workflows import save_scope as high_end_save_scope
+from .high_end_workflows import scope_review
+from .high_end_workflows import update_case as high_end_update_case
+from .high_end_workflows import verify_capture
 
 COMMON_PASSWORDS = {
     "password",
@@ -391,6 +410,257 @@ def run_target():
 def jobs():
     jobs = db.list_scan_jobs(limit=100)
     return render_template("jobs.html", jobs=jobs, health=scan_job_health())
+
+
+@dashboard_bp.route("/analyst/console")
+@login_required
+def analyst_console():
+    payload = high_end_workbench(limit=100)
+    return render_template("analyst_console.html", payload=payload)
+
+
+@dashboard_bp.route("/evidence/capture", methods=["GET", "POST"])
+@run_required
+def high_end_capture_view():
+    if request.method == "POST":
+        try:
+            result = capture_snapshot(
+                request.form.get("url", ""),
+                request.form.get("html", ""),
+                case_key=request.form.get("case_key") or None,
+                subject_id=request.form.get("subject_id", type=int),
+                actor=session.get("user"),
+            )
+            audit("evidence_capture", details=result)
+            flash("Evidence capture stored.", "success")
+        except Exception as exc:
+            flash(str(exc), "error")
+        return redirect(url_for("dashboard.high_end_capture_view"))
+    return render_template(
+        "evidence_capture.html",
+        captures=list_capture_artifacts(),
+        plan=capture_automation_plan(request.args.get("url", "")),
+        scope=high_end_load_scope(),
+    )
+
+
+@dashboard_bp.route("/cases", methods=["GET", "POST"])
+@login_required
+def cases_view():
+    if request.method == "POST":
+        tags = [
+            item.strip()
+            for item in request.form.get("tags", "").split(",")
+            if item.strip()
+        ]
+        result = high_end_create_case(
+            request.form.get("title", "Untitled case"),
+            case_key=request.form.get("case_key") or None,
+            tags=tags,
+            actor=session.get("user"),
+        )
+        audit("case_create", details={"case_key": result["case_key"]})
+        return redirect(url_for("dashboard.case_detail_view", case_key=result["case_key"]))
+    return render_template("cases.html", cases=high_end_list_cases())
+
+
+@dashboard_bp.route("/cases/<case_key>", methods=["GET", "POST"])
+@login_required
+def case_detail_view(case_key):
+    if request.method == "POST":
+        action = request.form.get("action", "")
+        if action == "update":
+            high_end_update_case(
+                case_key,
+                actor=session.get("user"),
+                priority=request.form.get("priority"),
+                review_state=request.form.get("review_state"),
+                due_at=request.form.get("due_at") or None,
+            )
+        else:
+            high_end_add_case_event(
+                case_key,
+                action or "note",
+                actor=session.get("user"),
+                subject_id=request.form.get("subject_id", type=int),
+                note=request.form.get("note"),
+                comment=request.form.get("comment"),
+                assignee=request.form.get("assignee"),
+            )
+        audit("case_update", details={"case_key": case_key, "action": action})
+        return redirect(url_for("dashboard.case_detail_view", case_key=case_key))
+    return render_template("case_detail.html", case=high_end_case_payload(case_key))
+
+
+@dashboard_bp.route("/connectors/marketplace")
+@login_required
+def connector_marketplace_view():
+    return render_template(
+        "connector_marketplace.html",
+        payload=connector_marketplace_payload(),
+    )
+
+
+@dashboard_bp.route("/responsible-use", methods=["GET", "POST"])
+@login_required
+def responsible_use_view():
+    if request.method == "POST":
+        payload = {
+            "authorization_banner": request.form.get("authorization_banner"),
+            "allowed_targets": [
+                item.strip()
+                for item in request.form.get("allowed_targets", "").splitlines()
+                if item.strip()
+            ],
+            "blocked_targets": [
+                item.strip()
+                for item in request.form.get("blocked_targets", "").splitlines()
+                if item.strip()
+            ],
+            "sensitive_redaction_default": request.form.get("redaction") == "1",
+            "export_warning": request.form.get("export_warning"),
+        }
+        high_end_save_scope(payload, actor=session.get("user"))
+        audit("responsible_use_scope_update", details=payload)
+        return redirect(url_for("dashboard.responsible_use_view"))
+    return render_template(
+        "responsible_use.html",
+        scope=high_end_load_scope(),
+        policy=high_end_policy_events(),
+    )
+
+
+@dashboard_bp.route("/exports/builder")
+@login_required
+def export_builder_view():
+    return render_template(
+        "export_builder.html",
+        manifest=high_end_export_manifest(
+            subject_id=request.args.get("subject_id", type=int),
+            case_key=request.args.get("case_key") or None,
+            actor=session.get("user"),
+        ),
+    )
+
+
+@dashboard_bp.route("/spine/<int:subject_id>/graph/canvas")
+@login_required
+def graph_canvas_view(subject_id):
+    return render_template(
+        "graph_canvas.html",
+        payload=graph_canvas_payload(subject_id),
+    )
+
+
+@dashboard_bp.route("/spine/<int:subject_id>/resolution-lab")
+@login_required
+def resolution_lab_view(subject_id):
+    return render_template(
+        "entity_resolution_lab.html",
+        payload=entity_resolution_lab_payload(subject_id),
+    )
+
+
+@dashboard_bp.route("/api/v1/analyst/workbench")
+@login_required
+def api_high_end_workbench():
+    return jsonify(high_end_workbench(limit=request.args.get("limit", 100, type=int)))
+
+
+@dashboard_bp.route("/api/v1/evidence/capture", methods=["POST"])
+@run_required
+def api_high_end_capture():
+    payload = request.get_json(silent=True) or {}
+    return jsonify(
+        capture_snapshot(
+            payload.get("url", ""),
+            payload.get("html", ""),
+            case_key=payload.get("case_key"),
+            subject_id=payload.get("subject_id"),
+            actor=session.get("user"),
+        )
+    ), 201
+
+
+@dashboard_bp.route("/api/v1/evidence/captures")
+@login_required
+def api_high_end_captures():
+    return jsonify({"captures": list_capture_artifacts()})
+
+
+@dashboard_bp.route("/api/v1/evidence/captures/<capture_id>/verify")
+@login_required
+def api_high_end_capture_verify(capture_id):
+    return jsonify(verify_capture(capture_id))
+
+
+@dashboard_bp.route("/api/v1/cases")
+@login_required
+def api_high_end_cases():
+    return jsonify({"cases": high_end_list_cases()})
+
+
+@dashboard_bp.route("/api/v1/cases/<case_key>")
+@login_required
+def api_high_end_case(case_key):
+    return jsonify(high_end_case_payload(case_key))
+
+
+@dashboard_bp.route("/api/v1/connectors/marketplace")
+@login_required
+def api_connector_marketplace():
+    return jsonify(connector_marketplace_payload())
+
+
+@dashboard_bp.route("/api/v1/responsible-use/scope", methods=["GET", "PUT"])
+@login_required
+def api_responsible_use_scope():
+    if request.method == "PUT":
+        return jsonify(high_end_save_scope(request.get_json(silent=True) or {}))
+    return jsonify(high_end_load_scope())
+
+
+@dashboard_bp.route("/api/v1/responsible-use/review")
+@login_required
+def api_scope_review():
+    return jsonify(scope_review(request.args.get("target", "")))
+
+
+@dashboard_bp.route("/api/v1/responsible-use/gate", methods=["POST"])
+@login_required
+def api_gate_action():
+    payload = request.get_json(silent=True) or {}
+    return jsonify(
+        gate_action(
+            payload.get("action", "review"),
+            payload.get("target", ""),
+            actor=session.get("user"),
+        )
+    )
+
+
+@dashboard_bp.route("/api/v1/exports/builder")
+@login_required
+def api_export_builder():
+    return jsonify(
+        high_end_export_manifest(
+            subject_id=request.args.get("subject_id", type=int),
+            case_key=request.args.get("case_key") or None,
+            actor=session.get("user"),
+        )
+    )
+
+
+@dashboard_bp.route("/api/v1/spine/<int:subject_id>/graph/canvas")
+@login_required
+def api_graph_canvas(subject_id):
+    return jsonify(graph_canvas_payload(subject_id))
+
+
+@dashboard_bp.route("/api/v1/spine/<int:subject_id>/resolution-lab")
+@login_required
+def api_resolution_lab(subject_id):
+    return jsonify(entity_resolution_lab_payload(subject_id))
 
 
 @dashboard_bp.route("/api/v1/jobs/health")

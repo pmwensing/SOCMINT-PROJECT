@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Entity Resolution Lab</h1>
+<section class="panel"><h2>{{ payload.classification or "unclassified" }}</h2><p>{{ payload.explanation }}</p></section>
+<section class="card-grid">
+  <article class="card"><h2>Confidence deltas</h2><pre>{{ payload.confidence_deltas | tojson(indent=2) }}</pre></article>
+  <article class="card"><h2>Sources</h2><pre>{{ payload.source_contribution_chart | tojson(indent=2) }}</pre></article>
+  <article class="card"><h2>Contradictions</h2><pre>{{ payload.contradictions | tojson(indent=2) }}</pre></article>
+</section>
+{% endblock %}

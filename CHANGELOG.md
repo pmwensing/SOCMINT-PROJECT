@@ -1,5 +1,30 @@
 # Changelog
 
+## v8.0.0
+
+High-end SOCMINT workflow layer.
+
+### Added
+
+- Database-backed case records, case events, evidence captures, and
+  responsible-use scope with Alembic migration `0008`.
+- Browser/import evidence capture with artifact hashing, capture metadata,
+  chain-of-custody events, automation plan, and verification API.
+- Case management with subjects, notes, assignments, comments, priority, due
+  dates, review state, saved workflow payloads, audit-style activity, and case
+  capture attachment.
+- Analyst console combining review queues, cases, captures, connector trust,
+  jobs, policy events, and scope.
+- Connector marketplace with trust badge, capability tags, fixture runner
+  endpoint, and connector quality metrics.
+- Entity resolution lab, graph canvas payload, export builder manifest,
+  responsible-use gate, and scope review APIs.
+
+### Validation
+
+- `ruff check src tests scripts`
+- `pytest -q tests/test_high_end_workflows.py`
+
 ## v7.8.1
 
 Release hardening for the Ultimate Entity/Human dossier branch.

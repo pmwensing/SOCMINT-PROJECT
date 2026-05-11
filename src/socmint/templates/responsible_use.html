@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Responsible Use</h1>
+<section class="panel">
+  <form method="post" class="auth-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Authorization banner <textarea name="authorization_banner" rows="3">{{ scope.authorization_banner }}</textarea></label>
+    <label>Allowed targets <textarea name="allowed_targets" rows="5">{{ scope.allowed_targets|join("\n") }}</textarea></label>
+    <label>Blocked targets <textarea name="blocked_targets" rows="5">{{ scope.blocked_targets|join("\n") }}</textarea></label>
+    <label class="checkbox-label"><input type="checkbox" name="redaction" value="1" {% if scope.sensitive_redaction_default %}checked{% endif %}> Redact sensitive data by default</label>
+    <label>Export warning <textarea name="export_warning" rows="3">{{ scope.export_warning }}</textarea></label>
+    <button type="submit">Save Scope</button>
+  </form>
+</section>
+<section class="card"><h2>Policy events</h2><pre>{{ policy | tojson(indent=2) }}</pre></section>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Connector Marketplace</h1>
+<section class="card">
+  <table>
+    <thead><tr><th>Name</th><th>Targets</th><th>Trust</th><th>Fixture</th></tr></thead>
+    <tbody>
+      {% for item in payload.connectors %}
+      <tr><td>{{ item.name }}</td><td>{{ item.target_types|join(", ") }}</td><td>{{ item.trust_badge }}</td><td>{{ item.fixture_runner }}</td></tr>
+      {% else %}<tr><td colspan="4">No connectors registered.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
