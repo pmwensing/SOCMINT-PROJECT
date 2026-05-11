@@ -20,7 +20,11 @@ HIGH_VALUE_CONNECTORS = {
     "archivebox": {"seed_types": ["url"], "base": 0.82},
 }
 
-DIAGNOSTIC_OBSERVATION_TYPES = {"seed_expansion_candidate", "connector_no_result"}
+DIAGNOSTIC_OBSERVATION_TYPES = {
+    "archive_candidate",
+    "connector_no_result",
+    "seed_expansion_candidate",
+}
 NON_ENRICHMENT_STATUSES = {"dry_run", "skipped", "timeout", "failed"}
 SEED_ECHO_FINDING_TYPES = {"email", "username", "seed", "target", "archive_candidate", "url"}
 
@@ -138,10 +142,9 @@ def extract_observations(connector_key, seed, raw_result, spec, artifact) -> lis
         finding_type = str(finding.get("type", "connector_finding")).strip()
         if not value:
             continue
-        if _same_as_seed(value, seed) and finding_type in SEED_ECHO_FINDING_TYPES:
-            continue
-        if status in NON_ENRICHMENT_STATUSES and (_same_as_seed(value, seed) or finding_type == "archive_candidate"):
-            continue
+        diagnostic = status in NON_ENRICHMENT_STATUSES and (
+            _same_as_seed(value, seed) or finding_type in SEED_ECHO_FINDING_TYPES
+        )
         observations.append(
             {
                 "type": finding_type,
@@ -152,7 +155,7 @@ def extract_observations(connector_key, seed, raw_result, spec, artifact) -> lis
                 "confidence": float(finding.get("confidence", spec["base"])),
                 "artifact_sha256": artifact["sha256"],
                 "payload": finding,
-                "diagnostic": False,
+                "diagnostic": diagnostic,
                 "normalizer_schema": "socmint.connector_normalizers.v7_7_1",
             }
         )

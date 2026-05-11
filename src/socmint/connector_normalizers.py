@@ -55,6 +55,22 @@ def _add(findings: list[dict[str, Any]], seen: set[tuple[str, str]], kind: str, 
     )
 
 
+def _add_structured_findings(
+    findings: list[dict[str, Any]],
+    seen: set[tuple[str, str]],
+    raw_result: dict[str, Any],
+    connector: str,
+) -> None:
+    for finding in raw_result.get("findings") or []:
+        if not isinstance(finding, dict):
+            continue
+        kind = str(finding.get("type") or "connector_finding").strip()
+        value = finding.get("value") or finding.get("url")
+        confidence = finding.get("confidence", 0.65)
+        context = finding.get("context") or {}
+        _add(findings, seen, kind, value, finding.get("source") or connector, confidence, context)
+
+
 def normalize_connector_output(connector: str, seed_value: str, seed_type: str, raw_result: dict[str, Any]) -> list[dict[str, Any]]:
     connector = (connector or "unknown").strip().lower()
     normalizer = {
@@ -72,6 +88,7 @@ def normalize_connector_output(connector: str, seed_value: str, seed_type: str, 
 def normalize_generic(seed_value: str, seed_type: str, raw_result: dict[str, Any], connector: str = "generic") -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
+    _add_structured_findings(findings, seen, raw_result, connector)
     text = _text_from_result(raw_result)
     for url in PROFILE_URL_RE.findall(text):
         _add(findings, seen, "external_url", url, connector, 0.62)
@@ -87,6 +104,7 @@ def normalize_generic(seed_value: str, seed_type: str, raw_result: dict[str, Any
 def normalize_sherlock(seed_value: str, seed_type: str, raw_result: dict[str, Any], connector: str = "sherlock") -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
+    _add_structured_findings(findings, seen, raw_result, connector)
     text = _text_from_result(raw_result)
     for url in PROFILE_URL_RE.findall(text):
         if "example.com" in url and raw_result.get("status") == "dry_run":
@@ -115,6 +133,7 @@ def normalize_maigret(seed_value: str, seed_type: str, raw_result: dict[str, Any
 def normalize_socialscan(seed_value: str, seed_type: str, raw_result: dict[str, Any], connector: str = "socialscan") -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
+    _add_structured_findings(findings, seen, raw_result, connector)
     text = _text_from_result(raw_result)
     for platform, state in PLATFORM_LINE_RE.findall(text):
         if state.lower() in {"found", "exists", "registered", "used", "true", "yes", "valid"}:
@@ -141,6 +160,7 @@ def normalize_holehe(seed_value: str, seed_type: str, raw_result: dict[str, Any]
 def normalize_h8mail(seed_value: str, seed_type: str, raw_result: dict[str, Any], connector: str = "h8mail") -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
+    _add_structured_findings(findings, seen, raw_result, connector)
     text = _text_from_result(raw_result)
     for match in BREACH_RE.findall(text):
         label = match[1].strip() if isinstance(match, tuple) else str(match).strip()
@@ -155,6 +175,7 @@ def normalize_h8mail(seed_value: str, seed_type: str, raw_result: dict[str, Any]
 def normalize_phoneinfoga(seed_value: str, seed_type: str, raw_result: dict[str, Any], connector: str = "phoneinfoga") -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
+    _add_structured_findings(findings, seen, raw_result, connector)
     text = _text_from_result(raw_result)
     for label, value in PHONE_META_RE.findall(text):
         _add(findings, seen, f"phone_{label.lower().replace(' ', '_')}", value.strip(), connector, 0.7, {"target": seed_value})
@@ -167,6 +188,7 @@ def normalize_archivebox(seed_value: str, seed_type: str, raw_result: dict[str, 
     findings: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
     status = str(raw_result.get("status") or "").lower()
+    _add_structured_findings(findings, seen, raw_result, connector)
     if status == "dry_run":
         return findings
     for snapshot in raw_result.get("snapshots") or []:

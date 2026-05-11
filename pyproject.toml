@@ -36,3 +36,6 @@ dependencies = [
 
 [project.scripts]
 socmint = "socmint.main:main"
+
+[tool.ruff]
+ignore = ["E501"]
