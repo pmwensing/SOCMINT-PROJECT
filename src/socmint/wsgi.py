@@ -12,6 +12,7 @@ from .billing_routes import register_billing_routes
 from .tor_routes import register_tor_routes
 from .analyst_ux_routes import register_analyst_ux_routes
 from .export_quality_routes import register_export_quality_routes
+from .connector_sdk_routes import register_connector_sdk_routes
 
 app = create_app()
 register_full_report_aliases(app)
@@ -27,3 +28,4 @@ register_billing_routes(app)
 register_tor_routes(app)
 register_analyst_ux_routes(app)
 register_export_quality_routes(app)
+register_connector_sdk_routes(app)
