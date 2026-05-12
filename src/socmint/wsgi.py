@@ -8,6 +8,7 @@ from .connector_runtime_routes import register_connector_runtime_routes
 from .spine_intelligence_routes import register_spine_intelligence_routes
 from .ultimate_dossier_routes import register_ultimate_dossier_routes
 from .membership_routes import register_membership_routes
+from .billing_routes import register_billing_routes
 
 app = create_app()
 register_full_report_aliases(app)
@@ -19,3 +20,4 @@ register_connector_runtime_routes(app)
 register_spine_intelligence_routes(app)
 register_ultimate_dossier_routes(app)
 register_membership_routes(app)
+register_billing_routes(app)
