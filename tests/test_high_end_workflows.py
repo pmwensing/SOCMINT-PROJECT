@@ -2,6 +2,8 @@ import pytest
 
 from src.socmint import database as db
 from src.socmint.dashboard import create_app
+from src.socmint.high_end_workflows import build_export_bundle
+from src.socmint.high_end_workflows import capture_browser_snapshot
 from src.socmint.high_end_workflows import capture_snapshot
 from src.socmint.high_end_workflows import case_payload
 from src.socmint.high_end_workflows import create_case
@@ -9,6 +11,7 @@ from src.socmint.high_end_workflows import gate_action
 from src.socmint.high_end_workflows import load_scope
 from src.socmint.high_end_workflows import save_scope
 from src.socmint.high_end_workflows import verify_capture
+from src.socmint.high_end_workflows import verify_export_bundle
 from src.socmint.spine import create_subject
 
 
@@ -29,6 +32,11 @@ def authorize(client):
         session["user"] = "tester"
         session["role"] = "analyst"
         session["is_admin"] = True
+        session["_csrf_token"] = "test-csrf-token"
+
+
+def csrf_headers() -> dict[str, str]:
+    return {"X-CSRF-Token": "test-csrf-token"}
 
 
 def test_case_capture_scope_and_verification(app):
@@ -60,6 +68,48 @@ def test_case_capture_scope_and_verification(app):
     assert blocked["allowed"] is False
     assert payload["captures"]
     assert payload["subjects"] == [subject_id]
+
+
+def test_browser_capture_writes_snapshot_pdf_archive_and_manifest(app):
+    case = create_case("Browser Case", case_key="browser-case", actor="tester")
+    save_scope({"allowed_targets": ["example.com"]}, actor="tester")
+
+    capture = capture_browser_snapshot(
+        "https://example.com/browser",
+        html="<html><body>browser</body></html>",
+        case_key=case["case_key"],
+        actor="tester",
+        use_playwright=False,
+    )
+    types = {item["artifact_type"] for item in capture["captures"]}
+    manifest = next(
+        item for item in capture["captures"] if item["artifact_type"] == "manifest"
+    )
+
+    assert {"html", "screenshot", "pdf", "mhtml", "manifest"} <= types
+    assert verify_capture(manifest["capture_id"])["valid"] is True
+    assert capture["manifest_capture_id"] == manifest["capture_id"]
+
+
+def test_high_end_export_bundle_builds_and_verifies(app):
+    subject_id = create_subject(
+        "Bundle Subject",
+        [{"type": "email", "value": "bundle@example.com"}],
+    )
+    create_case("Bundle Case", case_key="bundle-case", actor="tester")
+
+    bundle = build_export_bundle(
+        subject_id=subject_id,
+        case_key="bundle-case",
+        redaction_preset="court",
+        actor="tester",
+    )
+    verification = verify_export_bundle(bundle["bundle"]["name"])
+
+    assert bundle["schema"] == "socmint.high_end_export_bundle_manifest.v8_0_1"
+    assert bundle["bundle"]["sha256"]
+    assert bundle["redaction_preset"] == "court"
+    assert verification["valid"] is True
 
 
 def test_high_end_routes_render_and_return_json(app):
@@ -99,6 +149,16 @@ def test_high_end_routes_render_and_return_json(app):
             response = client.get(route)
             assert response.status_code == 200, route
             assert response.is_json, route
+        bundle = client.post(
+            "/api/v1/exports/builder/bundle",
+            json={"subject_id": subject_id, "case_key": "route-case"},
+            headers=csrf_headers(),
+        )
+        assert bundle.status_code == 201
+        name = bundle.get_json()["bundle"]["name"]
+        verify = client.get(f"/api/v1/exports/builder/bundles/{name}/verify")
+        assert verify.status_code == 200
+        assert verify.get_json()["valid"] is True
 
 
 def test_migration_metadata_has_high_end_tables(app):

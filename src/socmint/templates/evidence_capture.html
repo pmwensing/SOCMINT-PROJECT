@@ -5,10 +5,17 @@
   <h2>Browser/import capture</h2>
   <form method="post" class="auth-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Mode
+      <select name="mode">
+        <option value="browser">Browser automation</option>
+        <option value="import">HTML import</option>
+      </select>
+    </label>
     <label>URL <input type="url" name="url" required></label>
     <label>Case key <input type="text" name="case_key"></label>
     <label>Subject ID <input type="number" name="subject_id"></label>
-    <label>HTML snapshot <textarea name="html" rows="10" required></textarea></label>
+    <label><input type="checkbox" name="use_playwright" value="1"> Use Playwright when available</label>
+    <label>HTML snapshot <textarea name="html" rows="10"></textarea></label>
     <button type="submit">Capture</button>
   </form>
 </section>

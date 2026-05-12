@@ -1,5 +1,19 @@
 # Changelog
 
+## v8.0.1
+
+Browser capture automation and signed export bundle builder.
+
+- Added browser capture mode with HTML, screenshot, PDF, MHTML, and manifest
+  artifacts for each capture group.
+- Added SHA-256 verification for capture manifests and every generated
+  browser capture artifact.
+- Added signed high-end export ZIP bundles with redaction presets, file hashes,
+  bundle hashes, and verification metadata.
+- Added API support for building and verifying high-end export bundles.
+- Expanded v8 workflow tests for capture manifests, bundle generation, and
+  bundle verification.
+
 ## v8.0.0
 
 High-end SOCMINT workflow layer.

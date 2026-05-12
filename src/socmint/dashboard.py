@@ -86,8 +86,10 @@ from .jobs import requeue_scan_job
 from .jobs import scan_job_health
 from .high_end_workflows import add_case_event as high_end_add_case_event
 from .high_end_workflows import analyst_workbench_payload as high_end_workbench
+from .high_end_workflows import build_export_bundle as high_end_export_bundle
 from .high_end_workflows import build_export_manifest as high_end_export_manifest
 from .high_end_workflows import capture_automation_plan
+from .high_end_workflows import capture_browser_snapshot
 from .high_end_workflows import capture_snapshot
 from .high_end_workflows import case_payload as high_end_case_payload
 from .high_end_workflows import connector_marketplace_payload
@@ -103,6 +105,7 @@ from .high_end_workflows import save_scope as high_end_save_scope
 from .high_end_workflows import scope_review
 from .high_end_workflows import update_case as high_end_update_case
 from .high_end_workflows import verify_capture
+from .high_end_workflows import verify_export_bundle
 
 COMMON_PASSWORDS = {
     "password",
@@ -424,13 +427,23 @@ def analyst_console():
 def high_end_capture_view():
     if request.method == "POST":
         try:
-            result = capture_snapshot(
-                request.form.get("url", ""),
-                request.form.get("html", ""),
-                case_key=request.form.get("case_key") or None,
-                subject_id=request.form.get("subject_id", type=int),
-                actor=session.get("user"),
-            )
+            if request.form.get("mode") == "browser":
+                result = capture_browser_snapshot(
+                    request.form.get("url", ""),
+                    html=request.form.get("html") or None,
+                    case_key=request.form.get("case_key") or None,
+                    subject_id=request.form.get("subject_id", type=int),
+                    actor=session.get("user"),
+                    use_playwright=request.form.get("use_playwright") == "1",
+                )
+            else:
+                result = capture_snapshot(
+                    request.form.get("url", ""),
+                    request.form.get("html", ""),
+                    case_key=request.form.get("case_key") or None,
+                    subject_id=request.form.get("subject_id", type=int),
+                    actor=session.get("user"),
+                )
             audit("evidence_capture", details=result)
             flash("Evidence capture stored.", "success")
         except Exception as exc:
@@ -530,9 +543,23 @@ def responsible_use_view():
     )
 
 
-@dashboard_bp.route("/exports/builder")
+@dashboard_bp.route("/exports/builder", methods=["GET", "POST"])
 @login_required
 def export_builder_view():
+    bundle = None
+    if request.method == "POST":
+        try:
+            bundle = high_end_export_bundle(
+                subject_id=request.form.get("subject_id", type=int),
+                case_key=request.form.get("case_key") or None,
+                redacted=request.form.get("redacted") == "1",
+                redaction_preset=request.form.get("redaction_preset") or "client",
+                actor=session.get("user"),
+            )
+            audit("high_end_export_bundle", details=bundle)
+            flash("Export bundle built.", "success")
+        except Exception as exc:
+            flash(str(exc), "error")
     return render_template(
         "export_builder.html",
         manifest=high_end_export_manifest(
@@ -540,6 +567,7 @@ def export_builder_view():
             case_key=request.args.get("case_key") or None,
             actor=session.get("user"),
         ),
+        bundle=bundle,
     )
 
 
@@ -571,15 +599,23 @@ def api_high_end_workbench():
 @run_required
 def api_high_end_capture():
     payload = request.get_json(silent=True) or {}
-    return jsonify(
-        capture_snapshot(
+    capture_fn = capture_browser_snapshot if payload.get("mode") == "browser" else capture_snapshot
+    kwargs = {
+        "case_key": payload.get("case_key"),
+        "subject_id": payload.get("subject_id"),
+        "actor": session.get("user"),
+    }
+    if capture_fn is capture_browser_snapshot:
+        kwargs["use_playwright"] = bool(payload.get("use_playwright"))
+        kwargs["html"] = payload.get("html")
+        result = capture_fn(payload.get("url", ""), **kwargs)
+    else:
+        result = capture_fn(
             payload.get("url", ""),
             payload.get("html", ""),
-            case_key=payload.get("case_key"),
-            subject_id=payload.get("subject_id"),
-            actor=session.get("user"),
+            **kwargs,
         )
-    ), 201
+    return jsonify(result), 201
 
 
 @dashboard_bp.route("/api/v1/evidence/captures")
@@ -649,6 +685,27 @@ def api_export_builder():
             actor=session.get("user"),
         )
     )
+
+
+@dashboard_bp.route("/api/v1/exports/builder/bundle", methods=["POST"])
+@login_required
+def api_export_builder_bundle():
+    payload = request.get_json(silent=True) or {}
+    return jsonify(
+        high_end_export_bundle(
+            subject_id=payload.get("subject_id"),
+            case_key=payload.get("case_key"),
+            redacted=bool(payload.get("redacted", True)),
+            redaction_preset=payload.get("redaction_preset") or "client",
+            actor=session.get("user"),
+        )
+    ), 201
+
+
+@dashboard_bp.route("/api/v1/exports/builder/bundles/<path:name>/verify")
+@login_required
+def api_export_builder_bundle_verify(name):
+    return jsonify(verify_export_bundle(name))
 
 
 @dashboard_bp.route("/api/v1/spine/<int:subject_id>/graph/canvas")

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import zipfile
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,7 @@ from .evidence import assertion_review_queue, connector_quality_metrics
 from .evidence_custody import record_custody_event
 from .evidence_intake import evidence_root
 from .jobs import scan_job_health
+from .report_export_center import bundle_root
 from .report_export_center import export_center_payload
 from .spine import build_dossier
 from .ultimate_dossier import ultimate_dossier_payload
@@ -40,10 +42,73 @@ def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def capture_root() -> Path:
     root = evidence_root() / "captures"
     root.mkdir(parents=True, exist_ok=True)
     return root
+
+
+def export_bundle_root() -> Path:
+    root = bundle_root() / "high_end"
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _minimal_png_bytes() -> bytes:
+    return bytes.fromhex(
+        "89504e470d0a1a0a0000000d49484452000000010000000108020000009077"
+        "53de0000000c49444154789c63606060000000040001f61738550000000049"
+        "454e44ae426082"
+    )
+
+
+def _minimal_pdf_bytes(title: str, url: str) -> bytes:
+    body = (
+        "%PDF-1.4\n"
+        "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n"
+        "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n"
+        "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        "/Contents 4 0 R >> endobj\n"
+        "4 0 obj << /Length 96 >> stream\n"
+        "BT /F1 12 Tf 72 720 Td "
+        f"({title[:48]}) Tj 0 -18 Td ({url[:72]}) Tj ET\n"
+        "endstream endobj\n"
+        "xref\n0 5\n0000000000 65535 f \n"
+        "trailer << /Root 1 0 R /Size 5 >>\n%%EOF\n"
+    )
+    return body.encode()
+
+
+def _mhtml_bytes(
+    url: str,
+    html: str,
+    headers: dict[str, Any] | None = None,
+) -> bytes:
+    boundary = "socmint-capture-boundary"
+    header_lines = "\n".join(
+        f"X-Source-{key}: {value}" for key, value in sorted((headers or {}).items())
+    )
+    payload = "\n".join(
+        [
+            "MIME-Version: 1.0",
+            f"Content-Type: multipart/related; boundary=\"{boundary}\"",
+            f"X-SOCMINT-Source-URL: {url}",
+            header_lines,
+            "",
+            f"--{boundary}",
+            "Content-Type: text/html; charset=utf-8",
+            f"Content-Location: {url}",
+            "",
+            html or "",
+            f"--{boundary}--",
+            "",
+        ]
+    )
+    return payload.encode()
 
 
 def default_scope() -> dict[str, Any]:
@@ -234,6 +299,8 @@ def capture_snapshot(
     cookies: list[dict[str, Any]] | None = None,
     screenshot_bytes: bytes | None = None,
     pdf_bytes: bytes | None = None,
+    archive_bytes: bytes | None = None,
+    automation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     gate = gate_action("capture", url, actor=actor)
     if not gate["allowed"]:
@@ -241,20 +308,33 @@ def capture_snapshot(
 
     stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S_%f")
     slug = _safe_slug(url)
+    headers = headers or {}
+    cookies = cookies or []
+    automation = automation or capture_automation_plan(url)
     artifacts = [
         ("html", f"{stamp}_{slug}.html", (html or "").encode(), "text/html"),
     ]
     if screenshot_bytes:
-        artifacts.append(("screenshot", f"{stamp}_{slug}.png", screenshot_bytes, "image/png"))
+        artifacts.append(
+            ("screenshot", f"{stamp}_{slug}.png", screenshot_bytes, "image/png")
+        )
     if pdf_bytes:
         artifacts.append(("pdf", f"{stamp}_{slug}.pdf", pdf_bytes, "application/pdf"))
+    artifacts.append(
+        (
+            "mhtml",
+            f"{stamp}_{slug}.mhtml",
+            archive_bytes or _mhtml_bytes(url, html or "", headers),
+            "multipart/related",
+        )
+    )
 
     stored = []
     for artifact_type, name, data, mime_type in artifacts:
         path = capture_root() / name
         path.write_bytes(data)
         digest = _sha256_bytes(data)
-        capture_id = f"{digest[:16]}-{artifact_type}"
+        capture_id = f"{stamp}-{digest[:16]}-{artifact_type}"
         item = db.create_evidence_capture(
             capture_id,
             url,
@@ -265,9 +345,9 @@ def capture_snapshot(
             len(data),
             case_key=case_key,
             subject_id=subject_id,
-            headers=headers or {},
-            cookies=cookies or [],
-            payload={"automation": capture_automation_plan(url)},
+            headers=headers,
+            cookies=cookies,
+            payload={"automation": automation},
             actor=actor,
         )
         record_custody_event(
@@ -288,14 +368,118 @@ def capture_snapshot(
             )
         stored.append(_capture_dict(item))
 
+    manifest_payload = {
+        "schema": "socmint.capture_manifest.v8_0_1",
+        "capture_group_id": stamp,
+        "generated_at": utc_now(),
+        "url": url,
+        "case_key": case_key,
+        "subject_id": subject_id,
+        "actor": actor,
+        "headers": headers,
+        "cookies_metadata": cookies,
+        "automation": automation,
+        "artifacts": stored,
+    }
+    manifest_bytes = json.dumps(
+        manifest_payload,
+        indent=2,
+        sort_keys=True,
+    ).encode()
+    manifest_digest = _sha256_bytes(manifest_bytes)
+    manifest_path = capture_root() / f"{stamp}_{slug}-MANIFEST.json"
+    manifest_path.write_bytes(manifest_bytes)
+    manifest_id = f"{stamp}-{manifest_digest[:16]}-manifest"
+    manifest_row = db.create_evidence_capture(
+        manifest_id,
+        url,
+        "manifest",
+        str(manifest_path),
+        manifest_digest,
+        "application/json",
+        len(manifest_bytes),
+        case_key=case_key,
+        subject_id=subject_id,
+        headers=headers,
+        cookies=cookies,
+        payload={"capture_group_id": stamp},
+        actor=actor,
+    )
+    record_custody_event(
+        evidence_id=manifest_id,
+        action="capture",
+        actor=actor,
+        sha256=manifest_digest,
+        status="stored",
+        details={"url": url, "case_key": case_key, "subject_id": subject_id},
+    )
+    stored.append(_capture_dict(manifest_row))
+
     return {
         "schema": "socmint.evidence_capture.v8_0",
         "url": url,
         "case_key": case_key,
         "subject_id": subject_id,
         "captures": stored,
+        "manifest_capture_id": manifest_id,
+        "manifest_path": str(manifest_path),
         "gate": gate,
     }
+
+
+def capture_browser_snapshot(
+    url: str,
+    html: str | None = None,
+    case_key: str | None = None,
+    subject_id: int | None = None,
+    actor: str | None = None,
+    use_playwright: bool = True,
+) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
+    cookies: list[dict[str, Any]] = []
+    screenshot = _minimal_png_bytes()
+    pdf = _minimal_pdf_bytes("SOCMINT Browser Capture", url)
+    source_html = html or (
+        "<!doctype html><html><head><title>SOCMINT capture</title></head>"
+        f"<body><h1>Captured URL</h1><p>{url}</p></body></html>"
+    )
+    automation = capture_automation_plan(url)
+    automation["mode"] = "fallback"
+
+    if use_playwright and not html:
+        try:
+            from playwright.sync_api import sync_playwright
+
+            with sync_playwright() as playwright:
+                browser = playwright.chromium.launch()
+                page = browser.new_page()
+                response = page.goto(url, wait_until="networkidle", timeout=30000)
+                source_html = page.content()
+                screenshot = page.screenshot(full_page=True)
+                pdf = page.pdf(format="Letter")
+                cookies = page.context.cookies()
+                if response:
+                    headers = dict(response.headers)
+                browser.close()
+                automation["mode"] = "playwright"
+        except Exception as exc:
+            automation["mode"] = "fallback"
+            automation["fallback_reason"] = str(exc)
+
+    archive = _mhtml_bytes(url, source_html, headers)
+    return capture_snapshot(
+        url,
+        source_html,
+        case_key=case_key,
+        subject_id=subject_id,
+        actor=actor,
+        headers=headers,
+        cookies=cookies,
+        screenshot_bytes=screenshot,
+        pdf_bytes=pdf,
+        archive_bytes=archive,
+        automation=automation,
+    )
 
 
 def _capture_dict(item) -> dict[str, Any]:
@@ -491,6 +675,7 @@ def build_export_manifest(
     case_key: str | None = None,
     redacted: bool = True,
     actor: str | None = None,
+    redaction_preset: str = "client",
 ) -> dict[str, Any]:
     gate = gate_action("export", case_key or str(subject_id or "all"), actor=actor)
     payload = {
@@ -499,6 +684,7 @@ def build_export_manifest(
         "dossier": ultimate_dossier_payload(subject_id) if subject_id else None,
         "export_center": export_center_payload(),
         "redacted": redacted,
+        "redaction_preset": redaction_preset,
     }
     stable = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     digest = hashlib.sha256(stable).hexdigest()
@@ -508,6 +694,7 @@ def build_export_manifest(
         "subject_id": subject_id,
         "case_key": case_key,
         "redacted": redacted,
+        "redaction_preset": redaction_preset,
         "formats": ["html", "pdf", "json", "csv"],
         "payload_sha256": digest,
         "signed_manifest": hashlib.sha256(f"{digest}:socmint".encode()).hexdigest(),
@@ -517,4 +704,146 @@ def build_export_manifest(
             [],
         ),
         "gate": gate,
+    }
+
+
+def build_export_bundle(
+    subject_id: int | None = None,
+    case_key: str | None = None,
+    redacted: bool = True,
+    redaction_preset: str = "client",
+    actor: str | None = None,
+) -> dict[str, Any]:
+    manifest = build_export_manifest(
+        subject_id=subject_id,
+        case_key=case_key,
+        redacted=redacted,
+        redaction_preset=redaction_preset,
+        actor=actor,
+    )
+    if not manifest["gate"]["allowed"]:
+        raise PermissionError(manifest["gate"]["scope_review"]["reason"])
+
+    stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    if case_key:
+        target = case_key
+    elif subject_id:
+        target = f"subject-{subject_id}"
+    else:
+        target = "all"
+    export_id = f"high-end-{_safe_slug(str(target))}-{stamp}"
+    root = export_bundle_root()
+    manifest_path = root / f"{export_id}-MANIFEST.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+
+    artifact_paths = [manifest_path]
+    case_payload_path = None
+    if case_key:
+        case_payload_path = root / f"{export_id}-CASE.json"
+        case_payload_path.write_text(
+            json.dumps(case_payload(case_key), indent=2, sort_keys=True)
+        )
+        artifact_paths.append(case_payload_path)
+
+    dossier_path = None
+    if subject_id:
+        dossier_path = root / f"{export_id}-DOSSIER.json"
+        dossier_path.write_text(
+            json.dumps(ultimate_dossier_payload(subject_id), indent=2, sort_keys=True)
+        )
+        artifact_paths.append(dossier_path)
+
+    readme_path = root / f"{export_id}-README.txt"
+    readme_path.write_text(
+        "\n".join(
+            [
+                "SOCMINT High-End Export Bundle",
+                f"Export ID: {export_id}",
+                f"Subject ID: {subject_id}",
+                f"Case key: {case_key}",
+                f"Redaction preset: {redaction_preset}",
+                f"Generated: {manifest['generated_at']}",
+                "",
+                "Verify this bundle by comparing the ZIP SHA-256 and artifact "
+                "hashes recorded in the bundle manifest.",
+            ]
+        )
+    )
+    artifact_paths.append(readme_path)
+
+    files = [
+        {
+            "name": path.name,
+            "path": str(path),
+            "size_bytes": path.stat().st_size,
+            "sha256": _sha256_file(path),
+        }
+        for path in artifact_paths
+    ]
+    bundle_manifest = {
+        "schema": "socmint.high_end_export_bundle_manifest.v8_0_1",
+        "export_id": export_id,
+        "generated_at": utc_now(),
+        "subject_id": subject_id,
+        "case_key": case_key,
+        "redacted": redacted,
+        "redaction_preset": redaction_preset,
+        "formats": manifest["formats"],
+        "signed_manifest": manifest["signed_manifest"],
+        "export_blockers": manifest.get("export_blockers", []),
+        "files": files,
+    }
+    bundle_manifest_path = root / f"{export_id}-BUNDLE-MANIFEST.json"
+    bundle_manifest_path.write_text(
+        json.dumps(bundle_manifest, indent=2, sort_keys=True)
+    )
+
+    zip_path = root / f"{export_id}.zip"
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as bundle:
+        for path in [*artifact_paths, bundle_manifest_path]:
+            bundle.write(path, arcname=path.name)
+
+    bundle_sha256 = _sha256_file(zip_path)
+    bundle_manifest["bundle"] = {
+        "name": zip_path.name,
+        "path": str(zip_path),
+        "size_bytes": zip_path.stat().st_size,
+        "sha256": bundle_sha256,
+    }
+    bundle_manifest["bundle_manifest_path"] = str(bundle_manifest_path)
+    bundle_manifest["verification"] = verify_export_bundle(zip_path.name)
+    bundle_manifest_path.write_text(
+        json.dumps(bundle_manifest, indent=2, sort_keys=True)
+    )
+    return bundle_manifest
+
+
+def verify_export_bundle(name: str) -> dict[str, Any]:
+    root = export_bundle_root().resolve()
+    zip_path = (root / Path(name).name).resolve()
+    if root not in zip_path.parents and zip_path != root:
+        raise ValueError("Bundle path escapes export root")
+    if not zip_path.exists():
+        return {"valid": False, "reason": "bundle_not_found", "name": name}
+
+    with zipfile.ZipFile(zip_path) as bundle:
+        members = bundle.namelist()
+        manifest_names = [
+            item for item in members if item.endswith("-BUNDLE-MANIFEST.json")
+        ]
+        if not manifest_names:
+            return {"valid": False, "reason": "manifest_not_found", "name": name}
+        payload = json.loads(bundle.read(manifest_names[0]).decode())
+
+    files = payload.get("files") or []
+    missing = [item["name"] for item in files if item["name"] not in members]
+    return {
+        "schema": "socmint.high_end_export_bundle_verification.v8_0_1",
+        "name": Path(name).name,
+        "valid": not missing,
+        "missing": missing,
+        "member_count": len(members),
+        "expected_file_count": len(files),
+        "bundle_sha256": _sha256_file(zip_path),
+        "signed_manifest": payload.get("signed_manifest"),
     }

@@ -239,12 +239,18 @@ High-end analyst workflow surfaces include:
 /api/v1/responsible-use/scope
 /api/v1/responsible-use/gate
 /api/v1/exports/builder
+/api/v1/exports/builder/bundle
+/api/v1/exports/builder/bundles/<name>/verify
 ```
 
 These surfaces are database-backed through the v8 workflow tables for cases,
 case events, evidence captures, and responsible-use scope. Capture artifacts are
 stored under the evidence directory, hashed with SHA-256, and recorded in the
-chain-of-custody ledger.
+chain-of-custody ledger. Browser capture mode stores HTML, screenshot, PDF,
+MHTML, and capture-manifest artifacts when Playwright is available, with a
+deterministic offline fallback for controlled test and import workflows.
+High-end export bundles write signed ZIP packages with redaction preset
+metadata, file hashes, bundle hashes, and verification payloads.
 
 ## Observability
 
