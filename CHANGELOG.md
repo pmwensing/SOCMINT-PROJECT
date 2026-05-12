@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Added the implementation-grade ultimate SOCMINT product build spec covering
+  memberships, quotas, Tor deployment, responsible-use gates, evidence
+  workflows, account discovery, graph UX, exports, billing, and production
+  readiness.
+
 ## v8.1.0
 
 Account discovery ingest layer.

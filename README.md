@@ -2,6 +2,9 @@
 
 SOCMINT builds local dossiers from open-source intelligence tools and serves the results through an authenticated Flask dashboard. It can run locally for research or behind a Tor v3 hidden service for private operator access.
 
+The end-state product roadmap lives in
+[`docs/ULTIMATE_SOCMINT_PRODUCT_BUILD_SPEC.md`](docs/ULTIMATE_SOCMINT_PRODUCT_BUILD_SPEC.md).
+
 ## Safety
 
 - Use only on targets you are authorized to investigate.
