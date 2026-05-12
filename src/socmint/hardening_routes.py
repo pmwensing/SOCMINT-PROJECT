@@ -6,6 +6,8 @@ from .export_gate import export_preflight
 from .export_gate import export_preflight_summary
 from .gate_audit import gate_audit_summary
 from .gate_audit import route_gate_matrix
+from .route_enforcement import route_enforcement_report
+from .route_enforcement import route_enforcement_summary
 from .security_audit_routes import register_security_audit_routes
 
 SECURITY_HARDENING_SCHEMA = "socmint.security_hardening.v9_0_2"
@@ -27,6 +29,7 @@ def security_hardening_checklist() -> dict:
             "rate_limits": "recommended: verify login/signup/scan throttles",
             "branch_protection": "recommended: require PR review and CI before merge",
             "route_gate_matrix": "available at /api/v1/admin/gates/matrix",
+            "route_enforcement": "available at /api/v1/admin/gates/enforcement",
             "export_preflight": "available at /api/v1/spine/subjects/<id>/export-preflight",
         },
     }
@@ -46,6 +49,18 @@ def register_hardening_routes(app):
         if not _admin_required():
             return jsonify({"error": "admin required"}), 403
         return jsonify(gate_audit_summary(app))
+
+    @app.get("/api/v1/admin/gates/enforcement")
+    def api_gate_enforcement():
+        if not _admin_required():
+            return jsonify({"error": "admin required"}), 403
+        return jsonify(route_enforcement_report(app))
+
+    @app.get("/api/v1/admin/gates/enforcement/summary")
+    def api_gate_enforcement_summary():
+        if not _admin_required():
+            return jsonify({"error": "admin required"}), 403
+        return jsonify(route_enforcement_summary(app))
 
     @app.get("/api/v1/admin/security/checklist")
     def api_security_checklist():
