@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Account Usage</h1>
+
+<section class="card">
+    <h2>Membership</h2>
+    <p><strong>User:</strong> {{ payload.username }}</p>
+    <p><strong>Plan:</strong> {{ payload.plan }}</p>
+    <p><strong>Status:</strong> {{ payload.status }}</p>
+</section>
+
+<section class="card">
+    <h2>Quota Usage</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Quota</th>
+                <th>Used</th>
+                <th>Limit</th>
+                <th>Remaining</th>
+                <th>Resets</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for quota_key, quota in payload.usage.items() %}
+            <tr>
+                <td><code>{{ quota_key }}</code></td>
+                <td>{{ quota.used if quota.used is not none else "n/a" }}</td>
+                <td>{{ quota.limit }}</td>
+                <td>{{ quota.remaining if quota.remaining is not none else "n/a" }}</td>
+                <td>{{ quota.resets_at or "never" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}
