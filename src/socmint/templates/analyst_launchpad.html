@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>Analyst Launchpad</h1>
+  <p>High-level readiness, quota, job, connector, capture, and export review signals.</p>
+</section>
+
+<section class="grid">
+  {% for card in payload.cards %}
+  <article class="card">
+    <h2>{{ card.label }}</h2>
+    <p class="metric">{{ card.value }}</p>
+    <p>Status: <strong>{{ card.status }}</strong></p>
+    <a href="{{ card.href }}">Open</a>
+  </article>
+  {% endfor %}
+</section>
+
+<section class="card">
+  <h2>Next Actions</h2>
+  {% for item in payload.next_actions %}
+  <div class="row">
+    <strong>{{ item.priority }} — {{ item.title }}</strong>
+    <p>{{ item.body }}</p>
+    <a href="{{ item.href }}">Open</a>
+  </div>
+  {% endfor %}
+</section>
+{% endblock %}
