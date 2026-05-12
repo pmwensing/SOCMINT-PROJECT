@@ -7,6 +7,15 @@
   workflows, account discovery, graph UX, exports, billing, and production
   readiness.
 
+## v9.6.0
+
+Operator UX smoke and release cleanup.
+
+- Added admin-only operator smoke matrix, summary, and validation endpoints.
+- Registered operator smoke routes through production-release integration.
+- Added focused operator smoke tests and release cleanup documentation.
+- Synced package metadata to the v9.6.0 release line.
+
 ## v8.1.0
 
 Account discovery ingest layer.
