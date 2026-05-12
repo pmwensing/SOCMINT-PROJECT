@@ -61,6 +61,16 @@ def run_spine_for_subject(subject_id: int, connectors: list[str] | None = None) 
             run_ids.append(run_connector_for_seed(subject_id, seed, key, spec))
 
     correlate_subject(subject_id)
+    try:
+        from .account_discovery import ingest_account_discoveries
+
+        ingest_account_discoveries(
+            subject_id,
+            actor="spine",
+            capture_profiles=False,
+        )
+    except Exception:
+        pass
     return {"subject_id": subject_id, "run_ids": run_ids}
 
 

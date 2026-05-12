@@ -71,6 +71,9 @@ from .contradictions import resolve_contradiction
 from .evidence import assertion_review_queue
 from .evidence import connector_quality_metrics
 from .evidence import get_assertion_evidence
+from .account_discovery import account_discovery_queue
+from .account_discovery import ingest_account_discoveries
+from .account_discovery import review_account_discovery
 from .identity_graph import apply_merge_candidate
 from .identity_graph import build_identity_graph
 from .identity_graph import graph_payload
@@ -1085,6 +1088,101 @@ def api_spine_connector_quality():
 def api_spine_assertion_review_queue():
     limit = min(max(request.args.get("limit", 100, type=int), 1), 500)
     return jsonify({"assertions": assertion_review_queue(limit=limit)})
+
+
+@dashboard_bp.route("/spine/subjects/<int:subject_id>/account-discovery")
+@login_required
+def spine_account_discovery_view(subject_id):
+    return render_template(
+        "spine_account_discovery.html",
+        payload=account_discovery_queue(
+            subject_id=subject_id,
+            review_state=request.args.get("state", "unreviewed") or None,
+        ),
+        subject_id=subject_id,
+    )
+
+
+@dashboard_bp.route(
+    "/spine/subjects/<int:subject_id>/account-discovery/ingest",
+    methods=["POST"],
+)
+@run_required
+def spine_account_discovery_ingest(subject_id):
+    result = ingest_account_discoveries(
+        subject_id,
+        actor=session.get("user"),
+        capture_profiles=request.form.get("capture_profiles") == "1",
+    )
+    audit("account_discovery_ingest", details=result)
+    flash(f"Ingested {result['discovery_count']} account discoveries.", "success")
+    return redirect(
+        url_for("dashboard.spine_account_discovery_view", subject_id=subject_id)
+    )
+
+
+@dashboard_bp.route(
+    "/spine/account-discovery/<int:discovery_id>/review",
+    methods=["POST"],
+)
+@run_required
+def spine_account_discovery_review(discovery_id):
+    result = review_account_discovery(
+        discovery_id,
+        request.form.get("action", "unreviewed"),
+        actor=session.get("user"),
+        note=request.form.get("note"),
+        promote=request.form.get("promote") == "1",
+    )
+    audit("account_discovery_review", details=result)
+    flash("Account discovery reviewed.", "success")
+    return redirect(request.referrer or url_for("dashboard.spine_subjects"))
+
+
+@dashboard_bp.route("/api/v1/spine/subjects/<int:subject_id>/account-discovery")
+@login_required
+def api_spine_account_discovery(subject_id):
+    return jsonify(
+        account_discovery_queue(
+            subject_id=subject_id,
+            review_state=request.args.get("state", "unreviewed") or None,
+            limit=request.args.get("limit", 500, type=int),
+        )
+    )
+
+
+@dashboard_bp.route(
+    "/api/v1/spine/subjects/<int:subject_id>/account-discovery/ingest",
+    methods=["POST"],
+)
+@run_required
+def api_spine_account_discovery_ingest(subject_id):
+    payload = request.get_json(silent=True) or {}
+    return jsonify(
+        ingest_account_discoveries(
+            subject_id,
+            actor=session.get("user"),
+            capture_profiles=bool(payload.get("capture_profiles", True)),
+        )
+    ), 201
+
+
+@dashboard_bp.route(
+    "/api/v1/spine/account-discovery/<int:discovery_id>/review",
+    methods=["POST"],
+)
+@run_required
+def api_spine_account_discovery_review(discovery_id):
+    payload = request.get_json(silent=True) or {}
+    return jsonify(
+        review_account_discovery(
+            discovery_id,
+            payload.get("action", "unreviewed"),
+            actor=session.get("user"),
+            note=payload.get("note"),
+            promote=bool(payload.get("promote")),
+        )
+    )
 
 
 

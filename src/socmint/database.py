@@ -826,6 +826,30 @@ class SpineValidationEvent(Base):
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 
+class AccountDiscovery(Base):
+    __tablename__ = "account_discoveries"
+    id = Column(Integer, primary_key=True)
+    subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
+    observation_id = Column(Integer, ForeignKey("spine_observations.id"), nullable=False)
+    assertion_id = Column(
+        Integer,
+        ForeignKey("spine_dossier_assertions.id"),
+        nullable=True,
+    )
+    discovery_type = Column(String, nullable=False)
+    platform = Column(String, nullable=True)
+    account_value = Column(Text, nullable=False)
+    profile_url = Column(Text, nullable=True)
+    confidence = Column(String, nullable=False, default="0.5")
+    review_state = Column(String, nullable=False, default="unreviewed")
+    capture_ids_json = Column(Text, nullable=False, default="[]")
+    promoted_seed_id = Column(Integer, ForeignKey("spine_seeds.id"), nullable=True)
+    payload_json = Column(Text, nullable=False)
+    actor = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
 def _detach_all(session, items):
     for item in items:
         session.expunge(item)
@@ -1118,6 +1142,149 @@ def get_spine_assertion(assertion_id):
         )
         if item:
             session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
+def find_spine_assertion(subject_id, assertion_type, normalized_value):
+    ensure_configured()
+    session = Session()
+    try:
+        item = (
+            session.query(SpineDossierAssertion)
+            .filter_by(
+                subject_id=subject_id,
+                assertion_type=assertion_type,
+                normalized_value=normalized_value,
+            )
+            .first()
+        )
+        if item:
+            session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
+def upsert_account_discovery(
+    subject_id,
+    observation_id,
+    discovery_type,
+    account_value,
+    platform=None,
+    profile_url=None,
+    confidence="0.5",
+    assertion_id=None,
+    capture_ids=None,
+    payload=None,
+    actor=None,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = session.query(AccountDiscovery).filter_by(
+            subject_id=subject_id,
+            observation_id=observation_id,
+        ).first()
+        if not item:
+            item = AccountDiscovery(
+                subject_id=subject_id,
+                observation_id=observation_id,
+                discovery_type=discovery_type,
+                account_value=account_value,
+                platform=platform,
+                profile_url=profile_url,
+                confidence=str(confidence),
+                assertion_id=assertion_id,
+                capture_ids_json=json.dumps(capture_ids or []),
+                payload_json=json.dumps(payload or {}),
+                actor=actor,
+            )
+            session.add(item)
+        else:
+            item.discovery_type = discovery_type
+            item.account_value = account_value
+            item.platform = platform
+            item.profile_url = profile_url
+            item.confidence = str(confidence)
+            item.assertion_id = assertion_id
+            if capture_ids:
+                existing = json.loads(item.capture_ids_json or "[]")
+                item.capture_ids_json = json.dumps(
+                    sorted({*existing, *capture_ids})
+                )
+            item.payload_json = json.dumps(payload or {})
+            item.actor = actor or item.actor
+            item.updated_at = utc_now()
+        session.commit()
+        session.refresh(item)
+        session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
+def list_account_discoveries(subject_id=None, review_state=None, limit=500):
+    ensure_configured()
+    session = Session()
+    try:
+        query = session.query(AccountDiscovery)
+        if subject_id is not None:
+            query = query.filter_by(subject_id=subject_id)
+        if review_state:
+            query = query.filter_by(review_state=review_state)
+        items = query.order_by(
+            AccountDiscovery.updated_at.desc(),
+            AccountDiscovery.id.desc(),
+        ).limit(limit).all()
+        return _detach_all(session, items)
+    finally:
+        session.close()
+
+
+def get_account_discovery(discovery_id):
+    ensure_configured()
+    session = Session()
+    try:
+        item = session.query(AccountDiscovery).filter_by(id=discovery_id).first()
+        if item:
+            session.expunge(item)
+        return item
+    finally:
+        session.close()
+
+
+def update_account_discovery_review(
+    discovery_id,
+    review_state,
+    actor=None,
+    note=None,
+    promoted_seed_id=None,
+):
+    ensure_configured()
+    session = Session()
+    try:
+        item = session.query(AccountDiscovery).filter_by(id=discovery_id).first()
+        if not item:
+            return None
+        if review_state not in {"confirmed", "rejected", "suppressed", "unreviewed"}:
+            raise ValueError("Invalid account discovery review state.")
+        payload = json.loads(item.payload_json or "{}")
+        payload["review"] = {
+            "state": review_state,
+            "actor": actor,
+            "note": note,
+            "reviewed_at": utc_now().isoformat(),
+        }
+        item.review_state = review_state
+        item.payload_json = json.dumps(payload)
+        item.actor = actor or item.actor
+        item.promoted_seed_id = promoted_seed_id or item.promoted_seed_id
+        item.updated_at = utc_now()
+        session.commit()
+        session.refresh(item)
+        session.expunge(item)
         return item
     finally:
         session.close()

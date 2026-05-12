@@ -1,5 +1,16 @@
 # Changelog
 
+## v8.1.0
+
+Account discovery ingest layer.
+
+- Added `account_discoveries` persistence for social/profile account leads.
+- Added account discovery ingestion from `account_presence` and `profile_url`
+  spine observations.
+- Added optional profile capture for discovered profile URLs.
+- Added account discovery review and seed-promotion workflow.
+- Added UI and API routes for discovery queues, ingest, review, and promotion.
+
 ## v8.0.1
 
 Browser capture automation and signed export bundle builder.

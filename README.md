@@ -241,6 +241,10 @@ High-end analyst workflow surfaces include:
 /api/v1/exports/builder
 /api/v1/exports/builder/bundle
 /api/v1/exports/builder/bundles/<name>/verify
+/spine/subjects/<id>/account-discovery
+/api/v1/spine/subjects/<id>/account-discovery
+/api/v1/spine/subjects/<id>/account-discovery/ingest
+/api/v1/spine/account-discovery/<id>/review
 ```
 
 These surfaces are database-backed through the v8 workflow tables for cases,
@@ -251,6 +255,11 @@ MHTML, and capture-manifest artifacts when Playwright is available, with a
 deterministic offline fallback for controlled test and import workflows.
 High-end export bundles write signed ZIP packages with redaction preset
 metadata, file hashes, bundle hashes, and verification payloads.
+
+Account discovery ingestion turns `account_presence` and `profile_url` spine
+observations into reviewable account leads. Analysts can capture profile URLs,
+confirm or reject discoveries, and promote confirmed account/profile leads into
+new seeds for follow-on connector runs.
 
 ## Observability
 
