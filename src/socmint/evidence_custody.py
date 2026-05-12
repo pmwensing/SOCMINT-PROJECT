@@ -22,6 +22,7 @@ VALID_CUSTODY_ACTIONS = {
     "export_attach",
     "note",
     "manual_review",
+    "capture",
 }
 
 

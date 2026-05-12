@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Export Builder</h1>
+<section class="panel">
+  <h2>Build signed bundle</h2>
+  <form method="post" class="auth-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Subject ID <input type="number" name="subject_id"></label>
+    <label>Case key <input type="text" name="case_key"></label>
+    <label>Redaction preset
+      <select name="redaction_preset">
+        <option value="client">Client</option>
+        <option value="court">Court</option>
+        <option value="internal">Internal</option>
+      </select>
+    </label>
+    <label><input type="checkbox" name="redacted" value="1" checked> Redacted</label>
+    <button type="submit">Build Bundle</button>
+  </form>
+</section>
+{% if bundle %}
+<section class="card">
+  <h2>Bundle</h2>
+  <pre>{{ bundle | tojson(indent=2) }}</pre>
+</section>
+{% endif %}
+<section class="card"><pre>{{ manifest | tojson(indent=2) }}</pre></section>
+{% endblock %}

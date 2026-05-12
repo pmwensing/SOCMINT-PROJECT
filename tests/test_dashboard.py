@@ -102,6 +102,19 @@ def test_create_app_rejects_placeholder_secret(monkeypatch):
         create_app()
 
 
+def test_create_app_tolerates_unwritable_log_file(tmp_path, monkeypatch):
+    monkeypatch.setenv("SOCMINT_SECRET_KEY", "test-secret-key-with-enough-entropy")
+    monkeypatch.setenv("SOCMINT_AUTO_CREATE_DB", "true")
+    monkeypatch.setenv("SOCMINT_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("SOCMINT_LOG_FILE", "/proc/socmint.log")
+
+    app = create_app(f"sqlite:///{tmp_path / 'socmint-log-fallback.db'}")
+    app.config.update(TESTING=True)
+
+    with app.test_client() as client:
+        assert client.get("/healthz").status_code == 200
+
+
 def test_signup_is_disabled_by_default(tmp_path, monkeypatch):
     monkeypatch.setenv("SOCMINT_SECRET_KEY", "test-secret-key-with-enough-entropy")
     monkeypatch.setenv("SOCMINT_AUTO_CREATE_DB", "true")

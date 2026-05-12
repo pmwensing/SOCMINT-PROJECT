@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Evidence Capture</h1>
+<section class="panel">
+  <h2>Browser/import capture</h2>
+  <form method="post" class="auth-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Mode
+      <select name="mode">
+        <option value="browser">Browser automation</option>
+        <option value="import">HTML import</option>
+      </select>
+    </label>
+    <label>URL <input type="url" name="url" required></label>
+    <label>Case key <input type="text" name="case_key"></label>
+    <label>Subject ID <input type="number" name="subject_id"></label>
+    <label><input type="checkbox" name="use_playwright" value="1"> Use Playwright when available</label>
+    <label>HTML snapshot <textarea name="html" rows="10"></textarea></label>
+    <button type="submit">Capture</button>
+  </form>
+</section>
+<section class="card"><h2>Automation plan</h2><pre>{{ plan | tojson(indent=2) }}</pre></section>
+<section class="card">
+  <h2>Artifacts</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Type</th><th>URL</th><th>SHA-256</th><th>Verify</th></tr></thead>
+    <tbody>
+      {% for item in captures %}
+      <tr>
+        <td>{{ item.capture_id }}</td><td>{{ item.artifact_type }}</td><td>{{ item.url }}</td>
+        <td><code>{{ item.sha256 }}</code></td>
+        <td><a href="{{ url_for('dashboard.api_high_end_capture_verify', capture_id=item.capture_id) }}">Verify</a></td>
+      </tr>
+      {% else %}<tr><td colspan="5">No captures yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

@@ -30,7 +30,7 @@
   <h2>Recent subjects</h2>
   <table>
     <thead>
-      <tr><th>ID</th><th>Label</th><th>Created</th><th>Dossier</th></tr>
+      <tr><th>ID</th><th>Label</th><th>Created</th><th>Actions</th></tr>
     </thead>
     <tbody>
       {% for subject in subjects %}
@@ -39,8 +39,9 @@
         <td>{{ subject.label or "Untitled subject" }}</td>
         <td>{{ subject.created_at }}</td>
         <td>
-          <a href="{{ url_for('dashboard.spine_dossier',
-          subject_id=subject.id) }}">Open</a>
+          <a href="/spine/subjects/{{ subject.id }}/intelligence">Intelligence Console</a>
+          · <a href="{{ url_for('dashboard.spine_dossier', subject_id=subject.id) }}">Classic Spine</a>
+          · <a href="/spine/subjects/{{ subject.id }}/dossier">Full Dossier v2</a>
         </td>
       </tr>
       {% else %}

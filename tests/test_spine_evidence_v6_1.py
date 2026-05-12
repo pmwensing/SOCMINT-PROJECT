@@ -64,6 +64,20 @@ def test_connector_quality_metrics(configured_db, monkeypatch):
 def test_evidence_dashboard_api(tmp_path, monkeypatch):
     from src.socmint.dashboard import create_app
 
+    def fake_execute_connector(connector_key, seed):
+        return {
+            "connector": connector_key,
+            "status": "dry_run",
+            "findings": [
+                {
+                    "type": "account_presence",
+                    "value": f"https://example.com/{seed.normalized_value}",
+                    "source": connector_key,
+                    "confidence": 0.61,
+                }
+            ],
+        }
+
     monkeypatch.setenv(
         "SOCMINT_SECRET_KEY",
         "test-secret-key-for-socmint-spine-32chars-plus",
@@ -72,6 +86,7 @@ def test_evidence_dashboard_api(tmp_path, monkeypatch):
     monkeypatch.setenv("SOCMINT_ADMIN_PASSWORD", "StrongPass123!")
     monkeypatch.setenv("SOCMINT_AUTO_CREATE_DB", "1")
     monkeypatch.setenv("SOCMINT_ARTIFACT_DIR", str(tmp_path / "artifacts"))
+    monkeypatch.setattr("src.socmint.spine.execute_connector", fake_execute_connector)
 
     app = create_app(database_url=f"sqlite:///{tmp_path / 'web.db'}")
     app.config.update(TESTING=True)

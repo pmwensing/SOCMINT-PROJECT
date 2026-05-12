@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Ultimate Entity/Human SOCMINT Dossier</p>
+    <h1>{{ payload.subject.label }}</h1>
+    <p class="muted">Generated {{ payload.generated_at }} · {{ payload.schema }}</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/spine/subjects/{{ payload.subject.id }}/intelligence">Intelligence Console</a>
+    <a class="button-link secondary" href="/spine/subjects/{{ payload.subject.id }}/dossier">Full Dossier v2</a>
+    <a class="button-link secondary" href="{{ payload.exports.json }}">JSON</a>
+    <a class="button-link secondary" href="{{ payload.exports.csv }}">Assertion CSV</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>Dossier kind</span><strong>{{ payload.resolution.dossier_kind }}</strong></article>
+  <article class="metric-card"><span>Identity confidence</span><strong>{{ payload.resolution.identity_band }}</strong></article>
+  <article class="metric-card"><span>Assertions</span><strong>{{ payload.summary.assertion_count }}</strong></article>
+  <article class="metric-card"><span>Real enrichment</span><strong>{{ payload.summary.observation_count }}</strong></article>
+  <article class="metric-card"><span>Runs</span><strong>{{ payload.summary.connector_run_count }}</strong></article>
+  <article class="metric-card"><span>Trace entries</span><strong>{{ payload.traceability|length }}</strong></article>
+</section>
+
+<section class="panel">
+  <h2>Executive Summary</h2>
+  <p>{{ payload.narrative.executive_summary }}</p>
+  <h3>Key Findings</h3>
+  <ul>
+    {% for item in payload.narrative.key_findings %}<li>{{ item }}</li>{% else %}<li>No key findings yet.</li>{% endfor %}
+  </ul>
+  <h3>Gaps and Cautions</h3>
+  <ul>{% for item in payload.narrative.gaps_and_cautions %}<li>{{ item }}</li>{% endfor %}</ul>
+</section>
+
+<section class="panel">
+  <h2>Entity / Human Resolution</h2>
+  <p><strong>Kind:</strong> {{ payload.resolution.dossier_kind }}</p>
+  <p><strong>Confidence:</strong> {{ payload.resolution.identity_confidence }} — {{ payload.resolution.identity_band }}</p>
+  <p><strong>Human signals:</strong> {{ payload.resolution.human_signal_count }} · <strong>Entity signals:</strong> {{ payload.resolution.entity_signal_count }}</p>
+  <p><strong>Primary identifiers:</strong> {{ payload.resolution.primary_identifiers | join(', ') }}</p>
+  {% if payload.resolution.contradictions %}
+  <h3>Contradictions</h3>
+  <ul>{% for item in payload.resolution.contradictions %}<li>{{ item.type }}: {{ item.values | join(', ') }}</li>{% endfor %}</ul>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Dossier Assertions</h2>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>ID</th><th>Type</th><th>Value</th><th>Confidence</th><th>Status</th><th>Sources</th></tr></thead>
+      <tbody>
+      {% for item in payload.assertions %}
+        <tr>
+          <td>{{ item.id }}</td>
+          <td>{{ item.type }}</td>
+          <td>{{ item.value }}</td>
+          <td>{{ item.confidence }}</td>
+          <td><span class="status-pill {{ 'completed' if item.validation_state == 'confirmed' else 'failed' if item.validation_state == 'rejected' else 'queued' }}">{{ item.validation_state }}</span></td>
+          <td>{{ item.payload.source_count or item.payload.source_refs|length or 'n/a' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">No assertions yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Source Traceability</h2>
+  <div class="card-grid">
+    {% for item in payload.traceability %}
+    <article class="card">
+      <h3>{{ item.assertion_type }}</h3>
+      <p><strong>Value:</strong> {{ item.value }}</p>
+      <p><strong>Evidence refs:</strong> {{ item.evidence_refs | join(', ') }}</p>
+      <ul>
+        {% for run in item.runs %}
+        <li>Run {{ run.id }} · {{ run.connector }} · {{ run.status }} · {% for artifact in run.artifacts %}<code>{{ artifact.sha256 }}</code>{% endfor %}</li>
+        {% else %}<li>No run link available.</li>{% endfor %}
+      </ul>
+    </article>
+    {% else %}
+    <p>No traceability entries yet.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Timeline</h2>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>Time</th><th>Kind</th><th>Label</th><th>Value/Status</th></tr></thead>
+      <tbody>
+      {% for event in payload.timeline %}
+        <tr><td>{{ event.timestamp }}</td><td>{{ event.kind }}</td><td>{{ event.label }}</td><td>{{ event.value or event.status }}</td></tr>
+      {% else %}
+        <tr><td colspan="4">No timeline events yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Recommended Next Actions</h2>
+  <ul>{% for item in payload.narrative.recommended_next_actions %}<li>{{ item }}</li>{% endfor %}</ul>
+</section>
+{% endblock %}

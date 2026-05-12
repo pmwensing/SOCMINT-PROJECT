@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Spine-Native Subject Intelligence</p>
+    <h1>{{ payload.subject.label }}</h1>
+    <p class="muted">Dossier-first pipeline: seeds → connector runs → raw artifacts → real enrichment observations → assertions → Full Entity Profile Dossier.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="{{ payload.dossier_url }}">Open Full Dossier v2</a>
+    <a class="button-link secondary" href="{{ payload.full_report_url }}">Open Full Report</a>
+    <a class="button-link secondary" href="{{ payload.export_history_url }}">Export History</a>
+    <a class="button-link secondary" href="{{ payload.classic_subject_url }}">Classic Subject View</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>Seeds</span><strong>{{ payload.summary.seed_count }}</strong></article>
+  <article class="metric-card"><span>Spine runs</span><strong>{{ payload.summary.connector_run_count }}</strong></article>
+  <article class="metric-card"><span>Artifacts</span><strong>{{ payload.summary.artifact_count }}</strong></article>
+  <article class="metric-card"><span>Real enrichment</span><strong>{{ payload.summary.observation_count }}</strong></article>
+  <article class="metric-card"><span>Diagnostics</span><strong>{{ payload.summary.diagnostic_count }}</strong></article>
+  <article class="metric-card"><span>Assertions</span><strong>{{ payload.summary.assertion_count }}</strong></article>
+  <article class="metric-card"><span>Needs review</span><strong>{{ payload.summary.unreviewed_assertions }}</strong></article>
+</section>
+
+{% if not payload.summary.has_real_enrichment and payload.summary.connector_run_count > 0 %}
+<section class="panel warning-panel">
+  <h2>No real enrichment findings yet</h2>
+  <p class="warning-text">The connectors ran, but the normalizers did not extract profile URLs, account presence, exposure data, phone intelligence, archive captures, or other dossier-grade enrichment. Seed echoes are now treated as diagnostics instead of evidence.</p>
+  <p class="muted">Open the raw run output below to verify whether the tool returned no useful result, returned output the normalizer does not yet understand, or hit a connector/runtime issue.</p>
+</section>
+{% endif %}
+
+<section class="panel command-panel">
+  <div class="section-header">
+    <div>
+      <h2>Run subject intelligence</h2>
+      <p class="muted">Only compatible connectors are enabled for this subject's seed types.</p>
+    </div>
+    <span class="status-pill {{ 'queued' if payload.summary.needs_review else 'completed' }}">{{ 'Review needed' if payload.summary.needs_review else 'Dossier ready' }}</span>
+  </div>
+  <form method="post" action="{{ url_for('spine_intelligence_run', subject_id=payload.subject.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card-grid">
+      {% for connector in payload.connector_options %}
+      <label class="card checkbox-card {{ '' if connector.enabled else 'muted-card' }}">
+        <input type="checkbox" name="connectors" value="{{ connector.key }}" {% if connector.enabled %}checked{% else %}disabled{% endif %}>
+        <strong>{{ connector.key }}</strong>
+        <span>Supports: {{ connector.seed_types | join(', ') }}</span>
+        <span>Compatible now: {{ connector.compatible | join(', ') if connector.compatible else 'none' }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    <button type="submit">Run selected connectors into Spine</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Seeds</h2>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>ID</th><th>Type</th><th>Value</th><th>Hash</th></tr></thead>
+      <tbody>
+      {% for seed in payload.seeds %}
+        <tr><td>{{ seed.id }}</td><td>{{ seed.type }}</td><td>{{ seed.value }}</td><td><code>{{ seed.hash }}</code></td></tr>
+      {% else %}
+        <tr><td colspan="4">No seeds yet. Add seeds from the classic subject view.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Dossier Assertions</h2>
+      <p class="muted">These are what the Full Entity Profile Dossier reads. Confirm strong items, reject noise, or suppress weak items.</p>
+    </div>
+  </div>
+  <div class="card-grid">
+    {% for assertion in payload.assertions %}
+    <article class="card">
+      <h3>{{ assertion.type }}</h3>
+      <p><span class="status-pill {{ 'completed' if assertion.validation_state == 'confirmed' else 'failed' if assertion.validation_state == 'rejected' else 'queued' }}">{{ assertion.validation_state }}</span></p>
+      <p><strong>Value:</strong> {{ assertion.value }}</p>
+      <p><strong>Confidence:</strong> {{ assertion.confidence }}</p>
+      <p class="muted">Sources: {{ assertion.payload.source_count or assertion.payload.source_refs|length or 'n/a' }}</p>
+      <form method="post" action="{{ url_for('spine_intelligence_assertion_review', assertion_id=assertion.id) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="subject_id" value="{{ payload.subject.id }}">
+        <input type="text" name="note" placeholder="Analyst note">
+        <button name="action" value="confirmed" type="submit">Confirm</button>
+        <button name="action" value="rejected" type="submit">Reject</button>
+        <button name="action" value="suppressed" type="submit">Suppress</button>
+        <button name="action" value="unreviewed" type="submit">Reset</button>
+      </form>
+    </article>
+    {% else %}
+    <p>No dossier assertions yet. Real enrichment observations are required before assertion candidates are created.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Real Enrichment Observations</h2>
+  <p class="muted">Only dossier-grade observations appear here. Seed echoes and empty connector results are excluded.</p>
+  <div class="card-grid">
+    {% for observation in payload.observations %}
+    <article class="card">
+      <h3>{{ observation.type }}</h3>
+      <p><strong>Value:</strong> {{ observation.value }}</p>
+      <p><strong>Confidence:</strong> {{ observation.confidence }}</p>
+      <p class="muted">{{ observation.source_ref }} · {{ observation.evidence_ref }}</p>
+      <form method="post" action="{{ url_for('spine_observation_promote', observation_id=observation.id) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="subject_id" value="{{ payload.subject.id }}">
+        <input type="text" name="note" placeholder="Promotion note">
+        <button type="submit">Promote to confirmed assertion</button>
+      </form>
+    </article>
+    {% else %}
+    <p>No real enrichment observations yet.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Connector Diagnostics / No-Result Runs</h2>
+  <p class="muted">These are useful for troubleshooting but do not become dossier assertions.</p>
+  <div class="card-grid">
+    {% for diagnostic in payload.diagnostics %}
+    <article class="card muted-card">
+      <h3>{{ diagnostic.type }}</h3>
+      <p><strong>Value:</strong> {{ diagnostic.value }}</p>
+      <p><strong>Confidence:</strong> {{ diagnostic.confidence }}</p>
+      <p class="muted">{{ diagnostic.payload.note or 'Connector did not produce normalized enrichment findings.' }}</p>
+      <p class="muted">{{ diagnostic.source_ref }} · {{ diagnostic.evidence_ref }}</p>
+    </article>
+    {% else %}
+    <p>No connector diagnostics.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Spine Connector Runs + Raw Output</h2>
+  <div class="card-grid">
+    {% for run in payload.runs %}
+    <article class="card wide-card">
+      <h3>{{ run.connector }} · Run {{ run.id }}</h3>
+      <p><span class="status-pill {{ 'completed' if run.status == 'completed' else 'failed' if run.status in ['failed','timeout'] else 'queued' }}">{{ run.status }}</span> Seed ID: {{ run.seed_id }}</p>
+      <p><strong>Normalized findings:</strong> {{ run.finding_count }} · <strong>Artifacts:</strong> {{ run.artifacts|length }}</p>
+      {% if run.artifacts %}
+      <ul>
+        {% for artifact in run.artifacts %}
+        <li><code>{{ artifact.sha256 }}</code> — {{ artifact.kind }} — {{ artifact.size_bytes }} bytes</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <details>
+        <summary>Raw stdout</summary>
+        <pre>{{ run.stdout or '' }}</pre>
+      </details>
+      <details>
+        <summary>Raw stderr</summary>
+        <pre>{{ run.stderr or '' }}</pre>
+      </details>
+      <details>
+        <summary>Raw JSON</summary>
+        <pre>{{ run.raw_result | tojson(indent=2) }}</pre>
+      </details>
+    </article>
+    {% else %}
+    <p>No Spine connector runs yet.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

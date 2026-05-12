@@ -2,6 +2,9 @@
 
 SOCMINT builds local dossiers from open-source intelligence tools and serves the results through an authenticated Flask dashboard. It can run locally for research or behind a Tor v3 hidden service for private operator access.
 
+The end-state product roadmap lives in
+[`docs/ULTIMATE_SOCMINT_PRODUCT_BUILD_SPEC.md`](docs/ULTIMATE_SOCMINT_PRODUCT_BUILD_SPEC.md).
+
 ## Safety
 
 - Use only on targets you are authorized to investigate.
@@ -89,6 +92,17 @@ Generate and retrieve dossiers:
 python -m src.socmint.main john_doe --tools sherlock,maigret
 python -m src.socmint.main john_doe --retrieve
 python -m src.socmint.main john_doe --no-enrich --output-json --export exports/john_doe.json
+```
+
+Spine subjects also expose an Ultimate Entity/Human dossier package through the
+authenticated dashboard:
+
+```text
+/spine/subjects/<id>/ultimate-dossier
+/api/v1/spine/subjects/<id>/ultimate-dossier
+/api/v1/spine/subjects/<id>/ultimate-dossier?redacted=1
+/api/v1/spine/subjects/<id>/ultimate-dossier/manifest
+/spine/subjects/<id>/ultimate-dossier/assertions.csv
 ```
 
 Create an admin manually:
@@ -203,6 +217,52 @@ Postgres drill:
 5. Run `alembic current` and perform the same dashboard checks.
 
 Admin users can export/delete dossiers, manage users at `/admin/users`, assign `viewer`, `analyst`, or `admin` roles, and review filtered/paginated events at `/admin/audit`. Analysts can queue dashboard scan jobs but cannot manage users or export/delete dossiers. All users can rotate their own password at `/account/password`. Job status is available at `/jobs`.
+
+Operational review APIs include `/api/v1/spine/assertions/review-queue`,
+`/api/v1/spine/connectors/quality`, and `/api/v1/jobs/health`. Admin users can
+requeue or cancel scan jobs through `/api/v1/jobs/<id>/requeue` and
+`/api/v1/jobs/<id>/cancel`.
+
+High-end analyst workflow surfaces include:
+
+```text
+/analyst/console
+/cases
+/evidence/capture
+/connectors/marketplace
+/responsible-use
+/exports/builder
+/spine/<id>/graph/canvas
+/spine/<id>/resolution-lab
+/api/v1/analyst/workbench
+/api/v1/evidence/capture
+/api/v1/evidence/captures
+/api/v1/cases
+/api/v1/connectors/marketplace
+/api/v1/responsible-use/scope
+/api/v1/responsible-use/gate
+/api/v1/exports/builder
+/api/v1/exports/builder/bundle
+/api/v1/exports/builder/bundles/<name>/verify
+/spine/subjects/<id>/account-discovery
+/api/v1/spine/subjects/<id>/account-discovery
+/api/v1/spine/subjects/<id>/account-discovery/ingest
+/api/v1/spine/account-discovery/<id>/review
+```
+
+These surfaces are database-backed through the v8 workflow tables for cases,
+case events, evidence captures, and responsible-use scope. Capture artifacts are
+stored under the evidence directory, hashed with SHA-256, and recorded in the
+chain-of-custody ledger. Browser capture mode stores HTML, screenshot, PDF,
+MHTML, and capture-manifest artifacts when Playwright is available, with a
+deterministic offline fallback for controlled test and import workflows.
+High-end export bundles write signed ZIP packages with redaction preset
+metadata, file hashes, bundle hashes, and verification payloads.
+
+Account discovery ingestion turns `account_presence` and `profile_url` spine
+observations into reviewable account leads. Analysts can capture profile URLs,
+confirm or reject discoveries, and promote confirmed account/profile leads into
+new seeds for follow-on connector runs.
 
 ## Observability
 

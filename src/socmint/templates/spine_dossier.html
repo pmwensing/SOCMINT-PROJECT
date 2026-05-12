@@ -91,6 +91,21 @@
 </section>
 
 <section class="card">
+  <h2>Account discovery</h2>
+  <form
+    method="post"
+    action="{{ url_for('dashboard.spine_account_discovery_ingest',
+    subject_id=dossier.subject.id) }}"
+  >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label><input type="checkbox" name="capture_profiles" value="1"> Capture profile URLs</label>
+    <button type="submit">Ingest discoveries</button>
+    <a href="{{ url_for('dashboard.spine_account_discovery_view',
+    subject_id=dossier.subject.id) }}">Open discovery queue</a>
+  </form>
+</section>
+
+<section class="card">
   <h2>Seeds</h2>
   <table>
     <thead><tr><th>Type</th><th>Normalized value</th><th>Hash</th></tr></thead>

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Account Discovery</h1>
+<section class="panel">
+  <form
+    method="post"
+    action="{{ url_for('dashboard.spine_account_discovery_ingest',
+    subject_id=subject_id) }}"
+  >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label><input type="checkbox" name="capture_profiles" value="1" checked> Capture profile URLs</label>
+    <button type="submit">Ingest Discoveries</button>
+  </form>
+</section>
+<section class="card">
+  <h2>Queue</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>State</th><th>Type</th><th>Platform</th><th>Account</th>
+        <th>Profile</th><th>Confidence</th><th>Captures</th><th>Review</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in payload.discoveries %}
+      <tr>
+        <td>{{ item.review_state }}</td>
+        <td>{{ item.discovery_type }}</td>
+        <td>{{ item.platform or "" }}</td>
+        <td class="mono">{{ item.account_value }}</td>
+        <td class="mono">{{ item.profile_url or "" }}</td>
+        <td>{{ "%.3f"|format(item.confidence) }}</td>
+        <td>{{ item.capture_ids|length }}</td>
+        <td>
+          <form
+            method="post"
+            action="{{ url_for('dashboard.spine_account_discovery_review',
+            discovery_id=item.id) }}"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="action">
+              <option value="confirmed">Confirm</option>
+              <option value="rejected">Reject</option>
+              <option value="suppressed">Suppress</option>
+              <option value="unreviewed">Unreview</option>
+            </select>
+            <label><input type="checkbox" name="promote" value="1"> Promote seed</label>
+            <input type="text" name="note" placeholder="Note">
+            <button type="submit">Apply</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8">No account discoveries in this queue.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

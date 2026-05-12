@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ case.title }}</h1>
+<section class="metric-grid">
+  <div class="metric-card"><span>Subjects</span><strong>{{ case.subjects|length }}</strong></div>
+  <div class="metric-card"><span>Captures</span><strong>{{ case.captures|length }}</strong></div>
+  <div class="metric-card"><span>Priority</span><strong>{{ case.priority }}</strong></div>
+  <div class="metric-card"><span>Review</span><strong>{{ case.review_state }}</strong></div>
+</section>
+<section class="card-grid">
+  <article class="card">
+    <h2>Update</h2>
+    <form method="post" class="auth-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="update">
+      <label>Priority <input type="text" name="priority" value="{{ case.priority }}"></label>
+      <label>Review state <input type="text" name="review_state" value="{{ case.review_state }}"></label>
+      <label>Due date <input type="date" name="due_at" value="{{ case.due_at or '' }}"></label>
+      <button type="submit">Save</button>
+    </form>
+  </article>
+  <article class="card">
+    <h2>Add activity</h2>
+    <form method="post" class="auth-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Action <input type="text" name="action" value="note"></label>
+      <label>Subject ID <input type="number" name="subject_id"></label>
+      <label>Assignee <input type="text" name="assignee"></label>
+      <label>Note <textarea name="note" rows="4"></textarea></label>
+      <button type="submit">Add</button>
+    </form>
+  </article>
+</section>
+<section class="card"><h2>Activity</h2><pre>{{ case.events | tojson(indent=2) }}</pre></section>
+<section class="card"><h2>Captures</h2><pre>{{ case.captures | tojson(indent=2) }}</pre></section>
+{% endblock %}

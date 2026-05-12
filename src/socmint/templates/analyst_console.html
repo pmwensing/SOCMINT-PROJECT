@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Analyst Console</h1>
+<section class="metric-grid">
+  <div class="metric-card"><span>Cases</span><strong>{{ payload.cases|length }}</strong></div>
+  <div class="metric-card"><span>Captures</span><strong>{{ payload.captures|length }}</strong></div>
+  <div class="metric-card"><span>Export blockers</span><strong>{{ payload.queues.export_blockers|length }}</strong></div>
+  <div class="metric-card"><span>Connector warnings</span><strong>{{ payload.connector_trust|length }}</strong></div>
+</section>
+<section class="card-grid">
+  <article class="card"><h2>High-risk queue</h2><pre>{{ payload.queues.high_risk | tojson(indent=2) }}</pre></article>
+  <article class="card"><h2>Cases</h2><pre>{{ payload.cases | tojson(indent=2) }}</pre></article>
+  <article class="card"><h2>Evidence</h2><pre>{{ payload.captures | tojson(indent=2) }}</pre></article>
+  <article class="card"><h2>Policy</h2><pre>{{ payload.policy | tojson(indent=2) }}</pre></article>
+</section>
+{% endblock %}

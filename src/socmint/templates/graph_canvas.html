@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Graph Canvas</h1>
+<section class="card"><h2>Controls</h2><pre>{{ payload.controls | tojson(indent=2) }}</pre></section>
+<section class="card-grid"><article class="card"><h2>Nodes</h2><pre>{{ payload.nodes | tojson(indent=2) }}</pre></article><article class="card"><h2>Edges</h2><pre>{{ payload.edges | tojson(indent=2) }}</pre></article></section>
+{% endblock %}

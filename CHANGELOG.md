@@ -1,5 +1,83 @@
 # Changelog
 
+## Unreleased
+
+- Added the implementation-grade ultimate SOCMINT product build spec covering
+  memberships, quotas, Tor deployment, responsible-use gates, evidence
+  workflows, account discovery, graph UX, exports, billing, and production
+  readiness.
+
+## v8.1.0
+
+Account discovery ingest layer.
+
+- Added `account_discoveries` persistence for social/profile account leads.
+- Added account discovery ingestion from `account_presence` and `profile_url`
+  spine observations.
+- Added optional profile capture for discovered profile URLs.
+- Added account discovery review and seed-promotion workflow.
+- Added UI and API routes for discovery queues, ingest, review, and promotion.
+
+## v8.0.1
+
+Browser capture automation and signed export bundle builder.
+
+- Added browser capture mode with HTML, screenshot, PDF, MHTML, and manifest
+  artifacts for each capture group.
+- Added SHA-256 verification for capture manifests and every generated
+  browser capture artifact.
+- Added signed high-end export ZIP bundles with redaction presets, file hashes,
+  bundle hashes, and verification metadata.
+- Added API support for building and verifying high-end export bundles.
+- Expanded v8 workflow tests for capture manifests, bundle generation, and
+  bundle verification.
+
+## v8.0.0
+
+High-end SOCMINT workflow layer.
+
+### Added
+
+- Database-backed case records, case events, evidence captures, and
+  responsible-use scope with Alembic migration `0008`.
+- Browser/import evidence capture with artifact hashing, capture metadata,
+  chain-of-custody events, automation plan, and verification API.
+- Case management with subjects, notes, assignments, comments, priority, due
+  dates, review state, saved workflow payloads, audit-style activity, and case
+  capture attachment.
+- Analyst console combining review queues, cases, captures, connector trust,
+  jobs, policy events, and scope.
+- Connector marketplace with trust badge, capability tags, fixture runner
+  endpoint, and connector quality metrics.
+- Entity resolution lab, graph canvas payload, export builder manifest,
+  responsible-use gate, and scope review APIs.
+
+### Validation
+
+- `ruff check src tests scripts`
+- `pytest -q tests/test_high_end_workflows.py`
+
+## v7.8.1
+
+Release hardening for the Ultimate Entity/Human dossier branch.
+
+### Added
+
+- Ultimate Dossier readiness review, export manifest, redacted JSON mode, and
+  CSV/assertion parity checks.
+- Connector reliability score and quality warning labels.
+- Prioritized assertion review queue API.
+- Scan job health, stale-running detection, requeue, and cancel APIs.
+- Manual GitHub Actions Docker/Tor production rehearsal.
+
+### Validation
+
+- `make ci`
+- `bash scripts/test_v7_8_0.sh`
+- `make production-smoke`
+- `make backup-restore-smoke`
+- `make production-docker-smoke`
+
 ## v0.1.0-rc1
 
 Production readiness candidate.

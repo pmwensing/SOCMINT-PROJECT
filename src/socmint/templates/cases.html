@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Cases</h1>
+<section class="panel">
+  <form method="post" class="inline-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Title <input type="text" name="title" required></label>
+    <label>Case key <input type="text" name="case_key"></label>
+    <label>Tags <input type="text" name="tags"></label>
+    <button type="submit">Create</button>
+  </form>
+</section>
+<section class="card">
+  <table>
+    <thead><tr><th>Case</th><th>Status</th><th>Priority</th><th>Review</th><th>Updated</th></tr></thead>
+    <tbody>
+      {% for case in cases %}
+      <tr>
+        <td><a href="{{ url_for('dashboard.case_detail_view', case_key=case.case_key) }}">{{ case.title }}</a></td>
+        <td>{{ case.status }}</td><td>{{ case.priority }}</td><td>{{ case.review_state }}</td><td>{{ case.updated_at }}</td>
+      </tr>
+      {% else %}<tr><td colspan="5">No cases yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
