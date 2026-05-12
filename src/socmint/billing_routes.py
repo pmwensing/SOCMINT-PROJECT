@@ -6,6 +6,7 @@ from .billing import billing_status
 from .billing import create_checkout_session
 from .billing import process_subscription_event
 from .billing import verify_webhook_signature
+from .billing_integration_routes import register_billing_integration_routes
 
 
 def _login_required():
@@ -17,6 +18,8 @@ def _admin_required():
 
 
 def register_billing_routes(app):
+    register_billing_integration_routes(app)
+
     @app.get("/api/v1/account/billing")
     def api_account_billing():
         if not _login_required():
