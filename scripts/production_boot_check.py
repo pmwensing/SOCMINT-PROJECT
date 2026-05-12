@@ -20,6 +20,7 @@ def configure_env(root):
             "SOCMINT_ALLOW_SIGNUP": "false",
             "SOCMINT_AUTO_CREATE_DB": "false",
             "SOCMINT_DATA_DIR": str(root),
+            "SOCMINT_LOG_FILE": str(root / "socmint.log"),
             "DATABASE_URL": f"sqlite:///{root / 'socmint.db'}",
         }
     )
