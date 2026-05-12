@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Memberships</h1>
+
+<section class="card">
+    <h2>Plans</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Plan</th>
+                <th>Price</th>
+                <th>Key Limits</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for plan_key, plan in payload.plans.items() %}
+            <tr>
+                <td><strong>{{ plan.name }}</strong> <code>{{ plan_key }}</code></td>
+                <td>{{ plan.price }}</td>
+                <td>
+                    Cases {{ plan.limits.active_cases }},
+                    connector runs/day {{ plan.limits.connector_runs_per_day }},
+                    signed exports/month {{ plan.limits.signed_exports_per_month }},
+                    seats {{ plan.limits.team_seats }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<section class="card">
+    <h2>Users</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Admin</th>
+                <th>Active</th>
+                <th>Plan</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in payload.memberships %}
+            <tr>
+                <td>{{ row.username }}</td>
+                <td>{{ row.role }}</td>
+                <td>{{ row.is_admin }}</td>
+                <td>{{ row.is_active }}</td>
+                <td><code>{{ row.plan_key }}</code></td>
+                <td>{{ row.status }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6">No users found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

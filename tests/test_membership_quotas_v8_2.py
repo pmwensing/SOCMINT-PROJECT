@@ -5,6 +5,7 @@ from src.socmint.membership import evaluate_gate
 from src.socmint.membership import list_memberships
 from src.socmint.membership import record_usage
 from src.socmint.membership import set_quota_override
+from src.socmint.membership_routes import register_membership_routes
 
 
 def test_free_membership_is_created_and_blocks_paid_exports(tmp_path):
@@ -69,3 +70,50 @@ def test_list_memberships_reports_unassigned_users_as_free(tmp_path):
 
     assert payload["schema"] == "socmint.membership.v8_2_0"
     assert row["plan_key"] == "free"
+
+
+def test_account_usage_route_renders_html(tmp_path):
+    db.configure_database(f"sqlite:///{tmp_path / 'socmint.db'}")
+    db.create_user("member", "StrongPass123!", role="analyst")
+
+    from src.socmint.dashboard import create_app
+
+    app = create_app(f"sqlite:///{tmp_path / 'socmint.db'}")
+    register_membership_routes(app)
+    app.config.update(TESTING=True)
+
+    with app.test_client() as client:
+        with client.session_transaction() as session:
+            session["user"] = "member"
+            session["role"] = "analyst"
+            session["is_admin"] = False
+        response = client.get("/account/usage")
+
+    assert response.status_code == 200
+    assert response.content_type.startswith("text/html")
+    assert b"Account Usage" in response.data
+    assert b"signed_exports_per_month" in response.data
+
+
+def test_admin_memberships_route_renders_html(tmp_path):
+    db.configure_database(f"sqlite:///{tmp_path / 'socmint.db'}")
+    db.create_user("admin", "StrongPass123!", role="admin", is_admin=True)
+    db.create_user("analyst", "StrongPass123!", role="analyst")
+
+    from src.socmint.dashboard import create_app
+
+    app = create_app(f"sqlite:///{tmp_path / 'socmint.db'}")
+    register_membership_routes(app)
+    app.config.update(TESTING=True)
+
+    with app.test_client() as client:
+        with client.session_transaction() as session:
+            session["user"] = "admin"
+            session["role"] = "admin"
+            session["is_admin"] = True
+        response = client.get("/admin/memberships")
+
+    assert response.status_code == 200
+    assert response.content_type.startswith("text/html")
+    assert b"Memberships" in response.data
+    assert b"analyst" in response.data

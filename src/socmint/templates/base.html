@@ -20,9 +20,11 @@
                 <a href="{{ url_for('dashboard.spine_subjects') }}">Subjects</a>
                 <a href="/spine">Spine Intelligence</a>
                 <a href="/connectors/runtime">Connector Runtime</a>
+                <a href="/account/usage">Account</a>
                 <a href="{{ url_for('dashboard.connector_marketplace_view') }}">Marketplace</a>
                 {% if session.get('is_admin') %}
                 <a href="{{ url_for('dashboard.admin_users') }}">Users</a>
+                <a href="/admin/memberships">Memberships</a>
                 <a href="{{ url_for('dashboard.audit_log') }}">Audit</a>
                 {% endif %}
                 <a href="{{ url_for('dashboard.change_password') }}">Password</a>
