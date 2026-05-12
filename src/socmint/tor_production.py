@@ -89,7 +89,6 @@ def deployment_check(
         checks["hostname_present"] = bool(onion_hostname)
     if onion_hostname:
         checks["hostname_format_valid"] = onion_hostname.endswith(".onion") and len(onion_hostname) >= 22
-    # Guardrail: this helper never reads or stores private_key content.
     private_key_path = path / "hs_ed25519_secret_key"
     if private_key_path.exists():
         checks["private_key_detected_not_read"] = True
@@ -185,6 +184,7 @@ def hidden_service_status(service_name: str = "socmint") -> dict[str, Any]:
             "check": check,
         }
     payload = dict(row)
+    payload["enabled"] = bool(payload.get("enabled"))
     payload["last_check"] = json.loads(payload.pop("last_check_json") or "{}")
     payload["torrc"] = torrc_snippet(
         service_dir=payload["service_dir"],
