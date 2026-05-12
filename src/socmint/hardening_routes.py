@@ -6,6 +6,7 @@ from .export_gate import export_preflight
 from .export_gate import export_preflight_summary
 from .gate_audit import gate_audit_summary
 from .gate_audit import route_gate_matrix
+from .security_audit_routes import register_security_audit_routes
 
 SECURITY_HARDENING_SCHEMA = "socmint.security_hardening.v9_0_2"
 
@@ -19,10 +20,10 @@ def security_hardening_checklist() -> dict:
         "schema": SECURITY_HARDENING_SCHEMA,
         "status": "checklist_ready",
         "controls": {
-            "secret_scanning": "recommended: enable gitleaks/detect-secrets in CI",
+            "secret_scanning": "available at /api/v1/admin/security/secrets/scan",
             "csrf": "recommended: verify every state-changing form/API route",
-            "security_headers": "recommended: verify CSP, X-Frame-Options, nosniff, referrer policy",
-            "session_cookies": "recommended: verify HttpOnly, SameSite, Secure when HTTPS is enabled",
+            "security_headers": "available at /api/v1/admin/security/headers",
+            "session_cookies": "available at /api/v1/admin/security/cookies",
             "rate_limits": "recommended: verify login/signup/scan throttles",
             "branch_protection": "recommended: require PR review and CI before merge",
             "route_gate_matrix": "available at /api/v1/admin/gates/matrix",
@@ -32,6 +33,8 @@ def security_hardening_checklist() -> dict:
 
 
 def register_hardening_routes(app):
+    register_security_audit_routes(app)
+
     @app.get("/api/v1/admin/gates/matrix")
     def api_gate_matrix():
         if not _admin_required():
