@@ -6,7 +6,6 @@ from .membership import assign_membership
 from .membership import evaluate_gate
 from .membership import ensure_default_membership
 from .membership import list_memberships
-from .membership import membership_summary
 from .membership import set_quota_override
 
 
