@@ -531,3 +531,234 @@ def product_v10_module_health_view():
     payload = _module_health_payload()
     return render_template("product_v10_module_health.html", health=payload)
 # ---- end v10.0.5 product module health console ----
+
+
+
+# ---- v10.0.6 Product Blueprint Ownership Migration Plan ----
+TARGET_BLUEPRINT_BY_MODULE = {
+    "socmint.product_release_flow": "product_release_flow_bp",
+    "socmint.product_post_release": "product_post_release_bp",
+    "socmint.product_artifacts": "product_artifacts_bp",
+    "socmint.product_registry": "product_registry_bp",
+}
+
+
+def _route_method_risk(methods: list[str]) -> int:
+    method_set = set(methods or [])
+    if method_set <= {"GET"}:
+        return 5
+    if "POST" in method_set and len(method_set) == 1:
+        return 18
+    if "POST" in method_set:
+        return 22
+    return 10
+
+
+def _route_semantic_risk(route: str) -> int:
+    text = route.lower()
+    risk = 0
+    if "download" in text or "<" in text or "{" in text:
+        risk += 18
+    if "write" in text or "build" in text or "publish" in text or "decision" in text or "signoff" in text:
+        risk += 20
+    if "archive" in text or "zip" in text or "package" in text:
+        risk += 12
+    if "audit" in text:
+        risk += 8
+    if route.startswith("/api/"):
+        risk += 4
+    return risk
+
+
+def _migration_route_phase(route: str, methods: list[str], module_key: str) -> str:
+    text = route.lower()
+    method_set = set(methods or [])
+
+    if method_set <= {"GET"} and not any(token in text for token in ["download", "audit", "archive", "package"]):
+        return "phase_1_low_risk_get_views"
+
+    if route.startswith("/api/") and method_set <= {"GET"}:
+        return "phase_2_read_only_api"
+
+    if "audit" in text or "download" in text or "package" in text or "archive" in text:
+        return "phase_3_stateful_artifact_and_file_routes"
+
+    if "write" in text or "build" in text or "decision" in text or "signoff" in text or "publish" in text or "POST" in method_set:
+        return "phase_4_mutating_action_routes"
+
+    return "phase_2_read_only_api"
+
+
+def _migration_plan_payload() -> dict[str, Any]:
+    health = _module_health_payload()
+    ownership = _route_ownership_map()
+
+    health_by_module = {
+        module.get("module"): module
+        for module in health.get("modules", [])
+    }
+
+    candidates = []
+    for row in ownership.get("ownership", []):
+        if row.get("ownership") != "extracted-module-reexport":
+            continue
+
+        module_name = row.get("module")
+        module_health = health_by_module.get(module_name, {})
+        methods = row.get("methods") or []
+        risk_score = min(
+            100,
+            _route_method_risk(methods)
+            + _route_semantic_risk(row.get("route", ""))
+            + (0 if row.get("present") else 50)
+            + (0 if module_health.get("status") == "healthy" else 25),
+        )
+        readiness_gate_passed = (
+            health.get("status") == "healthy"
+            and module_health.get("status") == "healthy"
+            and module_health.get("ready_for_deeper_extraction") is True
+            and row.get("present") is True
+        )
+
+        candidate = {
+            "route": row.get("route"),
+            "normalized_route": row.get("normalized_route"),
+            "endpoint": row.get("endpoint"),
+            "methods": methods,
+            "current_owner": "dashboard.py",
+            "current_endpoint": row.get("endpoint"),
+            "target_module": module_name,
+            "target_blueprint": TARGET_BLUEPRINT_BY_MODULE.get(module_name),
+            "surface_key": row.get("surface_key"),
+            "surface_label": row.get("surface_label"),
+            "risk_score": risk_score,
+            "risk_level": "low" if risk_score < 25 else "medium" if risk_score < 55 else "high",
+            "recommended_phase": _migration_route_phase(row.get("route", ""), methods, row.get("surface_key", "")),
+            "safe_to_migrate": readiness_gate_passed and risk_score < 55,
+            "readiness_gate_passed": readiness_gate_passed,
+            "blocking_reasons": [
+                reason
+                for reason in [
+                    None if health.get("status") == "healthy" else "module health payload is not healthy",
+                    None if module_health.get("status") == "healthy" else f"{module_name} is not healthy",
+                    None if module_health.get("ready_for_deeper_extraction") is True else f"{module_name} is not ready for deeper extraction",
+                    None if row.get("present") is True else "route is missing",
+                    None if risk_score < 55 else "route risk is too high for first migration wave",
+                ]
+                if reason
+            ],
+        }
+        candidates.append(candidate)
+
+    candidates.sort(key=lambda item: (item["risk_score"], item["route"] or ""))
+
+    safe = [item for item in candidates if item["safe_to_migrate"]]
+    blocked = [item for item in candidates if not item["safe_to_migrate"]]
+    first_wave = [
+        item
+        for item in safe
+        if item["recommended_phase"] in {"phase_1_low_risk_get_views", "phase_2_read_only_api"}
+    ][:10]
+
+    return {
+        "status": "ready" if health.get("status") == "healthy" and safe else "blocked",
+        "version": "10.0.6",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "module_health_status": health.get("status"),
+        "module_health_overall_score": health.get("overall_score"),
+        "ready_for_deeper_blueprint_extraction": health.get("ready_for_deeper_blueprint_extraction"),
+        "candidate_count": len(candidates),
+        "safe_candidate_count": len(safe),
+        "blocked_candidate_count": len(blocked),
+        "first_wave_count": len(first_wave),
+        "first_wave_routes": first_wave,
+        "candidates": candidates,
+        "blocked_routes": blocked,
+        "module_health": health,
+        "ownership": ownership,
+        "recommended_next_action": (
+            "Move first-wave low-risk GET/view routes to extracted blueprints one route family at a time."
+            if health.get("status") == "healthy" and safe
+            else "Do not migrate route ownership until module health is healthy and candidate gates pass."
+        ),
+    }
+
+
+def write_migration_plan_report() -> dict[str, Any]:
+    import json
+    from pathlib import Path
+
+    payload = _migration_plan_payload()
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+
+    json_path = release_dir / "V10_0_6_BLUEPRINT_MIGRATION_PLAN.json"
+    md_path = release_dir / "V10_0_6_BLUEPRINT_MIGRATION_PLAN.md"
+
+    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+
+    rows = [
+        "# v10.0.6 Blueprint Ownership Migration Plan",
+        "",
+        f"Generated: {payload['generated_at']}",
+        f"Status: **{payload['status']}**",
+        f"Module health: **{payload['module_health_status']}**",
+        f"Overall module health score: {payload['module_health_overall_score']}",
+        f"Safe candidates: {payload['safe_candidate_count']}/{payload['candidate_count']}",
+        f"First wave routes: {payload['first_wave_count']}",
+        "",
+        "## First Wave Routes",
+        "",
+    ]
+
+    if payload["first_wave_routes"]:
+        for item in payload["first_wave_routes"]:
+            rows.append(
+                f"- `{item['route']}` → `{item['target_module']}` / `{item['target_blueprint']}` "
+                f"(risk {item['risk_score']}, {item['risk_level']})"
+            )
+    else:
+        rows.append("- None")
+
+    rows.extend(["", "## Blocked Routes", ""])
+    if payload["blocked_routes"]:
+        for item in payload["blocked_routes"]:
+            rows.append(
+                f"- `{item['route']}` risk={item['risk_score']} reasons={'; '.join(item['blocking_reasons'])}"
+            )
+    else:
+        rows.append("- None")
+
+    rows.extend(
+        [
+            "",
+            "## Recommended Next Action",
+            "",
+            payload["recommended_next_action"],
+            "",
+        ]
+    )
+
+    md_path.write_text("\n".join(rows))
+    payload["artifacts_written"] = {
+        "json": json_path.as_posix(),
+        "markdown": md_path.as_posix(),
+    }
+    return payload
+
+
+@product_registry_bp.route("/api/v1/product/v10/migration-plan")
+def api_product_v10_migration_plan():
+    return jsonify(_migration_plan_payload())
+
+
+@product_registry_bp.route("/api/v1/product/v10/migration-plan/write", methods=["POST"])
+def api_product_v10_migration_plan_write():
+    return jsonify(write_migration_plan_report())
+
+
+@product_registry_bp.route("/product/v10/migration-plan")
+def product_v10_migration_plan_view():
+    payload = _migration_plan_payload()
+    return render_template("product_v10_migration_plan.html", plan=payload)
+# ---- end v10.0.6 product blueprint ownership migration plan ----

@@ -1,0 +1,31 @@
+{
+  "status": "pass",
+  "generated_at": "2026-05-13T05:49:55.539703+00:00",
+  "version": "10.0.6",
+  "summary": "3/3 checks passed.",
+  "checks": [
+    {
+      "name": "compileall-src",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "Listing 'src/socmint'...\nListing 'src/socmint/static'...\nListing 'src/socmint/templates'...\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "module-health-smoke",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "PYTHONPATH=src python3 scripts/product_module_health_smoke_v10_0_5.py\n{\"timestamp\":\"2026-05-13T05:49:54.594123+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"8314094e6a3f479e8b5e9984de0f7e45\",\"method\":\"GET\",\"path\":\"/api/v1/product/v10/module-health\",\"status_code\":200,\"duration_ms\":3.17,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET module health API 200\n[PASS] module health release_flow 100\n[PASS] module health post_release 100\n[PASS] module health artifact_pipeline 100\n[PASS] module health module_registry 100\n{\"timestamp\":\"2026-05-13T05:49:54.601778+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"a17aa0f84a3b4123946fadce164531dc\",\"method\":\"GET\",\"path\":\"/product/v10/module-health\",\"status_code\":200,\"duration_ms\":6.69,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET module health UI 200\n{\"timestamp\":\"2026-05-13T05:49:54.606359+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"a16d008178824699a1f05a9a8d73159a\",\"method\":\"POST\",\"path\":\"/api/v1/product/v10/module-health/write\",\"status_code\":200,\"duration_ms\":3.99,\"remote_addr\":\"127.0.0.1\"}\n[PASS] write module health report 200\n{\"timestamp\":\"2026-05-13T05:49:54.612546+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"99a2c37fcf8641f7b7b2e1d15ec4a2e8\",\"method\":\"GET\",\"path\":\"/product/v10/modules\",\"status_code\":200,\"duration_ms\":5.44,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET registry module health link 200\n{\"timestamp\":\"2026-05-13T05:49:54.615935+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"e0c8f5fb12b344b785ec191e63507a4f\",\"method\":\"GET\",\"path\":\"/product/v10\",\"status_code\":200,\"duration_ms\":2.85,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET v10 dashboard module health link 200\nv10.0.5 product module health smoke passed\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "migration-plan-smoke-v10-0-6",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "{\"timestamp\":\"2026-05-13T05:49:55.353120+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"38109085b8a447fdb01c21011a6a162b\",\"method\":\"GET\",\"path\":\"/api/v1/product/v10/module-health\",\"status_code\":200,\"duration_ms\":3.32,\"remote_addr\":\"127.0.0.1\"}\n[PASS] module health gate healthy 200\n{\"timestamp\":\"2026-05-13T05:49:55.360190+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"5f86fb73ae7b4ae3995eea33d8d6caa2\",\"method\":\"GET\",\"path\":\"/api/v1/product/v10/migration-plan\",\"status_code\":200,\"duration_ms\":6.12,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET migration plan API 200\n[PASS] safe routes gated by healthy module health 0\n{\"timestamp\":\"2026-05-13T05:49:55.371220+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"94cf302ef0bc43e7bee83733d0c2977b\",\"method\":\"GET\",\"path\":\"/product/v10/migration-plan\",\"status_code\":200,\"duration_ms\":9.82,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET migration plan UI 200\n{\"timestamp\":\"2026-05-13T05:49:55.379306+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"6421d6eb810b4f0ab6dda3f039f4d92f\",\"method\":\"POST\",\"path\":\"/api/v1/product/v10/migration-plan/write\",\"status_code\":200,\"duration_ms\":7.58,\"remote_addr\":\"127.0.0.1\"}\n[PASS] write migration plan report 200\n{\"timestamp\":\"2026-05-13T05:49:55.388368+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"f66403df4cff4e1881a51e69015b48ad\",\"method\":\"GET\",\"path\":\"/product/v10/module-health\",\"status_code\":200,\"duration_ms\":7.75,\"remote_addr\":\"127.0.0.1\"}\n[PASS] migration link /product/v10/module-health 200\n{\"timestamp\":\"2026-05-13T05:49:55.394298+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"750e9ab773a9451ca6faba7ba27a44d8\",\"method\":\"GET\",\"path\":\"/product/v10/modules\",\"status_code\":200,\"duration_ms\":5.38,\"remote_addr\":\"127.0.0.1\"}\n[PASS] migration link /product/v10/modules 200\n{\"timestamp\":\"2026-05-13T05:49:55.398288+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"d655718bad104bafbc778c0202ee4fec\",\"method\":\"GET\",\"path\":\"/product/v10\",\"status_code\":200,\"duration_ms\":3.49,\"remote_addr\":\"127.0.0.1\"}\n[PASS] migration link /product/v10 200\nv10.0.6 blueprint migration plan smoke passed\n",
+      "stderr_tail": ""
+    }
+  ],
+  "failed": [],
+  "next_action": "Merge and tag v10.0.6 blueprint ownership migration plan"
+}
