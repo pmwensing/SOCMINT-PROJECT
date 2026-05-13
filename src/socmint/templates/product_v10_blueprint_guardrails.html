@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Blueprint Guardrails</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+    .pass { color: #86efac; font-weight: 700; }
+    .fail { color: #fecaca; font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Blueprint Migration Wave 1 Guardrails + Rollback Console</h1>
+  <p>v10.0.8 verifies each moved Wave 1 route has a blueprint-owned primary route and dashboard fallback.</p>
+
+  <section class="card">
+    <h2>Guardrail Status</h2>
+    <p>Status: <strong class="{{ guardrails.status }}">{{ guardrails.status|upper }}</strong></p>
+    <p>Moved routes: {{ guardrails.moved_route_count }}</p>
+    <p>Passed routes: {{ guardrails.passed_route_count }}</p>
+    <p>Failed routes: {{ guardrails.failed_route_count }}</p>
+    <p>No POST/write/build/download/archive routes moved: {{ guardrails.no_action_routes_moved }}</p>
+    <p>Rollback readiness: {{ guardrails.rollback_readiness.rollback_ready_count }}/{{ guardrails.rollback_readiness.route_count }}</p>
+    <p>Recommended next action: {{ guardrails.recommended_next_action }}</p>
+    <p>
+      <a href="/api/v1/product/v10/blueprint-guardrails">Guardrails JSON</a> |
+      <a href="/product/v10/migration-plan">Migration Plan</a> |
+      <a href="/product/v10/module-health">Module Health</a>
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>Moved Wave 1 Routes</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Route</th>
+          <th>Status</th>
+          <th>Primary Endpoint</th>
+          <th>Blueprint/Fallback</th>
+          <th>Action Route Check</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for item in guardrails.routes %}
+        <tr>
+          <td><code>{{ item.route }}</code></td>
+          <td><span class="{{ item.status }}">{{ item.status|upper }}</span></td>
+          <td><code>{{ item.primary_endpoint }}</code></td>
+          <td>
+            Blueprint primary: {{ item.has_blueprint_primary }}<br>
+            Dashboard fallback: {{ item.has_dashboard_fallback }}<br>
+            Fallback count: {{ item.dashboard_fallback_count }}
+          </td>
+          <td>
+            Action route moved: {{ item.action_route_moved }}<br>
+            Forbidden hits: {{ item.forbidden_token_hits }}<br>
+            Non-GET methods: {{ item.non_get_blueprint_methods }}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>
