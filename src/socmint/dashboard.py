@@ -3542,3 +3542,158 @@ def product_release_package_build():
     flash("Product release package built.", "success")
     return redirect(url_for("dashboard.product_release_package_view"))
 # ---- end v9.8.8 product release package builder ----
+
+
+
+# ---- v9.8.9 Product Release Package ZIP Export + Download ----
+def _v989_packages_root():
+    from pathlib import Path
+
+    root = Path("storage/product_packages")
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _v989_safe_package_dir(package_name):
+    root = _v989_packages_root().resolve()
+    package = _v988_package_slug(package_name)
+    path = (root / package).resolve()
+    if not str(path).startswith(str(root)):
+        abort(404)
+    if not path.exists() or not path.is_dir():
+        abort(404)
+    return path
+
+
+def _v989_package_zip_path(package_name):
+    root = _v989_packages_root()
+    package = _v988_package_slug(package_name)
+    return root / f"{package}.zip"
+
+
+def _v989_list_release_packages():
+    from datetime import datetime, timezone
+    import zipfile
+
+    root = _v989_packages_root()
+    packages = []
+
+    for path in sorted(root.iterdir()):
+        if not path.is_dir():
+            continue
+
+        manifest_path = path / "PACKAGE_MANIFEST.json"
+        index_path = path / "PACKAGE_INDEX.md"
+        zip_path = _v989_package_zip_path(path.name)
+
+        manifest = {}
+        if manifest_path.exists():
+            try:
+                manifest = json.loads(manifest_path.read_text())
+            except Exception:
+                manifest = {}
+
+        packages.append(
+            {
+                "package_name": path.name,
+                "package_path": path.as_posix(),
+                "manifest_path": manifest_path.as_posix() if manifest_path.exists() else None,
+                "index_path": index_path.as_posix() if index_path.exists() else None,
+                "zip_path": zip_path.as_posix() if zip_path.exists() else None,
+                "zip_exists": zip_path.exists(),
+                "zip_size_bytes": zip_path.stat().st_size if zip_path.exists() else 0,
+                "zip_download_url": f"/product/release-package/download/{path.name}" if zip_path.exists() else None,
+                "selected_count": manifest.get("selected_count", 0),
+                "copied_artifact_count": manifest.get("copied_artifact_count", 0),
+                "metadata_file_count": manifest.get("metadata_file_count", 0),
+                "generated_at": manifest.get("generated_at"),
+                "modified_at": datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat(),
+                "zip_entries": zipfile.ZipFile(zip_path).namelist() if zip_path.exists() else [],
+            }
+        )
+
+    packages.sort(key=lambda item: item.get("modified_at") or "", reverse=True)
+    return packages
+
+
+def _v989_zip_release_package(package_name):
+    import zipfile
+
+    package_dir = _v989_safe_package_dir(package_name)
+    zip_path = _v989_package_zip_path(package_dir.name)
+
+    if zip_path.exists():
+        zip_path.unlink()
+
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for path in sorted(package_dir.rglob("*")):
+            if not path.is_file():
+                continue
+            zf.write(path, path.relative_to(package_dir).as_posix())
+
+    entries = []
+    with zipfile.ZipFile(zip_path) as zf:
+        entries = zf.namelist()
+
+    return {
+        "status": "ok",
+        "version": "9.8.9",
+        "package_name": package_dir.name,
+        "package_path": package_dir.as_posix(),
+        "zip_path": zip_path.as_posix(),
+        "zip_size_bytes": zip_path.stat().st_size,
+        "zip_entry_count": len(entries),
+        "zip_entries": entries,
+        "download_url": f"/product/release-package/download/{package_dir.name}",
+    }
+
+
+@dashboard_bp.route("/api/v1/product/release-packages")
+@login_required
+def api_v989_release_packages():
+    return jsonify(
+        {
+            "status": "ok",
+            "version": "9.8.9",
+            "count": len(_v989_list_release_packages()),
+            "packages": _v989_list_release_packages(),
+        }
+    )
+
+
+@dashboard_bp.route("/api/v1/product/release-package/<package_name>/zip", methods=["POST"])
+@admin_required
+def api_v989_zip_release_package(package_name):
+    result = _v989_zip_release_package(package_name)
+    audit("product_release_package_zip", details=result)
+    return jsonify(result)
+
+
+@dashboard_bp.route("/product/release-package/zip/<package_name>", methods=["POST"])
+@admin_required
+def product_release_package_zip(package_name):
+    result = _v989_zip_release_package(package_name)
+    audit("product_release_package_zip", details=result)
+    flash("Product release package ZIP created.", "success")
+    return redirect(url_for("dashboard.product_release_package_view"))
+
+
+@dashboard_bp.route("/product/release-package/download/<package_name>")
+@login_required
+def product_release_package_download(package_name):
+    from flask import send_file
+
+    package = _v988_package_slug(package_name)
+    zip_path = _v989_package_zip_path(package)
+    root = _v989_packages_root().resolve()
+    resolved = zip_path.resolve()
+
+    if not str(resolved).startswith(str(root)) or not zip_path.exists():
+        abort(404)
+
+    return send_file(
+        resolved,
+        as_attachment=True,
+        download_name=zip_path.name,
+    )
+# ---- end v9.8.9 product release package ZIP export ----
