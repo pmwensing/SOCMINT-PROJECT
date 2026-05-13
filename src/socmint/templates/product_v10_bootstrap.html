@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>v10 Bootstrap Gate</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+    .ready, .closed { color: #86efac; font-weight: 700; }
+    .blocked { color: #fecaca; font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Final v9 Line Closure + v10 Bootstrap Gate</h1>
+  <p>v9.9.9 freezes v9.9.x as complete and controls v10 bootstrap readiness.</p>
+
+  <section class="card">
+    <h2>Bootstrap Status</h2>
+    <p>Status: <strong class="{{ payload.status }}">{{ payload.status|upper }}</strong></p>
+    <p>Release: <code>{{ payload.release_name }}</code></p>
+    <p>Safe to start v10: {{ payload.safe_to_start_v10 }}</p>
+    <p>v9 closed: {{ payload.v9_closed }}</p>
+    <p>v10 bootstrap ready: {{ payload.v10_bootstrap_ready }}</p>
+    <p>Artifacts: {{ payload.required_present }}/{{ payload.required_total }}</p>
+    <p>Recommended next action: {{ payload.recommended_next_action }}</p>
+    <p>
+      <a href="/api/v1/product/final/v10-bootstrap">Bootstrap JSON</a> |
+      <a href="/api/v1/product/final/v10-bootstrap/audit">Bootstrap Audit JSON</a> |
+      <a href="/product/final/self-test">Final Self-Test</a>
+    </p>
+
+    {% if session.get('is_admin') %}
+    <form method="post" action="{{ url_for('dashboard.product_v10_bootstrap_decision') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="release_name" value="{{ payload.release_name }}">
+      <input type="hidden" name="decision" value="close_v9">
+      <input type="text" name="reason" value="Close v9.9.x release line.">
+      <button type="submit">Close v9 Line</button>
+    </form>
+
+    <form method="post" action="{{ url_for('dashboard.product_v10_bootstrap_decision') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="release_name" value="{{ payload.release_name }}">
+      <input type="hidden" name="decision" value="approve_v10_bootstrap">
+      <input type="text" name="reason" value="Approve v10 bootstrap.">
+      <button type="submit">Approve v10 Bootstrap</button>
+    </form>
+
+    <form method="post" action="{{ url_for('dashboard.product_v10_bootstrap_decision') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="release_name" value="{{ payload.release_name }}">
+      <input type="hidden" name="decision" value="block_v10_bootstrap">
+      <input type="text" name="reason" value="Block v10 bootstrap pending review.">
+      <button type="submit">Block v10 Bootstrap</button>
+    </form>
+
+    <form method="post" action="{{ url_for('dashboard.product_v10_bootstrap_write') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="release_name" value="{{ payload.release_name }}">
+      <button type="submit">Write Closure Manifests</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Required v9 Closure Artifacts</h2>
+    <table>
+      <thead><tr><th>Artifact</th><th>Status</th><th>SHA256</th></tr></thead>
+      <tbody>
+      {% for item in payload.artifacts %}
+        <tr>
+          <td><code>{{ item.path }}</code></td>
+          <td>{% if item.exists %}<span class="ready">PRESENT</span>{% else %}<span class="blocked">MISSING</span>{% endif %}</td>
+          <td><code>{{ item.sha256 }}</code></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Bootstrap Audit Trail</h2>
+    <table>
+      <thead><tr><th>Timestamp</th><th>Action</th><th>Actor</th><th>Safe</th><th>Reason</th></tr></thead>
+      <tbody>
+      {% for event in audit_events|reverse %}
+        <tr>
+          <td>{{ event.timestamp }}</td>
+          <td>{{ event.action }}</td>
+          <td>{{ event.actor }}</td>
+          <td>{{ event.safe_to_start_v10 }}</td>
+          <td>{{ event.reason }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">No bootstrap audit events yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

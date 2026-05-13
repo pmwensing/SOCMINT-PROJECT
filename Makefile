@@ -478,3 +478,16 @@ final-self-test-hardening-smoke:
 
 zip998:
 	cd .. && zip -r SOCMINT-PROJECT-v9.9.8-final-self-test-maintenance.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-v10-bootstrap-smoke:
+	PYTHONPATH=src python3 scripts/product_v10_bootstrap_smoke_v9_9_9.py
+
+test999:
+	PYTHONPATH=src python3 scripts/product_v10_bootstrap_smoke_v9_9_9.py
+
+v10-bootstrap-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_v10_bootstrap_hardening_v9_9_9.py
+
+zip999:
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.9-v10-bootstrap.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
