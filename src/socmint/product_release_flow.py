@@ -112,3 +112,17 @@ def wave1_product_final_gate_view():
 def wave1_api_product_final_gate():
     return _v1007_dispatch_dashboard_get("/api/v1/product/final-gate")
 # ---- end v10.0.7 wave 1 release flow routes ----
+
+
+
+# ---- v10.0.9 Blueprint Migration Wave 2 read-only API ownership ----
+@product_release_flow_bp.route("/api/v1/product/final-release", methods=["GET"])
+def wave2_api_product_final_release():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/final-release")
+
+
+
+@product_release_flow_bp.route("/api/v1/product/final-release/verify", methods=["GET"])
+def wave2_api_product_final_release_verify():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/final-release/verify")
+# ---- end v10.0.9 wave 2 release-flow API routes ----

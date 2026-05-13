@@ -608,3 +608,16 @@ blueprint-guardrails-hardening-smoke:
 
 zip1008:
 	cd .. && zip -r SOCMINT-PROJECT-v10.0.8-blueprint-guardrails.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-blueprint-wave2-smoke:
+	PYTHONPATH=src python3 scripts/product_blueprint_wave2_smoke_v10_0_9.py
+
+test1009:
+	PYTHONPATH=src python3 scripts/product_blueprint_wave2_smoke_v10_0_9.py
+
+blueprint-wave2-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_blueprint_wave2_hardening_v10_0_9.py
+
+zip1009:
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.9-blueprint-wave2-readonly-api.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'

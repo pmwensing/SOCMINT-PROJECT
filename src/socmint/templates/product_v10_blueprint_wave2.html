@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Blueprint Wave 2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+    .pass { color: #86efac; font-weight: 700; }
+    .fail { color: #fecaca; font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Blueprint Migration Wave 2 Read-Only API Expansion</h1>
+  <p>v10.0.9 moves additional low/medium-risk GET API routes while keeping action routes blocked.</p>
+
+  <section class="card">
+    <h2>Status</h2>
+    <p>Status: <strong class="{{ wave2.status }}">{{ wave2.status|upper }}</strong></p>
+    <p>Wave 1 status: {{ wave2.wave1_status }}</p>
+    <p>Wave 2 routes: {{ wave2.wave2_passed_route_count }}/{{ wave2.wave2_route_count }}</p>
+    <p>Ownership OK: {{ wave2.wave2_ownership_ok }}</p>
+    <p>No POST/write/build/download/archive routes moved: {{ wave2.no_post_write_build_download_archive_routes_moved }}</p>
+    <p>Recommended next action: {{ wave2.recommended_next_action }}</p>
+    <p>
+      <a href="/api/v1/product/v10/blueprint-wave2">Wave 2 JSON</a> |
+      <a href="/product/v10/blueprint-guardrails">Wave 1 Guardrails</a> |
+      <a href="/product/v10/migration-plan">Migration Plan</a>
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>Wave 2 Routes</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Route</th>
+          <th>Status</th>
+          <th>Primary Endpoint</th>
+          <th>Fallback</th>
+          <th>Action Route Check</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for item in wave2.wave2_routes %}
+        <tr>
+          <td><code>{{ item.route }}</code></td>
+          <td><span class="{{ item.status }}">{{ item.status|upper }}</span></td>
+          <td><code>{{ item.primary_endpoint }}</code></td>
+          <td>{{ item.dashboard_fallback_count }} dashboard fallback(s)</td>
+          <td>
+            Blocked action: {{ item.blocked_action_route }}<br>
+            Forbidden hits: {{ item.forbidden_token_hits }}<br>
+            Non-GET methods: {{ item.non_get_blueprint_methods }}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

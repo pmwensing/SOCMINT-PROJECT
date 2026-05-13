@@ -43,7 +43,7 @@ def main() -> int:
                 response.status_code == 200
                 and payload.get("version") == "10.0.8"
                 and payload.get("status") == "pass"
-                and payload.get("moved_route_count") == 16
+                and payload.get("moved_route_count", 0) >= 16
                 and payload.get("failed_route_count") == 0
                 and payload.get("no_action_routes_moved") is True
                 and payload.get("rollback_readiness", {}).get("rollback_ready_count") == payload.get("moved_route_count")
