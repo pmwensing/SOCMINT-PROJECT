@@ -1,0 +1,38 @@
+{
+  "status": "pass",
+  "generated_at": "2026-05-13T00:50:57.572347+00:00",
+  "version": "9.8.3",
+  "summary": "4/4 checks passed.",
+  "checks": [
+    {
+      "name": "compileall-src",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "Listing 'src/socmint'...\nListing 'src/socmint/static'...\nListing 'src/socmint/templates'...\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "product-smoke",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "python3 scripts/product_qa_v9_7_4.py\n[PASS] file src/socmint/product_control_center.py\n[PASS] file src/socmint/dossier_quality_gate.py\n[PASS] file src/socmint/dossier_traceability.py\n[PASS] file src/socmint/ultimate_dossier.py\n[PASS] file src/socmint/entity_dossier_v2.py\n[PASS] file src/socmint/dossier_export.py\n[+] compileall-src\n[PASS] compileall-src\n[+] product-control-import\n[PASS] product-control-import\n[+] quality-gate-import\n[PASS] quality-gate-import\n[+] traceability-import\n[PASS] traceability-import\n[+] ultimate-dossier-smoke\n[PASS] ultimate-dossier-smoke\n{\n  \"status\": \"pass\",\n  \"report\": \"release/V9_7_PRODUCT_SMOKE_REPORT.md\"\n}\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "product-route-smoke",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "PYTHONPATH=src python3 scripts/product_route_smoke_v9_8_1.py\n{\"timestamp\":\"2026-05-13T00:50:56.640404+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"aaa8fe30c9e047609f707470a23bca9e\",\"method\":\"GET\",\"path\":\"/api/v1/product/build-status\",\"status_code\":200,\"duration_ms\":5.29,\"remote_addr\":\"127.0.0.1\"}\n[PASS] /api/v1/product/build-status 200\n{\"timestamp\":\"2026-05-13T00:50:56.641298+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"b24b070f8b784569b95006d65464f750\",\"method\":\"GET\",\"path\":\"/api/v1/product/system-health\",\"status_code\":200,\"duration_ms\":0.17,\"remote_addr\":\"127.0.0.1\"}\n[PASS] /api/v1/product/system-health 200\n{\"timestamp\":\"2026-05-13T00:50:56.641981+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"4e50dd08cc8545ae918a56fe1cd78b9f\",\"method\":\"GET\",\"path\":\"/api/v1/product/smoke-summary\",\"status_code\":200,\"duration_ms\":0.16,\"remote_addr\":\"127.0.0.1\"}\n[PASS] /api/v1/product/smoke-summary 200\n{\"timestamp\":\"2026-05-13T00:50:56.647612+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"35ee219085dc4a448f2df2b335b05ee5\",\"method\":\"GET\",\"path\":\"/api/v1/product/release-readiness\",\"status_code\":200,\"duration_ms\":5.19,\"remote_addr\":\"127.0.0.1\"}\n[PASS] /api/v1/product/release-readiness 200\n{\"timestamp\":\"2026-05-13T00:50:56.649901+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"9a74aaa853de496297cc7e3e8f0004db\",\"method\":\"GET\",\"path\":\"/api/v1/dossier/demo-subject/quality-gate\",\"status_code\":200,\"duration_ms\":1.66,\"remote_addr\":\"127.0.0.1\"}\n[PASS] /api/v1/dossier/demo-subject/quality-gate 200\n{\"timestamp\":\"2026-05-13T00:50:56.651951+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"7fcaec7382b241c689b9c03e46babd0a\",\"method\":\"GET\",\"path\":\"/api/v1/dossier/demo-subject/traceability\",\"status_code\":200,\"duration_ms\":1.64,\"remote_addr\":\"127.0.0.1\"}\n[PASS] /api/v1/dossier/demo-subject/traceability 200\n{\"timestamp\":\"2026-05-13T00:50:56.666606+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"f5c21e3fe7ab4f398b52a73603c442d6\",\"method\":\"GET\",\"path\":\"/product/build-control\",\"status_code\":200,\"duration_ms\":14.22,\"remote_addr\":\"127.0.0.1\"}\n[PASS] /product/build-control 200\nv9.8.1 product route smoke passed\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "runtime-actions-smoke-v9-8-3",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "0c0cd8e673894102ae566cfbf669a25c\",\"method\":\"GET\",\"path\":\"/product/build-control\",\"status_code\":200,\"duration_ms\":15.4,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET /product/build-control 200\n{\"timestamp\":\"2026-05-13T00:50:57.387554+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"9ec2069a250d47e8941f7d54937c645e\",\"method\":\"GET\",\"path\":\"/api/v1/product/runtime-actions\",\"status_code\":200,\"duration_ms\":0.08,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET /api/v1/product/runtime-actions 200\n{\"timestamp\":\"2026-05-13T00:50:57.392548+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"fdf45f1fc332486ea8a557ad9e89d8fa\",\"method\":\"GET\",\"path\":\"/api/v1/product/build-status\",\"status_code\":200,\"duration_ms\":4.52,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET /api/v1/product/build-status 200\n{\"timestamp\":\"2026-05-13T00:50:57.397725+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"0b28ecbfca5347f6bb5d53c8ab6371b4\",\"method\":\"GET\",\"path\":\"/api/v1/product/release-readiness\",\"status_code\":200,\"duration_ms\":4.71,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET /api/v1/product/release-readiness 200\n{\"timestamp\":\"2026-05-13T00:50:57.409083+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"25513c7a2e594de2a149ca4fc35cf120\",\"method\":\"POST\",\"path\":\"/api/v1/product/actions/write-reports\",\"status_code\":200,\"duration_ms\":10.67,\"remote_addr\":\"127.0.0.1\"}\n[PASS] POST /api/v1/product/actions/write-reports 200\n{\"timestamp\":\"2026-05-13T00:50:57.419733+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"01acbdbf91e34060b7b03046db8e3af0\",\"method\":\"POST\",\"path\":\"/api/v1/product/actions/export-control-snapshot\",\"status_code\":200,\"duration_ms\":10.08,\"remote_addr\":\"127.0.0.1\"}\n[PASS] POST /api/v1/product/actions/export-control-snapshot 200\n{\"timestamp\":\"2026-05-13T00:50:57.420476+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"11a3ff692542439cbf89e2ee035c1a13\",\"method\":\"POST\",\"path\":\"/product/actions/refresh-readiness\",\"status_code\":302,\"duration_ms\":0.12,\"remote_addr\":\"127.0.0.1\"}\n[PASS] POST /product/actions/refresh-readiness 302\n{\"timestamp\":\"2026-05-13T00:50:57.438192+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"b0dc3d3d739d403ba39bebcee8966c26\",\"method\":\"POST\",\"path\":\"/product/actions/write-reports\",\"status_code\":302,\"duration_ms\":17.1,\"remote_addr\":\"127.0.0.1\"}\n[PASS] POST /product/actions/write-reports 302\n{\"timestamp\":\"2026-05-13T00:50:57.449894+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"335f833235d7425093ff84b30395cca0\",\"method\":\"POST\",\"path\":\"/product/actions/export-control-snapshot\",\"status_code\":302,\"duration_ms\":10.87,\"remote_addr\":\"127.0.0.1\"}\n[PASS] POST /product/actions/export-control-snapshot 302\nv9.8.3 product runtime actions smoke passed\n",
+      "stderr_tail": ""
+    }
+  ],
+  "failed": [],
+  "next_action": "Merge v9.8.3 into master"
+}

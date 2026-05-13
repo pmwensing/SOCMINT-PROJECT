@@ -257,3 +257,29 @@ release-hardening-smoke:
 
 zip981:
 	cd .. && zip -r SOCMINT-PROJECT-v9.8.1-release-hardening.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-ux-smoke:
+	PYTHONPATH=src python3 scripts/product_ux_smoke_v9_8_2.py
+
+test982:
+	PYTHONPATH=src python3 scripts/product_ux_smoke_v9_8_2.py
+
+ux-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_ux_hardening_v9_8_2.py
+
+zip982:
+	cd .. && zip -r SOCMINT-PROJECT-v9.8.2-product-control-ux.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-runtime-actions-smoke:
+	PYTHONPATH=src python3 scripts/product_runtime_actions_smoke_v9_8_3.py
+
+test983:
+	PYTHONPATH=src python3 scripts/product_runtime_actions_smoke_v9_8_3.py
+
+runtime-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_runtime_hardening_v9_8_3.py
+
+zip983:
+	cd .. && zip -r SOCMINT-PROJECT-v9.8.3-product-runtime-actions.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'

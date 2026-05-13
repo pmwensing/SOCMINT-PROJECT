@@ -377,7 +377,23 @@ def index():
     session_db = db.Session()
     targets = session_db.query(db.Target).order_by(db.Target.created_at.desc()).all()
     session_db.close()
-    return render_template("dashboard.html", targets=targets)
+    product_readiness = None
+    try:
+        from .product_control_center import release_readiness
+
+        product_readiness = release_readiness()
+    except Exception as exc:
+        product_readiness = {
+            "status": "warn",
+            "recommended_next_action": "Product readiness check unavailable.",
+            "warnings": [str(exc)],
+            "blockers": [],
+        }
+    return render_template(
+        "dashboard.html",
+        targets=targets,
+        product_readiness=product_readiness,
+    )
 
 
 @dashboard_bp.route("/target/run", methods=["POST"])
@@ -2420,3 +2436,178 @@ def product_build_control_center():
         health=system_health(),
     )
 # ---- end v9.8.1 product routes ----
+
+
+
+# ---- v9.8.2 Product Control Operator UX Routes ----
+@dashboard_bp.route("/product/operator-runbook")
+@login_required
+def product_operator_runbook():
+    from .product_control_center import build_status, release_readiness, smoke_summary, system_health
+
+    return render_template(
+        "product_operator_runbook.html",
+        build=build_status(),
+        readiness=release_readiness(),
+        smoke=smoke_summary(),
+        health=system_health(),
+    )
+
+
+@dashboard_bp.route("/api/v1/product/operator-runbook")
+@login_required
+def api_v982_product_operator_runbook():
+    from .product_control_center import build_status, release_readiness, smoke_summary, system_health
+
+    return jsonify(
+        {
+            "status": "ok",
+            "version": "9.8.2",
+            "operator_flow": [
+                "Open /product/build-control",
+                "Run make product-smoke",
+                "Run make release-hardening-smoke",
+                "Review dossier quality gate",
+                "Review dossier traceability",
+                "Merge only when release readiness is pass",
+            ],
+            "links": {
+                "build_control": "/product/build-control",
+                "product_smoke": "make product-smoke",
+                "release_hardening": "make release-hardening-smoke",
+                "quality_gate": "/api/v1/dossier/{subject_id}/quality-gate",
+                "traceability": "/api/v1/dossier/{subject_id}/traceability",
+            },
+            "build": build_status(),
+            "readiness": release_readiness(),
+            "smoke": smoke_summary(),
+            "health": system_health(),
+        }
+    )
+# ---- end v9.8.2 product UX routes ----
+
+
+
+# ---- v9.8.3 Product Control Runtime Actions ----
+def _v983_product_runtime_snapshot(actor=None):
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    from .product_control_center import build_status, release_readiness, smoke_summary, system_health
+
+    snapshot = {
+        "status": "ok",
+        "version": "9.8.3",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "actor": actor,
+        "build": build_status(),
+        "readiness": release_readiness(),
+        "smoke": smoke_summary(),
+        "health": system_health(),
+        "actions": {
+            "write_reports": "/api/v1/product/actions/write-reports",
+            "export_snapshot": "/api/v1/product/actions/export-control-snapshot",
+            "runtime_actions": "/api/v1/product/runtime-actions",
+            "build_control": "/product/build-control",
+        },
+    }
+
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+    json_path = release_dir / "V9_8_3_PRODUCT_CONTROL_RUNTIME_SNAPSHOT.json"
+    md_path = release_dir / "V9_8_3_PRODUCT_CONTROL_RUNTIME_SNAPSHOT.md"
+
+    json_path.write_text(json.dumps(snapshot, indent=2))
+    md_path.write_text(
+        "# v9.8.3 Product Control Runtime Snapshot\n\n"
+        f"Generated: {snapshot['generated_at']}\n\n"
+        f"Actor: {actor or 'unknown'}\n\n"
+        f"Readiness: **{snapshot['readiness'].get('status')}**\n\n"
+        f"Smoke: **{snapshot['smoke'].get('status')}**\n"
+    )
+
+    snapshot["artifacts"] = {
+        "json": str(json_path),
+        "markdown": str(md_path),
+    }
+    return snapshot
+
+
+@dashboard_bp.route("/api/v1/product/runtime-actions")
+@login_required
+def api_v983_product_runtime_actions():
+    return jsonify(
+        {
+            "status": "ok",
+            "version": "9.8.3",
+            "actions": [
+                {
+                    "key": "write_reports",
+                    "label": "Write product reports",
+                    "method": "POST",
+                    "url": "/api/v1/product/actions/write-reports",
+                    "role": "admin",
+                },
+                {
+                    "key": "export_control_snapshot",
+                    "label": "Export product control snapshot",
+                    "method": "POST",
+                    "url": "/api/v1/product/actions/export-control-snapshot",
+                    "role": "admin",
+                },
+                {
+                    "key": "open_build_control",
+                    "label": "Open Product Build Control Center",
+                    "method": "GET",
+                    "url": "/product/build-control",
+                    "role": "user",
+                },
+            ],
+        }
+    )
+
+
+@dashboard_bp.route("/api/v1/product/actions/write-reports", methods=["POST"])
+@admin_required
+def api_v983_write_product_reports_action():
+    from .product_control_center import write_product_reports
+
+    result = write_product_reports()
+    audit("product_reports_write", details=result)
+    return jsonify({"status": "ok", "version": "9.8.3", "result": result})
+
+
+@dashboard_bp.route("/api/v1/product/actions/export-control-snapshot", methods=["POST"])
+@admin_required
+def api_v983_export_product_snapshot_action():
+    result = _v983_product_runtime_snapshot(actor=session.get("user"))
+    audit("product_control_snapshot_export", details=result.get("artifacts"))
+    return jsonify(result)
+
+
+@dashboard_bp.route("/product/actions/write-reports", methods=["POST"])
+@admin_required
+def product_action_write_reports():
+    from .product_control_center import write_product_reports
+
+    result = write_product_reports()
+    audit("product_reports_write", details=result)
+    flash("Product reports written.", "success")
+    return redirect(url_for("dashboard.product_build_control_center"))
+
+
+@dashboard_bp.route("/product/actions/export-control-snapshot", methods=["POST"])
+@admin_required
+def product_action_export_control_snapshot():
+    result = _v983_product_runtime_snapshot(actor=session.get("user"))
+    audit("product_control_snapshot_export", details=result.get("artifacts"))
+    flash("Product control snapshot exported.", "success")
+    return redirect(url_for("dashboard.product_build_control_center"))
+
+
+@dashboard_bp.route("/product/actions/refresh-readiness", methods=["POST"])
+@login_required
+def product_action_refresh_readiness():
+    flash("Product readiness refreshed.", "success")
+    return redirect(url_for("dashboard.product_build_control_center"))
+# ---- end v9.8.3 product runtime actions ----

@@ -1,0 +1,390 @@
+{
+  "status": "ok",
+  "version": "9.8.3",
+  "generated_at": "2026-05-13T00:50:57.439036+00:00",
+  "actor": "v983-runtime-smoke",
+  "build": {
+    "product": "SOCMINT Workbench Product Build Suite",
+    "version": "9.7.4",
+    "generated_at": "2026-05-13T00:50:57.439041+00:00",
+    "git": {
+      "branch": "feat/v9.8.3-product-runtime-actions",
+      "commit": "59c7fb3",
+      "status_short": "MM Makefile\n M release/V9_7_1_PRODUCT_BUILD_CONTROL_CENTER.md\n M release/V9_7_PRODUCT_SMOKE_REPORT.md\nAM release/V9_8_2_OPERATOR_UX_HARDENING_REPORT.json\nA  release/V9_8_2_OPERATOR_UX_HARDENING_REPORT.md\nA  release/V9_8_2_PRODUCT_CONTROL_UX_POLISH.md\nA  scripts/product_ux_hardening_v9_8_2.py\nA  scripts/product_ux_smoke_v9_8_2.py\nMM src/socmint/dashboard.py\nM  src/socmint/templates/base.html\nM  src/socmint/templates/dashboard.html\nMM src/socmint/templates/product_build_control.html\nA  src/socmint/templates/product_operator_runbook.html\n?? build_v9_8_3_product_runtime_actions.sh\n?? release/V9_8_3_PRODUCT_CONTROL_RUNTIME_ACTIONS.md\n?? release/V9_8_3_PRODUCT_CONTROL_RUNTIME_SNAPSHOT.md\n?? scripts/product_runtime_actions_smoke_v9_8_3.py\n?? scripts/product_runtime_hardening_v9_8_3.py"
+    },
+    "health": {
+      "status": "pass",
+      "generated_at": "2026-05-13T00:50:57.443644+00:00",
+      "version": "9.7.4",
+      "python": "3.13.12",
+      "required": {
+        "product_control_center": true,
+        "dossier_quality_gate": true,
+        "dossier_traceability": true,
+        "product_qa_script": true
+      },
+      "optional": {
+        "dossier_export": true,
+        "entity_dossier_v2": true,
+        "ultimate_dossier": true,
+        "v7_8_smoke": true,
+        "ultimate_dossier_smoke": true
+      },
+      "missing_required": [],
+      "missing_optional": []
+    },
+    "smoke": {
+      "status": "pass",
+      "message": "11/11 checks passed; 0 required failed; 0 optional failed.",
+      "last_report": "release/V9_7_PRODUCT_SMOKE_REPORT.json",
+      "checks": [
+        {
+          "name": "file:src/socmint/product_control_center.py",
+          "required": true,
+          "ok": true,
+          "returncode": 0,
+          "stdout_tail": "",
+          "stderr_tail": ""
+        },
+        {
+          "name": "file:src/socmint/dossier_quality_gate.py",
+          "required": true,
+          "ok": true,
+          "returncode": 0,
+          "stdout_tail": "",
+          "stderr_tail": ""
+        },
+        {
+          "name": "file:src/socmint/dossier_traceability.py",
+          "required": true,
+          "ok": true,
+          "returncode": 0,
+          "stdout_tail": "",
+          "stderr_tail": ""
+        },
+        {
+          "name": "file:src/socmint/ultimate_dossier.py",
+          "required": false,
+          "ok": true,
+          "returncode": 0,
+          "stdout_tail": "",
+          "stderr_tail": ""
+        },
+        {
+          "name": "file:src/socmint/entity_dossier_v2.py",
+          "required": false,
+          "ok": true,
+          "returncode": 0,
+          "stdout_tail": "",
+          "stderr_tail": ""
+        },
+        {
+          "name": "file:src/socmint/dossier_export.py",
+          "required": false,
+          "ok": true,
+          "returncode": 0,
+          "stdout_tail": "",
+          "stderr_tail": ""
+        },
+        {
+          "name": "compileall-src",
+          "required": true,
+          "ok": true,
+          "returncode": 0,
+          "stdout_tail": "Listing 'src/socmint'...\nListing 'src/socmint/static'...\nListing 'src/socmint/templates'...\n",
+          "stderr_tail": ""
+        },
+        {
+          "name": "product-control-import",
+          "required": true,
+          "ok": true,
+          "returncode": 0,
+          "stdout_tail": "9.7.4\nwarn\n",
+          "stderr_tail": ""
+        },
+        {
+          "name": "quality-gate-import",
+          "required": true,
+          "ok": true,
+          "returncode": 0,
+          "stdout_tail": "pass\n",
+          "stderr_tail": ""
+        },
+        {
+          "name": "traceability-import",
+          "required": true,
+          "ok": true,
+          "returncode": 0,
+          "stdout_tail": "warn\n",
+          "stderr_tail": ""
+        },
+        {
+          "name": "ultimate-dossier-smoke",
+          "required": false,
+          "ok": true,
+          "returncode": 0,
+          "stdout_tail": "{\"timestamp\":\"2026-05-13T00:50:55.931711+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"a857ffd80ba04b02b007278f654199f3\",\"method\":\"GET\",\"path\":\"/spine/subjects/1/ultimate-dossier\",\"status_code\":200,\"duration_ms\":26.13,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T00:50:55.936630+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"470b9e188f264059aa0e0ed714644088\",\"method\":\"GET\",\"path\":\"/api/v1/spine/subjects/1/ultimate-dossier\",\"status_code\":200,\"duration_ms\":4.14,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T00:50:55.941071+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"6a13b301e84c4da391a3a0ef29cd4f84\",\"method\":\"GET\",\"path\":\"/api/v1/spine/subjects/1/ultimate-dossier\",\"status_code\":200,\"duration_ms\":3.86,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T00:50:55.945508+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"b003b90bb5ba45be983e1a87806ce58b\",\"method\":\"GET\",\"path\":\"/api/v1/spine/subjects/1/ultimate-dossier/manifest\",\"status_code\":200,\"duration_ms\":3.81,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T00:50:55.951343+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"3e577971aa2b4631a0f1a32eed768d3d\",\"method\":\"GET\",\"path\":\"/spine/subjects/1/ultimate-dossier/assertions.csv\",\"status_code\":200,\"duration_ms\":5.19,\"remote_addr\":\"127.0.0.1\"}\nv7.8.0 ultimate dossier smoke passed\n",
+          "stderr_tail": ""
+        }
+      ]
+    }
+  },
+  "readiness": {
+    "status": "warn",
+    "generated_at": "2026-05-13T00:50:57.448648+00:00",
+    "version": "9.7.4",
+    "blockers": [],
+    "warnings": [
+      "git_worktree_has_local_changes"
+    ],
+    "recommended_next_action": "Resolve blockers/warnings before v9.8.",
+    "build_status": {
+      "product": "SOCMINT Workbench Product Build Suite",
+      "version": "9.7.4",
+      "generated_at": "2026-05-13T00:50:57.443741+00:00",
+      "git": {
+        "branch": "feat/v9.8.3-product-runtime-actions",
+        "commit": "59c7fb3",
+        "status_short": "MM Makefile\n M release/V9_7_1_PRODUCT_BUILD_CONTROL_CENTER.md\n M release/V9_7_PRODUCT_SMOKE_REPORT.md\nAM release/V9_8_2_OPERATOR_UX_HARDENING_REPORT.json\nA  release/V9_8_2_OPERATOR_UX_HARDENING_REPORT.md\nA  release/V9_8_2_PRODUCT_CONTROL_UX_POLISH.md\nA  scripts/product_ux_hardening_v9_8_2.py\nA  scripts/product_ux_smoke_v9_8_2.py\nMM src/socmint/dashboard.py\nM  src/socmint/templates/base.html\nM  src/socmint/templates/dashboard.html\nMM src/socmint/templates/product_build_control.html\nA  src/socmint/templates/product_operator_runbook.html\n?? build_v9_8_3_product_runtime_actions.sh\n?? release/V9_8_3_PRODUCT_CONTROL_RUNTIME_ACTIONS.md\n?? release/V9_8_3_PRODUCT_CONTROL_RUNTIME_SNAPSHOT.md\n?? scripts/product_runtime_actions_smoke_v9_8_3.py\n?? scripts/product_runtime_hardening_v9_8_3.py"
+      },
+      "health": {
+        "status": "pass",
+        "generated_at": "2026-05-13T00:50:57.448578+00:00",
+        "version": "9.7.4",
+        "python": "3.13.12",
+        "required": {
+          "product_control_center": true,
+          "dossier_quality_gate": true,
+          "dossier_traceability": true,
+          "product_qa_script": true
+        },
+        "optional": {
+          "dossier_export": true,
+          "entity_dossier_v2": true,
+          "ultimate_dossier": true,
+          "v7_8_smoke": true,
+          "ultimate_dossier_smoke": true
+        },
+        "missing_required": [],
+        "missing_optional": []
+      },
+      "smoke": {
+        "status": "pass",
+        "message": "11/11 checks passed; 0 required failed; 0 optional failed.",
+        "last_report": "release/V9_7_PRODUCT_SMOKE_REPORT.json",
+        "checks": [
+          {
+            "name": "file:src/socmint/product_control_center.py",
+            "required": true,
+            "ok": true,
+            "returncode": 0,
+            "stdout_tail": "",
+            "stderr_tail": ""
+          },
+          {
+            "name": "file:src/socmint/dossier_quality_gate.py",
+            "required": true,
+            "ok": true,
+            "returncode": 0,
+            "stdout_tail": "",
+            "stderr_tail": ""
+          },
+          {
+            "name": "file:src/socmint/dossier_traceability.py",
+            "required": true,
+            "ok": true,
+            "returncode": 0,
+            "stdout_tail": "",
+            "stderr_tail": ""
+          },
+          {
+            "name": "file:src/socmint/ultimate_dossier.py",
+            "required": false,
+            "ok": true,
+            "returncode": 0,
+            "stdout_tail": "",
+            "stderr_tail": ""
+          },
+          {
+            "name": "file:src/socmint/entity_dossier_v2.py",
+            "required": false,
+            "ok": true,
+            "returncode": 0,
+            "stdout_tail": "",
+            "stderr_tail": ""
+          },
+          {
+            "name": "file:src/socmint/dossier_export.py",
+            "required": false,
+            "ok": true,
+            "returncode": 0,
+            "stdout_tail": "",
+            "stderr_tail": ""
+          },
+          {
+            "name": "compileall-src",
+            "required": true,
+            "ok": true,
+            "returncode": 0,
+            "stdout_tail": "Listing 'src/socmint'...\nListing 'src/socmint/static'...\nListing 'src/socmint/templates'...\n",
+            "stderr_tail": ""
+          },
+          {
+            "name": "product-control-import",
+            "required": true,
+            "ok": true,
+            "returncode": 0,
+            "stdout_tail": "9.7.4\nwarn\n",
+            "stderr_tail": ""
+          },
+          {
+            "name": "quality-gate-import",
+            "required": true,
+            "ok": true,
+            "returncode": 0,
+            "stdout_tail": "pass\n",
+            "stderr_tail": ""
+          },
+          {
+            "name": "traceability-import",
+            "required": true,
+            "ok": true,
+            "returncode": 0,
+            "stdout_tail": "warn\n",
+            "stderr_tail": ""
+          },
+          {
+            "name": "ultimate-dossier-smoke",
+            "required": false,
+            "ok": true,
+            "returncode": 0,
+            "stdout_tail": "{\"timestamp\":\"2026-05-13T00:50:55.931711+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"a857ffd80ba04b02b007278f654199f3\",\"method\":\"GET\",\"path\":\"/spine/subjects/1/ultimate-dossier\",\"status_code\":200,\"duration_ms\":26.13,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T00:50:55.936630+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"470b9e188f264059aa0e0ed714644088\",\"method\":\"GET\",\"path\":\"/api/v1/spine/subjects/1/ultimate-dossier\",\"status_code\":200,\"duration_ms\":4.14,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T00:50:55.941071+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"6a13b301e84c4da391a3a0ef29cd4f84\",\"method\":\"GET\",\"path\":\"/api/v1/spine/subjects/1/ultimate-dossier\",\"status_code\":200,\"duration_ms\":3.86,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T00:50:55.945508+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"b003b90bb5ba45be983e1a87806ce58b\",\"method\":\"GET\",\"path\":\"/api/v1/spine/subjects/1/ultimate-dossier/manifest\",\"status_code\":200,\"duration_ms\":3.81,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T00:50:55.951343+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"3e577971aa2b4631a0f1a32eed768d3d\",\"method\":\"GET\",\"path\":\"/spine/subjects/1/ultimate-dossier/assertions.csv\",\"status_code\":200,\"duration_ms\":5.19,\"remote_addr\":\"127.0.0.1\"}\nv7.8.0 ultimate dossier smoke passed\n",
+            "stderr_tail": ""
+          }
+        ]
+      }
+    }
+  },
+  "smoke": {
+    "status": "pass",
+    "message": "11/11 checks passed; 0 required failed; 0 optional failed.",
+    "last_report": "release/V9_7_PRODUCT_SMOKE_REPORT.json",
+    "checks": [
+      {
+        "name": "file:src/socmint/product_control_center.py",
+        "required": true,
+        "ok": true,
+        "returncode": 0,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "name": "file:src/socmint/dossier_quality_gate.py",
+        "required": true,
+        "ok": true,
+        "returncode": 0,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "name": "file:src/socmint/dossier_traceability.py",
+        "required": true,
+        "ok": true,
+        "returncode": 0,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "name": "file:src/socmint/ultimate_dossier.py",
+        "required": false,
+        "ok": true,
+        "returncode": 0,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "name": "file:src/socmint/entity_dossier_v2.py",
+        "required": false,
+        "ok": true,
+        "returncode": 0,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "name": "file:src/socmint/dossier_export.py",
+        "required": false,
+        "ok": true,
+        "returncode": 0,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "name": "compileall-src",
+        "required": true,
+        "ok": true,
+        "returncode": 0,
+        "stdout_tail": "Listing 'src/socmint'...\nListing 'src/socmint/static'...\nListing 'src/socmint/templates'...\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "product-control-import",
+        "required": true,
+        "ok": true,
+        "returncode": 0,
+        "stdout_tail": "9.7.4\nwarn\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "quality-gate-import",
+        "required": true,
+        "ok": true,
+        "returncode": 0,
+        "stdout_tail": "pass\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "traceability-import",
+        "required": true,
+        "ok": true,
+        "returncode": 0,
+        "stdout_tail": "warn\n",
+        "stderr_tail": ""
+      },
+      {
+        "name": "ultimate-dossier-smoke",
+        "required": false,
+        "ok": true,
+        "returncode": 0,
+        "stdout_tail": "{\"timestamp\":\"2026-05-13T00:50:55.931711+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"a857ffd80ba04b02b007278f654199f3\",\"method\":\"GET\",\"path\":\"/spine/subjects/1/ultimate-dossier\",\"status_code\":200,\"duration_ms\":26.13,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T00:50:55.936630+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"470b9e188f264059aa0e0ed714644088\",\"method\":\"GET\",\"path\":\"/api/v1/spine/subjects/1/ultimate-dossier\",\"status_code\":200,\"duration_ms\":4.14,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T00:50:55.941071+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"6a13b301e84c4da391a3a0ef29cd4f84\",\"method\":\"GET\",\"path\":\"/api/v1/spine/subjects/1/ultimate-dossier\",\"status_code\":200,\"duration_ms\":3.86,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T00:50:55.945508+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"b003b90bb5ba45be983e1a87806ce58b\",\"method\":\"GET\",\"path\":\"/api/v1/spine/subjects/1/ultimate-dossier/manifest\",\"status_code\":200,\"duration_ms\":3.81,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T00:50:55.951343+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"3e577971aa2b4631a0f1a32eed768d3d\",\"method\":\"GET\",\"path\":\"/spine/subjects/1/ultimate-dossier/assertions.csv\",\"status_code\":200,\"duration_ms\":5.19,\"remote_addr\":\"127.0.0.1\"}\nv7.8.0 ultimate dossier smoke passed\n",
+        "stderr_tail": ""
+      }
+    ]
+  },
+  "health": {
+    "status": "pass",
+    "generated_at": "2026-05-13T00:50:57.448748+00:00",
+    "version": "9.7.4",
+    "python": "3.13.12",
+    "required": {
+      "product_control_center": true,
+      "dossier_quality_gate": true,
+      "dossier_traceability": true,
+      "product_qa_script": true
+    },
+    "optional": {
+      "dossier_export": true,
+      "entity_dossier_v2": true,
+      "ultimate_dossier": true,
+      "v7_8_smoke": true,
+      "ultimate_dossier_smoke": true
+    },
+    "missing_required": [],
+    "missing_optional": []
+  },
+  "actions": {
+    "write_reports": "/api/v1/product/actions/write-reports",
+    "export_snapshot": "/api/v1/product/actions/export-control-snapshot",
+    "runtime_actions": "/api/v1/product/runtime-actions",
+    "build_control": "/product/build-control"
+  }
+}
