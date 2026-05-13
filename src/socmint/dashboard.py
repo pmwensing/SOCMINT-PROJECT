@@ -2726,13 +2726,14 @@ def api_v984_product_artifacts():
     suffix = request.args.get("suffix", "").strip()
     root = request.args.get("root", "").strip()
 
-    artifacts = payload["artifacts"]
+    artifacts = _v985_apply_artifact_review_state(payload["artifacts"])
     if kind:
         artifacts = [item for item in artifacts if item["kind"] == kind]
     if suffix:
         artifacts = [item for item in artifacts if item["suffix"] == suffix]
     if root:
         artifacts = [item for item in artifacts if item["root"] == root]
+    artifacts = _v985_filter_artifacts(artifacts)
 
     payload = {**payload, "count": len(artifacts), "artifacts": artifacts}
     return jsonify(payload)
@@ -2742,6 +2743,10 @@ def api_v984_product_artifacts():
 @login_required
 def product_artifacts_view():
     payload = _v984_product_artifacts_payload()
+    payload["artifacts"] = _v985_filter_artifacts(
+        _v985_apply_artifact_review_state(payload["artifacts"])
+    )
+    payload["count"] = len(payload["artifacts"])
     return render_template("product_artifacts.html", payload=payload)
 
 
@@ -2780,3 +2785,174 @@ def product_artifact_download(relpath):
         download_name=artifact.name,
     )
 # ---- end v9.8.4 product artifacts ----
+
+
+
+# ---- v9.8.5 Product Artifact Review + Pin/Archive Controls ----
+def _v985_artifact_metadata_path():
+    from pathlib import Path
+
+    path = Path("storage/product_qa/product_artifact_metadata.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _v985_load_artifact_metadata():
+    path = _v985_artifact_metadata_path()
+    if not path.exists():
+        return {"version": "9.8.5", "artifacts": {}}
+
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        return {"version": "9.8.5", "artifacts": {}}
+
+    if not isinstance(data, dict):
+        return {"version": "9.8.5", "artifacts": {}}
+    data.setdefault("version", "9.8.5")
+    data.setdefault("artifacts", {})
+    return data
+
+
+def _v985_save_artifact_metadata(data):
+    path = _v985_artifact_metadata_path()
+    data["version"] = "9.8.5"
+    path.write_text(json.dumps(data, indent=2, sort_keys=True))
+    return data
+
+
+def _v985_bool_value(value, default=False):
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "on", "y"}
+
+
+def _v985_apply_artifact_review_state(artifacts):
+    data = _v985_load_artifact_metadata()
+    meta = data.get("artifacts", {})
+    for artifact in artifacts:
+        state = meta.get(
+            artifact.get("path", ""),
+            {
+                "reviewed": False,
+                "important": False,
+                "archived": False,
+                "reviewed_by": None,
+                "reviewed_at": None,
+                "note": "",
+            },
+        )
+        artifact["review"] = state
+        artifact["reviewed"] = bool(state.get("reviewed"))
+        artifact["important"] = bool(state.get("important"))
+        artifact["archived"] = bool(state.get("archived"))
+    return artifacts
+
+
+def _v985_update_artifact_review(path, reviewed=None, important=None, archived=None, note=None, actor=None):
+    from datetime import datetime, timezone
+
+    _v984_safe_artifact_path(path)
+
+    data = _v985_load_artifact_metadata()
+    artifacts = data.setdefault("artifacts", {})
+    state = artifacts.setdefault(
+        path,
+        {
+            "reviewed": False,
+            "important": False,
+            "archived": False,
+            "reviewed_by": None,
+            "reviewed_at": None,
+            "note": "",
+        },
+    )
+
+    if reviewed is not None:
+        state["reviewed"] = _v985_bool_value(reviewed)
+    if important is not None:
+        state["important"] = _v985_bool_value(important)
+    if archived is not None:
+        state["archived"] = _v985_bool_value(archived)
+    if note is not None:
+        state["note"] = str(note)
+
+    state["reviewed_by"] = actor
+    state["reviewed_at"] = datetime.now(timezone.utc).isoformat()
+    artifacts[path] = state
+    _v985_save_artifact_metadata(data)
+
+    return {
+        "status": "ok",
+        "version": "9.8.5",
+        "path": path,
+        "review": state,
+        "metadata_path": str(_v985_artifact_metadata_path()),
+    }
+
+
+def _v985_filter_artifacts(artifacts):
+    reviewed = request.args.get("reviewed")
+    important = request.args.get("important")
+    archived = request.args.get("archived")
+
+    if reviewed is not None:
+        expected = _v985_bool_value(reviewed)
+        artifacts = [item for item in artifacts if bool(item.get("reviewed")) == expected]
+    if important is not None:
+        expected = _v985_bool_value(important)
+        artifacts = [item for item in artifacts if bool(item.get("important")) == expected]
+    if archived is not None:
+        expected = _v985_bool_value(archived)
+        artifacts = [item for item in artifacts if bool(item.get("archived")) == expected]
+
+    return artifacts
+
+
+@dashboard_bp.route("/api/v1/product/artifact-review-state")
+@login_required
+def api_v985_artifact_review_state():
+    return jsonify(_v985_load_artifact_metadata())
+
+
+@dashboard_bp.route("/api/v1/product/artifacts/review", methods=["POST"])
+@login_required
+def api_v985_update_artifact_review():
+    payload = request.get_json(silent=True) or request.form
+    path = (payload.get("path") or "").strip()
+    if not path:
+        abort(400)
+
+    result = _v985_update_artifact_review(
+        path,
+        reviewed=payload.get("reviewed"),
+        important=payload.get("important"),
+        archived=payload.get("archived"),
+        note=payload.get("note"),
+        actor=session.get("user"),
+    )
+    audit("product_artifact_review_update", details=result)
+    return jsonify(result)
+
+
+@dashboard_bp.route("/product/artifacts/review", methods=["POST"])
+@login_required
+def product_artifact_review_action():
+    path = request.form.get("path", "").strip()
+    if not path:
+        abort(400)
+
+    result = _v985_update_artifact_review(
+        path,
+        reviewed=request.form.get("reviewed"),
+        important=request.form.get("important"),
+        archived=request.form.get("archived"),
+        note=request.form.get("note"),
+        actor=session.get("user"),
+    )
+    audit("product_artifact_review_update", details=result)
+    flash("Artifact review state updated.", "success")
+    return redirect(url_for("dashboard.product_artifacts_view"))
+# ---- end v9.8.5 artifact review controls ----

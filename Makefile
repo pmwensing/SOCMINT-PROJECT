@@ -296,3 +296,16 @@ artifact-hardening-smoke:
 
 zip984:
 	cd .. && zip -r SOCMINT-PROJECT-v9.8.4-product-artifact-browser.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-artifact-review-smoke:
+	PYTHONPATH=src python3 scripts/product_artifact_review_smoke_v9_8_5.py
+
+test985:
+	PYTHONPATH=src python3 scripts/product_artifact_review_smoke_v9_8_5.py
+
+artifact-review-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_artifact_review_hardening_v9_8_5.py
+
+zip985:
+	cd .. && zip -r SOCMINT-PROJECT-v9.8.5-product-artifact-review.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'

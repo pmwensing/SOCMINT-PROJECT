@@ -33,6 +33,26 @@
     </p>
   </section>
 
+
+  <section class="card">
+    <h2>Review Filters</h2>
+    <p>
+      <a href="/product/artifacts">All</a> |
+      <a href="/product/artifacts?reviewed=true">Reviewed</a> |
+      <a href="/product/artifacts?reviewed=false">Unreviewed</a> |
+      <a href="/product/artifacts?important=true">Important</a> |
+      <a href="/product/artifacts?archived=true">Archived</a> |
+      <a href="/product/artifacts?archived=false">Active</a>
+    </p>
+    <p>
+      <a href="/api/v1/product/artifacts?reviewed=true">Reviewed JSON</a> |
+      <a href="/api/v1/product/artifacts?important=true">Important JSON</a> |
+      <a href="/api/v1/product/artifacts?archived=true">Archived JSON</a> |
+      <a href="/api/v1/product/artifact-review-state">Review state JSON</a>
+    </p>
+  </section>
+
+
   <section class="card">
     <h2>Artifacts</h2>
     <table>
@@ -42,6 +62,8 @@
           <th>Name</th>
           <th>Size</th>
           <th>Modified</th>
+          <th>Review State</th>
+          <th>Controls</th>
           <th>Links</th>
         </tr>
       </thead>
@@ -53,13 +75,29 @@
           <td>{{ artifact.size_bytes }}</td>
           <td>{{ artifact.modified_at }}</td>
           <td>
+            reviewed={{ artifact.reviewed }}<br>
+            important={{ artifact.important }}<br>
+            archived={{ artifact.archived }}
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('dashboard.product_artifact_review_action') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="path" value="{{ artifact.path }}">
+              <label><input type="checkbox" name="reviewed" value="1" {% if artifact.reviewed %}checked{% endif %}> reviewed</label><br>
+              <label><input type="checkbox" name="important" value="1" {% if artifact.important %}checked{% endif %}> important</label><br>
+              <label><input type="checkbox" name="archived" value="1" {% if artifact.archived %}checked{% endif %}> archived</label><br>
+              <input type="text" name="note" value="{{ artifact.review.note }}" placeholder="review note">
+              <button type="submit">Save</button>
+            </form>
+          </td>
+          <td>
             <a href="{{ artifact.view_url }}">view</a>
             |
             <a href="{{ artifact.download_url }}">download</a>
           </td>
         </tr>
       {% else %}
-        <tr><td colspan="5">No product artifacts found yet. Run product smoke or export a runtime snapshot.</td></tr>
+        <tr><td colspan="7">No product artifacts found yet. Run product smoke or export a runtime snapshot.</td></tr>
       {% endfor %}
       </tbody>
     </table>
