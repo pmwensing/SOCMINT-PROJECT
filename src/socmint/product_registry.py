@@ -40,6 +40,20 @@ WAVE1_TARGET_BLUEPRINTS = {
 }
 
 
+WAVE2_BLUEPRINT_OWNED_ROUTES = {
+    "/api/v1/product/final-release": "socmint.product_release_flow",
+    "/api/v1/product/artifact-review-state": "socmint.product_artifacts",
+    "/api/v1/product/artifact-review-audit": "socmint.product_artifacts",
+    "/api/v1/product/artifact-export-manifest": "socmint.product_artifacts",
+    "/api/v1/product/release-packages": "socmint.product_artifacts",
+}
+
+ALL_BLUEPRINT_OWNED_ROUTES = {
+    **WAVE1_BLUEPRINT_OWNED_ROUTES,
+    **WAVE2_BLUEPRINT_OWNED_ROUTES,
+}
+
+
 
 DASHBOARD_OWNED_SURFACES = [
     {
@@ -167,7 +181,7 @@ def _route_ownership_map() -> dict[str, Any]:
         for route in surface.get("routes", []):
             normalized = route.replace("{package_name}", "<package_name>")
             present = _route_exists(route) or _route_exists(normalized)
-            wave1_target = WAVE1_BLUEPRINT_OWNED_ROUTES.get(route) or WAVE1_BLUEPRINT_OWNED_ROUTES.get(normalized)
+            wave1_target = ALL_BLUEPRINT_OWNED_ROUTES.get(route) or ALL_BLUEPRINT_OWNED_ROUTES.get(normalized)
             ownership_route = _v1007_route_lookup_for_ownership(route_inventory, route, normalized, wave1_target)
             endpoint = ownership_route["endpoint"] if ownership_route else None
             methods: list[str] = ownership_route["methods"] if ownership_route else []
@@ -840,7 +854,7 @@ def _v1008_rules_for_route(route: str) -> list[dict[str, Any]]:
 
 
 def _v1008_expected_blueprint_for_route(route: str) -> str | None:
-    module_name = WAVE1_BLUEPRINT_OWNED_ROUTES.get(route)
+    module_name = ALL_BLUEPRINT_OWNED_ROUTES.get(route)
     if not module_name:
         return None
     return WAVE1_TARGET_BLUEPRINTS.get(module_name)
@@ -907,7 +921,7 @@ def _v1008_route_guardrail(route: str) -> dict[str, Any]:
 
 
 def _v1008_guardrails_payload() -> dict[str, Any]:
-    moved_routes = sorted(WAVE1_BLUEPRINT_OWNED_ROUTES)
+    moved_routes = sorted(ALL_BLUEPRINT_OWNED_ROUTES)
     rows = [_v1008_route_guardrail(route) for route in moved_routes]
 
     failed = [row for row in rows if row["status"] != "pass"]
@@ -1024,3 +1038,179 @@ def product_v10_blueprint_guardrails_view():
     payload = _v1008_guardrails_payload()
     return render_template("product_v10_blueprint_guardrails.html", guardrails=payload)
 # ---- end v10.0.8 blueprint guardrails ----
+
+
+
+# ---- v10.0.9 Blueprint Migration Wave 2 Read-Only API Expansion ----
+V1009_FORBIDDEN_ROUTE_TOKENS = (
+    "write",
+    "build",
+    "download",
+    "publish",
+    "decision",
+    "signoff",
+)
+
+
+def _v1009_wave2_route_rows() -> list[dict[str, Any]]:
+    rows = []
+    for route, module_name in sorted(WAVE2_BLUEPRINT_OWNED_ROUTES.items()):
+        rules = _v1008_rules_for_route(route)
+        expected_blueprint = WAVE1_TARGET_BLUEPRINTS.get(module_name)
+        blueprint_rules = [
+            item
+            for item in rules
+            if expected_blueprint and str(item.get("endpoint", "")).startswith(expected_blueprint + ".")
+        ]
+        dashboard_rules = [
+            item
+            for item in rules
+            if str(item.get("endpoint", "")).startswith("dashboard.")
+        ]
+        primary_endpoint = rules[0].get("endpoint") if rules else None
+        primary_is_blueprint = bool(primary_endpoint and expected_blueprint and str(primary_endpoint).startswith(expected_blueprint + "."))
+        method_sets = [set(item.get("methods") or []) for item in blueprint_rules]
+        non_get_methods = sorted({method for methods in method_sets for method in methods if method != "GET"})
+        route_text = route.lower()
+        forbidden_hits = [token for token in V1009_FORBIDDEN_ROUTE_TOKENS if token in route_text]
+        rows.append(
+            {
+                "wave": "wave2",
+                "route": route,
+                "module": module_name,
+                "expected_blueprint": expected_blueprint,
+                "rules": rules,
+                "primary_endpoint": primary_endpoint,
+                "primary_is_blueprint": primary_is_blueprint,
+                "blueprint_rule_count": len(blueprint_rules),
+                "dashboard_fallback_count": len(dashboard_rules),
+                "has_blueprint_primary": bool(primary_is_blueprint and blueprint_rules),
+                "has_dashboard_fallback": bool(dashboard_rules),
+                "rollback_ready": bool(primary_is_blueprint and blueprint_rules and dashboard_rules),
+                "non_get_blueprint_methods": non_get_methods,
+                "forbidden_token_hits": forbidden_hits,
+                "blocked_action_route": bool(forbidden_hits or non_get_methods),
+                "status": "pass" if primary_is_blueprint and blueprint_rules and dashboard_rules and not forbidden_hits and not non_get_methods else "fail",
+            }
+        )
+    return rows
+
+
+def _v1009_wave2_payload() -> dict[str, Any]:
+    wave1_guardrails = _v1008_guardrails_payload()
+    wave2_rows = _v1009_wave2_route_rows()
+
+    failed_wave2 = [row for row in wave2_rows if row["status"] != "pass"]
+    blocked_actions = [row for row in wave2_rows if row["blocked_action_route"]]
+    missing_primary = [row for row in wave2_rows if not row["has_blueprint_primary"]]
+    missing_fallback = [row for row in wave2_rows if not row["has_dashboard_fallback"]]
+
+    ownership = _route_ownership_map()
+    ownership_rows = {
+        row.get("route"): row
+        for row in ownership.get("ownership", [])
+        if row.get("route") in ALL_BLUEPRINT_OWNED_ROUTES
+    }
+    wave2_ownership_rows = {
+        route: ownership_rows.get(route, {})
+        for route in WAVE2_BLUEPRINT_OWNED_ROUTES
+    }
+    wave2_ownership_ok = all(
+        row.get("ownership") == "blueprint-owned"
+        and row.get("wave1_blueprint_owned") is True
+        for row in wave2_ownership_rows.values()
+    )
+
+    status = "pass" if (
+        wave1_guardrails.get("status") == "pass"
+        and not failed_wave2
+        and wave2_ownership_ok
+    ) else "fail"
+
+    return {
+        "status": status,
+        "version": "10.0.9",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "wave1_status": wave1_guardrails.get("status"),
+        "wave1_route_count": wave1_guardrails.get("moved_route_count"),
+        "wave2_route_count": len(wave2_rows),
+        "wave2_passed_route_count": sum(1 for row in wave2_rows if row["status"] == "pass"),
+        "wave2_failed_route_count": len(failed_wave2),
+        "wave2_ownership_ok": wave2_ownership_ok,
+        "no_post_write_build_download_archive_routes_moved": not blocked_actions,
+        "rollback_ready_count": sum(1 for row in wave2_rows if row["rollback_ready"]),
+        "wave2_routes": wave2_rows,
+        "failed_wave2_routes": failed_wave2,
+        "blocked_action_routes": blocked_actions,
+        "missing_blueprint_primary": missing_primary,
+        "missing_dashboard_fallback": missing_fallback,
+        "ownership": ownership,
+        "wave1_guardrails": wave1_guardrails,
+        "recommended_next_action": (
+            "Wave 2 read-only API expansion is guarded. Keep action routes blocked until Wave 3."
+            if status == "pass"
+            else "Do not proceed to action route migration. Fix Wave 2 guardrail failures first."
+        ),
+    }
+
+
+def write_blueprint_wave2_report() -> dict[str, Any]:
+    import json
+    from pathlib import Path
+
+    payload = _v1009_wave2_payload()
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+
+    json_path = release_dir / "V10_0_9_BLUEPRINT_WAVE2_REPORT.json"
+    md_path = release_dir / "V10_0_9_BLUEPRINT_WAVE2_REPORT.md"
+
+    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+
+    rows = [
+        "# v10.0.9 Blueprint Migration Wave 2 Read-Only API Expansion Report",
+        "",
+        f"Generated: {payload['generated_at']}",
+        f"Status: **{payload['status']}**",
+        f"Wave 1 status: {payload['wave1_status']}",
+        f"Wave 2 routes: {payload['wave2_passed_route_count']}/{payload['wave2_route_count']}",
+        f"Wave 2 ownership OK: {payload['wave2_ownership_ok']}",
+        f"No blocked action routes moved: {payload['no_post_write_build_download_archive_routes_moved']}",
+        "",
+        "## Wave 2 Routes",
+        "",
+    ]
+
+    for item in payload["wave2_routes"]:
+        rows.append(
+            f"- **{item['status'].upper()}** `{item['route']}` → `{item['primary_endpoint']}` "
+            f"fallbacks={item['dashboard_fallback_count']} blocked_action={item['blocked_action_route']}"
+        )
+
+    rows.extend(["", "## Blocked Action Route Violations", ""])
+    rows.extend([f"- `{item['route']}`" for item in payload["blocked_action_routes"]] or ["- None"])
+    rows.extend(["", "## Recommended Next Action", "", payload["recommended_next_action"], ""])
+
+    md_path.write_text("\n".join(rows))
+    payload["artifacts_written"] = {
+        "json": json_path.as_posix(),
+        "markdown": md_path.as_posix(),
+    }
+    return payload
+
+
+@product_registry_bp.route("/api/v1/product/v10/blueprint-wave2")
+def api_product_v10_blueprint_wave2():
+    return jsonify(_v1009_wave2_payload())
+
+
+@product_registry_bp.route("/api/v1/product/v10/blueprint-wave2/write", methods=["POST"])
+def api_product_v10_blueprint_wave2_write():
+    return jsonify(write_blueprint_wave2_report())
+
+
+@product_registry_bp.route("/product/v10/blueprint-wave2")
+def product_v10_blueprint_wave2_view():
+    payload = _v1009_wave2_payload()
+    return render_template("product_v10_blueprint_wave2.html", wave2=payload)
+# ---- end v10.0.9 blueprint wave 2 expansion ----

@@ -129,3 +129,26 @@ def wave1_product_release_package_view():
 def wave1_api_product_release_package():
     return _v1007_dispatch_dashboard_get("/api/v1/product/release-package")
 # ---- end v10.0.7 wave 1 artifact routes ----
+
+
+
+# ---- v10.0.9 Blueprint Migration Wave 2 read-only API ownership ----
+@product_artifacts_bp.route("/api/v1/product/artifact-review-state", methods=["GET"])
+def wave2_api_product_artifact_review_state():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/artifact-review-state")
+
+
+@product_artifacts_bp.route("/api/v1/product/artifact-review-audit", methods=["GET"])
+def wave2_api_product_artifact_review_audit():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/artifact-review-audit")
+
+
+@product_artifacts_bp.route("/api/v1/product/artifact-export-manifest", methods=["GET"])
+def wave2_api_product_artifact_export_manifest():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/artifact-export-manifest")
+
+
+@product_artifacts_bp.route("/api/v1/product/release-packages", methods=["GET"])
+def wave2_api_product_release_packages():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/release-packages")
+# ---- end v10.0.9 wave 2 artifact API routes ----

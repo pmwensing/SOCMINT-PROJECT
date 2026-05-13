@@ -139,3 +139,13 @@ def wave1_product_v10_bootstrap_view():
 def wave1_api_v10_bootstrap():
     return _v1007_dispatch_dashboard_get("/api/v1/product/final/v10-bootstrap")
 # ---- end v10.0.7 wave 1 post-release routes ----
+
+
+
+# ---- v10.0.9 Blueprint Migration Wave 2 read-only API ownership ----
+
+
+@product_post_release_bp.route("/api/v1/product/final/v10-bootstrap/audit", methods=["GET"])
+def wave2_api_product_v10_bootstrap_audit():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/final/v10-bootstrap/audit")
+# ---- end v10.0.9 wave 2 post-release API routes ----
