@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .dossier_export_audit import audit_event
 from .dossier_export_pack import DOSSIER_EXPORT_SCHEMA
 from .dossier_export_pack import build_export_pack
 from .dossier_export_pack import canonical_json
@@ -28,6 +29,8 @@ def persist_export_pack(
     evidence: list[dict[str, Any]] | None = None,
     analyst_reviewed: bool = False,
     root: str | Path = DEFAULT_EXPORT_ROOT,
+    actor: str | None = None,
+    audit: bool = True,
 ) -> dict[str, Any]:
     pack = build_export_pack(subject, evidence=evidence or [], analyst_reviewed=analyst_reviewed)
     subject_id = pack.get("summary", {}).get("subject_id") or subject.get("subject_id")
@@ -61,7 +64,7 @@ def persist_export_pack(
     manifest_path = out_dir / "manifest.json"
     manifest_path.write_text(canonical_json(manifest), encoding="utf-8")
 
-    return {
+    result = {
         "schema": DOSSIER_EXPORT_STORE_SCHEMA,
         "status": pack.get("status"),
         "directory": str(out_dir),
@@ -71,8 +74,31 @@ def persist_export_pack(
         "pack_summary": pack.get("summary"),
     }
 
+    if audit and case_id and subject_id:
+        event = audit_event(
+            "export_created",
+            case_id=str(case_id),
+            subject_id=str(subject_id),
+            actor=actor,
+            detail={
+                "artifact_count": len(written),
+                "status": pack.get("status"),
+                "manifest_path": str(manifest_path),
+            },
+            root=root,
+        )
+        result["audit_event"] = event
 
-def load_export_manifest(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+    return result
+
+
+def load_export_manifest(
+    subject_id: str,
+    case_id: str,
+    root: str | Path = DEFAULT_EXPORT_ROOT,
+    actor: str | None = None,
+    audit: bool = False,
+) -> dict[str, Any]:
     manifest_path = export_directory(subject_id, case_id, root=root) / "manifest.json"
     if not manifest_path.exists():
         return {
@@ -83,7 +109,17 @@ def load_export_manifest(subject_id: str, case_id: str, root: str | Path = DEFAU
             "manifest_path": str(manifest_path),
             "artifacts": [],
         }
-    return json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if audit:
+        manifest["audit_event"] = audit_event(
+            "manifest_read",
+            case_id=case_id,
+            subject_id=subject_id,
+            actor=actor,
+            detail={"manifest_path": str(manifest_path)},
+            root=root,
+        )
+    return manifest
 
 
 def export_store_summary(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
