@@ -5,7 +5,7 @@ import re
 import src.socmint as socmint
 
 
-EXPECTED_VERSION = "9.6.0"
+EXPECTED_VERSION = "10.1.1"
 
 
 def _pyproject_text() -> str:
