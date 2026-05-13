@@ -2354,3 +2354,69 @@ def api_report_review_audit():
     item_id = request.args.get("item_id")
     batch_id = request.args.get("batch_id")
     return jsonify(review_audit_payload(item_id=item_id, batch_id=batch_id))
+
+
+
+# ---- v9.8.1 Product Release Hardening + Route/UI Wiring ----
+@dashboard_bp.route("/api/v1/product/build-status")
+@login_required
+def api_v981_product_build_status():
+    from .product_control_center import build_status
+    return jsonify(build_status())
+
+
+@dashboard_bp.route("/api/v1/product/release-readiness")
+@login_required
+def api_v981_product_release_readiness():
+    from .product_control_center import release_readiness
+    return jsonify(release_readiness())
+
+
+@dashboard_bp.route("/api/v1/product/smoke-summary")
+@login_required
+def api_v981_product_smoke_summary():
+    from .product_control_center import smoke_summary
+    return jsonify(smoke_summary())
+
+
+@dashboard_bp.route("/api/v1/product/system-health")
+@login_required
+def api_v981_product_system_health():
+    from .product_control_center import system_health
+    return jsonify(system_health())
+
+
+@dashboard_bp.route("/api/v1/product/write-reports", methods=["POST"])
+@admin_required
+def api_v981_product_write_reports():
+    from .product_control_center import write_product_reports
+    return jsonify(write_product_reports())
+
+
+@dashboard_bp.route("/api/v1/dossier/<subject_id>/quality-gate")
+@login_required
+def api_v981_dossier_quality_gate(subject_id):
+    from .dossier_quality_gate import dossier_quality_gate
+    return jsonify(dossier_quality_gate(subject_id))
+
+
+@dashboard_bp.route("/api/v1/dossier/<subject_id>/traceability")
+@login_required
+def api_v981_dossier_traceability(subject_id):
+    from .dossier_traceability import evidence_to_dossier_traceability
+    return jsonify(evidence_to_dossier_traceability(subject_id))
+
+
+@dashboard_bp.route("/product/build-control")
+@login_required
+def product_build_control_center():
+    from .product_control_center import build_status, release_readiness, smoke_summary, system_health
+
+    return render_template(
+        "product_build_control.html",
+        build=build_status(),
+        readiness=release_readiness(),
+        smoke=smoke_summary(),
+        health=system_health(),
+    )
+# ---- end v9.8.1 product routes ----

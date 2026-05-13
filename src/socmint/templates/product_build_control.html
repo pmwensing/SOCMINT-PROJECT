@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SOCMINT Product Build Control Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1180px; margin: 0 auto; padding: 28px; }
+    h1 { margin-bottom: 4px; }
+    .muted { color: #94a3b8; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; box-shadow: 0 10px 30px #0005; overflow: auto; }
+    .status { display: inline-block; padding: 4px 10px; border-radius: 999px; font-weight: 700; }
+    .pass { background: #14532d; color: #bbf7d0; }
+    .warn { background: #713f12; color: #fef3c7; }
+    .fail { background: #7f1d1d; color: #fecaca; }
+    pre { white-space: pre-wrap; font-size: 12px; color: #bfdbfe; }
+    a { color: #93c5fd; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>SOCMINT Product Build Control Center</h1>
+  <p class="muted">v9.8.1 product release hardening, route wiring, and QA readiness panel.</p>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Release Readiness</h2>
+      <p><span class="status {{ readiness.status }}">{{ readiness.status|upper }}</span></p>
+      <p>{{ readiness.recommended_next_action }}</p>
+      <h3>Blockers</h3>
+      <pre>{{ readiness.blockers|tojson(indent=2) }}</pre>
+      <h3>Warnings</h3>
+      <pre>{{ readiness.warnings|tojson(indent=2) }}</pre>
+    </div>
+
+    <div class="card">
+      <h2>Build</h2>
+      <p><b>Product:</b> {{ build.product }}</p>
+      <p><b>Version:</b> {{ build.version }}</p>
+      <p><b>Branch:</b> {{ build.git.branch }}</p>
+      <p><b>Commit:</b> {{ build.git.commit }}</p>
+      <p><b>Generated:</b> {{ build.generated_at }}</p>
+    </div>
+
+    <div class="card">
+      <h2>System Health</h2>
+      <p><span class="status {{ health.status }}">{{ health.status|upper }}</span></p>
+      <pre>{{ health|tojson(indent=2) }}</pre>
+    </div>
+
+    <div class="card">
+      <h2>Smoke Summary</h2>
+      <p><span class="status {{ smoke.status }}">{{ smoke.status|upper }}</span></p>
+      <p>{{ smoke.message }}</p>
+      <pre>{{ smoke|tojson(indent=2) }}</pre>
+    </div>
+  </section>
+</main>
+</body>
+</html>
