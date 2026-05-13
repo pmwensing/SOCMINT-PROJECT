@@ -2331,6 +2331,15 @@ def create_app(database_url=None):
     app.before_request(csrf_protect)
     app.after_request(add_security_headers)
     app.register_blueprint(dashboard_bp)
+    # v10.0.0 product foundation blueprint
+    try:
+        from socmint.product_v10 import product_v10_bp
+
+        app.register_blueprint(product_v10_bp)
+    except Exception as exc:
+        app.logger.warning("failed to register product_v10 blueprint: %s", exc)
+
+
     return app
 
 
