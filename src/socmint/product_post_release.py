@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from flask import Blueprint as _Blueprint, current_app as _current_app
+
 # v10.0.2 Product Route Extraction Phase 2
 #
 # Phase 2 creates the dedicated post-release product module for v9.9.5-v9.9.9
@@ -80,3 +82,60 @@ __all__ = [
     "COMPATIBILITY_MODE",
     "ROUTE_FAMILY",
 ]
+
+
+
+# ---- v10.0.7 Blueprint Migration Wave 1 GET ownership ----
+
+try:
+    product_post_release_bp
+except NameError:
+    product_post_release_bp = _Blueprint("product_post_release", __name__)
+
+
+def _v1007_dispatch_dashboard_get(rule: str, **kwargs):
+    for candidate in _current_app.url_map.iter_rules():
+        if candidate.rule == rule and candidate.endpoint.startswith("dashboard."):
+            return _current_app.view_functions[candidate.endpoint](**kwargs)
+    raise RuntimeError(f"dashboard fallback route not found for {rule}")
+
+
+@product_post_release_bp.route("/product/final", methods=["GET"])
+def wave1_product_final_dashboard():
+    return _v1007_dispatch_dashboard_get("/product/final")
+
+
+@product_post_release_bp.route("/api/v1/product/final", methods=["GET"])
+def wave1_api_product_final_dashboard():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/final")
+
+
+@product_post_release_bp.route("/product/final/handoff", methods=["GET"])
+def wave1_product_final_handoff_view():
+    return _v1007_dispatch_dashboard_get("/product/final/handoff")
+
+
+@product_post_release_bp.route("/api/v1/product/final/handoff", methods=["GET"])
+def wave1_api_product_final_handoff():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/final/handoff")
+
+
+@product_post_release_bp.route("/product/final/self-test", methods=["GET"])
+def wave1_product_final_self_test_view():
+    return _v1007_dispatch_dashboard_get("/product/final/self-test")
+
+
+@product_post_release_bp.route("/api/v1/product/final/self-test", methods=["GET"])
+def wave1_api_product_final_self_test():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/final/self-test")
+
+
+@product_post_release_bp.route("/product/final/v10-bootstrap", methods=["GET"])
+def wave1_product_v10_bootstrap_view():
+    return _v1007_dispatch_dashboard_get("/product/final/v10-bootstrap")
+
+
+@product_post_release_bp.route("/api/v1/product/final/v10-bootstrap", methods=["GET"])
+def wave1_api_v10_bootstrap():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/final/v10-bootstrap")
+# ---- end v10.0.7 wave 1 post-release routes ----
