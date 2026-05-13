@@ -6020,3 +6020,471 @@ def product_final_handoff_build():
         flash("Operator handoff pack blocked until all required artifacts are present and final dashboard is ready.", "error")
     return redirect(url_for("dashboard.product_final_handoff_view"))
 # ---- end v9.9.7 product release closeout handoff ----
+
+
+
+# ---- v9.9.8 Final Release Self-Test + Post-Release Maintenance Gate ----
+def _v998_maintenance_state_path():
+    from pathlib import Path
+
+    path = Path("storage/product_qa/post_release_maintenance_state.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _v998_maintenance_audit_path():
+    from pathlib import Path
+
+    path = Path("storage/product_qa/post_release_maintenance_audit.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _v998_load_maintenance_state():
+    path = _v998_maintenance_state_path()
+    if not path.exists():
+        return {
+            "version": "9.9.8",
+            "safe_to_start_v10": False,
+            "decision": "pending",
+            "actor": None,
+            "reason": "",
+            "release_name": None,
+            "updated_at": None,
+        }
+
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        data = {}
+
+    if not isinstance(data, dict):
+        data = {}
+
+    data.setdefault("version", "9.9.8")
+    data.setdefault("safe_to_start_v10", False)
+    data.setdefault("decision", "pending")
+    data.setdefault("actor", None)
+    data.setdefault("reason", "")
+    data.setdefault("release_name", None)
+    data.setdefault("updated_at", None)
+    return data
+
+
+def _v998_save_maintenance_state(state):
+    state["version"] = "9.9.8"
+    _v998_maintenance_state_path().write_text(json.dumps(state, indent=2, sort_keys=True))
+    return state
+
+
+def _v998_load_maintenance_audit():
+    path = _v998_maintenance_audit_path()
+    if not path.exists():
+        return {"version": "9.9.8", "events": []}
+
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        data = {}
+
+    if not isinstance(data, dict):
+        data = {}
+
+    data.setdefault("version", "9.9.8")
+    data.setdefault("events", [])
+    return data
+
+
+def _v998_save_maintenance_audit(data):
+    data["version"] = "9.9.8"
+    _v998_maintenance_audit_path().write_text(json.dumps(data, indent=2, sort_keys=True))
+    return data
+
+
+def _v998_append_maintenance_audit(action, actor, before, after, self_test_status, reason=""):
+    from datetime import datetime, timezone
+    from uuid import uuid4
+
+    data = _v998_load_maintenance_audit()
+    event = {
+        "event_id": uuid4().hex,
+        "version": "9.9.8",
+        "action": action,
+        "actor": actor,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "reason": reason,
+        "self_test_status": self_test_status,
+        "before": before,
+        "after": after,
+    }
+    data.setdefault("events", []).append(event)
+    _v998_save_maintenance_audit(data)
+    return event
+
+
+def _v998_final_self_test_payload(actor=None, release_name=None):
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    checks = []
+
+    def add_check(key, label, ok, detail=None):
+        checks.append(
+            {
+                "key": key,
+                "label": label,
+                "ok": bool(ok),
+                "detail": detail or {},
+            }
+        )
+
+    rc_manifest = _v992_load_json_file("release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json") or {}
+    add_check(
+        "release_candidate",
+        "Release candidate manifest status is pass",
+        rc_manifest.get("status") == "pass",
+        {"status": rc_manifest.get("status"), "artifact": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json"},
+    )
+
+    final_gate = _v991_final_gate_payload(actor=actor)
+    add_check(
+        "final_gate",
+        "Final gate is approved",
+        final_gate.get("gate_status") == "approved" and final_gate.get("signoff", {}).get("approved") is True,
+        {"gate_status": final_gate.get("gate_status"), "approved": final_gate.get("signoff", {}).get("approved")},
+    )
+
+    archives = _v993_list_final_releases()
+    if release_name:
+        release_name = _v988_package_slug(release_name)
+    elif archives:
+        release_name = archives[0].get("release_name")
+
+    archive = None
+    for item in archives:
+        if item.get("release_name") == release_name:
+            archive = item
+            break
+
+    add_check(
+        "archive",
+        "Final release archive exists with ZIP, TAR, and integrity manifest",
+        bool(archive)
+        and archive.get("archive_zip_exists") is True
+        and archive.get("archive_tar_exists") is True
+        and archive.get("integrity_manifest_exists") is True,
+        {"release_name": release_name, "archive": archive},
+    )
+
+    verification = _v994_verify_final_release(release_name=release_name) if release_name else {"status": "fail", "failures": ["no_release"]}
+    add_check(
+        "verification",
+        "Final release verification status is pass",
+        verification.get("status") == "pass",
+        {
+            "status": verification.get("status"),
+            "checks_passed": verification.get("checks_passed"),
+            "checks_total": verification.get("checks_total"),
+            "failures": verification.get("failures", []),
+        },
+    )
+
+    distribution = _v995_distribution_payload(release_name=release_name, actor=actor) if release_name else {
+        "distribution_status": "blocked",
+        "state": {},
+    }
+    add_check(
+        "distribution",
+        "Distribution readiness status is ready",
+        distribution.get("distribution_status") == "ready" and distribution.get("state", {}).get("ready") is True,
+        {
+            "distribution_status": distribution.get("distribution_status"),
+            "ready": distribution.get("state", {}).get("ready"),
+            "locked": distribution.get("state", {}).get("locked"),
+        },
+    )
+
+    final_dashboard = _v996_final_dashboard_payload(actor=actor, release_name=release_name) if release_name else {"status": "not_ready"}
+    add_check(
+        "final_dashboard",
+        "Final product dashboard status is ready",
+        final_dashboard.get("status") == "ready" and final_dashboard.get("distribution_ready") is True,
+        {"status": final_dashboard.get("status"), "distribution_ready": final_dashboard.get("distribution_ready")},
+    )
+
+    handoff = _v997_handoff_preview(actor=actor, release_name=release_name) if release_name else {"status": "blocked"}
+    add_check(
+        "operator_handoff",
+        "Operator handoff pack preview is ready",
+        handoff.get("status") == "ready"
+        and handoff.get("required_present") == handoff.get("required_total")
+        and handoff.get("distribution_ready") is True,
+        {
+            "status": handoff.get("status"),
+            "required_present": handoff.get("required_present"),
+            "required_total": handoff.get("required_total"),
+            "distribution_ready": handoff.get("distribution_ready"),
+        },
+    )
+
+    handoff_manifest = _v992_load_json_file("release/V9_9_7_OPERATOR_HANDOFF_MANIFEST.json") or {}
+    add_check(
+        "operator_handoff_manifest",
+        "Operator handoff manifest artifact exists and is ready",
+        Path("release/V9_9_7_OPERATOR_HANDOFF_MANIFEST.json").exists()
+        and handoff_manifest.get("status") == "ready",
+        {"status": handoff_manifest.get("status"), "artifact": "release/V9_9_7_OPERATOR_HANDOFF_MANIFEST.json"},
+    )
+
+    maintenance = _v998_load_maintenance_state()
+    failures = [check["key"] for check in checks if not check["ok"]]
+    self_test_status = "pass" if not failures else "fail"
+    v10_allowed = self_test_status == "pass" and handoff.get("status") == "ready"
+
+    return {
+        "status": self_test_status,
+        "version": "9.9.8",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "actor": actor,
+        "release_name": release_name,
+        "checks_total": len(checks),
+        "checks_passed": sum(1 for check in checks if check["ok"]),
+        "failures": failures,
+        "checks": checks,
+        "safe_to_start_v10_allowed": v10_allowed,
+        "maintenance_state": maintenance,
+        "rc_manifest": rc_manifest,
+        "final_gate": final_gate,
+        "archive": archive,
+        "verification": verification,
+        "distribution": distribution,
+        "final_dashboard": final_dashboard,
+        "handoff": handoff,
+        "recommended_next_action": (
+            "Safe to start v10 maintenance branch after operator confirmation."
+            if v10_allowed
+            else "Finish v9.9.7 handoff and all final release self-test checks before starting v10."
+        ),
+    }
+
+
+def _v998_write_post_release_maintenance_report(actor=None, release_name=None):
+    from pathlib import Path
+
+    payload = _v998_final_self_test_payload(actor=actor, release_name=release_name)
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+
+    json_path = release_dir / "V9_9_8_POST_RELEASE_MAINTENANCE_REPORT.json"
+    md_path = release_dir / "V9_9_8_POST_RELEASE_MAINTENANCE_REPORT.md"
+
+    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+
+    rows = [
+        "# v9.9.8 Post-Release Maintenance Report",
+        "",
+        f"Generated: {payload['generated_at']}",
+        f"Status: **{payload['status']}**",
+        f"Release: `{payload.get('release_name')}`",
+        f"Safe to start v10 allowed: {payload.get('safe_to_start_v10_allowed')}",
+        "",
+        f"{payload['checks_passed']}/{payload['checks_total']} self-test checks passed.",
+        "",
+        "## Failures",
+        "",
+        *([f"- {failure}" for failure in payload.get("failures", [])] or ["- None"]),
+        "",
+        "## Checks",
+        "",
+    ]
+    for check in payload.get("checks", []):
+        rows.extend(
+            [
+                f"### {check['label']}",
+                "",
+                f"- Key: `{check['key']}`",
+                f"- Status: {'PASS' if check['ok'] else 'FAIL'}",
+                "",
+            ]
+        )
+
+    rows.extend(
+        [
+            "## Recommended Next Action",
+            "",
+            payload.get("recommended_next_action", ""),
+            "",
+        ]
+    )
+
+    md_path.write_text("\n".join(rows))
+    payload["artifacts_written"] = {"json": json_path.as_posix(), "markdown": md_path.as_posix()}
+    return payload
+
+
+def _v998_apply_maintenance_decision(decision, actor=None, release_name=None, reason=""):
+    from copy import deepcopy
+    from datetime import datetime, timezone
+
+    self_test = _v998_final_self_test_payload(actor=actor, release_name=release_name)
+    before = deepcopy(_v998_load_maintenance_state())
+    decision = str(decision or "").strip().lower()
+
+    if decision not in {"safe_to_start_v10", "block_v10", "reset"}:
+        abort(400)
+
+    if decision == "safe_to_start_v10" and not self_test.get("safe_to_start_v10_allowed"):
+        after = deepcopy(before)
+        event = _v998_append_maintenance_audit(
+            action="safe_to_start_v10_denied",
+            actor=actor,
+            before=before,
+            after=after,
+            self_test_status=self_test.get("status"),
+            reason=reason or "v10 readiness denied because final self-test or v9.9.7 handoff is not ready.",
+        )
+        return {
+            "status": "blocked",
+            "version": "9.9.8",
+            "decision": decision,
+            "reason": "v10 readiness requires final self-test pass and v9.9.7 handoff ready.",
+            "audit_event": event,
+            "self_test": self_test,
+        }
+
+    if decision == "safe_to_start_v10":
+        after = {
+            "version": "9.9.8",
+            "safe_to_start_v10": True,
+            "decision": "safe_to_start_v10",
+            "actor": actor,
+            "reason": reason or "v9.9.x final release self-test passed and handoff is ready.",
+            "release_name": self_test.get("release_name"),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    elif decision == "block_v10":
+        after = {
+            "version": "9.9.8",
+            "safe_to_start_v10": False,
+            "decision": "blocked",
+            "actor": actor,
+            "reason": reason or "v10 start blocked by operator.",
+            "release_name": self_test.get("release_name"),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    else:
+        after = {
+            "version": "9.9.8",
+            "safe_to_start_v10": False,
+            "decision": "pending",
+            "actor": actor,
+            "reason": reason or "Post-release maintenance gate reset.",
+            "release_name": self_test.get("release_name"),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    _v998_save_maintenance_state(after)
+    event = _v998_append_maintenance_audit(
+        action=f"maintenance_{decision}",
+        actor=actor,
+        before=before,
+        after=after,
+        self_test_status=self_test.get("status"),
+        reason=after.get("reason", ""),
+    )
+    report = _v998_write_post_release_maintenance_report(actor=actor, release_name=release_name)
+    return {
+        "status": "ok",
+        "version": "9.9.8",
+        "decision": decision,
+        "state": after,
+        "audit_event": event,
+        "self_test": report,
+    }
+
+
+@dashboard_bp.route("/api/v1/product/final/self-test")
+@login_required
+def api_v998_final_self_test():
+    release_name = request.args.get("release_name")
+    return jsonify(_v998_final_self_test_payload(actor=session.get("user"), release_name=release_name))
+
+
+@dashboard_bp.route("/api/v1/product/final/self-test/write", methods=["POST"])
+@admin_required
+def api_v998_final_self_test_write():
+    payload = request.get_json(silent=True) or request.form
+    release_name = payload.get("release_name") or None
+    report = _v998_write_post_release_maintenance_report(actor=session.get("user"), release_name=release_name)
+    audit("product_post_release_maintenance_write", details=report.get("artifacts_written"))
+    return jsonify(report)
+
+
+@dashboard_bp.route("/api/v1/product/final/self-test/maintenance", methods=["POST"])
+@admin_required
+def api_v998_maintenance_decision():
+    payload = request.get_json(silent=True) or request.form
+    result = _v998_apply_maintenance_decision(
+        decision=payload.get("decision"),
+        actor=session.get("user"),
+        release_name=payload.get("release_name") or None,
+        reason=payload.get("reason", ""),
+    )
+    audit("product_post_release_maintenance_decision", details={"decision": payload.get("decision"), "status": result.get("status")})
+    return jsonify(result)
+
+
+@dashboard_bp.route("/api/v1/product/final/self-test/maintenance-audit")
+@login_required
+def api_v998_maintenance_audit():
+    data = _v998_load_maintenance_audit()
+    return jsonify(
+        {
+            "status": "ok",
+            "version": "9.9.8",
+            "count": len(data.get("events", [])),
+            "events": data.get("events", []),
+            "audit_path": str(_v998_maintenance_audit_path()),
+        }
+    )
+
+
+@dashboard_bp.route("/product/final/self-test")
+@login_required
+def product_final_self_test_view():
+    release_name = request.args.get("release_name")
+    self_test = _v998_final_self_test_payload(actor=session.get("user"), release_name=release_name)
+    audit_data = _v998_load_maintenance_audit()
+    return render_template(
+        "product_final_self_test.html",
+        self_test=self_test,
+        audit_events=audit_data.get("events", []),
+    )
+
+
+@dashboard_bp.route("/product/final/self-test/write", methods=["POST"])
+@admin_required
+def product_final_self_test_write():
+    release_name = request.form.get("release_name") or None
+    report = _v998_write_post_release_maintenance_report(actor=session.get("user"), release_name=release_name)
+    audit("product_post_release_maintenance_write", details=report.get("artifacts_written"))
+    flash("Post-release maintenance report written.", "success")
+    return redirect(url_for("dashboard.product_final_self_test_view"))
+
+
+@dashboard_bp.route("/product/final/self-test/maintenance", methods=["POST"])
+@admin_required
+def product_final_self_test_maintenance():
+    release_name = request.form.get("release_name") or None
+    result = _v998_apply_maintenance_decision(
+        decision=request.form.get("decision"),
+        actor=session.get("user"),
+        release_name=release_name,
+        reason=request.form.get("reason", ""),
+    )
+    if result.get("status") == "blocked":
+        flash("v10 readiness blocked until v9.9.7 handoff and final self-test are ready.", "error")
+    else:
+        flash("Post-release maintenance gate decision recorded.", "success")
+    return redirect(url_for("dashboard.product_final_self_test_view"))
+# ---- end v9.9.8 final release self-test maintenance gate ----

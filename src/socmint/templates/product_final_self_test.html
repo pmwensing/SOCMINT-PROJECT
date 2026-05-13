@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Final Release Self-Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+    .pass { color: #86efac; font-weight: 700; }
+    .fail { color: #fecaca; font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Final Release Self-Test + Post-Release Maintenance Gate</h1>
+  <p>v9.9.8 final chain self-test and safe-to-start-v10 gate.</p>
+
+  <section class="card">
+    <h2>Self-Test Status</h2>
+    <p>Status: <strong class="{{ self_test.status }}">{{ self_test.status|upper }}</strong></p>
+    <p>Release: <code>{{ self_test.release_name }}</code></p>
+    <p>Checks: {{ self_test.checks_passed }}/{{ self_test.checks_total }}</p>
+    <p>Safe to start v10 allowed: {{ self_test.safe_to_start_v10_allowed }}</p>
+    <p>Maintenance decision: {{ self_test.maintenance_state.decision }}</p>
+    <p>Recommended next action: {{ self_test.recommended_next_action }}</p>
+    <p>
+      <a href="/api/v1/product/final/self-test">Self-test JSON</a> |
+      <a href="/api/v1/product/final/self-test/maintenance-audit">Maintenance Audit JSON</a> |
+      <a href="/product/final/handoff">Operator Handoff</a> |
+      <a href="/product/final">Final Dashboard</a>
+    </p>
+
+    {% if session.get('is_admin') %}
+    <form method="post" action="{{ url_for('dashboard.product_final_self_test_maintenance') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="release_name" value="{{ self_test.release_name }}">
+      <input type="hidden" name="decision" value="safe_to_start_v10">
+      <input type="text" name="reason" value="Final self-test passed; safe to start v10.">
+      <button type="submit">Mark Safe to Start v10</button>
+    </form>
+
+    <form method="post" action="{{ url_for('dashboard.product_final_self_test_maintenance') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="release_name" value="{{ self_test.release_name }}">
+      <input type="hidden" name="decision" value="block_v10">
+      <input type="text" name="reason" value="v10 blocked pending review.">
+      <button type="submit">Block v10 Start</button>
+    </form>
+
+    <form method="post" action="{{ url_for('dashboard.product_final_self_test_write') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="release_name" value="{{ self_test.release_name }}">
+      <button type="submit">Write Maintenance Report</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>One-Page Final Chain Checks</h2>
+    <table>
+      <thead>
+        <tr><th>Check</th><th>Status</th><th>Detail</th></tr>
+      </thead>
+      <tbody>
+      {% for check in self_test.checks %}
+        <tr>
+          <td>{{ check.label }}<br><code>{{ check.key }}</code></td>
+          <td>{% if check.ok %}<span class="pass">PASS</span>{% else %}<span class="fail">FAIL</span>{% endif %}</td>
+          <td><code>{{ check.detail }}</code></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Maintenance Audit Trail</h2>
+    <table>
+      <thead><tr><th>Timestamp</th><th>Action</th><th>Actor</th><th>Status</th><th>Reason</th></tr></thead>
+      <tbody>
+      {% for event in audit_events|reverse %}
+        <tr>
+          <td>{{ event.timestamp }}</td>
+          <td>{{ event.action }}</td>
+          <td>{{ event.actor }}</td>
+          <td>{{ event.self_test_status }}</td>
+          <td>{{ event.reason }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">No maintenance audit events yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

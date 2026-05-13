@@ -465,3 +465,16 @@ operator-handoff-hardening-smoke:
 
 zip997:
 	cd .. && zip -r SOCMINT-PROJECT-v9.9.7-operator-handoff.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-final-self-test-smoke:
+	PYTHONPATH=src python3 scripts/product_final_self_test_smoke_v9_9_8.py
+
+test998:
+	PYTHONPATH=src python3 scripts/product_final_self_test_smoke_v9_9_8.py
+
+final-self-test-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_final_self_test_hardening_v9_9_8.py
+
+zip998:
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.8-final-self-test-maintenance.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
