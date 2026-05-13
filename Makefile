@@ -283,3 +283,16 @@ runtime-hardening-smoke:
 
 zip983:
 	cd .. && zip -r SOCMINT-PROJECT-v9.8.3-product-runtime-actions.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-artifacts-smoke:
+	PYTHONPATH=src python3 scripts/product_artifacts_smoke_v9_8_4.py
+
+test984:
+	PYTHONPATH=src python3 scripts/product_artifacts_smoke_v9_8_4.py
+
+artifact-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_artifacts_hardening_v9_8_4.py
+
+zip984:
+	cd .. && zip -r SOCMINT-PROJECT-v9.8.4-product-artifact-browser.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
