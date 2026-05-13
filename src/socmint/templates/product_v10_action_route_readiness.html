@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Action Route Readiness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+    .pass { color: #86efac; font-weight: 700; }
+    .fail { color: #fecaca; font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Blueprint Migration Wave 3 Action Route Readiness Gate</h1>
+  <p>v10.1.0 inventories POST/write/build/download/archive/action routes and keeps them blocked from blueprint migration.</p>
+
+  <section class="card">
+    <h2>Readiness Status</h2>
+    <p>Status: <strong class="{{ readiness.status }}">{{ readiness.status|upper }}</strong></p>
+    <p>Wave 2 status: {{ readiness.wave2_status }}</p>
+    <p>Action routes inventoried: {{ readiness.action_route_count }}</p>
+    <p>Dashboard-owned action routes: {{ readiness.dashboard_owned_count }}</p>
+    <p>Extracted-blueprint-owned action routes: {{ readiness.extracted_blueprint_owned_count }}</p>
+    <p>Safe to migrate: {{ readiness.safe_to_migrate_count }}</p>
+    <p>CSRF required: {{ readiness.csrf_required_count }}</p>
+    <p>Session required: {{ readiness.session_required_count }}</p>
+    <p>Write-safety required: {{ readiness.write_safety_required_count }}</p>
+    <p>Recommended next action: {{ readiness.recommended_next_action }}</p>
+    <p>
+      <a href="/api/v1/product/v10/action-route-readiness">Action Readiness JSON</a> |
+      <a href="/product/v10/blueprint-wave2">Blueprint Wave 2</a> |
+      <a href="/product/v10/blueprint-guardrails">Blueprint Guardrails</a>
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>Action Route Inventory</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Route</th>
+          <th>Status</th>
+          <th>Endpoint</th>
+          <th>Methods</th>
+          <th>Gate</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for item in readiness.action_routes %}
+        <tr>
+          <td><code>{{ item.route }}</code></td>
+          <td><span class="{{ item.status }}">{{ item.status|upper }}</span></td>
+          <td><code>{{ item.endpoint }}</code><br>{{ item.endpoint_family }}</td>
+          <td>{{ item.methods }}<br>Mutating: {{ item.mutating_methods }}</td>
+          <td>
+            Safe: {{ item.safe_to_migrate }}<br>
+            Blocked: {{ item.blocked_from_blueprint_migration }}<br>
+            CSRF: {{ item.requires_csrf }}<br>
+            Session: {{ item.requires_session }}<br>
+            Write safety: {{ item.requires_write_safety_review }}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>
