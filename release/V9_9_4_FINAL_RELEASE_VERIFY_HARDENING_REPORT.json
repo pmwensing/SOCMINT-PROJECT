@@ -1,0 +1,31 @@
+{
+  "status": "pass",
+  "generated_at": "2026-05-13T03:35:46.088623+00:00",
+  "version": "9.9.4",
+  "summary": "3/3 checks passed.",
+  "checks": [
+    {
+      "name": "compileall-src",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "Listing 'src/socmint'...\nListing 'src/socmint/static'...\nListing 'src/socmint/templates'...\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "final-release-archive-smoke",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "PYTHONPATH=src python3 scripts/product_final_release_archive_smoke_v9_9_3.py\n{\"timestamp\":\"2026-05-13T03:35:45.178749+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"718646ec87cb48da8ef5e9d676f7fa93\",\"method\":\"POST\",\"path\":\"/api/v1/product/final-gate/signoff\",\"status_code\":200,\"duration_ms\":13.55,\"remote_addr\":\"127.0.0.1\"}\n[PASS] approve final gate 200\n{\"timestamp\":\"2026-05-13T03:35:45.185125+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"022160fe1d5f409d9413f2964f86e2b0\",\"method\":\"POST\",\"path\":\"/api/v1/product/final-gate/write\",\"status_code\":200,\"duration_ms\":5.6,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T03:35:45.193838+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"7a4300a16bb3435cbec763abfc00cef0\",\"method\":\"POST\",\"path\":\"/api/v1/product/final-release/publish\",\"status_code\":200,\"duration_ms\":7.78,\"remote_addr\":\"127.0.0.1\"}\n[PASS] publish final release 200\n{\"timestamp\":\"2026-05-13T03:35:45.202031+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"b18435e9c5a4461b8e0bf1595f2052a8\",\"method\":\"POST\",\"path\":\"/api/v1/product/final-release/archive/v9_9_3_archive_smoke_release/create\",\"status_code\":200,\"duration_ms\":7.57,\"remote_addr\":\"127.0.0.1\"}\n[PASS] create archive integrity seal 200\n[PASS] ZIP contains required release evidence\n[PASS] TAR contains required release evidence\n[PASS] integrity manifest checksums\n{\"timestamp\":\"2026-05-13T03:35:45.203858+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"5bedbd9b2b4148c5b20490743b4e9598\",\"method\":\"GET\",\"path\":\"/api/v1/product/final-release/archives\",\"status_code\":200,\"duration_ms\":0.43,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET archive inventory 200\n{\"timestamp\":\"2026-05-13T03:35:45.206287+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"7b17d1f1777a41cb951d934c698b4094\",\"method\":\"GET\",\"path\":\"/product/final-release/archive/download/v9_9_3_archive_smoke_release.zip\",\"status_code\":200,\"duration_ms\":1.86,\"remote_addr\":\"127.0.0.1\"}\n[PASS] download archive ZIP 200\n{\"timestamp\":\"2026-05-13T03:35:45.211992+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"4e225c1719d34357b516945830aa7297\",\"method\":\"GET\",\"path\":\"/product/final-release/archive\",\"status_code\":200,\"duration_ms\":5.18,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET archive UI 200\nv9.9.3 final release archive integrity smoke passed\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "final-release-verify-smoke-v9-9-4",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "{\"timestamp\":\"2026-05-13T03:35:45.923582+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"51ac0e8d8d7d46499f19f475d09ac34c\",\"method\":\"POST\",\"path\":\"/api/v1/product/final-gate/signoff\",\"status_code\":200,\"duration_ms\":13.74,\"remote_addr\":\"127.0.0.1\"}\n[PASS] approve final gate 200\n{\"timestamp\":\"2026-05-13T03:35:45.929895+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"5ed9d658d41c4fe59cdca72865e46102\",\"method\":\"POST\",\"path\":\"/api/v1/product/final-gate/write\",\"status_code\":200,\"duration_ms\":5.32,\"remote_addr\":\"127.0.0.1\"}\n{\"timestamp\":\"2026-05-13T03:35:45.939553+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"412f7fb1679f4ce99d2099e0f3c55150\",\"method\":\"POST\",\"path\":\"/api/v1/product/final-release/publish\",\"status_code\":200,\"duration_ms\":8.8,\"remote_addr\":\"127.0.0.1\"}\n[PASS] publish final release 200\n{\"timestamp\":\"2026-05-13T03:35:45.950570+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"5c1f756ba37240c68d4fc29ddc691890\",\"method\":\"POST\",\"path\":\"/api/v1/product/final-release/archive/v9_9_4_verify_smoke_release/create\",\"status_code\":200,\"duration_ms\":9.63,\"remote_addr\":\"127.0.0.1\"}\n[PASS] create archive seal 200\n{\"timestamp\":\"2026-05-13T03:35:45.953431+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"10b802b34d07403d99cd8f76507f19ff\",\"method\":\"GET\",\"path\":\"/api/v1/product/final-release/verify\",\"status_code\":200,\"duration_ms\":2.24,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET final release verification API 200\n[PASS] verification report artifacts\n{\"timestamp\":\"2026-05-13T03:35:45.961128+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"0e0be0cfcfc94fa2b162a645d0d91c8b\",\"method\":\"GET\",\"path\":\"/product/final-release/verify\",\"status_code\":200,\"duration_ms\":7.05,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET verification UI 200\n{\"timestamp\":\"2026-05-13T03:35:45.963864+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"5600d05e05d444d69234fe5539e73300\",\"method\":\"GET\",\"path\":\"/product/final-release/archive/download/v9_9_4_verify_smoke_release.zip\",\"status_code\":200,\"duration_ms\":2.22,\"remote_addr\":\"127.0.0.1\"}\n[PASS] download verified ZIP 200\nv9.9.4 final release verification smoke passed\n",
+      "stderr_tail": ""
+    }
+  ],
+  "failed": [],
+  "next_action": "Merge and tag v9.9.4 final release verification console"
+}

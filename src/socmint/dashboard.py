@@ -4783,3 +4783,293 @@ def product_final_release_archive_download(filename):
         abort(404)
     return send_file(path, as_attachment=True, download_name=path.name)
 # ---- end v9.9.3 final release archive integrity seal ----
+
+
+
+# ---- v9.9.4 Final Release Verification Console ----
+def _v994_safe_archive_file(filename):
+    from pathlib import Path
+
+    root = _v993_archives_root().resolve()
+    requested = Path(filename)
+    if requested.is_absolute() or ".." in requested.parts:
+        abort(404)
+
+    path = (root / requested.name).resolve()
+    if not str(path).startswith(str(root)) or not path.exists() or not path.is_file():
+        abort(404)
+
+    if not (path.name.endswith(".zip") or path.name.endswith(".tar.gz")):
+        abort(404)
+
+    return path
+
+
+def _v994_verify_final_release(release_name=None):
+    import tarfile
+    import zipfile
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    releases = _v993_list_final_releases()
+    if release_name:
+        releases = [item for item in releases if item.get("release_name") == _v988_package_slug(release_name)]
+
+    if not releases:
+        return {
+            "status": "fail",
+            "version": "9.9.4",
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "release_name": _v988_package_slug(release_name) if release_name else None,
+            "checks": [],
+            "failures": ["no_final_release_found"],
+            "summary": "No final release pack found to verify.",
+        }
+
+    release = releases[0]
+    release_name = release["release_name"]
+    release_dir = _v993_safe_final_release_dir(release_name)
+
+    checks = []
+
+    def add_check(key, label, ok, detail=None):
+        checks.append(
+            {
+                "key": key,
+                "label": label,
+                "ok": bool(ok),
+                "detail": detail or {},
+            }
+        )
+
+    required_files = {
+        "release_notes": release_dir / "RELEASE_NOTES.md",
+        "checklist": release_dir / "FINAL_RELEASE_CHECKLIST.json",
+        "publish_manifest": release_dir / "PUBLISH_MANIFEST.json",
+        "integrity_manifest": release_dir / "INTEGRITY_MANIFEST.json",
+    }
+
+    for key, path in required_files.items():
+        add_check(
+            key,
+            f"Required file exists: {path.name}",
+            path.exists() and path.is_file(),
+            {"path": path.as_posix()},
+        )
+
+    publish_manifest = _v992_load_json_file(release_dir / "PUBLISH_MANIFEST.json")
+    final_gate = publish_manifest.get("final_gate", {}) if isinstance(publish_manifest, dict) else {}
+    add_check(
+        "publish_manifest_published",
+        "Publish manifest status is published",
+        isinstance(publish_manifest, dict) and publish_manifest.get("status") == "published",
+        {"status": publish_manifest.get("status") if isinstance(publish_manifest, dict) else None},
+    )
+    add_check(
+        "final_gate_approved",
+        "Final gate is approved",
+        final_gate.get("gate_status") == "approved" and final_gate.get("signoff", {}).get("approved") is True,
+        {
+            "gate_status": final_gate.get("gate_status"),
+            "approved": final_gate.get("signoff", {}).get("approved"),
+        },
+    )
+
+    integrity = _v992_load_json_file(release_dir / "INTEGRITY_MANIFEST.json")
+    add_check(
+        "integrity_manifest_present",
+        "Integrity manifest is present and valid JSON",
+        isinstance(integrity, dict),
+        {"path": (release_dir / "INTEGRITY_MANIFEST.json").as_posix()},
+    )
+
+    if isinstance(integrity, dict):
+        required_presence = integrity.get("required_presence", {})
+        add_check(
+            "integrity_required_presence",
+            "Integrity manifest confirms required evidence presence",
+            integrity.get("required_all_present") is True and all(required_presence.values()),
+            {"required_presence": required_presence},
+        )
+
+        checksum_failures = []
+        for item in integrity.get("files", []):
+            path = release_dir / item.get("path", "")
+            expected = item.get("sha256")
+            actual = _v993_sha256_file(path) if path.exists() and path.is_file() else None
+            if actual != expected:
+                checksum_failures.append(
+                    {
+                        "path": item.get("path"),
+                        "expected": expected,
+                        "actual": actual,
+                    }
+                )
+        add_check(
+            "integrity_file_checksums",
+            "All integrity-manifest file SHA256 checks match",
+            not checksum_failures,
+            {"failure_count": len(checksum_failures), "failures": checksum_failures[:10]},
+        )
+
+    zip_path = Path(release.get("archive_zip_path") or "")
+    tar_path = Path(release.get("archive_tar_path") or "")
+    if not zip_path.exists():
+        zip_path = _v993_archives_root() / f"{release_name}.zip"
+    if not tar_path.exists():
+        tar_path = _v993_archives_root() / f"{release_name}.tar.gz"
+
+    add_check("archive_zip_exists", "Archive ZIP exists", zip_path.exists() and zip_path.is_file(), {"path": zip_path.as_posix()})
+    add_check("archive_tar_exists", "Archive TAR.GZ exists", tar_path.exists() and tar_path.is_file(), {"path": tar_path.as_posix()})
+
+    seal = _v992_load_json_file("release/V9_9_3_FINAL_RELEASE_ARCHIVE_SEAL.json")
+    if isinstance(seal, dict) and seal.get("release_name") == release_name:
+        expected_zip = seal.get("archive_zip_sha256")
+        expected_tar = seal.get("archive_tar_sha256")
+    else:
+        expected_zip = None
+        expected_tar = None
+
+    zip_sha = _v993_sha256_file(zip_path) if zip_path.exists() and zip_path.is_file() else None
+    tar_sha = _v993_sha256_file(tar_path) if tar_path.exists() and tar_path.is_file() else None
+
+    add_check(
+        "archive_zip_checksum",
+        "Archive ZIP checksum matches integrity seal when seal is available",
+        zip_sha is not None and (expected_zip is None or zip_sha == expected_zip),
+        {"expected": expected_zip, "actual": zip_sha},
+    )
+    add_check(
+        "archive_tar_checksum",
+        "Archive TAR.GZ checksum matches integrity seal when seal is available",
+        tar_sha is not None and (expected_tar is None or tar_sha == expected_tar),
+        {"expected": expected_tar, "actual": tar_sha},
+    )
+
+    zip_required = {
+        "RELEASE_NOTES.md",
+        "FINAL_RELEASE_CHECKLIST.json",
+        "PUBLISH_MANIFEST.json",
+        "INTEGRITY_MANIFEST.json",
+    }
+    zip_entries = set()
+    tar_entries = set()
+    if zip_path.exists() and zip_path.is_file():
+        with zipfile.ZipFile(zip_path) as zf:
+            zip_entries = set(zf.namelist())
+    if tar_path.exists() and tar_path.is_file():
+        with tarfile.open(tar_path, "r:gz") as tf:
+            tar_entries = set(tf.getnames())
+
+    add_check(
+        "zip_required_files",
+        "ZIP contains required final release files",
+        zip_required.issubset(zip_entries)
+        and any("V9_9_0_RELEASE_CANDIDATE_MANIFEST.json" in item for item in zip_entries)
+        and any("V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json" in item for item in zip_entries)
+        and any("release_candidate_signoff_audit.json" in item for item in zip_entries)
+        and any(item.endswith(".zip") for item in zip_entries),
+        {"entry_count": len(zip_entries)},
+    )
+    add_check(
+        "tar_required_files",
+        "TAR.GZ contains required final release files",
+        zip_required.issubset(tar_entries)
+        and any("V9_9_0_RELEASE_CANDIDATE_MANIFEST.json" in item for item in tar_entries)
+        and any("V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json" in item for item in tar_entries)
+        and any("release_candidate_signoff_audit.json" in item for item in tar_entries)
+        and any(item.endswith(".zip") for item in tar_entries),
+        {"entry_count": len(tar_entries)},
+    )
+
+    package_zips = []
+    if isinstance(publish_manifest, dict):
+        package_zips = publish_manifest.get("package_zips", [])
+    package_zip_failures = []
+    for item in package_zips:
+        path = Path(item.get("package_path") or item.get("source") or "")
+        if not path.exists() or not path.is_file():
+            package_zip_failures.append({"path": path.as_posix()})
+    add_check(
+        "package_zips_present",
+        "Package ZIPs referenced by publish manifest are present",
+        len(package_zips) > 0 and not package_zip_failures,
+        {"package_zip_count": len(package_zips), "failures": package_zip_failures},
+    )
+
+    failures = [check["key"] for check in checks if not check["ok"]]
+    status = "pass" if not failures else "fail"
+
+    result = {
+        "status": status,
+        "version": "9.9.4",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "release_name": release_name,
+        "release_path": release_dir.as_posix(),
+        "checks_total": len(checks),
+        "checks_passed": sum(1 for check in checks if check["ok"]),
+        "failures": failures,
+        "checks": checks,
+        "archive_zip_path": zip_path.as_posix(),
+        "archive_tar_path": tar_path.as_posix(),
+        "download_zip_url": f"/product/final-release/archive/download/{release_name}.zip",
+        "download_tar_url": f"/product/final-release/archive/download/{release_name}.tar.gz",
+        "recommended_next_action": "Final release verified." if status == "pass" else "Fix failed final release verification checks.",
+    }
+
+    release_dir_latest = Path("release")
+    release_dir_latest.mkdir(exist_ok=True)
+    latest_json = release_dir_latest / "V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json"
+    latest_md = release_dir_latest / "V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.md"
+    latest_json.write_text(json.dumps(result, indent=2, sort_keys=True))
+
+    rows = [
+        "# v9.9.4 Final Release Verification Report",
+        "",
+        f"Generated: {result['generated_at']}",
+        f"Status: **{result['status']}**",
+        f"Release: {release_name}",
+        "",
+        f"{result['checks_passed']}/{result['checks_total']} checks passed.",
+        "",
+        "## Failures",
+        "",
+        *([f"- {failure}" for failure in failures] or ["- None"]),
+        "",
+        "## Checks",
+        "",
+    ]
+    for check in checks:
+        rows.extend(
+            [
+                f"### {check['label']}",
+                "",
+                f"- Key: `{check['key']}`",
+                f"- Status: {'PASS' if check['ok'] else 'FAIL'}",
+                "",
+            ]
+        )
+    latest_md.write_text("\n".join(rows))
+    result["artifacts_written"] = {"json": latest_json.as_posix(), "markdown": latest_md.as_posix()}
+    return result
+
+
+@dashboard_bp.route("/api/v1/product/final-release/verify")
+@login_required
+def api_v994_final_release_verify():
+    release_name = request.args.get("release_name")
+    return jsonify(_v994_verify_final_release(release_name=release_name))
+
+
+@dashboard_bp.route("/product/final-release/verify")
+@login_required
+def product_final_release_verify_view():
+    release_name = request.args.get("release_name")
+    verification = _v994_verify_final_release(release_name=release_name)
+    releases = _v993_list_final_releases()
+    return render_template(
+        "product_final_release_verify.html",
+        verification=verification,
+        releases=releases,
+    )
+# ---- end v9.9.4 final release verification console ----
