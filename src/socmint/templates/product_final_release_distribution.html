@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Final Release Distribution Readiness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+    .ready, .verified { color: #86efac; font-weight: 700; }
+    .blocked, .locked, .pending { color: #fde68a; font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Final Release Distribution Readiness</h1>
+  <p>v9.9.5 locks verified final release state and marks the release ready to distribute.</p>
+
+  <section class="card">
+    <h2>Distribution Status</h2>
+    <p>Status: <strong class="{{ distribution.distribution_status }}">{{ distribution.distribution_status|upper }}</strong></p>
+    <p>Verification: <strong>{{ distribution.verification_status }}</strong></p>
+    <p>Release: <code>{{ distribution.release_name }}</code></p>
+    <p>Locked: {{ distribution.state.locked }} | Ready: {{ distribution.state.ready }} | Decision: {{ distribution.state.decision }}</p>
+    <p>Lock manifest SHA256: <code>{{ distribution.state.lock_manifest_sha256 }}</code></p>
+    <p>Recommended next action: {{ distribution.recommended_next_action }}</p>
+    <p>
+      <a href="/api/v1/product/final-release/distribution">Distribution JSON</a> |
+      <a href="/api/v1/product/final-release/distribution/audit">Distribution Audit JSON</a> |
+      <a href="/product/final-release/verify">Final Verification</a>
+    </p>
+
+    {% if session.get('is_admin') %}
+    <form method="post" action="{{ url_for('dashboard.product_final_release_distribution_decision') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="release_name" value="{{ distribution.release_name }}">
+      <input type="hidden" name="decision" value="lock">
+      <input type="text" name="reason" value="Lock verified final release state.">
+      <button type="submit">Lock Release</button>
+    </form>
+
+    <form method="post" action="{{ url_for('dashboard.product_final_release_distribution_decision') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="release_name" value="{{ distribution.release_name }}">
+      <input type="hidden" name="decision" value="ready">
+      <input type="text" name="reason" value="Ready to distribute.">
+      <button type="submit">Mark Ready to Distribute</button>
+    </form>
+
+    <form method="post" action="{{ url_for('dashboard.product_final_release_distribution_decision') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="release_name" value="{{ distribution.release_name }}">
+      <input type="hidden" name="decision" value="block">
+      <input type="text" name="reason" value="Distribution blocked pending review.">
+      <button type="submit">Block Distribution</button>
+    </form>
+
+    <form method="post" action="{{ url_for('dashboard.product_final_release_distribution_decision') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="release_name" value="{{ distribution.release_name }}">
+      <input type="hidden" name="decision" value="reset">
+      <input type="text" name="reason" value="Reset distribution to pending.">
+      <button type="submit">Reset Distribution</button>
+    </form>
+
+    <form method="post" action="{{ url_for('dashboard.product_final_release_distribution_write') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="release_name" value="{{ distribution.release_name }}">
+      <button type="submit">Write Readiness Report</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Distribution Audit Trail</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Action</th>
+          <th>Actor</th>
+          <th>Verification</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for event in audit_events|reverse %}
+        <tr>
+          <td>{{ event.timestamp }}</td>
+          <td>{{ event.action }}</td>
+          <td>{{ event.actor }}</td>
+          <td>{{ event.verification_status }}</td>
+          <td>{{ event.reason }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">No distribution audit events yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Available Final Releases</h2>
+    <table>
+      <thead>
+        <tr><th>Release</th><th>Status</th><th>Verify</th></tr>
+      </thead>
+      <tbody>
+      {% for release in releases %}
+        <tr>
+          <td><code>{{ release.release_name }}</code></td>
+          <td>ZIP={{ release.archive_zip_exists }} TAR={{ release.archive_tar_exists }}</td>
+          <td><a href="/product/final-release/distribution?release_name={{ release.release_name }}">Open distribution gate</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3">No final releases found yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

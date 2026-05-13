@@ -1,0 +1,216 @@
+{
+  "actor": "v995-distribution-smoke",
+  "audit_event_count": 6,
+  "can_mark_ready": false,
+  "distribution_status": "ready",
+  "generated_at": "2026-05-13T03:41:07.600688+00:00",
+  "latest_audit_event": {
+    "action": "distribution_ready",
+    "actor": "v995-distribution-smoke",
+    "after": {
+      "actor": "v995-distribution-smoke",
+      "decision": "ready",
+      "lock_manifest_sha256": "66657b756654a299868cb4c0cb44843739371c4c2664119a2c737cee57bd8bf2",
+      "locked": true,
+      "ready": true,
+      "reason": "ready smoke release",
+      "release_name": "v9_9_5_distribution_smoke_release",
+      "updated_at": "2026-05-13T03:41:07.591994+00:00",
+      "version": "9.9.5"
+    },
+    "before": {
+      "actor": "v995-distribution-smoke",
+      "decision": "locked",
+      "lock_manifest_sha256": "66657b756654a299868cb4c0cb44843739371c4c2664119a2c737cee57bd8bf2",
+      "locked": true,
+      "ready": false,
+      "reason": "lock smoke release",
+      "release_name": "v9_9_5_distribution_smoke_release",
+      "updated_at": "2026-05-13T03:41:07.586102+00:00",
+      "version": "9.9.5"
+    },
+    "event_id": "c8686cb9781e4995b899249d478abc37",
+    "reason": "ready smoke release",
+    "timestamp": "2026-05-13T03:41:07.592181+00:00",
+    "verification_status": "pass",
+    "version": "9.9.5"
+  },
+  "recommended_next_action": "Final release is locked and ready to distribute.",
+  "release_name": "v9_9_5_distribution_smoke_release",
+  "state": {
+    "actor": "v995-distribution-smoke",
+    "decision": "ready",
+    "lock_manifest_sha256": "66657b756654a299868cb4c0cb44843739371c4c2664119a2c737cee57bd8bf2",
+    "locked": true,
+    "ready": true,
+    "reason": "ready smoke release",
+    "release_name": "v9_9_5_distribution_smoke_release",
+    "updated_at": "2026-05-13T03:41:07.591994+00:00",
+    "version": "9.9.5"
+  },
+  "status": "ok",
+  "verification": {
+    "archive_tar_path": "storage/final_release_archives/v9_9_5_distribution_smoke_release.tar.gz",
+    "archive_zip_path": "storage/final_release_archives/v9_9_5_distribution_smoke_release.zip",
+    "artifacts_written": {
+      "json": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json",
+      "markdown": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.md"
+    },
+    "checks": [
+      {
+        "detail": {
+          "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_5_distribution_smoke_release/RELEASE_NOTES.md"
+        },
+        "key": "release_notes",
+        "label": "Required file exists: RELEASE_NOTES.md",
+        "ok": true
+      },
+      {
+        "detail": {
+          "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_5_distribution_smoke_release/FINAL_RELEASE_CHECKLIST.json"
+        },
+        "key": "checklist",
+        "label": "Required file exists: FINAL_RELEASE_CHECKLIST.json",
+        "ok": true
+      },
+      {
+        "detail": {
+          "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_5_distribution_smoke_release/PUBLISH_MANIFEST.json"
+        },
+        "key": "publish_manifest",
+        "label": "Required file exists: PUBLISH_MANIFEST.json",
+        "ok": true
+      },
+      {
+        "detail": {
+          "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_5_distribution_smoke_release/INTEGRITY_MANIFEST.json"
+        },
+        "key": "integrity_manifest",
+        "label": "Required file exists: INTEGRITY_MANIFEST.json",
+        "ok": true
+      },
+      {
+        "detail": {
+          "status": "published"
+        },
+        "key": "publish_manifest_published",
+        "label": "Publish manifest status is published",
+        "ok": true
+      },
+      {
+        "detail": {
+          "approved": true,
+          "gate_status": "approved"
+        },
+        "key": "final_gate_approved",
+        "label": "Final gate is approved",
+        "ok": true
+      },
+      {
+        "detail": {
+          "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_5_distribution_smoke_release/INTEGRITY_MANIFEST.json"
+        },
+        "key": "integrity_manifest_present",
+        "label": "Integrity manifest is present and valid JSON",
+        "ok": true
+      },
+      {
+        "detail": {
+          "required_presence": {
+            "checklist": true,
+            "final_gate_manifest": true,
+            "package_zip": true,
+            "publish_manifest": true,
+            "rc_manifest": true,
+            "release_notes": true,
+            "signoff_audit": true
+          }
+        },
+        "key": "integrity_required_presence",
+        "label": "Integrity manifest confirms required evidence presence",
+        "ok": true
+      },
+      {
+        "detail": {
+          "failure_count": 0,
+          "failures": []
+        },
+        "key": "integrity_file_checksums",
+        "label": "All integrity-manifest file SHA256 checks match",
+        "ok": true
+      },
+      {
+        "detail": {
+          "path": "storage/final_release_archives/v9_9_5_distribution_smoke_release.zip"
+        },
+        "key": "archive_zip_exists",
+        "label": "Archive ZIP exists",
+        "ok": true
+      },
+      {
+        "detail": {
+          "path": "storage/final_release_archives/v9_9_5_distribution_smoke_release.tar.gz"
+        },
+        "key": "archive_tar_exists",
+        "label": "Archive TAR.GZ exists",
+        "ok": true
+      },
+      {
+        "detail": {
+          "actual": "30ca0af1cecbba30d66a96b9f967938f258980a1464f0c396f4b848c6be6336e",
+          "expected": "30ca0af1cecbba30d66a96b9f967938f258980a1464f0c396f4b848c6be6336e"
+        },
+        "key": "archive_zip_checksum",
+        "label": "Archive ZIP checksum matches integrity seal when seal is available",
+        "ok": true
+      },
+      {
+        "detail": {
+          "actual": "044c99518cd35cf2b0310751276f69222e421a2a9da0287d1251a0b79d8b96dd",
+          "expected": "044c99518cd35cf2b0310751276f69222e421a2a9da0287d1251a0b79d8b96dd"
+        },
+        "key": "archive_tar_checksum",
+        "label": "Archive TAR.GZ checksum matches integrity seal when seal is available",
+        "ok": true
+      },
+      {
+        "detail": {
+          "entry_count": 12
+        },
+        "key": "zip_required_files",
+        "label": "ZIP contains required final release files",
+        "ok": true
+      },
+      {
+        "detail": {
+          "entry_count": 12
+        },
+        "key": "tar_required_files",
+        "label": "TAR.GZ contains required final release files",
+        "ok": true
+      },
+      {
+        "detail": {
+          "failures": [],
+          "package_zip_count": 2
+        },
+        "key": "package_zips_present",
+        "label": "Package ZIPs referenced by publish manifest are present",
+        "ok": true
+      }
+    ],
+    "checks_passed": 16,
+    "checks_total": 16,
+    "download_tar_url": "/product/final-release/archive/download/v9_9_5_distribution_smoke_release.tar.gz",
+    "download_zip_url": "/product/final-release/archive/download/v9_9_5_distribution_smoke_release.zip",
+    "failures": [],
+    "generated_at": "2026-05-13T03:41:07.600337+00:00",
+    "recommended_next_action": "Final release verified.",
+    "release_name": "v9_9_5_distribution_smoke_release",
+    "release_path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_5_distribution_smoke_release",
+    "status": "pass",
+    "version": "9.9.4"
+  },
+  "verification_status": "pass",
+  "version": "9.9.5"
+}

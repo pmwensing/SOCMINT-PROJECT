@@ -426,3 +426,16 @@ final-release-verify-hardening-smoke:
 
 zip994:
 	cd .. && zip -r SOCMINT-PROJECT-v9.9.4-final-release-verification-console.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-distribution-readiness-smoke:
+	PYTHONPATH=src python3 scripts/product_distribution_readiness_smoke_v9_9_5.py
+
+test995:
+	PYTHONPATH=src python3 scripts/product_distribution_readiness_smoke_v9_9_5.py
+
+distribution-readiness-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_distribution_readiness_hardening_v9_9_5.py
+
+zip995:
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.5-distribution-readiness.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
