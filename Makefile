@@ -634,3 +634,16 @@ action-route-readiness-hardening-smoke:
 
 zip1010:
 	cd .. && zip -r SOCMINT-PROJECT-v10.1.0-action-route-readiness.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-action-safety-contract-smoke:
+	PYTHONPATH=src python3 scripts/product_action_safety_contract_smoke_v10_1_1.py
+
+test1011:
+	PYTHONPATH=src python3 scripts/product_action_safety_contract_smoke_v10_1_1.py
+
+action-safety-contract-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_action_safety_contract_hardening_v10_1_1.py
+
+zip1011:
+	cd .. && zip -r SOCMINT-PROJECT-v10.1.1-action-safety-contract.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'

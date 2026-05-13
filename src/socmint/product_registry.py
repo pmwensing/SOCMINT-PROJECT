@@ -1425,3 +1425,212 @@ def product_v10_action_route_readiness_view():
     payload = _v1010_action_readiness_payload()
     return render_template("product_v10_action_route_readiness.html", readiness=payload)
 # ---- end v10.1.0 action route readiness gate ----
+
+
+
+# ---- v10.1.1 Action Route Safety Contract + CSRF Enforcement Matrix ----
+def _v1011_safety_classification(row: dict[str, Any]) -> dict[str, Any]:
+    route = row.get("route", "")
+    methods = row.get("methods") or []
+    mutating_methods = row.get("mutating_methods") or []
+    token_hits = row.get("token_hits") or []
+    is_mutating = bool(mutating_methods)
+
+    csrf_required = bool(row.get("requires_csrf"))
+    session_required = bool(row.get("requires_session"))
+    auth_required = True
+    write_safety_required = bool(row.get("requires_write_safety_review"))
+
+    download_or_archive = any(token in route.lower() for token in ("download", "archive"))
+    destructive_or_publish = any(token in route.lower() for token in ("publish", "decision", "signoff", "write", "build"))
+
+    enforcement = {
+        "csrf_required": csrf_required,
+        "session_required": session_required,
+        "auth_required": auth_required,
+        "write_safety_required": write_safety_required,
+        "dashboard_fallback_required": True,
+        "migration_blocked": True,
+        "route_owner_must_remain_dashboard": True,
+        "manual_approval_required": True,
+        "audit_event_required": is_mutating or destructive_or_publish,
+        "idempotency_review_required": is_mutating,
+        "download_path_safety_required": download_or_archive,
+        "state_change_review_required": is_mutating or destructive_or_publish,
+    }
+
+    missing = [
+        key
+        for key, value in enforcement.items()
+        if value is None
+    ]
+
+    if is_mutating and not csrf_required:
+        missing.append("csrf_required_for_mutating_route")
+
+    if not session_required:
+        missing.append("session_required")
+
+    if not auth_required:
+        missing.append("auth_required")
+
+    if not write_safety_required:
+        missing.append("write_safety_required")
+
+    if not row.get("is_dashboard_owned"):
+        missing.append("dashboard_ownership")
+
+    if row.get("is_extracted_blueprint_owned"):
+        missing.append("not_blueprint_owned")
+
+    if row.get("safe_to_migrate"):
+        missing.append("must_not_be_safe_to_migrate")
+
+    if not row.get("blocked_from_blueprint_migration"):
+        missing.append("migration_block")
+
+    route_type = "mutating" if is_mutating else "sensitive-read"
+    if download_or_archive and not is_mutating:
+        route_type = "file-or-archive-read"
+    if destructive_or_publish and is_mutating:
+        route_type = "state-changing-action"
+
+    return {
+        "route": route,
+        "endpoint": row.get("endpoint"),
+        "endpoint_family": row.get("endpoint_family"),
+        "methods": methods,
+        "mutating_methods": mutating_methods,
+        "token_hits": token_hits,
+        "route_type": route_type,
+        "risk_level": row.get("risk_level"),
+        "risk_score": row.get("risk_score"),
+        "enforcement": enforcement,
+        "missing_classification": missing,
+        "contract_complete": not missing,
+        "safe_to_migrate": False,
+        "migration_blocked": True,
+        "status": "pass" if not missing else "fail",
+    }
+
+
+def _v1011_action_safety_contract_payload() -> dict[str, Any]:
+    readiness = _v1010_action_readiness_payload()
+    contracts = [
+        _v1011_safety_classification(row)
+        for row in readiness.get("action_routes", [])
+    ]
+
+    failed = [item for item in contracts if item["status"] != "pass"]
+    incomplete = [item for item in contracts if not item["contract_complete"]]
+    not_blocked = [item for item in contracts if not item["migration_blocked"] or item["safe_to_migrate"]]
+
+    mutating = [item for item in contracts if item["mutating_methods"]]
+    csrf_missing = [
+        item
+        for item in mutating
+        if not item["enforcement"].get("csrf_required")
+    ]
+
+    status = "pass" if (
+        readiness.get("status") == "pass"
+        and contracts
+        and not failed
+        and not incomplete
+        and not not_blocked
+        and not csrf_missing
+    ) else "fail"
+
+    return {
+        "status": status,
+        "version": "10.1.1",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "action_readiness_status": readiness.get("status"),
+        "contract_count": len(contracts),
+        "complete_contract_count": sum(1 for item in contracts if item["contract_complete"]),
+        "failed_contract_count": len(failed),
+        "mutating_route_count": len(mutating),
+        "csrf_missing_count": len(csrf_missing),
+        "migration_blocked_count": sum(1 for item in contracts if item["migration_blocked"]),
+        "safe_to_migrate_count": sum(1 for item in contracts if item["safe_to_migrate"]),
+        "dashboard_owned_count": readiness.get("dashboard_owned_count"),
+        "extracted_blueprint_owned_count": readiness.get("extracted_blueprint_owned_count"),
+        "contracts": contracts,
+        "failed_contracts": failed,
+        "incomplete_contracts": incomplete,
+        "not_blocked_contracts": not_blocked,
+        "csrf_missing_contracts": csrf_missing,
+        "readiness": readiness,
+        "recommended_next_action": (
+            "Safety contract is complete. Keep action routes dashboard-owned until CSRF/session/write-safety enforcement is independently tested."
+            if status == "pass"
+            else "Do not migrate action routes. Complete missing CSRF/session/auth/write-safety classifications first."
+        ),
+    }
+
+
+def write_action_safety_contract_report() -> dict[str, Any]:
+    import json
+    from pathlib import Path
+
+    payload = _v1011_action_safety_contract_payload()
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+
+    json_path = release_dir / "V10_1_1_ACTION_SAFETY_CONTRACT_MATRIX.json"
+    md_path = release_dir / "V10_1_1_ACTION_SAFETY_CONTRACT_MATRIX.md"
+
+    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+
+    rows = [
+        "# v10.1.1 Action Route Safety Contract + CSRF Enforcement Matrix",
+        "",
+        f"Generated: {payload['generated_at']}",
+        f"Status: **{payload['status']}**",
+        f"Action readiness status: {payload['action_readiness_status']}",
+        f"Contracts: {payload['complete_contract_count']}/{payload['contract_count']}",
+        f"Mutating routes: {payload['mutating_route_count']}",
+        f"CSRF missing: {payload['csrf_missing_count']}",
+        f"Safe to migrate: {payload['safe_to_migrate_count']}",
+        "",
+        "## Safety Matrix",
+        "",
+    ]
+
+    for item in payload["contracts"]:
+        enforcement = item["enforcement"]
+        rows.append(
+            f"- **{item['status'].upper()}** `{item['route']}` `{item['methods']}` "
+            f"type={item['route_type']} csrf={enforcement['csrf_required']} "
+            f"session={enforcement['session_required']} auth={enforcement['auth_required']} "
+            f"write_safety={enforcement['write_safety_required']} blocked={item['migration_blocked']}"
+        )
+
+    rows.extend(["", "## Failed / Incomplete Contracts", ""])
+    rows.extend([f"- `{item['route']}` missing={item['missing_classification']}" for item in payload["failed_contracts"]] or ["- None"])
+
+    rows.extend(["", "## Recommended Next Action", "", payload["recommended_next_action"], ""])
+
+    md_path.write_text("\n".join(rows))
+    payload["artifacts_written"] = {
+        "json": json_path.as_posix(),
+        "markdown": md_path.as_posix(),
+    }
+    return payload
+
+
+@product_registry_bp.route("/api/v1/product/v10/action-safety-contract")
+def api_product_v10_action_safety_contract():
+    return jsonify(_v1011_action_safety_contract_payload())
+
+
+@product_registry_bp.route("/api/v1/product/v10/action-safety-contract/write", methods=["POST"])
+def api_product_v10_action_safety_contract_write():
+    return jsonify(write_action_safety_contract_report())
+
+
+@product_registry_bp.route("/product/v10/action-safety-contract")
+def product_v10_action_safety_contract_view():
+    payload = _v1011_action_safety_contract_payload()
+    return render_template("product_v10_action_safety_contract.html", contract=payload)
+# ---- end v10.1.1 action safety contract ----
