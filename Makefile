@@ -517,3 +517,16 @@ route-extraction-hardening-smoke:
 
 zip1001:
 	cd .. && zip -r SOCMINT-PROJECT-v10.0.1-route-extraction-phase-1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-post-release-extraction-smoke:
+	PYTHONPATH=src python3 scripts/product_post_release_extraction_smoke_v10_0_2.py
+
+test1002:
+	PYTHONPATH=src python3 scripts/product_post_release_extraction_smoke_v10_0_2.py
+
+post-release-extraction-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_post_release_extraction_hardening_v10_0_2.py
+
+zip1002:
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.2-post-release-extraction.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
