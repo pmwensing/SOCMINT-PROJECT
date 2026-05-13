@@ -543,3 +543,16 @@ artifact-pipeline-extraction-hardening-smoke:
 
 zip1003:
 	cd .. && zip -r SOCMINT-PROJECT-v10.0.3-artifact-pipeline-split.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-module-registry-smoke:
+	PYTHONPATH=src python3 scripts/product_module_registry_smoke_v10_0_4.py
+
+test1004:
+	PYTHONPATH=src python3 scripts/product_module_registry_smoke_v10_0_4.py
+
+module-registry-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_module_registry_hardening_v10_0_4.py
+
+zip1004:
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.4-product-module-registry.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
