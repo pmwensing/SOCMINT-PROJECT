@@ -5,7 +5,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .dossier_export_audit import audit_event
 from .dossier_export_pack import DOSSIER_EXPORT_SCHEMA
 from .dossier_export_pack import build_export_pack
 from .dossier_export_pack import canonical_json
@@ -22,6 +21,12 @@ def safe_slug(value: str | None, fallback: str = "unknown") -> str:
 
 def export_directory(subject_id: str | None, case_id: str | None, root: str | Path = DEFAULT_EXPORT_ROOT) -> Path:
     return Path(root) / safe_slug(case_id, "case") / safe_slug(subject_id, "subject")
+
+
+def _audit_event(*args, **kwargs):
+    from .dossier_export_audit import audit_event
+
+    return audit_event(*args, **kwargs)
 
 
 def persist_export_pack(
@@ -75,7 +80,7 @@ def persist_export_pack(
     }
 
     if audit and case_id and subject_id:
-        event = audit_event(
+        event = _audit_event(
             "export_created",
             case_id=str(case_id),
             subject_id=str(subject_id),
@@ -111,7 +116,7 @@ def load_export_manifest(
         }
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if audit:
-        manifest["audit_event"] = audit_event(
+        manifest["audit_event"] = _audit_event(
             "manifest_read",
             case_id=case_id,
             subject_id=subject_id,
