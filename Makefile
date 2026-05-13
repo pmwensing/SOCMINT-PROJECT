@@ -530,3 +530,16 @@ post-release-extraction-hardening-smoke:
 
 zip1002:
 	cd .. && zip -r SOCMINT-PROJECT-v10.0.2-post-release-extraction.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-artifact-pipeline-extraction-smoke:
+	PYTHONPATH=src python3 scripts/product_artifact_pipeline_extraction_smoke_v10_0_3.py
+
+test1003:
+	PYTHONPATH=src python3 scripts/product_artifact_pipeline_extraction_smoke_v10_0_3.py
+
+artifact-pipeline-extraction-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_artifact_pipeline_extraction_hardening_v10_0_3.py
+
+zip1003:
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.3-artifact-pipeline-split.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
