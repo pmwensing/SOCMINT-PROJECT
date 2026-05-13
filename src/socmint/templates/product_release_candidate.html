@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Product Release Candidate Console</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+    .pass { color: #86efac; font-weight: 700; }
+    .warn { color: #fde68a; font-weight: 700; }
+    .fail { color: #fecaca; font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Product Release Candidate Console</h1>
+  <p>v9.9.0 release candidate readiness across the v9.8 product chain.</p>
+
+  <section class="card">
+    <h2>Release Candidate Status</h2>
+    <p>Status: <strong class="{{ manifest.status }}">{{ manifest.status|upper }}</strong></p>
+    <p>Required passed: {{ manifest.summary.required_passed }}/{{ manifest.summary.required_total }}</p>
+    <p>Recommended next action: {{ manifest.release_candidate.recommended_next_action }}</p>
+    <p>
+      <a href="/api/v1/product/release-candidate">RC manifest JSON</a> |
+      <a href="/product/build-control">Product Control</a> |
+      <a href="/product/release-package">Release Package Builder</a>
+    </p>
+    {% if session.get('is_admin') %}
+    <form method="post" action="{{ url_for('dashboard.product_release_candidate_write') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Write RC Manifest</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>v9.8 Chain Stage Readiness</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Stage</th>
+          <th>Status</th>
+          <th>Target</th>
+          <th>Artifact</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for stage in manifest.summary.stages %}
+        <tr>
+          <td>{{ stage.label }}</td>
+          <td><span class="{{ stage.status }}">{{ stage.status|upper }}</span></td>
+          <td><code>{{ stage.target }}</code></td>
+          <td>
+            <code>{{ stage.artifact }}</code><br>
+            {% if stage.artifact_exists %}
+              <a href="{{ stage.artifact_view_url }}">view</a> |
+              <a href="{{ stage.artifact_download_url }}">download</a>
+            {% else %}
+              missing
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Built Packages</h2>
+    <p>Built package count: {{ manifest.built_package_count }}</p>
+    <p><a href="/api/v1/product/release-packages">Package list JSON</a></p>
+  </section>
+</main>
+</body>
+</html>

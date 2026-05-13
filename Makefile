@@ -361,3 +361,16 @@ release-package-zip-hardening-smoke:
 
 zip989:
 	cd .. && zip -r SOCMINT-PROJECT-v9.8.9-product-release-package-zip.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-release-candidate-smoke:
+	PYTHONPATH=src python3 scripts/product_release_candidate_smoke_v9_9_0.py
+
+test990:
+	PYTHONPATH=src python3 scripts/product_release_candidate_smoke_v9_9_0.py
+
+release-candidate-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_release_candidate_hardening_v9_9_0.py
+
+zip990:
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.0-product-release-candidate-console.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'

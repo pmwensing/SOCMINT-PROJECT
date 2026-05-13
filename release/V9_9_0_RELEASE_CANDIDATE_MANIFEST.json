@@ -1,0 +1,141 @@
+{
+  "actor": "v990-rc-smoke",
+  "built_package_count": 2,
+  "export_manifest_summary": {
+    "archived": 0,
+    "audit_events": 22,
+    "important": 3,
+    "reviewed": 3
+  },
+  "generated_at": "2026-05-13T01:40:07.617658+00:00",
+  "package_preview_count": 6,
+  "packages": [
+    {
+      "copied_artifact_count": 6,
+      "generated_at": "2026-05-13T01:40:06.832229+00:00",
+      "index_path": "storage/product_packages/v9_8_9_zip_smoke_package/PACKAGE_INDEX.md",
+      "manifest_path": "storage/product_packages/v9_8_9_zip_smoke_package/PACKAGE_MANIFEST.json",
+      "metadata_file_count": 4,
+      "modified_at": "2026-05-13T01:40:06.832399+00:00",
+      "package_name": "v9_8_9_zip_smoke_package",
+      "package_path": "storage/product_packages/v9_8_9_zip_smoke_package",
+      "selected_count": 6,
+      "zip_download_url": "/product/release-package/download/v9_8_9_zip_smoke_package",
+      "zip_entries": [
+        "PACKAGE_INDEX.md",
+        "PACKAGE_MANIFEST.json",
+        "artifacts/release/V9_8_7_SELECTED_IMPORTANT_ARTIFACT.md",
+        "artifacts/release/V9_8_7_SELECTED_REVIEWED_ARTIFACT.md",
+        "artifacts/release/V9_8_8_PACKAGE_IMPORTANT_ARTIFACT.md",
+        "artifacts/release/V9_8_8_PACKAGE_REVIEWED_ARTIFACT.md",
+        "artifacts/release/V9_8_9_ZIP_IMPORTANT_ARTIFACT.md",
+        "artifacts/release/V9_8_9_ZIP_REVIEWED_ARTIFACT.md",
+        "metadata/release/V9_8_7_PRODUCT_ARTIFACT_EXPORT_MANIFEST.json",
+        "metadata/release/V9_8_7_PRODUCT_ARTIFACT_EXPORT_MANIFEST.md",
+        "metadata/storage/product_qa/product_artifact_metadata.json",
+        "metadata/storage/product_qa/product_artifact_review_audit.json"
+      ],
+      "zip_exists": true,
+      "zip_path": "storage/product_packages/v9_8_9_zip_smoke_package.zip",
+      "zip_size_bytes": 9404
+    },
+    {
+      "copied_artifact_count": 6,
+      "generated_at": "2026-05-13T01:40:06.066938+00:00",
+      "index_path": "storage/product_packages/v9_8_8_smoke_package/PACKAGE_INDEX.md",
+      "manifest_path": "storage/product_packages/v9_8_8_smoke_package/PACKAGE_MANIFEST.json",
+      "metadata_file_count": 4,
+      "modified_at": "2026-05-13T01:40:06.067122+00:00",
+      "package_name": "v9_8_8_smoke_package",
+      "package_path": "storage/product_packages/v9_8_8_smoke_package",
+      "selected_count": 6,
+      "zip_download_url": null,
+      "zip_entries": [],
+      "zip_exists": false,
+      "zip_path": null,
+      "zip_size_bytes": 0
+    }
+  ],
+  "release_candidate": {
+    "base_line": "v9.8.0-v9.8.9",
+    "name": "SOCMINT Workbench v9.9.0 Release Candidate",
+    "recommended_next_action": "Cut v9.9.0 release candidate tag"
+  },
+  "status": "pass",
+  "summary": {
+    "missing_stage_keys": [],
+    "required_missing": 0,
+    "required_passed": 6,
+    "required_total": 6,
+    "stages": [
+      {
+        "artifact": "release/V9_7_PRODUCT_SMOKE_REPORT.md",
+        "artifact_download_url": "/product/artifacts/download/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+        "artifact_exists": true,
+        "artifact_view_url": "/product/artifacts/view/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+        "key": "product_smoke",
+        "label": "Product Smoke",
+        "required": true,
+        "status": "pass",
+        "target": "make product-smoke"
+      },
+      {
+        "artifact": "release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+        "artifact_download_url": "/product/artifacts/download/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+        "artifact_exists": true,
+        "artifact_view_url": "/product/artifacts/view/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+        "key": "artifact_review",
+        "label": "Artifact Review",
+        "required": true,
+        "status": "pass",
+        "target": "make product-artifact-review-smoke"
+      },
+      {
+        "artifact": "release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+        "artifact_download_url": "/product/artifacts/download/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+        "artifact_exists": true,
+        "artifact_view_url": "/product/artifacts/view/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+        "key": "artifact_review_audit",
+        "label": "Artifact Review Audit",
+        "required": true,
+        "status": "pass",
+        "target": "make product-artifact-review-audit-smoke"
+      },
+      {
+        "artifact": "release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+        "artifact_download_url": "/product/artifacts/download/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+        "artifact_exists": true,
+        "artifact_view_url": "/product/artifacts/view/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+        "key": "export_manifest",
+        "label": "Evidence Chain Export Manifest",
+        "required": true,
+        "status": "pass",
+        "target": "make product-artifact-export-manifest-smoke"
+      },
+      {
+        "artifact": "release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+        "artifact_download_url": "/product/artifacts/download/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+        "artifact_exists": true,
+        "artifact_view_url": "/product/artifacts/view/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+        "key": "release_package",
+        "label": "Release Package Builder",
+        "required": true,
+        "status": "pass",
+        "target": "make product-release-package-smoke"
+      },
+      {
+        "artifact": "release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+        "artifact_download_url": "/product/artifacts/download/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+        "artifact_exists": true,
+        "artifact_view_url": "/product/artifacts/view/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+        "key": "zip_export",
+        "label": "Release Package ZIP Export",
+        "required": true,
+        "status": "pass",
+        "target": "make product-release-package-zip-smoke"
+      }
+    ],
+    "status": "pass"
+  },
+  "version": "9.9.0"
+}
