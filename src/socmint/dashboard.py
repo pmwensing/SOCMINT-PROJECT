@@ -5682,3 +5682,341 @@ def product_final_dashboard_write():
     flash("Final product release index and version freeze written.", "success")
     return redirect(url_for("dashboard.product_final_dashboard_view"))
 # ---- end v9.9.6 final product release dashboard ----
+
+
+
+# ---- v9.9.7 Product Release Closeout + Operator Handoff Pack ----
+def _v997_handoff_root(handoff_name=None):
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    base = Path("storage/final_handoff")
+    base.mkdir(parents=True, exist_ok=True)
+    if not handoff_name:
+        handoff_name = "v9_9_7_handoff_" + datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    return base / _v988_package_slug(handoff_name)
+
+
+def _v997_required_handoff_sources():
+    return [
+        {
+            "key": "release_candidate_manifest_json",
+            "label": "Release Candidate Manifest JSON",
+            "path": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+            "version": "v9.9.0",
+        },
+        {
+            "key": "release_candidate_manifest_md",
+            "label": "Release Candidate Manifest MD",
+            "path": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.md",
+            "version": "v9.9.0",
+        },
+        {
+            "key": "final_gate_manifest_json",
+            "label": "Final Gate Manifest JSON",
+            "path": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+            "version": "v9.9.1",
+        },
+        {
+            "key": "final_gate_manifest_md",
+            "label": "Final Gate Manifest MD",
+            "path": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.md",
+            "version": "v9.9.1",
+        },
+        {
+            "key": "final_release_notes",
+            "label": "Final Release Notes",
+            "path": "release/V9_9_2_FINAL_RELEASE_NOTES.md",
+            "version": "v9.9.2",
+        },
+        {
+            "key": "final_release_publish_manifest",
+            "label": "Final Release Publish Manifest",
+            "path": "release/V9_9_2_FINAL_RELEASE_PUBLISH_MANIFEST.json",
+            "version": "v9.9.2",
+        },
+        {
+            "key": "archive_seal_json",
+            "label": "Archive Integrity Seal JSON",
+            "path": "release/V9_9_3_FINAL_RELEASE_ARCHIVE_SEAL.json",
+            "version": "v9.9.3",
+        },
+        {
+            "key": "archive_seal_md",
+            "label": "Archive Integrity Seal MD",
+            "path": "release/V9_9_3_FINAL_RELEASE_ARCHIVE_SEAL.md",
+            "version": "v9.9.3",
+        },
+        {
+            "key": "integrity_manifest",
+            "label": "Final Release Integrity Manifest",
+            "path": "release/V9_9_3_FINAL_RELEASE_INTEGRITY_MANIFEST.json",
+            "version": "v9.9.3",
+        },
+        {
+            "key": "verification_report_json",
+            "label": "Final Verification Report JSON",
+            "path": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json",
+            "version": "v9.9.4",
+        },
+        {
+            "key": "verification_report_md",
+            "label": "Final Verification Report MD",
+            "path": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.md",
+            "version": "v9.9.4",
+        },
+        {
+            "key": "distribution_report_json",
+            "label": "Distribution Readiness Report JSON",
+            "path": "release/V9_9_5_DISTRIBUTION_READINESS_REPORT.json",
+            "version": "v9.9.5",
+        },
+        {
+            "key": "distribution_report_md",
+            "label": "Distribution Readiness Report MD",
+            "path": "release/V9_9_5_DISTRIBUTION_READINESS_REPORT.md",
+            "version": "v9.9.5",
+        },
+        {
+            "key": "final_dashboard_index_json",
+            "label": "Final Dashboard Index JSON",
+            "path": "release/V9_9_6_FINAL_PRODUCT_RELEASE_INDEX.json",
+            "version": "v9.9.6",
+        },
+        {
+            "key": "final_dashboard_index_md",
+            "label": "Final Dashboard Index MD",
+            "path": "release/V9_9_6_FINAL_PRODUCT_RELEASE_INDEX.md",
+            "version": "v9.9.6",
+        },
+        {
+            "key": "version_freeze",
+            "label": "Version Freeze",
+            "path": "release/V9_9_6_FINAL_PRODUCT_VERSION_FREEZE.json",
+            "version": "v9.9.6",
+        },
+    ]
+
+
+def _v997_handoff_preview(actor=None, release_name=None):
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    final_payload = _v996_final_dashboard_payload(actor=actor, release_name=release_name)
+    sources = []
+    missing = []
+
+    for item in _v997_required_handoff_sources():
+        p = Path(item["path"])
+        entry = {
+            **item,
+            "exists": p.exists() and p.is_file(),
+            "size_bytes": p.stat().st_size if p.exists() and p.is_file() else 0,
+            "sha256": _v993_sha256_file(p) if p.exists() and p.is_file() else None,
+        }
+        sources.append(entry)
+        if not entry["exists"]:
+            missing.append(item["key"])
+
+    return {
+        "status": "ready" if final_payload.get("status") == "ready" and not missing else "blocked",
+        "version": "9.9.7",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "actor": actor,
+        "release_name": final_payload.get("release_name"),
+        "final_dashboard_status": final_payload.get("status"),
+        "distribution_ready": final_payload.get("distribution_ready"),
+        "required_total": len(sources),
+        "required_present": sum(1 for item in sources if item["exists"]),
+        "missing": missing,
+        "sources": sources,
+        "final_dashboard": final_payload,
+        "recommended_next_action": (
+            "Generate operator handoff pack."
+            if final_payload.get("status") == "ready" and not missing
+            else "Complete final dashboard/distribution readiness and regenerate missing artifacts."
+        ),
+    }
+
+
+def _v997_build_handoff_pack(handoff_name=None, actor=None, release_name=None):
+    from pathlib import Path
+    import shutil
+
+    preview = _v997_handoff_preview(actor=actor, release_name=release_name)
+    if preview.get("status") != "ready":
+        return {
+            "status": "blocked",
+            "version": "9.9.7",
+            "reason": "Operator handoff pack requires final dashboard ready status and all required v9.9.0-v9.9.6 artifacts.",
+            "preview": preview,
+        }
+
+    root = _v997_handoff_root(handoff_name)
+    if root.exists():
+        shutil.rmtree(root)
+    root.mkdir(parents=True, exist_ok=True)
+
+    copied = []
+    for item in preview.get("sources", []):
+        src = Path(item["path"])
+        dest = root / "artifacts" / item["version"] / src.name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
+        copied.append(
+            {
+                "key": item["key"],
+                "version": item["version"],
+                "label": item["label"],
+                "source": src.as_posix(),
+                "package_path": dest.as_posix(),
+                "size_bytes": dest.stat().st_size,
+                "sha256": _v993_sha256_file(dest),
+            }
+        )
+
+    checklist = [
+        {
+            "key": item["key"],
+            "label": item["label"],
+            "version": item["version"],
+            "included": True,
+            "package_path": item["package_path"],
+            "sha256": item["sha256"],
+        }
+        for item in copied
+    ]
+
+    manifest = {
+        "status": "ready",
+        "version": "9.9.7",
+        "handoff_name": root.name,
+        "handoff_path": root.as_posix(),
+        "actor": actor,
+        "release_name": preview.get("release_name"),
+        "final_dashboard_status": preview.get("final_dashboard_status"),
+        "distribution_ready": preview.get("distribution_ready"),
+        "required_total": preview.get("required_total"),
+        "required_present": preview.get("required_present"),
+        "copied_count": len(copied),
+        "copied": copied,
+        "checklist": checklist,
+    }
+
+    notes = [
+        "# Product Release Closeout Operator Handoff Pack",
+        "",
+        f"Handoff: {root.name}",
+        "Version: v9.9.7",
+        f"Release: {preview.get('release_name')}",
+        f"Status: {manifest['status']}",
+        f"Distribution ready: {manifest['distribution_ready']}",
+        "",
+        "## Printable Handoff Checklist",
+        "",
+    ]
+    for item in checklist:
+        notes.append(f"- [x] {item['version']} — {item['label']} — `{item['package_path']}`")
+
+    notes.extend(
+        [
+            "",
+            "## Operator Closeout",
+            "",
+            "- Confirm final dashboard status is READY.",
+            "- Confirm distribution readiness is ready.",
+            "- Confirm archive/integrity seal is retained.",
+            "- Confirm verification report is retained.",
+            "- Confirm RC and final gate manifests are retained.",
+            "",
+        ]
+    )
+
+    (root / "HANDOFF_MANIFEST.json").write_text(json.dumps(manifest, indent=2, sort_keys=True))
+    (root / "PRINTABLE_HANDOFF_CHECKLIST.md").write_text("\n".join(notes))
+    (root / "README.md").write_text("\n".join(notes))
+
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+    latest_manifest = release_dir / "V9_9_7_OPERATOR_HANDOFF_MANIFEST.json"
+    latest_checklist = release_dir / "V9_9_7_PRINTABLE_HANDOFF_CHECKLIST.md"
+    latest_summary = release_dir / "V9_9_7_PRODUCT_RELEASE_CLOSEOUT_OPERATOR_HANDOFF.md"
+
+    latest_manifest.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+    latest_checklist.write_text("\n".join(notes))
+    latest_summary.write_text(
+        "\n".join(
+            [
+                "# v9.9.7 - Product Release Closeout + Operator Handoff Pack",
+                "",
+                f"Status: **{manifest['status']}**",
+                f"Handoff: `{root.as_posix()}`",
+                f"Release: `{preview.get('release_name')}`",
+                f"Artifacts copied: {len(copied)}",
+                "",
+                "## Included Versions",
+                "",
+                "- v9.9.0 Release Candidate Manifest",
+                "- v9.9.1 Final Product Gate",
+                "- v9.9.2 Final Release Publisher",
+                "- v9.9.3 Archive Integrity Seal",
+                "- v9.9.4 Final Verification",
+                "- v9.9.5 Distribution Readiness",
+                "- v9.9.6 Final Product Dashboard + Version Freeze",
+                "",
+            ]
+        )
+    )
+
+    manifest["artifacts_written"] = {
+        "handoff_manifest": latest_manifest.as_posix(),
+        "printable_checklist": latest_checklist.as_posix(),
+        "summary": latest_summary.as_posix(),
+        "handoff_dir": root.as_posix(),
+    }
+    return manifest
+
+
+@dashboard_bp.route("/api/v1/product/final/handoff")
+@login_required
+def api_v997_handoff_preview():
+    release_name = request.args.get("release_name")
+    return jsonify(_v997_handoff_preview(actor=session.get("user"), release_name=release_name))
+
+
+@dashboard_bp.route("/api/v1/product/final/handoff/build", methods=["POST"])
+@admin_required
+def api_v997_handoff_build():
+    payload = request.get_json(silent=True) or request.form
+    result = _v997_build_handoff_pack(
+        handoff_name=payload.get("handoff_name") or None,
+        actor=session.get("user"),
+        release_name=payload.get("release_name") or None,
+    )
+    audit("product_operator_handoff_build", details=result.get("artifacts_written"))
+    return jsonify(result)
+
+
+@dashboard_bp.route("/product/final/handoff")
+@login_required
+def product_final_handoff_view():
+    release_name = request.args.get("release_name")
+    preview = _v997_handoff_preview(actor=session.get("user"), release_name=release_name)
+    return render_template("product_final_handoff.html", preview=preview)
+
+
+@dashboard_bp.route("/product/final/handoff/build", methods=["POST"])
+@admin_required
+def product_final_handoff_build():
+    result = _v997_build_handoff_pack(
+        handoff_name=request.form.get("handoff_name") or None,
+        actor=session.get("user"),
+        release_name=request.form.get("release_name") or None,
+    )
+    audit("product_operator_handoff_build", details=result.get("artifacts_written"))
+    if result.get("status") == "ready":
+        flash("Operator handoff pack built.", "success")
+    else:
+        flash("Operator handoff pack blocked until all required artifacts are present and final dashboard is ready.", "error")
+    return redirect(url_for("dashboard.product_final_handoff_view"))
+# ---- end v9.9.7 product release closeout handoff ----
