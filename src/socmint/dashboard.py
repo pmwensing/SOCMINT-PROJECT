@@ -5073,3 +5073,397 @@ def product_final_release_verify_view():
         releases=releases,
     )
 # ---- end v9.9.4 final release verification console ----
+
+
+
+# ---- v9.9.5 Final Release Lock + Distribution Readiness ----
+def _v995_distribution_state_path():
+    from pathlib import Path
+
+    path = Path("storage/product_qa/final_release_distribution_state.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _v995_distribution_audit_path():
+    from pathlib import Path
+
+    path = Path("storage/product_qa/final_release_distribution_audit.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _v995_load_distribution_state():
+    path = _v995_distribution_state_path()
+    if not path.exists():
+        return {
+            "version": "9.9.5",
+            "locked": False,
+            "ready": False,
+            "decision": "pending",
+            "release_name": None,
+            "actor": None,
+            "reason": "",
+            "updated_at": None,
+            "lock_manifest_sha256": None,
+        }
+
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        data = {}
+
+    if not isinstance(data, dict):
+        data = {}
+
+    data.setdefault("version", "9.9.5")
+    data.setdefault("locked", False)
+    data.setdefault("ready", False)
+    data.setdefault("decision", "pending")
+    data.setdefault("release_name", None)
+    data.setdefault("actor", None)
+    data.setdefault("reason", "")
+    data.setdefault("updated_at", None)
+    data.setdefault("lock_manifest_sha256", None)
+    return data
+
+
+def _v995_save_distribution_state(state):
+    state["version"] = "9.9.5"
+    _v995_distribution_state_path().write_text(json.dumps(state, indent=2, sort_keys=True))
+    return state
+
+
+def _v995_load_distribution_audit():
+    path = _v995_distribution_audit_path()
+    if not path.exists():
+        return {"version": "9.9.5", "events": []}
+
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        data = {}
+
+    if not isinstance(data, dict):
+        data = {}
+
+    data.setdefault("version", "9.9.5")
+    data.setdefault("events", [])
+    return data
+
+
+def _v995_save_distribution_audit(data):
+    data["version"] = "9.9.5"
+    _v995_distribution_audit_path().write_text(json.dumps(data, indent=2, sort_keys=True))
+    return data
+
+
+def _v995_append_distribution_audit(action, actor, before, after, verification_status, reason=""):
+    from datetime import datetime, timezone
+    from uuid import uuid4
+
+    data = _v995_load_distribution_audit()
+    event = {
+        "event_id": uuid4().hex,
+        "version": "9.9.5",
+        "action": action,
+        "actor": actor,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "reason": reason,
+        "verification_status": verification_status,
+        "before": before,
+        "after": after,
+    }
+    data.setdefault("events", []).append(event)
+    _v995_save_distribution_audit(data)
+    return event
+
+
+def _v995_distribution_payload(release_name=None, actor=None):
+    from datetime import datetime, timezone
+
+    verification = _v994_verify_final_release(release_name=release_name)
+    state = _v995_load_distribution_state()
+    audit_data = _v995_load_distribution_audit()
+
+    verification_pass = verification.get("status") == "pass"
+    locked = bool(state.get("locked"))
+    ready = bool(state.get("ready"))
+
+    if not verification_pass:
+        distribution_status = "blocked"
+        can_mark_ready = False
+        recommended = "Fix final release verification failures before distribution."
+    elif ready and locked:
+        distribution_status = "ready"
+        can_mark_ready = False
+        recommended = "Final release is locked and ready to distribute."
+    elif locked and not ready:
+        distribution_status = "locked"
+        can_mark_ready = True
+        recommended = "Release is locked. Mark ready when distribution review is complete."
+    else:
+        distribution_status = "verified"
+        can_mark_ready = True
+        recommended = "Final release verification passed. Lock and mark ready when approved."
+
+    return {
+        "status": "ok",
+        "version": "9.9.5",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "actor": actor,
+        "release_name": verification.get("release_name"),
+        "distribution_status": distribution_status,
+        "can_mark_ready": can_mark_ready,
+        "verification_status": verification.get("status"),
+        "verification": verification,
+        "state": state,
+        "audit_event_count": len(audit_data.get("events", [])),
+        "latest_audit_event": audit_data.get("events", [])[-1] if audit_data.get("events") else None,
+        "recommended_next_action": recommended,
+    }
+
+
+def _v995_write_distribution_readiness_report(release_name=None, actor=None):
+    from pathlib import Path
+
+    payload = _v995_distribution_payload(release_name=release_name, actor=actor)
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+
+    json_path = release_dir / "V9_9_5_DISTRIBUTION_READINESS_REPORT.json"
+    md_path = release_dir / "V9_9_5_DISTRIBUTION_READINESS_REPORT.md"
+
+    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+
+    state = payload.get("state", {})
+    rows = [
+        "# v9.9.5 Distribution Readiness Report",
+        "",
+        f"Generated: {payload['generated_at']}",
+        f"Status: **{payload['distribution_status']}**",
+        f"Verification status: **{payload['verification_status']}**",
+        f"Release: `{payload.get('release_name')}`",
+        "",
+        "## State",
+        "",
+        f"- Locked: {state.get('locked')}",
+        f"- Ready: {state.get('ready')}",
+        f"- Decision: {state.get('decision')}",
+        f"- Actor: {state.get('actor')}",
+        f"- Reason: {state.get('reason')}",
+        f"- Lock manifest SHA256: `{state.get('lock_manifest_sha256')}`",
+        "",
+        "## Recommended Next Action",
+        "",
+        payload.get("recommended_next_action", ""),
+        "",
+        "## Verification",
+        "",
+        f"- Checks passed: {payload.get('verification', {}).get('checks_passed')}/{payload.get('verification', {}).get('checks_total')}",
+        f"- Failures: {', '.join(payload.get('verification', {}).get('failures', [])) or 'None'}",
+        "",
+    ]
+    md_path.write_text("\n".join(rows))
+
+    payload["artifacts_written"] = {
+        "json": json_path.as_posix(),
+        "markdown": md_path.as_posix(),
+    }
+    return payload
+
+
+def _v995_apply_distribution_decision(decision, release_name=None, actor=None, reason=""):
+    from copy import deepcopy
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    payload = _v995_distribution_payload(release_name=release_name, actor=actor)
+    verification_status = payload.get("verification_status")
+    before = deepcopy(_v995_load_distribution_state())
+
+    decision = str(decision or "").strip().lower()
+    if decision not in {"lock", "ready", "block", "reset"}:
+        abort(400)
+
+    if decision in {"lock", "ready"} and verification_status != "pass":
+        after = deepcopy(before)
+        event = _v995_append_distribution_audit(
+            action=f"{decision}_denied",
+            actor=actor,
+            before=before,
+            after=after,
+            verification_status=verification_status,
+            reason=reason or "Distribution decision denied because final verification is not passing.",
+        )
+        return {
+            "status": "blocked",
+            "version": "9.9.5",
+            "decision": decision,
+            "reason": "Final release verification must be pass before lock or ready.",
+            "audit_event": event,
+            "distribution": _v995_distribution_payload(release_name=release_name, actor=actor),
+        }
+
+    if decision == "lock":
+        lock_manifest = Path("release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json")
+        lock_sha = _v993_sha256_file(lock_manifest) if lock_manifest.exists() else None
+        after = {
+            "version": "9.9.5",
+            "locked": True,
+            "ready": False,
+            "decision": "locked",
+            "release_name": payload.get("release_name"),
+            "actor": actor,
+            "reason": reason or "Final release verification frozen and locked.",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "lock_manifest_sha256": lock_sha,
+        }
+    elif decision == "ready":
+        lock_manifest = Path("release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json")
+        lock_sha = _v993_sha256_file(lock_manifest) if lock_manifest.exists() else None
+        after = {
+            "version": "9.9.5",
+            "locked": True,
+            "ready": True,
+            "decision": "ready",
+            "release_name": payload.get("release_name"),
+            "actor": actor,
+            "reason": reason or "Final release locked and ready to distribute.",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "lock_manifest_sha256": before.get("lock_manifest_sha256") or lock_sha,
+        }
+    elif decision == "block":
+        after = {
+            "version": "9.9.5",
+            "locked": False,
+            "ready": False,
+            "decision": "blocked",
+            "release_name": payload.get("release_name"),
+            "actor": actor,
+            "reason": reason or "Distribution blocked by operator.",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "lock_manifest_sha256": before.get("lock_manifest_sha256"),
+        }
+    else:
+        after = {
+            "version": "9.9.5",
+            "locked": False,
+            "ready": False,
+            "decision": "pending",
+            "release_name": payload.get("release_name"),
+            "actor": actor,
+            "reason": reason or "Distribution reset to pending.",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "lock_manifest_sha256": None,
+        }
+
+    _v995_save_distribution_state(after)
+    event = _v995_append_distribution_audit(
+        action=f"distribution_{decision}",
+        actor=actor,
+        before=before,
+        after=after,
+        verification_status=verification_status,
+        reason=after.get("reason", ""),
+    )
+    report = _v995_write_distribution_readiness_report(release_name=release_name, actor=actor)
+    return {
+        "status": "ok",
+        "version": "9.9.5",
+        "decision": decision,
+        "state": after,
+        "audit_event": event,
+        "distribution": report,
+    }
+
+
+@dashboard_bp.route("/api/v1/product/final-release/distribution")
+@login_required
+def api_v995_distribution():
+    release_name = request.args.get("release_name")
+    return jsonify(_v995_distribution_payload(release_name=release_name, actor=session.get("user")))
+
+
+@dashboard_bp.route("/api/v1/product/final-release/distribution/audit")
+@login_required
+def api_v995_distribution_audit():
+    data = _v995_load_distribution_audit()
+    return jsonify(
+        {
+            "status": "ok",
+            "version": "9.9.5",
+            "count": len(data.get("events", [])),
+            "events": data.get("events", []),
+            "audit_path": str(_v995_distribution_audit_path()),
+        }
+    )
+
+
+@dashboard_bp.route("/api/v1/product/final-release/distribution/write", methods=["POST"])
+@admin_required
+def api_v995_distribution_write():
+    payload = request.get_json(silent=True) or request.form
+    release_name = payload.get("release_name") or None
+    report = _v995_write_distribution_readiness_report(release_name=release_name, actor=session.get("user"))
+    audit("product_distribution_readiness_write", details=report.get("artifacts_written"))
+    return jsonify(report)
+
+
+@dashboard_bp.route("/api/v1/product/final-release/distribution/decision", methods=["POST"])
+@admin_required
+def api_v995_distribution_decision():
+    payload = request.get_json(silent=True) or request.form
+    result = _v995_apply_distribution_decision(
+        decision=payload.get("decision"),
+        release_name=payload.get("release_name") or None,
+        actor=session.get("user"),
+        reason=payload.get("reason", ""),
+    )
+    audit("product_distribution_decision", details={"decision": payload.get("decision"), "status": result.get("status")})
+    return jsonify(result)
+
+
+@dashboard_bp.route("/product/final-release/distribution")
+@login_required
+def product_final_release_distribution_view():
+    release_name = request.args.get("release_name")
+    distribution = _v995_distribution_payload(release_name=release_name, actor=session.get("user"))
+    audit_data = _v995_load_distribution_audit()
+    releases = _v993_list_final_releases()
+    return render_template(
+        "product_final_release_distribution.html",
+        distribution=distribution,
+        audit_events=audit_data.get("events", []),
+        releases=releases,
+    )
+
+
+@dashboard_bp.route("/product/final-release/distribution/write", methods=["POST"])
+@admin_required
+def product_final_release_distribution_write():
+    release_name = request.form.get("release_name") or None
+    report = _v995_write_distribution_readiness_report(release_name=release_name, actor=session.get("user"))
+    audit("product_distribution_readiness_write", details=report.get("artifacts_written"))
+    flash("Distribution readiness report written.", "success")
+    return redirect(url_for("dashboard.product_final_release_distribution_view"))
+
+
+@dashboard_bp.route("/product/final-release/distribution/decision", methods=["POST"])
+@admin_required
+def product_final_release_distribution_decision():
+    release_name = request.form.get("release_name") or None
+    decision = request.form.get("decision")
+    reason = request.form.get("reason", "")
+    result = _v995_apply_distribution_decision(
+        decision=decision,
+        release_name=release_name,
+        actor=session.get("user"),
+        reason=reason,
+    )
+    if result.get("status") == "blocked":
+        flash("Distribution action blocked because final verification is not passing.", "error")
+    else:
+        flash("Distribution decision recorded.", "success")
+    return redirect(url_for("dashboard.product_final_release_distribution_view"))
+# ---- end v9.9.5 final release distribution readiness ----
