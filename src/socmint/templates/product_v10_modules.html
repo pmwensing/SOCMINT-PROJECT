@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Product Module Registry</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+    .ok { color: #86efac; font-weight: 700; }
+    .warn { color: #fde68a; font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Product Module Registry + Route Ownership Map</h1>
+  <p>v10.0.4 central registry showing dashboard-owned surfaces and extracted module surfaces.</p>
+
+  <section class="card">
+    <h2>Registry Status</h2>
+    <p>Status: <strong class="{{ registry.status }}">{{ registry.status|upper }}</strong></p>
+    <p>Version: <strong>v{{ registry.version }}</strong></p>
+    <p>Routes present: {{ registry.present_route_count }}/{{ registry.route_count }}</p>
+    <p>Extracted modules: {{ registry.extracted_module_count }}</p>
+    <p>
+      <a href="/api/v1/product/v10/modules">Registry JSON</a> |
+      <a href="/api/v1/product/v10/route-ownership">Route Ownership JSON</a> |
+      <a href="/product/v10">Product v10 Foundation</a>
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>Modules</h2>
+    <table>
+      <thead><tr><th>Module</th><th>Ownership</th><th>Routes</th></tr></thead>
+      <tbody>
+      {% for module in registry.modules %}
+        <tr>
+          <td>{{ module.label }}<br><code>{{ module.module }}</code></td>
+          <td>{{ module.ownership }}<br>{{ module.compatibility_mode }}</td>
+          <td>{{ module.present_route_count }}/{{ module.route_count }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Route Ownership Map</h2>
+    <table>
+      <thead><tr><th>Route</th><th>Status</th><th>Owner Module</th><th>Endpoint</th></tr></thead>
+      <tbody>
+      {% for row in registry.ownership %}
+        <tr>
+          <td><code>{{ row.route }}</code></td>
+          <td>{% if row.present %}<span class="ok">PRESENT</span>{% else %}<span class="warn">MISSING</span>{% endif %}</td>
+          <td><code>{{ row.module }}</code><br>{{ row.ownership }}</td>
+          <td><code>{{ row.endpoint }}</code><br>{{ row.methods }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>
