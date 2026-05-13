@@ -6,6 +6,7 @@ from .beta_readiness_routes import register_beta_readiness_routes
 from .case_access_routes import register_case_access_routes
 from .certification_routes import register_certification_routes
 from .dossier_builder_v3_routes import register_dossier_builder_v3_routes
+from .dossier_export_index_routes import register_dossier_export_index_routes
 from .dossier_export_pack_routes import register_dossier_export_pack_routes
 from .dossier_export_store_routes import register_dossier_export_store_routes
 from .hardening_routes import register_hardening_routes
@@ -29,6 +30,7 @@ def register_production_release_routes(app):
     register_dossier_builder_v3_routes(app)
     register_dossier_export_pack_routes(app)
     register_dossier_export_store_routes(app)
+    register_dossier_export_index_routes(app)
 
     @app.get("/api/v1/production-release")
     def api_production_release():
