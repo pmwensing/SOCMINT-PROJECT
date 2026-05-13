@@ -228,3 +228,19 @@ test761:
 
 zip761:
 	cd .. && zip -r SOCMINT-PROJECT-v7.6.1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/.env' -x 'SOCMINT-PROJECT/.connector-tools/*'
+
+
+product-smoke:
+	python3 scripts/product_qa_v9_7_4.py
+
+test971:
+	python3 -c "from src.socmint.product_control_center import build_status; import json; print(json.dumps(build_status(), indent=2))"
+
+test972:
+	python3 -c "from src.socmint.dossier_quality_gate import dossier_quality_gate; import json; print(json.dumps(dossier_quality_gate('demo-subject'), indent=2))"
+
+test973:
+	python3 -c "from src.socmint.dossier_traceability import evidence_to_dossier_traceability; import json; print(json.dumps(evidence_to_dossier_traceability('demo-subject'), indent=2))"
+
+prepare98:
+	python3 scripts/prepare_v9_8_productized_release.py
