@@ -2611,3 +2611,172 @@ def product_action_refresh_readiness():
     flash("Product readiness refreshed.", "success")
     return redirect(url_for("dashboard.product_build_control_center"))
 # ---- end v9.8.3 product runtime actions ----
+
+
+
+# ---- v9.8.4 Product Control Runtime History + Artifact Browser ----
+def _v984_product_artifact_roots():
+    from pathlib import Path
+
+    return [
+        ("release", Path("release")),
+        ("product_qa", Path("storage/product_qa")),
+    ]
+
+
+def _v984_product_artifact_kind(path):
+    name = path.name.lower()
+    rel = str(path).lower()
+
+    if "runtime_snapshot" in name or "runtime_snapshot" in rel:
+        return "runtime_snapshot"
+    if "hardening_report" in name or "hardening_report" in rel:
+        return "hardening_report"
+    if "smoke_report" in name or "smoke_report" in rel:
+        return "smoke_report"
+    if "readiness" in name:
+        return "release_readiness"
+    if "build_status" in name:
+        return "build_status"
+    if "manifest" in name:
+        return "release_manifest"
+    if path.suffix.lower() == ".md":
+        return "markdown"
+    if path.suffix.lower() == ".json":
+        return "json"
+    return "artifact"
+
+
+def _v984_product_artifacts_payload():
+    from datetime import datetime, timezone
+
+    artifacts = []
+    allowed_suffixes = {".md", ".json", ".txt", ".csv", ".html"}
+
+    for root_key, root in _v984_product_artifact_roots():
+        if not root.exists():
+            continue
+
+        for path in sorted(root.rglob("*")):
+            if not path.is_file():
+                continue
+            if path.suffix.lower() not in allowed_suffixes:
+                continue
+
+            relpath = path.as_posix()
+            stat = path.stat()
+            artifacts.append(
+                {
+                    "root": root_key,
+                    "path": relpath,
+                    "name": path.name,
+                    "kind": _v984_product_artifact_kind(path),
+                    "suffix": path.suffix.lower(),
+                    "size_bytes": stat.st_size,
+                    "modified_at": datetime.fromtimestamp(
+                        stat.st_mtime,
+                        timezone.utc,
+                    ).isoformat(),
+                    "view_url": f"/product/artifacts/view/{relpath}",
+                    "download_url": f"/product/artifacts/download/{relpath}",
+                }
+            )
+
+    artifacts.sort(key=lambda item: item["modified_at"], reverse=True)
+
+    return {
+        "status": "ok",
+        "version": "9.8.4",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "count": len(artifacts),
+        "artifacts": artifacts,
+        "filters": {
+            "roots": sorted({item["root"] for item in artifacts}),
+            "kinds": sorted({item["kind"] for item in artifacts}),
+            "suffixes": sorted({item["suffix"] for item in artifacts}),
+        },
+    }
+
+
+def _v984_safe_artifact_path(relpath):
+    from pathlib import Path
+
+    requested = Path(relpath)
+    if requested.is_absolute() or ".." in requested.parts:
+        abort(404)
+
+    full = Path(relpath)
+    allowed_roots = [root for _, root in _v984_product_artifact_roots()]
+
+    if not full.exists() or not full.is_file():
+        abort(404)
+
+    resolved = full.resolve()
+    if not any(str(resolved).startswith(str(root.resolve())) for root in allowed_roots if root.exists()):
+        abort(404)
+
+    return full
+
+
+@dashboard_bp.route("/api/v1/product/artifacts")
+@login_required
+def api_v984_product_artifacts():
+    payload = _v984_product_artifacts_payload()
+    kind = request.args.get("kind", "").strip()
+    suffix = request.args.get("suffix", "").strip()
+    root = request.args.get("root", "").strip()
+
+    artifacts = payload["artifacts"]
+    if kind:
+        artifacts = [item for item in artifacts if item["kind"] == kind]
+    if suffix:
+        artifacts = [item for item in artifacts if item["suffix"] == suffix]
+    if root:
+        artifacts = [item for item in artifacts if item["root"] == root]
+
+    payload = {**payload, "count": len(artifacts), "artifacts": artifacts}
+    return jsonify(payload)
+
+
+@dashboard_bp.route("/product/artifacts")
+@login_required
+def product_artifacts_view():
+    payload = _v984_product_artifacts_payload()
+    return render_template("product_artifacts.html", payload=payload)
+
+
+@dashboard_bp.route("/product/artifacts/view/<path:relpath>")
+@login_required
+def product_artifact_view(relpath):
+    artifact = _v984_safe_artifact_path(relpath)
+    if artifact.suffix.lower() not in {".md", ".json", ".txt", ".csv", ".html"}:
+        abort(404)
+
+    text = artifact.read_text(errors="replace")
+    if len(text) > 250000:
+        text = text[:250000] + "\n\n[truncated for browser view]\n"
+
+    return render_template(
+        "product_artifact_view.html",
+        artifact={
+            "path": artifact.as_posix(),
+            "name": artifact.name,
+            "kind": _v984_product_artifact_kind(artifact),
+            "suffix": artifact.suffix.lower(),
+        },
+        content=text,
+    )
+
+
+@dashboard_bp.route("/product/artifacts/download/<path:relpath>")
+@login_required
+def product_artifact_download(relpath):
+    from flask import send_file
+
+    artifact = _v984_safe_artifact_path(relpath)
+    return send_file(
+        artifact.resolve(),
+        as_attachment=True,
+        download_name=artifact.name,
+    )
+# ---- end v9.8.4 product artifacts ----
