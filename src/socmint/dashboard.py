@@ -3322,3 +3322,223 @@ def product_artifact_export_manifest_write():
     flash("Product artifact export manifest written.", "success")
     return redirect(url_for("dashboard.product_artifact_export_manifest_view"))
 # ---- end v9.8.7 product artifact evidence chain ----
+
+
+
+# ---- v9.8.8 Product Release Package Builder ----
+def _v988_package_slug(value):
+    safe = "".join(c if c.isalnum() or c in "-_" else "-" for c in str(value).strip())
+    safe = "-".join(part for part in safe.split("-") if part)
+    return safe or "product-release-package"
+
+
+def _v988_package_root(package_name=None):
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    base = Path("storage/product_packages")
+    base.mkdir(parents=True, exist_ok=True)
+    if not package_name:
+        package_name = "v9_8_8_" + datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    return base / _v988_package_slug(package_name)
+
+
+def _v988_package_file_copy(src_path, package_root, artifact_prefix="artifacts"):
+    import shutil
+    from pathlib import Path
+
+    src = Path(src_path)
+    if not src.exists() or not src.is_file():
+        return None
+
+    rel = src.as_posix()
+    dest = package_root / artifact_prefix / rel
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dest)
+    return {
+        "source": rel,
+        "package_path": dest.as_posix(),
+        "size_bytes": dest.stat().st_size,
+    }
+
+
+def _v988_build_release_package(package_name=None, include_archived=False, actor=None):
+    from datetime import datetime, timezone
+    from pathlib import Path
+    import shutil
+
+    package_root = _v988_package_root(package_name)
+    if package_root.exists():
+        shutil.rmtree(package_root)
+    package_root.mkdir(parents=True, exist_ok=True)
+
+    manifest = _v987_export_manifest_payload(
+        include_archived=include_archived,
+        actor=actor,
+    )
+
+    copied_artifacts = []
+    for item in manifest.get("artifacts", []):
+        copied = _v988_package_file_copy(item.get("path"), package_root)
+        if copied:
+            copied["selection_reason"] = item.get("selection_reason", {})
+            copied["review"] = item.get("review", {})
+            copied["audit_summary"] = item.get("audit_summary", {})
+            copied_artifacts.append(copied)
+
+    metadata_files = []
+    for src in [
+        "release/V9_8_7_PRODUCT_ARTIFACT_EXPORT_MANIFEST.json",
+        "release/V9_8_7_PRODUCT_ARTIFACT_EXPORT_MANIFEST.md",
+        "storage/product_qa/product_artifact_metadata.json",
+        "storage/product_qa/product_artifact_review_audit.json",
+    ]:
+        copied = _v988_package_file_copy(src, package_root, artifact_prefix="metadata")
+        if copied:
+            metadata_files.append(copied)
+
+    package_manifest = {
+        "status": "ok",
+        "version": "9.8.8",
+        "package_name": package_root.name,
+        "package_path": package_root.as_posix(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "actor": actor,
+        "include_archived": bool(include_archived),
+        "selection_policy": manifest.get("selection_policy", {}),
+        "selected_count": len(manifest.get("artifacts", [])),
+        "copied_artifact_count": len(copied_artifacts),
+        "metadata_file_count": len(metadata_files),
+        "summary": manifest.get("summary", {}),
+        "copied_artifacts": copied_artifacts,
+        "metadata_files": metadata_files,
+        "source_manifest": manifest,
+    }
+
+    (package_root / "PACKAGE_MANIFEST.json").write_text(json.dumps(package_manifest, indent=2, sort_keys=True))
+
+    index_lines = [
+        "# Product Release Package",
+        "",
+        f"Version: {package_manifest['version']}",
+        f"Package: {package_manifest['package_name']}",
+        f"Generated: {package_manifest['generated_at']}",
+        f"Actor: {actor or 'unknown'}",
+        f"Selected artifacts: {package_manifest['selected_count']}",
+        f"Copied artifacts: {package_manifest['copied_artifact_count']}",
+        "",
+        "## Included Metadata",
+        "",
+    ]
+    for item in metadata_files:
+        index_lines.append(f"- `{item['package_path']}` from `{item['source']}`")
+
+    index_lines.extend(["", "## Selected Artifacts", ""])
+    for item in copied_artifacts:
+        reason = item.get("selection_reason", {})
+        index_lines.extend(
+            [
+                f"### {item['source']}",
+                "",
+                f"- Package path: `{item['package_path']}`",
+                f"- Reviewed: {reason.get('reviewed')}",
+                f"- Important: {reason.get('important')}",
+                f"- Archived: {reason.get('archived')}",
+                f"- Audit events: {item.get('audit_summary', {}).get('event_count')}",
+                "",
+            ]
+        )
+
+    (package_root / "PACKAGE_INDEX.md").write_text("\n".join(index_lines))
+
+    package_manifest["package_index"] = (package_root / "PACKAGE_INDEX.md").as_posix()
+    package_manifest["package_manifest"] = (package_root / "PACKAGE_MANIFEST.json").as_posix()
+
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+    latest_json = release_dir / "V9_8_8_PRODUCT_RELEASE_PACKAGE_MANIFEST.json"
+    latest_md = release_dir / "V9_8_8_PRODUCT_RELEASE_PACKAGE_INDEX.md"
+    latest_json.write_text(json.dumps(package_manifest, indent=2, sort_keys=True))
+    latest_md.write_text("\n".join(index_lines))
+    package_manifest["release_artifacts"] = {
+        "json": latest_json.as_posix(),
+        "markdown": latest_md.as_posix(),
+    }
+
+    return package_manifest
+
+
+@dashboard_bp.route("/api/v1/product/release-package")
+@login_required
+def api_v988_release_package_preview():
+    include_archived = _v985_bool_value(request.args.get("include_archived"))
+    package_name = request.args.get("package_name", "preview")
+    manifest = _v987_export_manifest_payload(
+        include_archived=include_archived,
+        actor=session.get("user"),
+    )
+    return jsonify(
+        {
+            "status": "ok",
+            "version": "9.8.8",
+            "package_name": _v988_package_slug(package_name),
+            "include_archived": include_archived,
+            "selected_count": manifest.get("count", 0),
+            "summary": manifest.get("summary", {}),
+            "selected_artifacts": manifest.get("artifacts", []),
+            "would_include_metadata": [
+                "release/V9_8_7_PRODUCT_ARTIFACT_EXPORT_MANIFEST.json",
+                "release/V9_8_7_PRODUCT_ARTIFACT_EXPORT_MANIFEST.md",
+                "storage/product_qa/product_artifact_metadata.json",
+                "storage/product_qa/product_artifact_review_audit.json",
+            ],
+        }
+    )
+
+
+@dashboard_bp.route("/api/v1/product/release-package/build", methods=["POST"])
+@admin_required
+def api_v988_release_package_build():
+    payload = request.get_json(silent=True) or request.form
+    package_name = payload.get("package_name") or None
+    include_archived = _v985_bool_value(payload.get("include_archived"))
+    result = _v988_build_release_package(
+        package_name=package_name,
+        include_archived=include_archived,
+        actor=session.get("user"),
+    )
+    audit("product_release_package_build", details=result.get("release_artifacts"))
+    return jsonify(result)
+
+
+@dashboard_bp.route("/product/release-package")
+@login_required
+def product_release_package_view():
+    include_archived = _v985_bool_value(request.args.get("include_archived"))
+    package_name = request.args.get("package_name", "v9_8_8_preview")
+    preview = _v987_export_manifest_payload(
+        include_archived=include_archived,
+        actor=session.get("user"),
+    )
+    return render_template(
+        "product_release_package.html",
+        preview=preview,
+        include_archived=include_archived,
+        package_name=package_name,
+    )
+
+
+@dashboard_bp.route("/product/release-package/build", methods=["POST"])
+@admin_required
+def product_release_package_build():
+    package_name = request.form.get("package_name") or None
+    include_archived = _v985_bool_value(request.form.get("include_archived"))
+    result = _v988_build_release_package(
+        package_name=package_name,
+        include_archived=include_archived,
+        actor=session.get("user"),
+    )
+    audit("product_release_package_build", details=result.get("release_artifacts"))
+    flash("Product release package built.", "success")
+    return redirect(url_for("dashboard.product_release_package_view"))
+# ---- end v9.8.8 product release package builder ----
