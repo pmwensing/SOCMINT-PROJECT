@@ -815,3 +815,212 @@ def product_v10_migration_plan_view():
     payload = _migration_plan_payload()
     return render_template("product_v10_migration_plan.html", plan=payload)
 # ---- end v10.0.6 product blueprint ownership migration plan ----
+
+
+
+# ---- v10.0.8 Blueprint Migration Wave 1 Guardrails + Rollback Console ----
+V1008_FORBIDDEN_WAVE1_TOKENS = (
+    "post",
+    "write",
+    "build",
+    "download",
+    "archive",
+    "publish",
+    "decision",
+    "signoff",
+)
+
+
+def _v1008_rules_for_route(route: str) -> list[dict[str, Any]]:
+    return [
+        item
+        for item in _route_inventory()
+        if item.get("rule") == route
+    ]
+
+
+def _v1008_expected_blueprint_for_route(route: str) -> str | None:
+    module_name = WAVE1_BLUEPRINT_OWNED_ROUTES.get(route)
+    if not module_name:
+        return None
+    return WAVE1_TARGET_BLUEPRINTS.get(module_name)
+
+
+def _v1008_route_guardrail(route: str) -> dict[str, Any]:
+    expected_blueprint = _v1008_expected_blueprint_for_route(route)
+    rules = _v1008_rules_for_route(route)
+
+    blueprint_rules = [
+        item
+        for item in rules
+        if expected_blueprint and str(item.get("endpoint", "")).startswith(expected_blueprint + ".")
+    ]
+    dashboard_rules = [
+        item
+        for item in rules
+        if str(item.get("endpoint", "")).startswith("dashboard.")
+    ]
+
+    primary_endpoint = rules[0].get("endpoint") if rules else None
+    primary_is_blueprint = bool(
+        primary_endpoint
+        and expected_blueprint
+        and str(primary_endpoint).startswith(expected_blueprint + ".")
+    )
+
+    route_text = route.lower()
+    forbidden_token_hits = [
+        token
+        for token in V1008_FORBIDDEN_WAVE1_TOKENS
+        if token in route_text
+    ]
+    blueprint_method_sets = [set(item.get("methods") or []) for item in blueprint_rules]
+    non_get_blueprint_methods = sorted(
+        {
+            method
+            for methods in blueprint_method_sets
+            for method in methods
+            if method != "GET"
+        }
+    )
+
+    rollback_ready = bool(blueprint_rules and dashboard_rules and primary_is_blueprint)
+    action_route_moved = bool(forbidden_token_hits or non_get_blueprint_methods)
+
+    return {
+        "route": route,
+        "expected_blueprint": expected_blueprint,
+        "module": WAVE1_BLUEPRINT_OWNED_ROUTES.get(route),
+        "rules": rules,
+        "primary_endpoint": primary_endpoint,
+        "primary_is_blueprint": primary_is_blueprint,
+        "blueprint_rule_count": len(blueprint_rules),
+        "dashboard_fallback_count": len(dashboard_rules),
+        "has_blueprint_primary": bool(blueprint_rules and primary_is_blueprint),
+        "has_dashboard_fallback": bool(dashboard_rules),
+        "rollback_ready": rollback_ready,
+        "forbidden_token_hits": forbidden_token_hits,
+        "non_get_blueprint_methods": non_get_blueprint_methods,
+        "action_route_moved": action_route_moved,
+        "status": "pass" if rollback_ready and not action_route_moved else "fail",
+    }
+
+
+def _v1008_guardrails_payload() -> dict[str, Any]:
+    moved_routes = sorted(WAVE1_BLUEPRINT_OWNED_ROUTES)
+    rows = [_v1008_route_guardrail(route) for route in moved_routes]
+
+    failed = [row for row in rows if row["status"] != "pass"]
+    action_route_violations = [row for row in rows if row["action_route_moved"]]
+    missing_fallback = [row for row in rows if not row["has_dashboard_fallback"]]
+    missing_blueprint = [row for row in rows if not row["has_blueprint_primary"]]
+
+    module_health = _module_health_payload()
+    ownership = _route_ownership_map()
+    ownership_rows = {
+        row.get("route"): row
+        for row in ownership.get("ownership", [])
+        if row.get("route") in WAVE1_BLUEPRINT_OWNED_ROUTES
+    }
+    ownership_blueprint_count = sum(
+        1
+        for row in ownership_rows.values()
+        if row.get("ownership") == "blueprint-owned"
+        and row.get("wave1_blueprint_owned") is True
+    )
+
+    rollback_readiness = {
+        "ready": not failed,
+        "route_count": len(rows),
+        "rollback_ready_count": sum(1 for row in rows if row["rollback_ready"]),
+        "missing_dashboard_fallback_count": len(missing_fallback),
+        "missing_blueprint_primary_count": len(missing_blueprint),
+        "action_route_violation_count": len(action_route_violations),
+    }
+
+    return {
+        "status": "pass" if not failed and ownership_blueprint_count == len(moved_routes) else "fail",
+        "version": "10.0.8",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "moved_route_count": len(rows),
+        "passed_route_count": sum(1 for row in rows if row["status"] == "pass"),
+        "failed_route_count": len(failed),
+        "ownership_blueprint_count": ownership_blueprint_count,
+        "no_action_routes_moved": len(action_route_violations) == 0,
+        "rollback_readiness": rollback_readiness,
+        "routes": rows,
+        "failed_routes": failed,
+        "action_route_violations": action_route_violations,
+        "missing_dashboard_fallback": missing_fallback,
+        "missing_blueprint_primary": missing_blueprint,
+        "module_health": module_health,
+        "ownership": ownership,
+        "recommended_next_action": (
+            "Wave 1 guardrails pass. Keep dashboard fallbacks until Wave 2 guardrails are implemented."
+            if not failed and ownership_blueprint_count == len(moved_routes)
+            else "Do not proceed to Wave 2. Fix missing blueprint primary, fallback, or action-route violations."
+        ),
+    }
+
+
+def write_blueprint_guardrails_report() -> dict[str, Any]:
+    import json
+    from pathlib import Path
+
+    payload = _v1008_guardrails_payload()
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+
+    json_path = release_dir / "V10_0_8_BLUEPRINT_GUARDRAILS_REPORT.json"
+    md_path = release_dir / "V10_0_8_BLUEPRINT_GUARDRAILS_REPORT.md"
+
+    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+
+    rows = [
+        "# v10.0.8 Blueprint Migration Wave 1 Guardrails + Rollback Report",
+        "",
+        f"Generated: {payload['generated_at']}",
+        f"Status: **{payload['status']}**",
+        f"Moved routes: {payload['moved_route_count']}",
+        f"Passed routes: {payload['passed_route_count']}",
+        f"Failed routes: {payload['failed_route_count']}",
+        f"No action routes moved: {payload['no_action_routes_moved']}",
+        f"Rollback ready routes: {payload['rollback_readiness']['rollback_ready_count']}/{payload['rollback_readiness']['route_count']}",
+        "",
+        "## Route Guardrails",
+        "",
+    ]
+
+    for item in payload["routes"]:
+        rows.append(
+            f"- **{item['status'].upper()}** `{item['route']}` → `{item['primary_endpoint']}` "
+            f"fallbacks={item['dashboard_fallback_count']} action_violations={item['action_route_moved']}"
+        )
+
+    rows.extend(["", "## Action Route Violations", ""])
+    rows.extend([f"- `{item['route']}`" for item in payload["action_route_violations"]] or ["- None"])
+    rows.extend(["", "## Recommended Next Action", "", payload["recommended_next_action"], ""])
+
+    md_path.write_text("\n".join(rows))
+    payload["artifacts_written"] = {
+        "json": json_path.as_posix(),
+        "markdown": md_path.as_posix(),
+    }
+    return payload
+
+
+@product_registry_bp.route("/api/v1/product/v10/blueprint-guardrails")
+def api_product_v10_blueprint_guardrails():
+    return jsonify(_v1008_guardrails_payload())
+
+
+@product_registry_bp.route("/api/v1/product/v10/blueprint-guardrails/write", methods=["POST"])
+def api_product_v10_blueprint_guardrails_write():
+    return jsonify(write_blueprint_guardrails_report())
+
+
+@product_registry_bp.route("/product/v10/blueprint-guardrails")
+def product_v10_blueprint_guardrails_view():
+    payload = _v1008_guardrails_payload()
+    return render_template("product_v10_blueprint_guardrails.html", guardrails=payload)
+# ---- end v10.0.8 blueprint guardrails ----
