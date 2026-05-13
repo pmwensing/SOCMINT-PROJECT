@@ -569,3 +569,16 @@ module-health-hardening-smoke:
 
 zip1005:
 	cd .. && zip -r SOCMINT-PROJECT-v10.0.5-product-module-health.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-migration-plan-smoke:
+	PYTHONPATH=src python3 scripts/product_migration_plan_smoke_v10_0_6.py
+
+test1006:
+	PYTHONPATH=src python3 scripts/product_migration_plan_smoke_v10_0_6.py
+
+migration-plan-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_migration_plan_hardening_v10_0_6.py
+
+zip1006:
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.6-blueprint-migration-plan.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'

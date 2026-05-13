@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Blueprint Migration Plan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+    .ready, .low { color: #86efac; font-weight: 700; }
+    .blocked, .high { color: #fecaca; font-weight: 700; }
+    .medium { color: #fde68a; font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Product Blueprint Ownership Migration Plan</h1>
+  <p>v10.0.6 route-by-route migration plan from dashboard-owned compatibility routes into extracted blueprints.</p>
+
+  <section class="card">
+    <h2>Plan Status</h2>
+    <p>Status: <strong class="{{ plan.status }}">{{ plan.status|upper }}</strong></p>
+    <p>Module health: {{ plan.module_health_status }} / {{ plan.module_health_overall_score }}</p>
+    <p>Safe candidates: {{ plan.safe_candidate_count }}/{{ plan.candidate_count }}</p>
+    <p>First-wave routes: {{ plan.first_wave_count }}</p>
+    <p>Recommended next action: {{ plan.recommended_next_action }}</p>
+    <p>
+      <a href="/api/v1/product/v10/migration-plan">Migration Plan JSON</a> |
+      <a href="/product/v10/module-health">Module Health</a> |
+      <a href="/product/v10/modules">Module Registry</a>
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>First Wave Routes</h2>
+    <table>
+      <thead><tr><th>Route</th><th>Target</th><th>Risk</th><th>Phase</th></tr></thead>
+      <tbody>
+      {% for item in plan.first_wave_routes %}
+        <tr>
+          <td><code>{{ item.route }}</code><br>{{ item.methods }}</td>
+          <td><code>{{ item.target_module }}</code><br>{{ item.target_blueprint }}</td>
+          <td><span class="{{ item.risk_level }}">{{ item.risk_score }} / {{ item.risk_level }}</span></td>
+          <td>{{ item.recommended_phase }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4">No first-wave routes are safe yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>All Candidates</h2>
+    <table>
+      <thead><tr><th>Route</th><th>Target Module</th><th>Risk</th><th>Safe</th><th>Blocking Reasons</th></tr></thead>
+      <tbody>
+      {% for item in plan.candidates %}
+        <tr>
+          <td><code>{{ item.route }}</code></td>
+          <td><code>{{ item.target_module }}</code></td>
+          <td><span class="{{ item.risk_level }}">{{ item.risk_score }} / {{ item.risk_level }}</span></td>
+          <td>{{ item.safe_to_migrate }}</td>
+          <td>{{ item.blocking_reasons }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>
