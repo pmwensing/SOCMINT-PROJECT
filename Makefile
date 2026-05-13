@@ -335,3 +335,16 @@ export-manifest-hardening-smoke:
 
 zip987:
 	cd .. && zip -r SOCMINT-PROJECT-v9.8.7-product-artifact-evidence-chain.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-release-package-smoke:
+	PYTHONPATH=src python3 scripts/product_release_package_smoke_v9_8_8.py
+
+test988:
+	PYTHONPATH=src python3 scripts/product_release_package_smoke_v9_8_8.py
+
+release-package-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_release_package_hardening_v9_8_8.py
+
+zip988:
+	cd .. && zip -r SOCMINT-PROJECT-v9.8.8-product-release-package-builder.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'

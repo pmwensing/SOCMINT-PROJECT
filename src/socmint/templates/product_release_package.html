@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Product Release Package Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Product Release Package Builder</h1>
+  <p>v9.8.8 bundles selected reviewed/important artifacts plus manifest, audit, and review metadata.</p>
+
+  <section class="card">
+    <h2>Package Preview</h2>
+    <p><strong>Selected artifacts:</strong> {{ preview.count }}</p>
+    <p><strong>Reviewed:</strong> {{ preview.summary.reviewed }}</p>
+    <p><strong>Important:</strong> {{ preview.summary.important }}</p>
+    <p><strong>Audit events:</strong> {{ preview.summary.audit_events }}</p>
+    <p>
+      <a href="/api/v1/product/release-package">Release package preview JSON</a> |
+      <a href="/product/artifacts/export-manifest">Export manifest</a> |
+      <a href="/product/artifacts">Artifact browser</a>
+    </p>
+
+    {% if session.get('is_admin') %}
+    <form method="post" action="{{ url_for('dashboard.product_release_package_build') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Package name <input type="text" name="package_name" value="{{ package_name }}"></label>
+      <label><input type="checkbox" name="include_archived" value="1" {% if include_archived %}checked{% endif %}> include archived</label>
+      <button type="submit">Build Release Package</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Selected Artifacts</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Artifact</th>
+          <th>Selection Reason</th>
+          <th>Audit</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for item in preview.artifacts %}
+        <tr>
+          <td><code>{{ item.path }}</code></td>
+          <td>
+            reviewed={{ item.selection_reason.reviewed }}<br>
+            important={{ item.selection_reason.important }}<br>
+            archived={{ item.selection_reason.archived }}
+          </td>
+          <td>
+            events={{ item.audit_summary.event_count }}<br>
+            latest={{ item.audit_summary.latest_timestamp }}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3">No reviewed or important artifacts are selected yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>
