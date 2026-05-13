@@ -1,0 +1,33 @@
+from __future__ import annotations
+
+from flask import jsonify, session
+
+from .dossier_export_gate import export_gate_decision
+from .dossier_export_gate import export_gate_report
+from .dossier_export_gate import export_gate_summary
+
+
+def _login_required() -> bool:
+    return bool(session.get("user"))
+
+
+def register_dossier_export_gate_routes(app):
+    @app.get("/api/v1/dossier-builder/v3/export-gate/<case_id>/<subject_id>")
+    def api_dossier_export_gate(case_id: str, subject_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        return jsonify(export_gate_report(subject_id=subject_id, case_id=case_id))
+
+    @app.get("/api/v1/dossier-builder/v3/export-gate/<case_id>/<subject_id>/summary")
+    def api_dossier_export_gate_summary(case_id: str, subject_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        return jsonify(export_gate_summary(subject_id=subject_id, case_id=case_id))
+
+    @app.get("/api/v1/dossier-builder/v3/export-gate/<case_id>/<subject_id>/decision")
+    def api_dossier_export_gate_decision(case_id: str, subject_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        return jsonify(export_gate_decision(subject_id=subject_id, case_id=case_id))
+
+    return app
