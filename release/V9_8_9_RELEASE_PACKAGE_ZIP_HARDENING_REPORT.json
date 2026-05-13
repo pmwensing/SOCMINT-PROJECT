@@ -1,0 +1,38 @@
+{
+  "status": "pass",
+  "generated_at": "2026-05-13T01:33:05.580142+00:00",
+  "version": "9.8.9",
+  "summary": "4/4 checks passed.",
+  "checks": [
+    {
+      "name": "compileall-src",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "Listing 'src/socmint'...\nListing 'src/socmint/static'...\nListing 'src/socmint/templates'...\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "product-smoke",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "python3 scripts/product_qa_v9_7_4.py\n[PASS] file src/socmint/product_control_center.py\n[PASS] file src/socmint/dossier_quality_gate.py\n[PASS] file src/socmint/dossier_traceability.py\n[PASS] file src/socmint/ultimate_dossier.py\n[PASS] file src/socmint/entity_dossier_v2.py\n[PASS] file src/socmint/dossier_export.py\n[+] compileall-src\n[PASS] compileall-src\n[+] product-control-import\n[PASS] product-control-import\n[+] quality-gate-import\n[PASS] quality-gate-import\n[+] traceability-import\n[PASS] traceability-import\n[+] ultimate-dossier-smoke\n[PASS] ultimate-dossier-smoke\n{\n  \"status\": \"pass\",\n  \"report\": \"release/V9_7_PRODUCT_SMOKE_REPORT.md\"\n}\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "product-release-package-smoke",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "PYTHONPATH=src python3 scripts/product_release_package_smoke_v9_8_8.py\n{\"timestamp\":\"2026-05-13T01:33:04.701853+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"9dcba52f867e4b01b664d90c25177645\",\"method\":\"POST\",\"path\":\"/api/v1/product/artifacts/review\",\"status_code\":200,\"duration_ms\":4.29,\"remote_addr\":\"127.0.0.1\"}\n[PASS] seed review release/V9_8_8_PACKAGE_REVIEWED_ARTIFACT.md 200\n{\"timestamp\":\"2026-05-13T01:33:04.704609+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"c6f5c415dd3b4f51be8c6a9daac6d7ea\",\"method\":\"POST\",\"path\":\"/api/v1/product/artifacts/review\",\"status_code\":200,\"duration_ms\":1.55,\"remote_addr\":\"127.0.0.1\"}\n[PASS] seed review release/V9_8_8_PACKAGE_IMPORTANT_ARTIFACT.md 200\n{\"timestamp\":\"2026-05-13T01:33:04.706262+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"429742456c2e454c8572df3544bdc8ae\",\"method\":\"POST\",\"path\":\"/api/v1/product/artifacts/review\",\"status_code\":200,\"duration_ms\":1.2,\"remote_addr\":\"127.0.0.1\"}\n[PASS] seed review release/V9_8_8_PACKAGE_ARCHIVED_ARTIFACT.md 200\n{\"timestamp\":\"2026-05-13T01:33:04.709782+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"dee594849c6c460daf4e2377a02b9679\",\"method\":\"GET\",\"path\":\"/api/v1/product/release-package\",\"status_code\":200,\"duration_ms\":3.08,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET release package preview 200\n{\"timestamp\":\"2026-05-13T01:33:04.716407+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"694077de12274f839cf6bbcbb0ab4b0b\",\"method\":\"POST\",\"path\":\"/api/v1/product/release-package/build\",\"status_code\":200,\"duration_ms\":5.96,\"remote_addr\":\"127.0.0.1\"}\n[PASS] POST build release package 200\n[PASS] package contents selected only\n{\"timestamp\":\"2026-05-13T01:33:04.723643+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"2e5c4f0d1d6b48c9949445344d1bc3ed\",\"method\":\"GET\",\"path\":\"/product/release-package\",\"status_code\":200,\"duration_ms\":6.5,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET release package UI 200\n{\"timestamp\":\"2026-05-13T01:33:04.731780+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"780dd3a62a814789bf04a3ed24d9249f\",\"method\":\"GET\",\"path\":\"/product/artifacts\",\"status_code\":200,\"duration_ms\":7.68,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET artifacts package panel 200\nv9.8.8 product release package smoke passed\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "product-release-package-zip-smoke-v9-8-9",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "{\"timestamp\":\"2026-05-13T01:33:05.421505+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"b3d8f3fd4f95405c99753bb384e30198\",\"method\":\"POST\",\"path\":\"/api/v1/product/artifacts/review\",\"status_code\":200,\"duration_ms\":2.42,\"remote_addr\":\"127.0.0.1\"}\n[PASS] seed review release/V9_8_9_ZIP_REVIEWED_ARTIFACT.md 200\n{\"timestamp\":\"2026-05-13T01:33:05.423553+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"8205d7df1d9644f0ac7e631a5f7ed8ca\",\"method\":\"POST\",\"path\":\"/api/v1/product/artifacts/review\",\"status_code\":200,\"duration_ms\":1.48,\"remote_addr\":\"127.0.0.1\"}\n[PASS] seed review release/V9_8_9_ZIP_IMPORTANT_ARTIFACT.md 200\n{\"timestamp\":\"2026-05-13T01:33:05.425286+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"dc19119f8f47420ea1ade46a0d0705f9\",\"method\":\"POST\",\"path\":\"/api/v1/product/artifacts/review\",\"status_code\":200,\"duration_ms\":1.27,\"remote_addr\":\"127.0.0.1\"}\n[PASS] seed review release/V9_8_9_ZIP_ARCHIVED_ARTIFACT.md 200\n{\"timestamp\":\"2026-05-13T01:33:05.431624+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"f6625983f6f64c77a94f840cf3d1944d\",\"method\":\"POST\",\"path\":\"/api/v1/product/release-package/build\",\"status_code\":200,\"duration_ms\":5.88,\"remote_addr\":\"127.0.0.1\"}\n[PASS] POST build package 200\n{\"timestamp\":\"2026-05-13T01:33:05.435165+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"cdd8fd3745d047b4a7d04b3c02a19c35\",\"method\":\"POST\",\"path\":\"/api/v1/product/release-package/v9_8_9_zip_smoke_package/zip\",\"status_code\":200,\"duration_ms\":2.78,\"remote_addr\":\"127.0.0.1\"}\n[PASS] POST zip package 200\n[PASS] zip contains selected package contents\n{\"timestamp\":\"2026-05-13T01:33:05.436897+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"3825e91d518b49a5bba6b8a2b1577bda\",\"method\":\"GET\",\"path\":\"/api/v1/product/release-packages\",\"status_code\":200,\"duration_ms\":1.01,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET package list 200\n{\"timestamp\":\"2026-05-13T01:33:05.439429+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"0873f7a192a94478b9b42da9c881cdc1\",\"method\":\"GET\",\"path\":\"/product/release-package/download/v9_8_9_zip_smoke_package\",\"status_code\":200,\"duration_ms\":2.07,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET package ZIP download 200\n{\"timestamp\":\"2026-05-13T01:33:05.447626+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"b4ae6c68c143471f93995ba956c039e1\",\"method\":\"GET\",\"path\":\"/product/release-package\",\"status_code\":200,\"duration_ms\":7.71,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET release package UI ZIP panel 200\nv9.8.9 product release package ZIP smoke passed\n",
+      "stderr_tail": ""
+    }
+  ],
+  "failed": [],
+  "next_action": "Merge v9.8.9 into master"
+}
