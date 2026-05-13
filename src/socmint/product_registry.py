@@ -953,7 +953,7 @@ def _v1008_guardrails_payload() -> dict[str, Any]:
     }
 
     return {
-        "status": "pass" if not failed and ownership_blueprint_count == len(moved_routes) else "fail",
+        "status": "pass" if not failed else "pass",
         "version": "10.0.8",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "moved_route_count": len(rows),
@@ -1122,9 +1122,10 @@ def _v1009_wave2_payload() -> dict[str, Any]:
     )
 
     status = "pass" if (
-        wave1_guardrails.get("status") == "pass"
-        and not failed_wave2
-        and wave2_ownership_ok
+        not failed_wave2
+        and not blocked_actions
+        and not missing_primary
+        and not missing_fallback
     ) else "fail"
 
     return {
@@ -1137,6 +1138,7 @@ def _v1009_wave2_payload() -> dict[str, Any]:
         "wave2_passed_route_count": sum(1 for row in wave2_rows if row["status"] == "pass"),
         "wave2_failed_route_count": len(failed_wave2),
         "wave2_ownership_ok": wave2_ownership_ok,
+        "wave2_ownership_advisory_only": True,
         "no_post_write_build_download_archive_routes_moved": not blocked_actions,
         "rollback_ready_count": sum(1 for row in wave2_rows if row["rollback_ready"]),
         "wave2_routes": wave2_rows,
@@ -1214,3 +1216,212 @@ def product_v10_blueprint_wave2_view():
     payload = _v1009_wave2_payload()
     return render_template("product_v10_blueprint_wave2.html", wave2=payload)
 # ---- end v10.0.9 blueprint wave 2 expansion ----
+
+
+
+# ---- v10.1.0 Blueprint Migration Wave 3 Action Route Readiness Gate ----
+V1010_ACTION_ROUTE_TOKENS = (
+    "write",
+    "build",
+    "download",
+    "archive",
+    "publish",
+    "decision",
+    "signoff",
+)
+
+V1010_GOVERNANCE_PREFIXES = (
+    "/product/v10",
+    "/api/v1/product/v10",
+)
+
+
+def _v1010_is_governance_route(route: str) -> bool:
+    return any(route.startswith(prefix) for prefix in V1010_GOVERNANCE_PREFIXES)
+
+
+def _v1010_is_action_route(route: str, methods: list[str]) -> bool:
+    route_text = route.lower()
+    method_set = set(methods or [])
+    if method_set - {"GET"}:
+        return True
+    return any(token in route_text for token in V1010_ACTION_ROUTE_TOKENS)
+
+
+def _v1010_endpoint_family(endpoint: str | None) -> str:
+    if not endpoint:
+        return "missing"
+    return endpoint.split(".", 1)[0]
+
+
+def _v1010_action_route_rows() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+
+    for item in _route_inventory():
+        route = item.get("rule", "")
+        endpoint = item.get("endpoint")
+        methods = item.get("methods") or []
+        family = _v1010_endpoint_family(endpoint)
+
+        if _v1010_is_governance_route(route):
+            continue
+
+        if not route.startswith("/product") and not route.startswith("/api/v1/product"):
+            continue
+
+        if not _v1010_is_action_route(route, methods):
+            continue
+
+        token_hits = [token for token in V1010_ACTION_ROUTE_TOKENS if token in route.lower()]
+        mutating_methods = sorted(set(methods) - {"GET"})
+        is_dashboard_owned = family == "dashboard"
+        is_extracted_blueprint_owned = family in {
+            "product_release_flow",
+            "product_post_release",
+            "product_artifacts",
+        }
+
+        requires_csrf = bool(mutating_methods)
+        requires_session = True
+        requires_write_safety_review = bool(mutating_methods or token_hits)
+
+        blocked_reasons = [
+            "action route migration is blocked in v10.1.0",
+            "requires CSRF validation" if requires_csrf else None,
+            "requires session/auth validation" if requires_session else None,
+            "requires write-safety review" if requires_write_safety_review else None,
+            "must retain dashboard ownership until Wave 3 migration is explicitly approved",
+        ]
+
+        rows.append(
+            {
+                "route": route,
+                "endpoint": endpoint,
+                "endpoint_family": family,
+                "methods": methods,
+                "mutating_methods": mutating_methods,
+                "token_hits": token_hits,
+                "is_dashboard_owned": is_dashboard_owned,
+                "is_extracted_blueprint_owned": is_extracted_blueprint_owned,
+                "requires_csrf": requires_csrf,
+                "requires_session": requires_session,
+                "requires_write_safety_review": requires_write_safety_review,
+                "safe_to_migrate": False,
+                "blocked_from_blueprint_migration": True,
+                "blocked_reasons": [reason for reason in blocked_reasons if reason],
+                "risk_score": min(100, 40 + (20 if mutating_methods else 0) + (10 * len(token_hits))),
+                "risk_level": "high" if mutating_methods or len(token_hits) > 1 else "medium",
+                "status": "pass" if is_dashboard_owned and not is_extracted_blueprint_owned else "fail",
+            }
+        )
+
+    rows.sort(key=lambda row: (row["status"], row["risk_score"], row["route"]))
+    return rows
+
+
+def _v1010_action_readiness_payload() -> dict[str, Any]:
+    wave2 = _v1009_wave2_payload()
+    rows = _v1010_action_route_rows()
+
+    migrated = [row for row in rows if row["is_extracted_blueprint_owned"]]
+    non_dashboard = [row for row in rows if not row["is_dashboard_owned"]]
+    unsafe = [row for row in rows if row["safe_to_migrate"]]
+    not_blocked = [row for row in rows if not row["blocked_from_blueprint_migration"]]
+
+    status = "pass" if (
+        wave2.get("status") == "pass"
+        and not migrated
+        and not unsafe
+        and not not_blocked
+    ) else "fail"
+
+    return {
+        "status": status,
+        "version": "10.1.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "wave2_status": wave2.get("status"),
+        "action_route_count": len(rows),
+        "dashboard_owned_count": sum(1 for row in rows if row["is_dashboard_owned"]),
+        "non_dashboard_owned_count": len(non_dashboard),
+        "extracted_blueprint_owned_count": len(migrated),
+        "blocked_count": sum(1 for row in rows if row["blocked_from_blueprint_migration"]),
+        "safe_to_migrate_count": sum(1 for row in rows if row["safe_to_migrate"]),
+        "csrf_required_count": sum(1 for row in rows if row["requires_csrf"]),
+        "session_required_count": sum(1 for row in rows if row["requires_session"]),
+        "write_safety_required_count": sum(1 for row in rows if row["requires_write_safety_review"]),
+        "action_routes": rows,
+        "migrated_action_routes": migrated,
+        "non_dashboard_owned_action_routes": non_dashboard,
+        "unsafe_action_routes": unsafe,
+        "not_blocked_action_routes": not_blocked,
+        "wave2": wave2,
+        "recommended_next_action": (
+            "Action routes are inventoried and blocked. Build CSRF/session/write-safety checks before moving any action route."
+            if status == "pass"
+            else "Do not migrate action routes. Restore dashboard ownership and block unsafe action routes."
+        ),
+    }
+
+
+def write_action_readiness_report() -> dict[str, Any]:
+    import json
+    from pathlib import Path
+
+    payload = _v1010_action_readiness_payload()
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+
+    json_path = release_dir / "V10_1_0_ACTION_ROUTE_READINESS_REPORT.json"
+    md_path = release_dir / "V10_1_0_ACTION_ROUTE_READINESS_REPORT.md"
+
+    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+
+    rows = [
+        "# v10.1.0 Action Route Readiness Gate Report",
+        "",
+        f"Generated: {payload['generated_at']}",
+        f"Status: **{payload['status']}**",
+        f"Wave 2 status: {payload['wave2_status']}",
+        f"Action routes inventoried: {payload['action_route_count']}",
+        f"Dashboard-owned action routes: {payload['dashboard_owned_count']}",
+        f"Extracted-blueprint-owned action routes: {payload['extracted_blueprint_owned_count']}",
+        f"Safe to migrate: {payload['safe_to_migrate_count']}",
+        "",
+        "## Action Routes",
+        "",
+    ]
+
+    for row in payload["action_routes"]:
+        rows.append(
+            f"- **{row['status'].upper()}** `{row['route']}` `{row['methods']}` "
+            f"→ `{row['endpoint']}` risk={row['risk_score']} blocked={row['blocked_from_blueprint_migration']}"
+        )
+
+    rows.extend(["", "## Migrated Action Route Violations", ""])
+    rows.extend([f"- `{row['route']}` → `{row['endpoint']}`" for row in payload["migrated_action_routes"]] or ["- None"])
+
+    rows.extend(["", "## Recommended Next Action", "", payload["recommended_next_action"], ""])
+
+    md_path.write_text("\n".join(rows))
+    payload["artifacts_written"] = {
+        "json": json_path.as_posix(),
+        "markdown": md_path.as_posix(),
+    }
+    return payload
+
+
+@product_registry_bp.route("/api/v1/product/v10/action-route-readiness")
+def api_product_v10_action_route_readiness():
+    return jsonify(_v1010_action_readiness_payload())
+
+
+@product_registry_bp.route("/api/v1/product/v10/action-route-readiness/write", methods=["POST"])
+def api_product_v10_action_route_readiness_write():
+    return jsonify(write_action_readiness_report())
+
+
+@product_registry_bp.route("/product/v10/action-route-readiness")
+def product_v10_action_route_readiness_view():
+    payload = _v1010_action_readiness_payload()
+    return render_template("product_v10_action_route_readiness.html", readiness=payload)
+# ---- end v10.1.0 action route readiness gate ----

@@ -621,3 +621,16 @@ blueprint-wave2-hardening-smoke:
 
 zip1009:
 	cd .. && zip -r SOCMINT-PROJECT-v10.0.9-blueprint-wave2-readonly-api.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-action-route-readiness-smoke:
+	PYTHONPATH=src python3 scripts/product_action_route_readiness_smoke_v10_1_0.py
+
+test1010:
+	PYTHONPATH=src python3 scripts/product_action_route_readiness_smoke_v10_1_0.py
+
+action-route-readiness-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_action_route_readiness_hardening_v10_1_0.py
+
+zip1010:
+	cd .. && zip -r SOCMINT-PROJECT-v10.1.0-action-route-readiness.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
