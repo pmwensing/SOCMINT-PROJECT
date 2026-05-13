@@ -2956,3 +2956,165 @@ def product_artifact_review_action():
     flash("Artifact review state updated.", "success")
     return redirect(url_for("dashboard.product_artifacts_view"))
 # ---- end v9.8.5 artifact review controls ----
+
+
+
+# ---- v9.8.6 Product Artifact Review Audit Trail ----
+def _v986_artifact_audit_path():
+    from pathlib import Path
+
+    path = Path("storage/product_qa/product_artifact_review_audit.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _v986_load_artifact_audit():
+    path = _v986_artifact_audit_path()
+    if not path.exists():
+        return {"version": "9.8.6", "events": []}
+
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        return {"version": "9.8.6", "events": []}
+
+    if not isinstance(data, dict):
+        return {"version": "9.8.6", "events": []}
+
+    data.setdefault("version", "9.8.6")
+    data.setdefault("events", [])
+    return data
+
+
+def _v986_save_artifact_audit(data):
+    path = _v986_artifact_audit_path()
+    data["version"] = "9.8.6"
+    path.write_text(json.dumps(data, indent=2, sort_keys=True))
+    return data
+
+
+def _v986_append_artifact_audit_event(path, actor, before, after, action="artifact_review_update"):
+    from datetime import datetime, timezone
+    from uuid import uuid4
+
+    data = _v986_load_artifact_audit()
+    events = data.setdefault("events", [])
+    changed_fields = []
+
+    before = before or {}
+    after = after or {}
+    for field in ["reviewed", "important", "archived", "note"]:
+        if before.get(field) != after.get(field):
+            changed_fields.append(field)
+
+    event = {
+        "event_id": uuid4().hex,
+        "version": "9.8.6",
+        "action": action,
+        "path": path,
+        "actor": actor,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "before": before,
+        "after": after,
+        "changed_fields": changed_fields,
+    }
+    events.append(event)
+    _v986_save_artifact_audit(data)
+    return event
+
+
+def _v986_events_for_artifact(path=None):
+    data = _v986_load_artifact_audit()
+    events = data.get("events", [])
+    if path:
+        events = [event for event in events if event.get("path") == path]
+    return events
+
+
+def _v985_update_artifact_review(path, reviewed=None, important=None, archived=None, note=None, actor=None):
+    from copy import deepcopy
+    from datetime import datetime, timezone
+
+    _v984_safe_artifact_path(path)
+
+    data = _v985_load_artifact_metadata()
+    artifacts = data.setdefault("artifacts", {})
+    state = artifacts.setdefault(
+        path,
+        {
+            "reviewed": False,
+            "important": False,
+            "archived": False,
+            "reviewed_by": None,
+            "reviewed_at": None,
+            "note": "",
+        },
+    )
+
+    before = deepcopy(state)
+
+    if reviewed is not None:
+        state["reviewed"] = _v985_bool_value(reviewed)
+    if important is not None:
+        state["important"] = _v985_bool_value(important)
+    if archived is not None:
+        state["archived"] = _v985_bool_value(archived)
+    if note is not None:
+        state["note"] = str(note)
+
+    state["reviewed_by"] = actor
+    state["reviewed_at"] = datetime.now(timezone.utc).isoformat()
+    artifacts[path] = state
+    _v985_save_artifact_metadata(data)
+
+    event = _v986_append_artifact_audit_event(
+        path=path,
+        actor=actor,
+        before=before,
+        after=deepcopy(state),
+    )
+
+    return {
+        "status": "ok",
+        "version": "9.8.6",
+        "path": path,
+        "review": state,
+        "audit_event": event,
+        "metadata_path": str(_v985_artifact_metadata_path()),
+        "audit_path": str(_v986_artifact_audit_path()),
+    }
+
+
+@dashboard_bp.route("/api/v1/product/artifact-review-audit")
+@login_required
+def api_v986_artifact_review_audit():
+    path = request.args.get("path", "").strip()
+    events = _v986_events_for_artifact(path or None)
+    return jsonify(
+        {
+            "status": "ok",
+            "version": "9.8.6",
+            "path": path or None,
+            "count": len(events),
+            "events": events,
+            "audit_path": str(_v986_artifact_audit_path()),
+        }
+    )
+
+
+@dashboard_bp.route("/product/artifacts/audit/<path:relpath>")
+@login_required
+def product_artifact_audit_view(relpath):
+    artifact = _v984_safe_artifact_path(relpath)
+    events = _v986_events_for_artifact(artifact.as_posix())
+    return render_template(
+        "product_artifact_audit.html",
+        artifact={
+            "path": artifact.as_posix(),
+            "name": artifact.name,
+            "kind": _v984_product_artifact_kind(artifact),
+            "suffix": artifact.suffix.lower(),
+        },
+        events=events,
+    )
+# ---- end v9.8.6 product artifact audit trail ----

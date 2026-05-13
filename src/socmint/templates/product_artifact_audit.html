@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Artifact Review Audit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1180px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    pre { white-space: pre-wrap; background: #020617; border: 1px solid #334155; border-radius: 14px; padding: 12px; overflow: auto; color: #bfdbfe; }
+    .muted { color: #94a3b8; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Artifact Review Audit Trail</h1>
+  <p class="muted">{{ artifact.kind }} | {{ artifact.path }}</p>
+  <p>
+    <a href="{{ url_for('dashboard.product_artifacts_view') }}">Back to artifacts</a>
+    |
+    <a href="/api/v1/product/artifact-review-audit?path={{ artifact.path }}">Audit JSON</a>
+  </p>
+
+  <section class="card">
+    <h2>Events</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Actor</th>
+          <th>Changed Fields</th>
+          <th>Before</th>
+          <th>After</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for event in events|reverse %}
+        <tr>
+          <td>{{ event.timestamp }}</td>
+          <td>{{ event.actor }}</td>
+          <td>{{ event.changed_fields|join(', ') }}</td>
+          <td><pre>{{ event.before|tojson(indent=2) }}</pre></td>
+          <td><pre>{{ event.after|tojson(indent=2) }}</pre></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">No review audit events yet for this artifact.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

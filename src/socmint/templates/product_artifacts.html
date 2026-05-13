@@ -53,6 +53,14 @@
   </section>
 
 
+
+  <section class="card">
+    <h2>Artifact Audit Trail</h2>
+    <p>Every review/pin/archive/note change is written to an append-only audit log.</p>
+    <p><a href="/api/v1/product/artifact-review-audit">Full audit log JSON</a></p>
+  </section>
+
+
   <section class="card">
     <h2>Artifacts</h2>
     <table>
@@ -94,6 +102,8 @@
             <a href="{{ artifact.view_url }}">view</a>
             |
             <a href="{{ artifact.download_url }}">download</a>
+            |
+            <a href="/product/artifacts/audit/{{ artifact.path }}">audit</a>
           </td>
         </tr>
       {% else %}
