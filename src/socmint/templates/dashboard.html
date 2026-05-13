@@ -1,5 +1,22 @@
 {% extends 'base.html' %}
 {% block content %}
+
+{% if product_readiness %}
+<section class="panel">
+    <h1>Product Release Readiness</h1>
+    <div class="card-grid">
+        <article class="card">
+            <h2>Status: {{ product_readiness.status|upper }}</h2>
+            <p>{{ product_readiness.recommended_next_action }}</p>
+            <p><strong>Blockers:</strong> {{ product_readiness.blockers|length }}</p>
+            <p><strong>Warnings:</strong> {{ product_readiness.warnings|length }}</p>
+            <a class="card-link" href="{{ url_for('dashboard.product_build_control_center') }}">Open Product Build Control Center</a>
+            <a class="card-link" href="{{ url_for('dashboard.product_operator_runbook') }}">Open Operator Runbook</a>
+        </article>
+    </div>
+</section>
+{% endif %}
+
 {% if session.get('is_admin') or session.get('role') == 'analyst' %}
 <section class="panel">
     <h1>Run Dossier</h1>

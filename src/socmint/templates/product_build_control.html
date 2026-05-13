@@ -57,6 +57,50 @@
       <pre>{{ smoke|tojson(indent=2) }}</pre>
     </div>
   </section>
+
+  <section class="card" style="margin-top: 16px;">
+    <h2>Operator Actions</h2>
+    <p>Use this page as the release control surface before merge/tag operations.</p>
+    <ul>
+      <li><code>make product-smoke</code> - run core product QA.</li>
+      <li><code>make product-route-smoke</code> - verify product/dossier routes are reachable.</li>
+      <li><code>make release-hardening-smoke</code> - run full v9.8.x hardening smoke.</li>
+      <li><a href="/product/operator-runbook">Open Operator Runbook</a></li>
+      <li><a href="/api/v1/dossier/demo-subject/quality-gate">Demo Quality Gate JSON</a></li>
+      <li><a href="/api/v1/dossier/demo-subject/traceability">Demo Traceability JSON</a></li>
+    </ul>
+  </section>
+
+
+  <section class="card" style="margin-top: 16px;">
+    <h2>Runtime Actions</h2>
+    <p>Use these actions to refresh readiness artifacts without leaving the Product Build Control Center.</p>
+
+    <form method="post" action="{{ url_for('dashboard.product_action_refresh_readiness') }}" style="display:inline-block;margin-right:8px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Refresh Readiness</button>
+    </form>
+
+    {% if session.get('is_admin') %}
+    <form method="post" action="{{ url_for('dashboard.product_action_write_reports') }}" style="display:inline-block;margin-right:8px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Write Product Reports</button>
+    </form>
+
+    <form method="post" action="{{ url_for('dashboard.product_action_export_control_snapshot') }}" style="display:inline-block;margin-right:8px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Export Control Snapshot</button>
+    </form>
+    {% endif %}
+
+    <h3>Runtime APIs</h3>
+    <ul>
+      <li><a href="/api/v1/product/runtime-actions">Runtime actions JSON</a></li>
+      <li><code>POST /api/v1/product/actions/write-reports</code></li>
+      <li><code>POST /api/v1/product/actions/export-control-snapshot</code></li>
+    </ul>
+  </section>
+
 </main>
 </body>
 </html>

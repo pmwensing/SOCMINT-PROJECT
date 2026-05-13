@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SOCMINT Operator Runbook</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1120px; margin: 0 auto; padding: 28px; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code, pre { color: #bfdbfe; }
+    a { color: #93c5fd; }
+    .pass { color: #86efac; }
+    .warn { color: #fde68a; }
+    .fail { color: #fecaca; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>SOCMINT Operator Runbook</h1>
+  <p>v9.8.2 navigation and operator workflow polish.</p>
+
+  <section class="card">
+    <h2>Current Readiness</h2>
+    <p>Status: <strong class="{{ readiness.status }}">{{ readiness.status|upper }}</strong></p>
+    <p>{{ readiness.recommended_next_action }}</p>
+    <p><a href="{{ url_for('dashboard.product_build_control_center') }}">Back to Product Build Control Center</a></p>
+  </section>
+
+  <section class="card">
+    <h2>Release Workflow</h2>
+    <ol>
+      <li>Open <code>/product/build-control</code> and review readiness.</li>
+      <li>Run <code>make product-smoke</code>.</li>
+      <li>Run <code>make product-route-smoke</code>.</li>
+      <li>Run <code>make release-hardening-smoke</code>.</li>
+      <li>Check dossier quality with <code>/api/v1/dossier/&lt;subject_id&gt;/quality-gate</code>.</li>
+      <li>Check traceability with <code>/api/v1/dossier/&lt;subject_id&gt;/traceability</code>.</li>
+      <li>Commit, push, merge, and tag only when the hardening report is pass.</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>Quick Commands</h2>
+    <pre>make product-smoke
+make product-route-smoke
+make release-hardening-smoke
+cat release/V9_8_1_RELEASE_HARDENING_REPORT.md</pre>
+  </section>
+
+  <section class="card">
+    <h2>Useful Links</h2>
+    <ul>
+      <li><a href="/api/v1/product/build-status">Build Status JSON</a></li>
+      <li><a href="/api/v1/product/release-readiness">Release Readiness JSON</a></li>
+      <li><a href="/api/v1/product/smoke-summary">Smoke Summary JSON</a></li>
+      <li><a href="/api/v1/product/system-health">System Health JSON</a></li>
+      <li><a href="/api/v1/product/operator-runbook">Operator Runbook JSON</a></li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
