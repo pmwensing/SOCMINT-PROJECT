@@ -322,3 +322,16 @@ artifact-review-audit-hardening-smoke:
 
 zip986:
 	cd .. && zip -r SOCMINT-PROJECT-v9.8.6-product-artifact-review-audit.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-artifact-export-manifest-smoke:
+	PYTHONPATH=src python3 scripts/product_artifact_export_manifest_smoke_v9_8_7.py
+
+test987:
+	PYTHONPATH=src python3 scripts/product_artifact_export_manifest_smoke_v9_8_7.py
+
+export-manifest-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_artifact_export_manifest_hardening_v9_8_7.py
+
+zip987:
+	cd .. && zip -r SOCMINT-PROJECT-v9.8.7-product-artifact-evidence-chain.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
