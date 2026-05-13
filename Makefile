@@ -244,3 +244,16 @@ test973:
 
 prepare98:
 	python3 scripts/prepare_v9_8_productized_release.py
+
+
+product-route-smoke:
+	PYTHONPATH=src python3 scripts/product_route_smoke_v9_8_1.py
+
+test981:
+	PYTHONPATH=src python3 scripts/product_route_smoke_v9_8_1.py
+
+release-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_hardening_smoke_v9_8_1.py
+
+zip981:
+	cd .. && zip -r SOCMINT-PROJECT-v9.8.1-release-hardening.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
