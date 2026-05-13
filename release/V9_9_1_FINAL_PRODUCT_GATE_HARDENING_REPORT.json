@@ -1,0 +1,31 @@
+{
+  "status": "pass",
+  "generated_at": "2026-05-13T01:48:30.855236+00:00",
+  "version": "9.9.1",
+  "summary": "3/3 checks passed.",
+  "checks": [
+    {
+      "name": "compileall-src",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "Listing 'src/socmint'...\nListing 'src/socmint/static'...\nListing 'src/socmint/templates'...\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "release-candidate-smoke",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "PYTHONPATH=src python3 scripts/product_release_candidate_smoke_v9_9_0.py\n{\"timestamp\":\"2026-05-13T01:48:29.914728+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"3ca599f6ee0b4ac782aae0cb80ce7248\",\"method\":\"GET\",\"path\":\"/api/v1/product/release-candidate\",\"status_code\":200,\"duration_ms\":7.88,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET RC manifest API 200\n{\"timestamp\":\"2026-05-13T01:48:29.923924+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"93ca0e73676841758c1c6b77dca2f4ee\",\"method\":\"POST\",\"path\":\"/api/v1/product/release-candidate/write\",\"status_code\":200,\"duration_ms\":8.54,\"remote_addr\":\"127.0.0.1\"}\n[PASS] POST write RC manifest API 200\n[PASS] RC manifest file content\n{\"timestamp\":\"2026-05-13T01:48:29.936022+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"c93f548bd946433b8638910596a7848c\",\"method\":\"GET\",\"path\":\"/product/release-candidate\",\"status_code\":200,\"duration_ms\":11.34,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET RC console UI 200\n{\"timestamp\":\"2026-05-13T01:48:29.954102+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"9c9f850f55974697afdcf4308eadbc2b\",\"method\":\"GET\",\"path\":\"/product/build-control\",\"status_code\":200,\"duration_ms\":17.48,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET Product Control RC link 200\nv9.9.0 product release candidate smoke passed\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "final-gate-smoke-v9-9-1",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "{\"timestamp\":\"2026-05-13T01:48:30.671813+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"f0f556f689f9421a8160f33abdce9df6\",\"method\":\"POST\",\"path\":\"/api/v1/product/final-gate/signoff\",\"status_code\":200,\"duration_ms\":16.96,\"remote_addr\":\"127.0.0.1\"}\n[PASS] deny approval when RC warn 200\n{\"timestamp\":\"2026-05-13T01:48:30.680587+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"354ea65998e24d58ac444e42e2ea5c1f\",\"method\":\"GET\",\"path\":\"/api/v1/product/final-gate\",\"status_code\":200,\"duration_ms\":7.45,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET final gate ready 200\n{\"timestamp\":\"2026-05-13T01:48:30.697492+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"448fc5234d2f4ba7a611da9b16cabcf2\",\"method\":\"POST\",\"path\":\"/api/v1/product/final-gate/signoff\",\"status_code\":200,\"duration_ms\":16.27,\"remote_addr\":\"127.0.0.1\"}\n[PASS] approve final gate 200\n{\"timestamp\":\"2026-05-13T01:48:30.698416+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"c0f233f665bf47208678d8ec9826c2c7\",\"method\":\"GET\",\"path\":\"/api/v1/product/final-gate/signoff-audit\",\"status_code\":200,\"duration_ms\":0.19,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET signoff audit 200\n{\"timestamp\":\"2026-05-13T01:48:30.708216+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"b2df395e8f5c4c4bbd5f860c75cec928\",\"method\":\"POST\",\"path\":\"/api/v1/product/final-gate/write\",\"status_code\":200,\"duration_ms\":9.27,\"remote_addr\":\"127.0.0.1\"}\n[PASS] write final gate manifest 200\n[PASS] final gate manifest content\n{\"timestamp\":\"2026-05-13T01:48:30.722332+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"d0f5b51e5b95420d9fb9f66c82e40cdd\",\"method\":\"GET\",\"path\":\"/product/final-gate\",\"status_code\":200,\"duration_ms\":13.13,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET final gate UI 200\n{\"timestamp\":\"2026-05-13T01:48:30.733938+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"f9d283a6c25a441383f306d789efd911\",\"method\":\"GET\",\"path\":\"/product/release-candidate\",\"status_code\":200,\"duration_ms\":10.18,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET RC console final gate link 200\nv9.9.1 final product gate smoke passed\n",
+      "stderr_tail": ""
+    }
+  ],
+  "failed": [],
+  "next_action": "Merge and tag v9.9.1 final product gate"
+}

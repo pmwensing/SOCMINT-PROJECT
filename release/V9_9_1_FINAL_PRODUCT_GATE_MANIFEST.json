@@ -1,0 +1,122 @@
+{
+  "actor": "v991-gate-smoke",
+  "audit_event_count": 4,
+  "can_approve": true,
+  "gate_status": "approved",
+  "generated_at": "2026-05-13T01:48:30.707065+00:00",
+  "latest_audit_event": {
+    "action": "signoff_approve",
+    "actor": "v991-gate-smoke",
+    "after": {
+      "actor": "v991-gate-smoke",
+      "approved": true,
+      "blocked": false,
+      "decision": "approved",
+      "reason": "smoke approved",
+      "updated_at": "2026-05-13T01:48:30.688554+00:00",
+      "version": "9.9.1"
+    },
+    "before": {
+      "actor": "v991-gate-smoke",
+      "approved": true,
+      "blocked": false,
+      "decision": "approved",
+      "reason": "smoke approved",
+      "updated_at": "2026-05-13T01:48:29.056327+00:00",
+      "version": "9.9.1"
+    },
+    "event_id": "26e095adfa5942f2ac5225347137b2e1",
+    "rc_status": "pass",
+    "reason": "smoke approved",
+    "timestamp": "2026-05-13T01:48:30.688708+00:00",
+    "version": "9.9.1"
+  },
+  "rc_status": "pass",
+  "rc_summary": {
+    "missing_stage_keys": [],
+    "required_missing": 0,
+    "required_passed": 6,
+    "required_total": 6,
+    "stages": [
+      {
+        "artifact": "release/V9_7_PRODUCT_SMOKE_REPORT.md",
+        "artifact_download_url": "/product/artifacts/download/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+        "artifact_exists": true,
+        "artifact_view_url": "/product/artifacts/view/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+        "key": "product_smoke",
+        "label": "Product Smoke",
+        "required": true,
+        "status": "pass",
+        "target": "make product-smoke"
+      },
+      {
+        "artifact": "release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+        "artifact_download_url": "/product/artifacts/download/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+        "artifact_exists": true,
+        "artifact_view_url": "/product/artifacts/view/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+        "key": "artifact_review",
+        "label": "Artifact Review",
+        "required": true,
+        "status": "pass",
+        "target": "make product-artifact-review-smoke"
+      },
+      {
+        "artifact": "release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+        "artifact_download_url": "/product/artifacts/download/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+        "artifact_exists": true,
+        "artifact_view_url": "/product/artifacts/view/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+        "key": "artifact_review_audit",
+        "label": "Artifact Review Audit",
+        "required": true,
+        "status": "pass",
+        "target": "make product-artifact-review-audit-smoke"
+      },
+      {
+        "artifact": "release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+        "artifact_download_url": "/product/artifacts/download/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+        "artifact_exists": true,
+        "artifact_view_url": "/product/artifacts/view/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+        "key": "export_manifest",
+        "label": "Evidence Chain Export Manifest",
+        "required": true,
+        "status": "pass",
+        "target": "make product-artifact-export-manifest-smoke"
+      },
+      {
+        "artifact": "release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+        "artifact_download_url": "/product/artifacts/download/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+        "artifact_exists": true,
+        "artifact_view_url": "/product/artifacts/view/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+        "key": "release_package",
+        "label": "Release Package Builder",
+        "required": true,
+        "status": "pass",
+        "target": "make product-release-package-smoke"
+      },
+      {
+        "artifact": "release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+        "artifact_download_url": "/product/artifacts/download/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+        "artifact_exists": true,
+        "artifact_view_url": "/product/artifacts/view/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+        "key": "zip_export",
+        "label": "Release Package ZIP Export",
+        "required": true,
+        "status": "pass",
+        "target": "make product-release-package-zip-smoke"
+      }
+    ],
+    "status": "pass"
+  },
+  "recommended_next_action": "Release candidate approved. Ready for final release/tag.",
+  "signoff": {
+    "actor": "v991-gate-smoke",
+    "approved": true,
+    "blocked": false,
+    "decision": "approved",
+    "reason": "smoke approved",
+    "updated_at": "2026-05-13T01:48:30.688554+00:00",
+    "version": "9.9.1"
+  },
+  "status": "ok",
+  "version": "9.9.1"
+}

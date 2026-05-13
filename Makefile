@@ -374,3 +374,16 @@ release-candidate-hardening-smoke:
 
 zip990:
 	cd .. && zip -r SOCMINT-PROJECT-v9.9.0-product-release-candidate-console.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-final-gate-smoke:
+	PYTHONPATH=src python3 scripts/product_final_gate_smoke_v9_9_1.py
+
+test991:
+	PYTHONPATH=src python3 scripts/product_final_gate_smoke_v9_9_1.py
+
+final-gate-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_final_gate_hardening_v9_9_1.py
+
+zip991:
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.1-final-product-gate.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'

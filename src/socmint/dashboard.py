@@ -3907,3 +3907,359 @@ def product_release_candidate_write():
     flash("Release candidate manifest written.", "success")
     return redirect(url_for("dashboard.product_release_candidate_console"))
 # ---- end v9.9.0 product release candidate console ----
+
+
+
+# ---- v9.9.1 Release Candidate Sign-Off + Final Product Gate ----
+def _v991_signoff_state_path():
+    from pathlib import Path
+
+    path = Path("storage/product_qa/release_candidate_signoff_state.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _v991_signoff_audit_path():
+    from pathlib import Path
+
+    path = Path("storage/product_qa/release_candidate_signoff_audit.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _v991_load_signoff_state():
+    path = _v991_signoff_state_path()
+    if not path.exists():
+        return {
+            "version": "9.9.1",
+            "decision": "pending",
+            "approved": False,
+            "blocked": False,
+            "reason": "",
+            "actor": None,
+            "updated_at": None,
+        }
+
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        data = {}
+
+    if not isinstance(data, dict):
+        data = {}
+
+    data.setdefault("version", "9.9.1")
+    data.setdefault("decision", "pending")
+    data.setdefault("approved", False)
+    data.setdefault("blocked", False)
+    data.setdefault("reason", "")
+    data.setdefault("actor", None)
+    data.setdefault("updated_at", None)
+    return data
+
+
+def _v991_save_signoff_state(state):
+    state["version"] = "9.9.1"
+    path = _v991_signoff_state_path()
+    path.write_text(json.dumps(state, indent=2, sort_keys=True))
+    return state
+
+
+def _v991_load_signoff_audit():
+    path = _v991_signoff_audit_path()
+    if not path.exists():
+        return {"version": "9.9.1", "events": []}
+
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        data = {}
+
+    if not isinstance(data, dict):
+        data = {}
+
+    data.setdefault("version", "9.9.1")
+    data.setdefault("events", [])
+    return data
+
+
+def _v991_save_signoff_audit(data):
+    data["version"] = "9.9.1"
+    path = _v991_signoff_audit_path()
+    path.write_text(json.dumps(data, indent=2, sort_keys=True))
+    return data
+
+
+def _v991_append_signoff_audit(action, actor, before, after, rc_status, reason=""):
+    from datetime import datetime, timezone
+    from uuid import uuid4
+
+    data = _v991_load_signoff_audit()
+    event = {
+        "event_id": uuid4().hex,
+        "version": "9.9.1",
+        "action": action,
+        "actor": actor,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "reason": reason,
+        "rc_status": rc_status,
+        "before": before,
+        "after": after,
+    }
+    data.setdefault("events", []).append(event)
+    _v991_save_signoff_audit(data)
+    return event
+
+
+def _v991_final_gate_payload(actor=None):
+    from datetime import datetime, timezone
+
+    rc_manifest = _v990_build_rc_manifest(actor=actor)
+    signoff = _v991_load_signoff_state()
+    audit_data = _v991_load_signoff_audit()
+
+    rc_pass = rc_manifest.get("status") == "pass"
+    approved = bool(signoff.get("approved"))
+    blocked = bool(signoff.get("blocked"))
+
+    if not rc_pass:
+        gate_status = "blocked"
+        can_approve = False
+        recommended = "Run and pass the full RC chain before approving."
+    elif blocked:
+        gate_status = "blocked"
+        can_approve = False
+        recommended = "Resolve the block reason before release."
+    elif approved:
+        gate_status = "approved"
+        can_approve = True
+        recommended = "Release candidate approved. Ready for final release/tag."
+    else:
+        gate_status = "pending"
+        can_approve = True
+        recommended = "RC chain is passing. Awaiting operator sign-off."
+
+    return {
+        "status": "ok",
+        "version": "9.9.1",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "actor": actor,
+        "gate_status": gate_status,
+        "can_approve": can_approve,
+        "rc_status": rc_manifest.get("status"),
+        "rc_summary": rc_manifest.get("summary"),
+        "signoff": signoff,
+        "audit_event_count": len(audit_data.get("events", [])),
+        "latest_audit_event": audit_data.get("events", [])[-1] if audit_data.get("events") else None,
+        "recommended_next_action": recommended,
+    }
+
+
+def _v991_write_final_gate_manifest(actor=None):
+    from pathlib import Path
+
+    payload = _v991_final_gate_payload(actor=actor)
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+
+    json_path = release_dir / "V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json"
+    md_path = release_dir / "V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.md"
+
+    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+
+    signoff = payload.get("signoff", {})
+    rows = [
+        "# v9.9.1 Final Product Gate Manifest",
+        "",
+        f"Generated: {payload['generated_at']}",
+        f"Gate status: **{payload['gate_status']}**",
+        f"RC status: **{payload['rc_status']}**",
+        f"Decision: **{signoff.get('decision')}**",
+        f"Approved: {signoff.get('approved')}",
+        f"Blocked: {signoff.get('blocked')}",
+        f"Actor: {signoff.get('actor') or actor or 'unknown'}",
+        f"Reason: {signoff.get('reason')}",
+        "",
+        "## Recommended Next Action",
+        "",
+        payload.get("recommended_next_action", ""),
+        "",
+        "## RC Summary",
+        "",
+        f"- Required passed: {payload.get('rc_summary', {}).get('required_passed')}/{payload.get('rc_summary', {}).get('required_total')}",
+        f"- Missing: {payload.get('rc_summary', {}).get('required_missing')}",
+        f"- Sign-off audit events: {payload.get('audit_event_count')}",
+        "",
+    ]
+    md_path.write_text("\n".join(rows))
+
+    payload["artifacts_written"] = {
+        "json": json_path.as_posix(),
+        "markdown": md_path.as_posix(),
+    }
+    return payload
+
+
+def _v991_apply_signoff_decision(decision, actor=None, reason=""):
+    from copy import deepcopy
+    from datetime import datetime, timezone
+
+    gate_before = _v991_final_gate_payload(actor=actor)
+    rc_status = gate_before.get("rc_status")
+    before = deepcopy(_v991_load_signoff_state())
+
+    decision = str(decision or "").strip().lower()
+    if decision not in {"approve", "block", "reset"}:
+        abort(400)
+
+    if decision == "approve" and rc_status != "pass":
+        after = deepcopy(before)
+        event = _v991_append_signoff_audit(
+            action="approve_denied",
+            actor=actor,
+            before=before,
+            after=after,
+            rc_status=rc_status,
+            reason=reason or "Approval denied because RC chain is not passing.",
+        )
+        return {
+            "status": "blocked",
+            "version": "9.9.1",
+            "approved": False,
+            "reason": "RC chain must be pass before approval.",
+            "audit_event": event,
+            "gate": _v991_final_gate_payload(actor=actor),
+        }
+
+    if decision == "approve":
+        after = {
+            "version": "9.9.1",
+            "decision": "approved",
+            "approved": True,
+            "blocked": False,
+            "reason": reason or "Approved for final product release.",
+            "actor": actor,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    elif decision == "block":
+        after = {
+            "version": "9.9.1",
+            "decision": "blocked",
+            "approved": False,
+            "blocked": True,
+            "reason": reason or "Blocked by operator.",
+            "actor": actor,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    else:
+        after = {
+            "version": "9.9.1",
+            "decision": "pending",
+            "approved": False,
+            "blocked": False,
+            "reason": reason or "Reset to pending.",
+            "actor": actor,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    _v991_save_signoff_state(after)
+    event = _v991_append_signoff_audit(
+        action=f"signoff_{decision}",
+        actor=actor,
+        before=before,
+        after=after,
+        rc_status=rc_status,
+        reason=after.get("reason", ""),
+    )
+    gate = _v991_write_final_gate_manifest(actor=actor)
+    return {
+        "status": "ok",
+        "version": "9.9.1",
+        "decision": decision,
+        "signoff": after,
+        "audit_event": event,
+        "gate": gate,
+    }
+
+
+@dashboard_bp.route("/api/v1/product/final-gate")
+@login_required
+def api_v991_final_gate():
+    return jsonify(_v991_final_gate_payload(actor=session.get("user")))
+
+
+@dashboard_bp.route("/api/v1/product/final-gate/signoff-audit")
+@login_required
+def api_v991_signoff_audit():
+    data = _v991_load_signoff_audit()
+    return jsonify(
+        {
+            "status": "ok",
+            "version": "9.9.1",
+            "count": len(data.get("events", [])),
+            "events": data.get("events", []),
+            "audit_path": str(_v991_signoff_audit_path()),
+        }
+    )
+
+
+@dashboard_bp.route("/api/v1/product/final-gate/write", methods=["POST"])
+@admin_required
+def api_v991_write_final_gate():
+    manifest = _v991_write_final_gate_manifest(actor=session.get("user"))
+    audit("product_final_gate_manifest_write", details=manifest.get("artifacts_written"))
+    return jsonify(manifest)
+
+
+@dashboard_bp.route("/api/v1/product/final-gate/signoff", methods=["POST"])
+@admin_required
+def api_v991_signoff_decision():
+    payload = request.get_json(silent=True) or request.form
+    decision = payload.get("decision")
+    reason = payload.get("reason", "")
+    result = _v991_apply_signoff_decision(
+        decision=decision,
+        actor=session.get("user"),
+        reason=reason,
+    )
+    audit("product_final_gate_signoff", details={"decision": decision, "result_status": result.get("status")})
+    return jsonify(result)
+
+
+@dashboard_bp.route("/product/final-gate")
+@login_required
+def product_final_gate_view():
+    gate = _v991_final_gate_payload(actor=session.get("user"))
+    audit_data = _v991_load_signoff_audit()
+    return render_template(
+        "product_final_gate.html",
+        gate=gate,
+        audit_events=audit_data.get("events", []),
+    )
+
+
+@dashboard_bp.route("/product/final-gate/write", methods=["POST"])
+@admin_required
+def product_final_gate_write():
+    manifest = _v991_write_final_gate_manifest(actor=session.get("user"))
+    audit("product_final_gate_manifest_write", details=manifest.get("artifacts_written"))
+    flash("Final product gate manifest written.", "success")
+    return redirect(url_for("dashboard.product_final_gate_view"))
+
+
+@dashboard_bp.route("/product/final-gate/signoff", methods=["POST"])
+@admin_required
+def product_final_gate_signoff():
+    decision = request.form.get("decision")
+    reason = request.form.get("reason", "")
+    result = _v991_apply_signoff_decision(
+        decision=decision,
+        actor=session.get("user"),
+        reason=reason,
+    )
+    if result.get("status") == "blocked" and decision == "approve":
+        flash("Approval blocked because the RC chain is not passing.", "error")
+    else:
+        flash("Final gate decision recorded.", "success")
+    return redirect(url_for("dashboard.product_final_gate_view"))
+# ---- end v9.9.1 release candidate sign-off gate ----
