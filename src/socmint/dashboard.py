@@ -2330,6 +2330,18 @@ def create_app(database_url=None):
     app.before_request(init_request_security)
     app.before_request(csrf_protect)
     app.after_request(add_security_headers)
+    # v10.0.7 wave 1 blueprint-owned read-only route registration
+    try:
+        from socmint.product_artifacts import product_artifacts_bp
+        from socmint.product_post_release import product_post_release_bp
+        from socmint.product_release_flow import product_release_flow_bp
+
+        app.register_blueprint(product_release_flow_bp)
+        app.register_blueprint(product_post_release_bp)
+        app.register_blueprint(product_artifacts_bp)
+    except Exception as exc:
+        app.logger.warning("failed to register v10.0.7 wave 1 blueprints: %s", exc)
+
     app.register_blueprint(dashboard_bp)
 
     # v10.0.4 product module registry blueprint

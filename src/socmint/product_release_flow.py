@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from flask import Blueprint as _Blueprint, current_app as _current_app
+
 # v10.0.1 Product Route Extraction Phase 1
 #
 # Phase 1 creates the dedicated product release flow module without breaking the
@@ -73,3 +75,40 @@ __all__ = [
     "COMPATIBILITY_MODE",
     "ROUTE_FAMILY",
 ]
+
+
+
+# ---- v10.0.7 Blueprint Migration Wave 1 GET ownership ----
+
+try:
+    product_release_flow_bp
+except NameError:
+    product_release_flow_bp = _Blueprint("product_release_flow", __name__)
+
+
+def _v1007_dispatch_dashboard_get(rule: str, **kwargs):
+    for candidate in _current_app.url_map.iter_rules():
+        if candidate.rule == rule and candidate.endpoint.startswith("dashboard."):
+            return _current_app.view_functions[candidate.endpoint](**kwargs)
+    raise RuntimeError(f"dashboard fallback route not found for {rule}")
+
+
+@product_release_flow_bp.route("/product/release-candidate", methods=["GET"])
+def wave1_product_release_candidate_console():
+    return _v1007_dispatch_dashboard_get("/product/release-candidate")
+
+
+@product_release_flow_bp.route("/api/v1/product/release-candidate", methods=["GET"])
+def wave1_api_product_release_candidate():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/release-candidate")
+
+
+@product_release_flow_bp.route("/product/final-gate", methods=["GET"])
+def wave1_product_final_gate_view():
+    return _v1007_dispatch_dashboard_get("/product/final-gate")
+
+
+@product_release_flow_bp.route("/api/v1/product/final-gate", methods=["GET"])
+def wave1_api_product_final_gate():
+    return _v1007_dispatch_dashboard_get("/api/v1/product/final-gate")
+# ---- end v10.0.7 wave 1 release flow routes ----

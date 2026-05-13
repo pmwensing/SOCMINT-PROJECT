@@ -582,3 +582,16 @@ migration-plan-hardening-smoke:
 
 zip1006:
 	cd .. && zip -r SOCMINT-PROJECT-v10.0.6-blueprint-migration-plan.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-blueprint-wave1-smoke:
+	PYTHONPATH=src python3 scripts/product_blueprint_wave1_smoke_v10_0_7.py
+
+test1007:
+	PYTHONPATH=src python3 scripts/product_blueprint_wave1_smoke_v10_0_7.py
+
+blueprint-wave1-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_blueprint_wave1_hardening_v10_0_7.py
+
+zip1007:
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.7-blueprint-migration-wave1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'

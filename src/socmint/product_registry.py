@@ -14,6 +14,32 @@ product_registry_bp = Blueprint("product_registry", __name__)
 
 REGISTRY_VERSION = "10.0.4"
 
+WAVE1_BLUEPRINT_OWNED_ROUTES = {
+    "/product/release-candidate": "socmint.product_release_flow",
+    "/api/v1/product/release-candidate": "socmint.product_release_flow",
+    "/product/final-gate": "socmint.product_release_flow",
+    "/api/v1/product/final-gate": "socmint.product_release_flow",
+    "/product/final": "socmint.product_post_release",
+    "/api/v1/product/final": "socmint.product_post_release",
+    "/product/final/handoff": "socmint.product_post_release",
+    "/api/v1/product/final/handoff": "socmint.product_post_release",
+    "/product/final/self-test": "socmint.product_post_release",
+    "/api/v1/product/final/self-test": "socmint.product_post_release",
+    "/product/final/v10-bootstrap": "socmint.product_post_release",
+    "/api/v1/product/final/v10-bootstrap": "socmint.product_post_release",
+    "/product/artifacts": "socmint.product_artifacts",
+    "/api/v1/product/artifacts": "socmint.product_artifacts",
+    "/product/release-package": "socmint.product_artifacts",
+    "/api/v1/product/release-package": "socmint.product_artifacts",
+}
+
+WAVE1_TARGET_BLUEPRINTS = {
+    "socmint.product_release_flow": "product_release_flow",
+    "socmint.product_post_release": "product_post_release",
+    "socmint.product_artifacts": "product_artifacts",
+}
+
+
 
 DASHBOARD_OWNED_SURFACES = [
     {
@@ -105,9 +131,33 @@ def _module_surfaces() -> list[dict[str, Any]]:
     return DASHBOARD_OWNED_SURFACES + extracted
 
 
+
+def _v1007_route_lookup_for_ownership(route_inventory: list[dict[str, Any]], route: str, normalized: str, wave1_target: str | None) -> dict[str, Any] | None:
+    candidates = [
+        item
+        for item in route_inventory
+        if item.get("rule") in {route, normalized}
+    ]
+    if not candidates:
+        return None
+
+    if wave1_target:
+        expected_blueprint = WAVE1_TARGET_BLUEPRINTS.get(wave1_target)
+        for item in candidates:
+            endpoint = item.get("endpoint") or ""
+            if expected_blueprint and endpoint.startswith(expected_blueprint + "."):
+                return item
+
+    for item in candidates:
+        endpoint = item.get("endpoint") or ""
+        if not endpoint.startswith("dashboard."):
+            return item
+
+    return candidates[0]
+
+
 def _route_ownership_map() -> dict[str, Any]:
     route_inventory = _route_inventory()
-    route_lookup = {item["rule"]: item for item in route_inventory}
     surfaces = _module_surfaces()
 
     ownership_rows: list[dict[str, Any]] = []
@@ -117,15 +167,15 @@ def _route_ownership_map() -> dict[str, Any]:
         for route in surface.get("routes", []):
             normalized = route.replace("{package_name}", "<package_name>")
             present = _route_exists(route) or _route_exists(normalized)
-            endpoint = None
-            methods: list[str] = []
-            if route in route_lookup:
-                endpoint = route_lookup[route]["endpoint"]
-                methods = route_lookup[route]["methods"]
-            elif normalized in route_lookup:
-                endpoint = route_lookup[normalized]["endpoint"]
-                methods = route_lookup[normalized]["methods"]
+            wave1_target = WAVE1_BLUEPRINT_OWNED_ROUTES.get(route) or WAVE1_BLUEPRINT_OWNED_ROUTES.get(normalized)
+            ownership_route = _v1007_route_lookup_for_ownership(route_inventory, route, normalized, wave1_target)
+            endpoint = ownership_route["endpoint"] if ownership_route else None
+            methods: list[str] = ownership_route["methods"] if ownership_route else []
 
+            endpoint_owner = (endpoint or "").split(".", 1)[0]
+            expected_blueprint = WAVE1_TARGET_BLUEPRINTS.get(wave1_target)
+            wave1_blueprint_owned = bool(wave1_target and endpoint_owner == expected_blueprint)
+            effective_ownership = "blueprint-owned" if wave1_blueprint_owned else surface["ownership"]
             row = {
                 "route": route,
                 "normalized_route": normalized,
@@ -134,9 +184,12 @@ def _route_ownership_map() -> dict[str, Any]:
                 "methods": methods,
                 "surface_key": surface["key"],
                 "surface_label": surface["label"],
-                "module": surface["module"],
-                "ownership": surface["ownership"],
-                "compatibility_mode": surface.get("compatibility_mode"),
+                "module": wave1_target or surface["module"],
+                "ownership": effective_ownership,
+                "compatibility_mode": "native-blueprint-wave1" if wave1_blueprint_owned else surface.get("compatibility_mode"),
+                "wave1_blueprint_owned": wave1_blueprint_owned,
+                "fallback_owner": "dashboard.py" if wave1_target else None,
+                "target_blueprint": expected_blueprint,
             }
             ownership_rows.append(row)
             if not present:
