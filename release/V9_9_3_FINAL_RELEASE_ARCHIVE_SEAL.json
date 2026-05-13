@@ -1,0 +1,122 @@
+{
+  "archive_tar_path": "storage/final_release_archives/v9_9_3_archive_smoke_release.tar.gz",
+  "archive_tar_sha256": "fc5c91c003aa18b820aab47acc4d4028c3ab2ea29f66c74aa4a3a19bb0fa3bc4",
+  "archive_tar_size_bytes": 4345,
+  "archive_zip_path": "storage/final_release_archives/v9_9_3_archive_smoke_release.zip",
+  "archive_zip_sha256": "5c4823bf5776f4209cefd1c150483dd838dac688c7883e08922c80e80944eec6",
+  "archive_zip_size_bytes": 8532,
+  "download_tar_url": "/product/final-release/archive/download/v9_9_3_archive_smoke_release.tar.gz",
+  "download_zip_url": "/product/final-release/archive/download/v9_9_3_archive_smoke_release.zip",
+  "generated_at": "2026-05-13T03:29:18.190989+00:00",
+  "integrity_manifest": {
+    "file_count": 11,
+    "files": [
+      {
+        "path": "FINAL_RELEASE_CHECKLIST.json",
+        "sha256": "a02035e8682613276eec45f946655e4d86c87d8a6004b5933afe8709f0e7d22a",
+        "size_bytes": 844
+      },
+      {
+        "path": "PUBLISH_MANIFEST.json",
+        "sha256": "0b5cff7a3474cfe388e41dc871dea82649a4ac5a12e5a5b2987f1ba621fa3110",
+        "size_bytes": 8284
+      },
+      {
+        "path": "RELEASE_NOTES.md",
+        "sha256": "1919a2499733c46e5192a3b0603c23c5a84e2d7a6c9aac69f224c0a6740c7327",
+        "size_bytes": 1296
+      },
+      {
+        "path": "evidence/release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+        "sha256": "afb8a79cb807a349fbce5acc10654a8d3aa855a12f29ad5329f4ba4669418258",
+        "size_bytes": 5560
+      },
+      {
+        "path": "evidence/release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.md",
+        "sha256": "ab7104e847ebca1768c9aac1700fc2dc88c0163343f66dd788513977f37fe1e4",
+        "size_bytes": 1325
+      },
+      {
+        "path": "evidence/release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+        "sha256": "f9c4840313840664eb7d7427f9c965b783a1a373f81c2b2ced5dba8b24f0eda8",
+        "size_bytes": 4724
+      },
+      {
+        "path": "evidence/release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.md",
+        "sha256": "e70c303ef5fbca1cbef6ace29d09a35532d92769d6940829b241d62ad556ced0",
+        "size_bytes": 402
+      },
+      {
+        "path": "evidence/storage/product_qa/release_candidate_signoff_audit.json",
+        "sha256": "1b4941a362be870745f85cefe16f6a3eae2a356fb33b0e9a79ed00a536322829",
+        "size_bytes": 1695
+      },
+      {
+        "path": "evidence/storage/product_qa/release_candidate_signoff_state.json",
+        "sha256": "5e9e91f2b6dc8693be02131df6c138426073c39d8e87c58b904b5f50e617f0be",
+        "size_bytes": 212
+      },
+      {
+        "path": "packages/v9_9_2_final_release_smoke_package.zip",
+        "sha256": "0efd7e8e55da0dbfbfe205c051e1f569083c4983bff6b3b342bff4e3369822b8",
+        "size_bytes": 258
+      },
+      {
+        "path": "packages/v9_9_3_archive_smoke_package.zip",
+        "sha256": "b1f973f24464e3d9085da111e5eed64204078dfa044c38646379490ab27d2ab5",
+        "size_bytes": 258
+      }
+    ],
+    "generated_at": "2026-05-13T03:29:18.185574+00:00",
+    "integrity_manifest_path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_3_archive_smoke_release/INTEGRITY_MANIFEST.json",
+    "latest_integrity_manifest_path": "release/V9_9_3_FINAL_RELEASE_INTEGRITY_MANIFEST.json",
+    "release_name": "v9_9_3_archive_smoke_release",
+    "release_path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_3_archive_smoke_release",
+    "required_all_present": true,
+    "required_presence": {
+      "checklist": true,
+      "final_gate_manifest": true,
+      "package_zip": true,
+      "publish_manifest": true,
+      "rc_manifest": true,
+      "release_notes": true,
+      "signoff_audit": true
+    },
+    "status": "ok",
+    "version": "9.9.3"
+  },
+  "release_name": "v9_9_3_archive_smoke_release",
+  "release_path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_3_archive_smoke_release",
+  "status": "ok",
+  "tar_entries": [
+    "FINAL_RELEASE_CHECKLIST.json",
+    "INTEGRITY_MANIFEST.json",
+    "PUBLISH_MANIFEST.json",
+    "RELEASE_NOTES.md",
+    "evidence/release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+    "evidence/release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.md",
+    "evidence/release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+    "evidence/release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.md",
+    "evidence/storage/product_qa/release_candidate_signoff_audit.json",
+    "evidence/storage/product_qa/release_candidate_signoff_state.json",
+    "packages/v9_9_2_final_release_smoke_package.zip",
+    "packages/v9_9_3_archive_smoke_package.zip"
+  ],
+  "tar_entry_count": 12,
+  "version": "9.9.3",
+  "zip_entries": [
+    "FINAL_RELEASE_CHECKLIST.json",
+    "INTEGRITY_MANIFEST.json",
+    "PUBLISH_MANIFEST.json",
+    "RELEASE_NOTES.md",
+    "evidence/release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+    "evidence/release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.md",
+    "evidence/release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+    "evidence/release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.md",
+    "evidence/storage/product_qa/release_candidate_signoff_audit.json",
+    "evidence/storage/product_qa/release_candidate_signoff_state.json",
+    "packages/v9_9_2_final_release_smoke_package.zip",
+    "packages/v9_9_3_archive_smoke_package.zip"
+  ],
+  "zip_entry_count": 12
+}
