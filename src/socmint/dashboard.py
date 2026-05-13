@@ -4536,3 +4536,250 @@ def product_final_release_publish():
         flash("Final release blocked until final gate approval.", "error")
     return redirect(url_for("dashboard.product_final_release_view"))
 # ---- end v9.9.2 final release publisher ----
+
+
+
+# ---- v9.9.3 Final Release Archive + Integrity Seal ----
+def _v993_final_releases_root():
+    from pathlib import Path
+    root = Path("storage/final_releases")
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _v993_archives_root():
+    from pathlib import Path
+    root = Path("storage/final_release_archives")
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _v993_safe_final_release_dir(release_name):
+    root = _v993_final_releases_root().resolve()
+    name = _v988_package_slug(release_name)
+    path = (root / name).resolve()
+    if not str(path).startswith(str(root)) or not path.exists() or not path.is_dir():
+        abort(404)
+    return path
+
+
+def _v993_sha256_file(path):
+    import hashlib
+    h = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _v993_list_final_releases():
+    from datetime import datetime, timezone
+    root = _v993_final_releases_root()
+    releases = []
+    for path in sorted(root.iterdir()):
+        if not path.is_dir():
+            continue
+        publish_manifest_path = path / "PUBLISH_MANIFEST.json"
+        publish_manifest = {}
+        if publish_manifest_path.exists():
+            try:
+                publish_manifest = json.loads(publish_manifest_path.read_text())
+            except Exception:
+                publish_manifest = {}
+        release_name = path.name
+        zip_path = _v993_archives_root() / f"{release_name}.zip"
+        tar_path = _v993_archives_root() / f"{release_name}.tar.gz"
+        integrity_path = path / "INTEGRITY_MANIFEST.json"
+        releases.append(
+            {
+                "release_name": release_name,
+                "release_path": path.as_posix(),
+                "publish_manifest_path": publish_manifest_path.as_posix() if publish_manifest_path.exists() else None,
+                "integrity_manifest_path": integrity_path.as_posix() if integrity_path.exists() else None,
+                "integrity_manifest_exists": integrity_path.exists(),
+                "archive_zip_path": zip_path.as_posix() if zip_path.exists() else None,
+                "archive_tar_path": tar_path.as_posix() if tar_path.exists() else None,
+                "archive_zip_exists": zip_path.exists(),
+                "archive_tar_exists": tar_path.exists(),
+                "archive_zip_size_bytes": zip_path.stat().st_size if zip_path.exists() else 0,
+                "archive_tar_size_bytes": tar_path.stat().st_size if tar_path.exists() else 0,
+                "download_zip_url": f"/product/final-release/archive/download/{release_name}.zip" if zip_path.exists() else None,
+                "download_tar_url": f"/product/final-release/archive/download/{release_name}.tar.gz" if tar_path.exists() else None,
+                "status": publish_manifest.get("status"),
+                "actor": publish_manifest.get("actor"),
+                "published_at": publish_manifest.get("published_at"),
+                "modified_at": datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat(),
+            }
+        )
+    releases.sort(key=lambda item: item.get("modified_at") or "", reverse=True)
+    return releases
+
+
+def _v993_build_integrity_manifest(release_name):
+    from datetime import datetime, timezone
+    from pathlib import Path
+    release_dir = _v993_safe_final_release_dir(release_name)
+    files = []
+    for path in sorted(release_dir.rglob("*")):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(release_dir).as_posix()
+        if rel == "INTEGRITY_MANIFEST.json":
+            continue
+        files.append({"path": rel, "size_bytes": path.stat().st_size, "sha256": _v993_sha256_file(path)})
+    manifest = {
+        "status": "ok",
+        "version": "9.9.3",
+        "release_name": release_dir.name,
+        "release_path": release_dir.as_posix(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "file_count": len(files),
+        "files": files,
+        "required_presence": {
+            "release_notes": any(item["path"] == "RELEASE_NOTES.md" for item in files),
+            "checklist": any(item["path"] == "FINAL_RELEASE_CHECKLIST.json" for item in files),
+            "publish_manifest": any(item["path"] == "PUBLISH_MANIFEST.json" for item in files),
+            "rc_manifest": any(item["path"].endswith("V9_9_0_RELEASE_CANDIDATE_MANIFEST.json") for item in files),
+            "final_gate_manifest": any(item["path"].endswith("V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json") for item in files),
+            "signoff_audit": any(item["path"].endswith("release_candidate_signoff_audit.json") for item in files),
+            "package_zip": any(item["path"].endswith(".zip") for item in files),
+        },
+    }
+    manifest["required_all_present"] = all(manifest["required_presence"].values())
+    integrity_path = release_dir / "INTEGRITY_MANIFEST.json"
+    integrity_path.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+    latest = Path("release/V9_9_3_FINAL_RELEASE_INTEGRITY_MANIFEST.json")
+    latest.parent.mkdir(exist_ok=True)
+    latest.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+    manifest["integrity_manifest_path"] = integrity_path.as_posix()
+    manifest["latest_integrity_manifest_path"] = latest.as_posix()
+    return manifest
+
+
+def _v993_create_final_release_archives(release_name):
+    import tarfile
+    import zipfile
+    from datetime import datetime, timezone
+    from pathlib import Path
+    release_dir = _v993_safe_final_release_dir(release_name)
+    integrity = _v993_build_integrity_manifest(release_dir.name)
+    archives_root = _v993_archives_root()
+    zip_path = archives_root / f"{release_dir.name}.zip"
+    tar_path = archives_root / f"{release_dir.name}.tar.gz"
+    if zip_path.exists():
+        zip_path.unlink()
+    if tar_path.exists():
+        tar_path.unlink()
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for path in sorted(release_dir.rglob("*")):
+            if path.is_file():
+                zf.write(path, path.relative_to(release_dir).as_posix())
+    with tarfile.open(tar_path, "w:gz") as tf:
+        for path in sorted(release_dir.rglob("*")):
+            if path.is_file():
+                tf.add(path, arcname=path.relative_to(release_dir).as_posix())
+    with zipfile.ZipFile(zip_path) as zf:
+        zip_entries = zf.namelist()
+    with tarfile.open(tar_path, "r:gz") as tf:
+        tar_entries = tf.getnames()
+    seal = {
+        "status": "ok",
+        "version": "9.9.3",
+        "release_name": release_dir.name,
+        "release_path": release_dir.as_posix(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "integrity_manifest": integrity,
+        "archive_zip_path": zip_path.as_posix(),
+        "archive_tar_path": tar_path.as_posix(),
+        "archive_zip_sha256": _v993_sha256_file(zip_path),
+        "archive_tar_sha256": _v993_sha256_file(tar_path),
+        "archive_zip_size_bytes": zip_path.stat().st_size,
+        "archive_tar_size_bytes": tar_path.stat().st_size,
+        "zip_entry_count": len(zip_entries),
+        "tar_entry_count": len(tar_entries),
+        "zip_entries": zip_entries,
+        "tar_entries": tar_entries,
+        "download_zip_url": f"/product/final-release/archive/download/{release_dir.name}.zip",
+        "download_tar_url": f"/product/final-release/archive/download/{release_dir.name}.tar.gz",
+    }
+    latest_json = Path("release/V9_9_3_FINAL_RELEASE_ARCHIVE_SEAL.json")
+    latest_md = Path("release/V9_9_3_FINAL_RELEASE_ARCHIVE_SEAL.md")
+    latest_json.write_text(json.dumps(seal, indent=2, sort_keys=True))
+    latest_md.write_text(
+        "\n".join([
+            "# v9.9.3 Final Release Archive Integrity Seal",
+            "",
+            f"Release: {release_dir.name}",
+            f"Generated: {seal['generated_at']}",
+            f"ZIP: `{seal['archive_zip_path']}`",
+            f"ZIP SHA256: `{seal['archive_zip_sha256']}`",
+            f"TAR: `{seal['archive_tar_path']}`",
+            f"TAR SHA256: `{seal['archive_tar_sha256']}`",
+            f"Integrity manifest: `{integrity.get('integrity_manifest_path')}`",
+            f"Required all present: {integrity.get('required_all_present')}",
+            "",
+        ])
+    )
+    seal["artifacts_written"] = {
+        "archive_seal_json": latest_json.as_posix(),
+        "archive_seal_markdown": latest_md.as_posix(),
+        "integrity_manifest_json": "release/V9_9_3_FINAL_RELEASE_INTEGRITY_MANIFEST.json",
+    }
+    return seal
+
+
+@dashboard_bp.route("/api/v1/product/final-release/archives")
+@login_required
+def api_v993_final_release_archives():
+    releases = _v993_list_final_releases()
+    return jsonify({"status": "ok", "version": "9.9.3", "count": len(releases), "releases": releases})
+
+
+@dashboard_bp.route("/api/v1/product/final-release/archive/<release_name>")
+@login_required
+def api_v993_final_release_archive_preview(release_name):
+    release_dir = _v993_safe_final_release_dir(release_name)
+    integrity = _v993_build_integrity_manifest(release_dir.name)
+    return jsonify({"status": "ok", "version": "9.9.3", "release_name": release_dir.name, "integrity": integrity})
+
+
+@dashboard_bp.route("/api/v1/product/final-release/archive/<release_name>/create", methods=["POST"])
+@admin_required
+def api_v993_create_final_release_archive(release_name):
+    seal = _v993_create_final_release_archives(release_name)
+    audit("product_final_release_archive_create", details=seal.get("artifacts_written"))
+    return jsonify(seal)
+
+
+@dashboard_bp.route("/product/final-release/archive")
+@login_required
+def product_final_release_archive_view():
+    releases = _v993_list_final_releases()
+    return render_template("product_final_release_archive.html", releases=releases)
+
+
+@dashboard_bp.route("/product/final-release/archive/<release_name>/create", methods=["POST"])
+@admin_required
+def product_final_release_archive_create(release_name):
+    seal = _v993_create_final_release_archives(release_name)
+    audit("product_final_release_archive_create", details=seal.get("artifacts_written"))
+    flash("Final release archive and integrity seal created.", "success")
+    return redirect(url_for("dashboard.product_final_release_archive_view"))
+
+
+@dashboard_bp.route("/product/final-release/archive/download/<path:filename>")
+@login_required
+def product_final_release_archive_download(filename):
+    from flask import send_file
+    from pathlib import Path
+    root = _v993_archives_root().resolve()
+    requested = Path(filename)
+    if requested.is_absolute() or ".." in requested.parts:
+        abort(404)
+    path = (root / requested.name).resolve()
+    if not str(path).startswith(str(root)) or not path.exists() or not path.is_file():
+        abort(404)
+    if not (path.name.endswith(".zip") or path.name.endswith(".tar.gz")):
+        abort(404)
+    return send_file(path, as_attachment=True, download_name=path.name)
+# ---- end v9.9.3 final release archive integrity seal ----

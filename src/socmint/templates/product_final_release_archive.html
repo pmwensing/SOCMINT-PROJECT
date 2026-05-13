@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Final Release Archive</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Final Release Archive + Integrity Seal</h1>
+  <p>v9.9.3 archive builder for final release notes packs.</p>
+  <section class="card">
+    <h2>Archive Inventory</h2>
+    <p>
+      <a href="/api/v1/product/final-release/archives">Archives JSON</a> |
+      <a href="/product/final-release">Final Release Publisher</a> |
+      <a href="/product/final-gate">Final Product Gate</a>
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Release</th>
+          <th>Archive Status</th>
+          <th>Downloads</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for release in releases %}
+        <tr>
+          <td><code>{{ release.release_name }}</code><br>{{ release.published_at }}</td>
+          <td>
+            ZIP={{ release.archive_zip_exists }}<br>
+            TAR={{ release.archive_tar_exists }}<br>
+            Integrity={{ release.integrity_manifest_exists }}
+          </td>
+          <td>
+            {% if release.download_zip_url %}<a href="{{ release.download_zip_url }}">ZIP</a>{% endif %}
+            {% if release.download_tar_url %} | <a href="{{ release.download_tar_url }}">TAR.GZ</a>{% endif %}
+          </td>
+          <td>
+            {% if session.get('is_admin') %}
+            <form method="post" action="/product/final-release/archive/{{ release.release_name }}/create">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit">Create Archive + Seal</button>
+            </form>
+            {% endif %}
+            <a href="/api/v1/product/final-release/archive/{{ release.release_name }}">Integrity Preview JSON</a>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4">No final releases found yet. Publish a final release first.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

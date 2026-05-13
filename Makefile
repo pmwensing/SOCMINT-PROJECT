@@ -400,3 +400,16 @@ final-release-hardening-smoke:
 
 zip992:
 	cd .. && zip -r SOCMINT-PROJECT-v9.9.2-final-release-publisher.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-final-release-archive-smoke:
+	PYTHONPATH=src python3 scripts/product_final_release_archive_smoke_v9_9_3.py
+
+test993:
+	PYTHONPATH=src python3 scripts/product_final_release_archive_smoke_v9_9_3.py
+
+final-release-archive-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_final_release_archive_hardening_v9_9_3.py
+
+zip993:
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.3-final-release-archive-integrity.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
