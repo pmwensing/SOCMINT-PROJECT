@@ -1,0 +1,38 @@
+{
+  "status": "pass",
+  "generated_at": "2026-05-13T01:23:28.819288+00:00",
+  "version": "9.8.7",
+  "summary": "4/4 checks passed.",
+  "checks": [
+    {
+      "name": "compileall-src",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "Listing 'src/socmint'...\nListing 'src/socmint/static'...\nListing 'src/socmint/templates'...\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "product-smoke",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "python3 scripts/product_qa_v9_7_4.py\n[PASS] file src/socmint/product_control_center.py\n[PASS] file src/socmint/dossier_quality_gate.py\n[PASS] file src/socmint/dossier_traceability.py\n[PASS] file src/socmint/ultimate_dossier.py\n[PASS] file src/socmint/entity_dossier_v2.py\n[PASS] file src/socmint/dossier_export.py\n[+] compileall-src\n[PASS] compileall-src\n[+] product-control-import\n[PASS] product-control-import\n[+] quality-gate-import\n[PASS] quality-gate-import\n[+] traceability-import\n[PASS] traceability-import\n[+] ultimate-dossier-smoke\n[PASS] ultimate-dossier-smoke\n{\n  \"status\": \"pass\",\n  \"report\": \"release/V9_7_PRODUCT_SMOKE_REPORT.md\"\n}\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "product-artifact-review-audit-smoke",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "PYTHONPATH=src python3 scripts/product_artifact_review_audit_smoke_v9_8_6.py\n{\"timestamp\":\"2026-05-13T01:23:27.968472+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"3a04556aa4e9472a88351c84b0bb9358\",\"method\":\"POST\",\"path\":\"/api/v1/product/artifacts/review\",\"status_code\":200,\"duration_ms\":2.45,\"remote_addr\":\"127.0.0.1\"}\n[PASS] POST audit update 1 200\n{\"timestamp\":\"2026-05-13T01:23:27.970470+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"babd44f66f5c475da00bb7b5ec3e342b\",\"method\":\"POST\",\"path\":\"/api/v1/product/artifacts/review\",\"status_code\":200,\"duration_ms\":1.38,\"remote_addr\":\"127.0.0.1\"}\n[PASS] POST audit update 2 200\n{\"timestamp\":\"2026-05-13T01:23:27.971268+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"49eab6bf427b42049f8720bb4ac9e0d7\",\"method\":\"GET\",\"path\":\"/api/v1/product/artifact-review-audit\",\"status_code\":200,\"duration_ms\":0.23,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET artifact audit JSON 200\n{\"timestamp\":\"2026-05-13T01:23:27.975329+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"fb624ce742fd4079913e69f2b382d650\",\"method\":\"GET\",\"path\":\"/product/artifacts/audit/release/V9_8_6_AUDIT_SMOKE_ARTIFACT.md\",\"status_code\":200,\"duration_ms\":3.57,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET artifact audit UI 200\n{\"timestamp\":\"2026-05-13T01:23:27.983479+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"619b6c2415b44c45b8fd814cdebec24c\",\"method\":\"GET\",\"path\":\"/product/artifacts\",\"status_code\":200,\"duration_ms\":7.71,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET artifact browser audit links 200\nv9.8.6 product artifact review audit smoke passed\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "product-artifact-export-manifest-smoke-v9-8-7",
+      "ok": true,
+      "returncode": 0,
+      "stdout_tail": "{\"timestamp\":\"2026-05-13T01:23:28.669494+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"2a2485b468dc413b84ae8d31979eeff0\",\"method\":\"POST\",\"path\":\"/api/v1/product/artifacts/review\",\"status_code\":200,\"duration_ms\":2.93,\"remote_addr\":\"127.0.0.1\"}\n[PASS] seed review release/V9_8_7_SELECTED_REVIEWED_ARTIFACT.md 200\n{\"timestamp\":\"2026-05-13T01:23:28.672374+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"e394f98a349b4652bfa0035db26ca589\",\"method\":\"POST\",\"path\":\"/api/v1/product/artifacts/review\",\"status_code\":200,\"duration_ms\":1.82,\"remote_addr\":\"127.0.0.1\"}\n[PASS] seed review release/V9_8_7_SELECTED_IMPORTANT_ARTIFACT.md 200\n{\"timestamp\":\"2026-05-13T01:23:28.673982+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"03eb04bbe7ad49d68a483d36d239dc08\",\"method\":\"POST\",\"path\":\"/api/v1/product/artifacts/review\",\"status_code\":200,\"duration_ms\":1.09,\"remote_addr\":\"127.0.0.1\"}\n[PASS] seed review release/V9_8_7_ARCHIVED_IMPORTANT_ARTIFACT.md 200\n{\"timestamp\":\"2026-05-13T01:23:28.676509+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"8a9c565814f74853a98f008fc4e5810f\",\"method\":\"GET\",\"path\":\"/api/v1/product/artifact-export-manifest\",\"status_code\":200,\"duration_ms\":2.08,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET manifest selected active artifacts 200\n{\"timestamp\":\"2026-05-13T01:23:28.679737+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"d0c7adc56bdc4b349b2e91b3bb88bbaa\",\"method\":\"GET\",\"path\":\"/api/v1/product/artifact-export-manifest\",\"status_code\":200,\"duration_ms\":2.68,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET manifest include archived 200\n{\"timestamp\":\"2026-05-13T01:23:28.684143+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"bc37bf351df0453384b83a45e37c7cac\",\"method\":\"POST\",\"path\":\"/api/v1/product/artifact-export-manifest/write\",\"status_code\":200,\"duration_ms\":3.23,\"remote_addr\":\"127.0.0.1\"}\n[PASS] POST write manifest 200\n{\"timestamp\":\"2026-05-13T01:23:28.692614+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"7175998583414ffb9a1aa3761ff452bf\",\"method\":\"GET\",\"path\":\"/product/artifacts/export-manifest\",\"status_code\":200,\"duration_ms\":7.94,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET export manifest UI 200\n{\"timestamp\":\"2026-05-13T01:23:28.700649+00:00\",\"level\":\"INFO\",\"logger\":\"socmint.dashboard\",\"message\":\"request completed\",\"request_id\":\"c54211cf11ec48e6b685ccf13a5b0a28\",\"method\":\"GET\",\"path\":\"/product/artifacts\",\"status_code\":200,\"duration_ms\":7.39,\"remote_addr\":\"127.0.0.1\"}\n[PASS] GET artifact browser export panel 200\nv9.8.7 product artifact export manifest smoke passed\n",
+      "stderr_tail": ""
+    }
+  ],
+  "failed": [],
+  "next_action": "Merge v9.8.7 into master"
+}

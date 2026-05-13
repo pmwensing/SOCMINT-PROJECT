@@ -3118,3 +3118,207 @@ def product_artifact_audit_view(relpath):
         events=events,
     )
 # ---- end v9.8.6 product artifact audit trail ----
+
+
+
+# ---- v9.8.7 Product Artifact Evidence Chain + Export Manifest ----
+def _v987_artifact_audit_summary(path):
+    events = _v986_events_for_artifact(path)
+    changed_fields = sorted(
+        {
+            field
+            for event in events
+            for field in event.get("changed_fields", [])
+        }
+    )
+    latest = events[-1] if events else None
+    return {
+        "event_count": len(events),
+        "changed_fields": changed_fields,
+        "latest_event_id": latest.get("event_id") if latest else None,
+        "latest_actor": latest.get("actor") if latest else None,
+        "latest_timestamp": latest.get("timestamp") if latest else None,
+        "latest_after": latest.get("after") if latest else None,
+    }
+
+
+def _v987_selected_artifacts(include_archived=False):
+    payload = _v984_product_artifacts_payload()
+    artifacts = _v985_apply_artifact_review_state(payload["artifacts"])
+
+    selected = []
+    for artifact in artifacts:
+        review = artifact.get("review", {})
+        reviewed = bool(review.get("reviewed"))
+        important = bool(review.get("important"))
+        archived = bool(review.get("archived"))
+
+        if not include_archived and archived:
+            continue
+        if reviewed or important:
+            item = {
+                "path": artifact["path"],
+                "name": artifact["name"],
+                "kind": artifact["kind"],
+                "suffix": artifact["suffix"],
+                "size_bytes": artifact["size_bytes"],
+                "modified_at": artifact["modified_at"],
+                "selection_reason": {
+                    "reviewed": reviewed,
+                    "important": important,
+                    "archived": archived,
+                },
+                "review": review,
+                "audit_summary": _v987_artifact_audit_summary(artifact["path"]),
+                "links": {
+                    "view": artifact.get("view_url"),
+                    "download": artifact.get("download_url"),
+                    "audit": f"/product/artifacts/audit/{artifact['path']}",
+                },
+            }
+            selected.append(item)
+
+    selected.sort(
+        key=lambda item: (
+            not item["selection_reason"]["important"],
+            not item["selection_reason"]["reviewed"],
+            item["path"],
+        )
+    )
+    return selected
+
+
+def _v987_export_manifest_payload(include_archived=False, actor=None):
+    from datetime import datetime, timezone
+
+    artifacts = _v987_selected_artifacts(include_archived=include_archived)
+    return {
+        "status": "ok",
+        "version": "9.8.7",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "actor": actor,
+        "selection_policy": {
+            "include_reviewed": True,
+            "include_important": True,
+            "include_archived": bool(include_archived),
+            "exclude_unreviewed_unimportant": True,
+        },
+        "count": len(artifacts),
+        "artifacts": artifacts,
+        "summary": {
+            "reviewed": sum(1 for item in artifacts if item["selection_reason"]["reviewed"]),
+            "important": sum(1 for item in artifacts if item["selection_reason"]["important"]),
+            "archived": sum(1 for item in artifacts if item["selection_reason"]["archived"]),
+            "audit_events": sum(item["audit_summary"]["event_count"] for item in artifacts),
+        },
+    }
+
+
+def _v987_write_export_manifest(include_archived=False, actor=None):
+    from pathlib import Path
+
+    payload = _v987_export_manifest_payload(include_archived=include_archived, actor=actor)
+
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+    json_path = release_dir / "V9_8_7_PRODUCT_ARTIFACT_EXPORT_MANIFEST.json"
+    md_path = release_dir / "V9_8_7_PRODUCT_ARTIFACT_EXPORT_MANIFEST.md"
+
+    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+
+    rows = [
+        "# v9.8.7 Product Artifact Export Manifest",
+        "",
+        f"Generated: {payload['generated_at']}",
+        f"Actor: {actor or 'unknown'}",
+        f"Count: {payload['count']}",
+        "",
+        "## Summary",
+        "",
+        f"- Reviewed: {payload['summary']['reviewed']}",
+        f"- Important: {payload['summary']['important']}",
+        f"- Archived included: {payload['summary']['archived']}",
+        f"- Audit events referenced: {payload['summary']['audit_events']}",
+        "",
+        "## Artifacts",
+        "",
+    ]
+    for item in payload["artifacts"]:
+        reason = item["selection_reason"]
+        rows.extend(
+            [
+                f"### {item['path']}",
+                "",
+                f"- Kind: {item['kind']}",
+                f"- Size: {item['size_bytes']}",
+                f"- Reviewed: {reason['reviewed']}",
+                f"- Important: {reason['important']}",
+                f"- Archived: {reason['archived']}",
+                f"- Audit events: {item['audit_summary']['event_count']}",
+                f"- Latest actor: {item['audit_summary'].get('latest_actor')}",
+                f"- Latest timestamp: {item['audit_summary'].get('latest_timestamp')}",
+                "",
+            ]
+        )
+
+    md_path.write_text("\n".join(rows))
+
+    payload["artifacts_written"] = {
+        "json": str(json_path),
+        "markdown": str(md_path),
+    }
+    return payload
+
+
+@dashboard_bp.route("/api/v1/product/artifact-export-manifest")
+@login_required
+def api_v987_artifact_export_manifest():
+    include_archived = _v985_bool_value(request.args.get("include_archived"))
+    return jsonify(
+        _v987_export_manifest_payload(
+            include_archived=include_archived,
+            actor=session.get("user"),
+        )
+    )
+
+
+@dashboard_bp.route("/api/v1/product/artifact-export-manifest/write", methods=["POST"])
+@admin_required
+def api_v987_write_artifact_export_manifest():
+    payload = request.get_json(silent=True) or request.form
+    include_archived = _v985_bool_value(payload.get("include_archived"))
+    result = _v987_write_export_manifest(
+        include_archived=include_archived,
+        actor=session.get("user"),
+    )
+    audit("product_artifact_export_manifest_write", details=result.get("artifacts_written"))
+    return jsonify(result)
+
+
+@dashboard_bp.route("/product/artifacts/export-manifest")
+@login_required
+def product_artifact_export_manifest_view():
+    include_archived = _v985_bool_value(request.args.get("include_archived"))
+    payload = _v987_export_manifest_payload(
+        include_archived=include_archived,
+        actor=session.get("user"),
+    )
+    return render_template(
+        "product_artifact_export_manifest.html",
+        payload=payload,
+        include_archived=include_archived,
+    )
+
+
+@dashboard_bp.route("/product/artifacts/export-manifest/write", methods=["POST"])
+@admin_required
+def product_artifact_export_manifest_write():
+    include_archived = _v985_bool_value(request.form.get("include_archived"))
+    result = _v987_write_export_manifest(
+        include_archived=include_archived,
+        actor=session.get("user"),
+    )
+    audit("product_artifact_export_manifest_write", details=result.get("artifacts_written"))
+    flash("Product artifact export manifest written.", "success")
+    return redirect(url_for("dashboard.product_artifact_export_manifest_view"))
+# ---- end v9.8.7 product artifact evidence chain ----

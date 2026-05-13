@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Product Artifact Export Manifest</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+    .pill { display: inline-block; border: 1px solid #475569; border-radius: 999px; padding: 2px 8px; color: #cbd5e1; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Product Artifact Export Manifest</h1>
+  <p>v9.8.7 evidence-chain manifest for reviewed or important product artifacts.</p>
+
+  <section class="card">
+    <h2>Summary</h2>
+    <p><strong>Total selected:</strong> {{ payload.count }}</p>
+    <p><strong>Reviewed:</strong> {{ payload.summary.reviewed }}</p>
+    <p><strong>Important:</strong> {{ payload.summary.important }}</p>
+    <p><strong>Archived included:</strong> {{ payload.summary.archived }}</p>
+    <p><strong>Audit events referenced:</strong> {{ payload.summary.audit_events }}</p>
+    <p>
+      <a href="/api/v1/product/artifact-export-manifest">Manifest JSON</a> |
+      <a href="/api/v1/product/artifact-export-manifest?include_archived=true">Manifest JSON incl. archived</a> |
+      <a href="{{ url_for('dashboard.product_artifacts_view') }}">Back to artifacts</a>
+    </p>
+    {% if session.get('is_admin') %}
+    <form method="post" action="{{ url_for('dashboard.product_artifact_export_manifest_write') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label><input type="checkbox" name="include_archived" value="1" {% if include_archived %}checked{% endif %}> include archived</label>
+      <button type="submit">Write Export Manifest</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Selected Artifacts</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Artifact</th>
+          <th>Reason</th>
+          <th>Review</th>
+          <th>Audit Summary</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for item in payload.artifacts %}
+        <tr>
+          <td><code>{{ item.path }}</code><br><span class="pill">{{ item.kind }}</span></td>
+          <td>
+            reviewed={{ item.selection_reason.reviewed }}<br>
+            important={{ item.selection_reason.important }}<br>
+            archived={{ item.selection_reason.archived }}
+          </td>
+          <td>
+            note={{ item.review.note }}<br>
+            by={{ item.review.reviewed_by }}<br>
+            at={{ item.review.reviewed_at }}
+          </td>
+          <td>
+            events={{ item.audit_summary.event_count }}<br>
+            fields={{ item.audit_summary.changed_fields|join(', ') }}<br>
+            latest={{ item.audit_summary.latest_timestamp }}
+          </td>
+          <td>
+            <a href="{{ item.links.view }}">view</a> |
+            <a href="{{ item.links.download }}">download</a> |
+            <a href="{{ item.links.audit }}">audit</a>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">No reviewed or important artifacts selected yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

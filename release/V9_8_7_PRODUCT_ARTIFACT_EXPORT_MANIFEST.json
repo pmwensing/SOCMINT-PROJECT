@@ -1,0 +1,109 @@
+{
+  "actor": "v987-export-smoke",
+  "artifacts": [
+    {
+      "audit_summary": {
+        "changed_fields": [
+          "important",
+          "note"
+        ],
+        "event_count": 2,
+        "latest_actor": "v987-export-smoke",
+        "latest_after": {
+          "archived": false,
+          "important": true,
+          "note": "important artifact",
+          "reviewed": false,
+          "reviewed_at": "2026-05-13T01:23:28.670839+00:00",
+          "reviewed_by": "v987-export-smoke"
+        },
+        "latest_event_id": "90eed11c14fa4d10a9805b74d2324a11",
+        "latest_timestamp": "2026-05-13T01:23:28.671156+00:00"
+      },
+      "kind": "markdown",
+      "links": {
+        "audit": "/product/artifacts/audit/release/V9_8_7_SELECTED_IMPORTANT_ARTIFACT.md",
+        "download": "/product/artifacts/download/release/V9_8_7_SELECTED_IMPORTANT_ARTIFACT.md",
+        "view": "/product/artifacts/view/release/V9_8_7_SELECTED_IMPORTANT_ARTIFACT.md"
+      },
+      "modified_at": "2026-05-13T01:23:28.487935+00:00",
+      "name": "V9_8_7_SELECTED_IMPORTANT_ARTIFACT.md",
+      "path": "release/V9_8_7_SELECTED_IMPORTANT_ARTIFACT.md",
+      "review": {
+        "archived": false,
+        "important": true,
+        "note": "important artifact",
+        "reviewed": false,
+        "reviewed_at": "2026-05-13T01:23:28.670839+00:00",
+        "reviewed_by": "v987-export-smoke"
+      },
+      "selection_reason": {
+        "archived": false,
+        "important": true,
+        "reviewed": false
+      },
+      "size_bytes": 21,
+      "suffix": ".md"
+    },
+    {
+      "audit_summary": {
+        "changed_fields": [
+          "note",
+          "reviewed"
+        ],
+        "event_count": 2,
+        "latest_actor": "v987-export-smoke",
+        "latest_after": {
+          "archived": false,
+          "important": false,
+          "note": "reviewed artifact",
+          "reviewed": true,
+          "reviewed_at": "2026-05-13T01:23:28.666973+00:00",
+          "reviewed_by": "v987-export-smoke"
+        },
+        "latest_event_id": "63bbeebce3044bb68c02683cdc309175",
+        "latest_timestamp": "2026-05-13T01:23:28.667418+00:00"
+      },
+      "kind": "markdown",
+      "links": {
+        "audit": "/product/artifacts/audit/release/V9_8_7_SELECTED_REVIEWED_ARTIFACT.md",
+        "download": "/product/artifacts/download/release/V9_8_7_SELECTED_REVIEWED_ARTIFACT.md",
+        "view": "/product/artifacts/view/release/V9_8_7_SELECTED_REVIEWED_ARTIFACT.md"
+      },
+      "modified_at": "2026-05-13T01:23:28.487772+00:00",
+      "name": "V9_8_7_SELECTED_REVIEWED_ARTIFACT.md",
+      "path": "release/V9_8_7_SELECTED_REVIEWED_ARTIFACT.md",
+      "review": {
+        "archived": false,
+        "important": false,
+        "note": "reviewed artifact",
+        "reviewed": true,
+        "reviewed_at": "2026-05-13T01:23:28.666973+00:00",
+        "reviewed_by": "v987-export-smoke"
+      },
+      "selection_reason": {
+        "archived": false,
+        "important": false,
+        "reviewed": true
+      },
+      "size_bytes": 20,
+      "suffix": ".md"
+    }
+  ],
+  "count": 2,
+  "generated_at": "2026-05-13T01:23:28.682810+00:00",
+  "selection_policy": {
+    "exclude_unreviewed_unimportant": true,
+    "include_archived": false,
+    "include_important": true,
+    "include_reviewed": true
+  },
+  "status": "ok",
+  "summary": {
+    "archived": 0,
+    "audit_events": 4,
+    "important": 1,
+    "reviewed": 1
+  },
+  "version": "9.8.7"
+}
