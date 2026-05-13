@@ -413,3 +413,16 @@ final-release-archive-hardening-smoke:
 
 zip993:
 	cd .. && zip -r SOCMINT-PROJECT-v9.9.3-final-release-archive-integrity.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-final-release-verify-smoke:
+	PYTHONPATH=src python3 scripts/product_final_release_verify_smoke_v9_9_4.py
+
+test994:
+	PYTHONPATH=src python3 scripts/product_final_release_verify_smoke_v9_9_4.py
+
+final-release-verify-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_final_release_verify_hardening_v9_9_4.py
+
+zip994:
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.4-final-release-verification-console.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
