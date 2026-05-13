@@ -1,0 +1,18 @@
+{
+  "distribution_ready": true,
+  "final_version": "v9.9.6",
+  "frozen_at": "2026-05-13T03:47:35.774263+00:00",
+  "frozen_by": "v996-final-dashboard-smoke",
+  "product": "SOCMINT Workbench",
+  "release_line": "v9.9.x final product release line",
+  "release_name": "v9_9_6_final_dashboard_release",
+  "source_versions": {
+    "archive_integrity": "v9.9.3",
+    "distribution_readiness": "v9.9.5",
+    "final_dashboard": "v9.9.6",
+    "final_gate": "v9.9.1",
+    "final_release_publisher": "v9.9.2",
+    "release_candidate": "v9.9.0",
+    "verification": "v9.9.4"
+  }
+}

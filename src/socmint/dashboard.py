@@ -5467,3 +5467,218 @@ def product_final_release_distribution_decision():
         flash("Distribution decision recorded.", "success")
     return redirect(url_for("dashboard.product_final_release_distribution_view"))
 # ---- end v9.9.5 final release distribution readiness ----
+
+
+
+# ---- v9.9.6 Final Product Release Dashboard + Version Freeze ----
+def _v996_version_freeze_path():
+    from pathlib import Path
+
+    path = Path("release/V9_9_6_FINAL_PRODUCT_VERSION_FREEZE.json")
+    path.parent.mkdir(exist_ok=True)
+    return path
+
+
+def _v996_final_release_index_paths():
+    from pathlib import Path
+
+    return {
+        "json": Path("release/V9_9_6_FINAL_PRODUCT_RELEASE_INDEX.json"),
+        "markdown": Path("release/V9_9_6_FINAL_PRODUCT_RELEASE_INDEX.md"),
+    }
+
+
+def _v996_final_dashboard_payload(actor=None, release_name=None):
+    from datetime import datetime, timezone
+
+    rc_manifest = _v992_load_json_file("release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json") or {}
+    final_gate = _v991_final_gate_payload(actor=actor)
+    archives = _v993_list_final_releases()
+
+    if release_name:
+        release_name = _v988_package_slug(release_name)
+    elif archives:
+        release_name = archives[0].get("release_name")
+
+    verification = _v994_verify_final_release(release_name=release_name) if release_name else {
+        "status": "fail",
+        "release_name": None,
+        "failures": ["no_release"],
+        "checks_total": 0,
+        "checks_passed": 0,
+    }
+    distribution = _v995_distribution_payload(release_name=release_name, actor=actor) if release_name else {
+        "distribution_status": "blocked",
+        "verification_status": "fail",
+        "state": {},
+        "recommended_next_action": "Publish and verify a final release first.",
+    }
+
+    archive = None
+    for item in archives:
+        if item.get("release_name") == release_name:
+            archive = item
+            break
+
+    chain = {
+        "release_candidate": {
+            "status": rc_manifest.get("status"),
+            "required_passed": rc_manifest.get("summary", {}).get("required_passed"),
+            "required_total": rc_manifest.get("summary", {}).get("required_total"),
+            "manifest": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+        },
+        "final_gate": {
+            "status": final_gate.get("gate_status"),
+            "rc_status": final_gate.get("rc_status"),
+            "approved": final_gate.get("signoff", {}).get("approved"),
+            "manifest": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+        },
+        "final_release": {
+            "status": "published" if archive else "missing",
+            "release_name": release_name,
+            "archive_zip": archive.get("archive_zip_path") if archive else None,
+            "archive_tar": archive.get("archive_tar_path") if archive else None,
+        },
+        "archive": {
+            "zip_exists": archive.get("archive_zip_exists") if archive else False,
+            "tar_exists": archive.get("archive_tar_exists") if archive else False,
+            "integrity_manifest_exists": archive.get("integrity_manifest_exists") if archive else False,
+        },
+        "verification": {
+            "status": verification.get("status"),
+            "checks_passed": verification.get("checks_passed"),
+            "checks_total": verification.get("checks_total"),
+            "failures": verification.get("failures", []),
+        },
+        "distribution": {
+            "status": distribution.get("distribution_status"),
+            "locked": distribution.get("state", {}).get("locked"),
+            "ready": distribution.get("state", {}).get("ready"),
+            "decision": distribution.get("state", {}).get("decision"),
+        },
+    }
+
+    distribution_ready = (
+        distribution.get("distribution_status") == "ready"
+        and distribution.get("state", {}).get("ready") is True
+        and verification.get("status") == "pass"
+        and final_gate.get("gate_status") == "approved"
+    )
+
+    version_freeze = {
+        "product": "SOCMINT Workbench",
+        "final_version": "v9.9.6",
+        "release_line": "v9.9.x final product release line",
+        "release_name": release_name,
+        "frozen_at": datetime.now(timezone.utc).isoformat(),
+        "frozen_by": actor,
+        "distribution_ready": distribution_ready,
+        "source_versions": {
+            "release_candidate": "v9.9.0",
+            "final_gate": "v9.9.1",
+            "final_release_publisher": "v9.9.2",
+            "archive_integrity": "v9.9.3",
+            "verification": "v9.9.4",
+            "distribution_readiness": "v9.9.5",
+            "final_dashboard": "v9.9.6",
+        },
+    }
+
+    return {
+        "status": "ready" if distribution_ready else "not_ready",
+        "version": "9.9.6",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "actor": actor,
+        "release_name": release_name,
+        "distribution_ready": distribution_ready,
+        "version_freeze": version_freeze,
+        "chain": chain,
+        "rc_manifest": rc_manifest,
+        "final_gate": final_gate,
+        "verification": verification,
+        "distribution": distribution,
+        "archives": archives,
+        "recommended_next_action": (
+            "Final product release is distribution-ready."
+            if distribution_ready
+            else "Complete verification and distribution readiness before final release."
+        ),
+    }
+
+
+def _v996_write_final_product_release_index(actor=None, release_name=None):
+    payload = _v996_final_dashboard_payload(actor=actor, release_name=release_name)
+    paths = _v996_final_release_index_paths()
+
+    paths["json"].write_text(json.dumps(payload, indent=2, sort_keys=True))
+    _v996_version_freeze_path().write_text(json.dumps(payload.get("version_freeze", {}), indent=2, sort_keys=True))
+
+    chain = payload.get("chain", {})
+    rows = [
+        "# v9.9.6 Final Product Release Index",
+        "",
+        f"Generated: {payload['generated_at']}",
+        f"Status: **{payload['status']}**",
+        f"Final version: **{payload['version_freeze']['final_version']}**",
+        f"Release line: {payload['version_freeze']['release_line']}",
+        f"Release name: `{payload.get('release_name')}`",
+        f"Distribution ready: {payload.get('distribution_ready')}",
+        "",
+        "## Chain Summary",
+        "",
+        f"- Release Candidate: {chain.get('release_candidate', {}).get('status')} ({chain.get('release_candidate', {}).get('required_passed')}/{chain.get('release_candidate', {}).get('required_total')})",
+        f"- Final Gate: {chain.get('final_gate', {}).get('status')} approved={chain.get('final_gate', {}).get('approved')}",
+        f"- Final Release: {chain.get('final_release', {}).get('status')}",
+        f"- Archive: zip={chain.get('archive', {}).get('zip_exists')} tar={chain.get('archive', {}).get('tar_exists')} integrity={chain.get('archive', {}).get('integrity_manifest_exists')}",
+        f"- Verification: {chain.get('verification', {}).get('status')} ({chain.get('verification', {}).get('checks_passed')}/{chain.get('verification', {}).get('checks_total')})",
+        f"- Distribution: {chain.get('distribution', {}).get('status')} ready={chain.get('distribution', {}).get('ready')}",
+        "",
+        "## Recommended Next Action",
+        "",
+        payload.get("recommended_next_action", ""),
+        "",
+    ]
+    paths["markdown"].write_text("\n".join(rows))
+
+    payload["artifacts_written"] = {
+        "index_json": paths["json"].as_posix(),
+        "index_markdown": paths["markdown"].as_posix(),
+        "version_freeze": _v996_version_freeze_path().as_posix(),
+    }
+    return payload
+
+
+@dashboard_bp.route("/api/v1/product/final")
+@login_required
+def api_v996_final_product_dashboard():
+    release_name = request.args.get("release_name")
+    return jsonify(_v996_final_dashboard_payload(actor=session.get("user"), release_name=release_name))
+
+
+@dashboard_bp.route("/api/v1/product/final/write", methods=["POST"])
+@admin_required
+def api_v996_final_product_write():
+    payload = request.get_json(silent=True) or request.form
+    release_name = payload.get("release_name") or None
+    result = _v996_write_final_product_release_index(actor=session.get("user"), release_name=release_name)
+    audit("product_final_release_index_write", details=result.get("artifacts_written"))
+    return jsonify(result)
+
+
+@dashboard_bp.route("/product/final")
+@login_required
+def product_final_dashboard_view():
+    release_name = request.args.get("release_name")
+    payload = _v996_final_dashboard_payload(actor=session.get("user"), release_name=release_name)
+    return render_template("product_final.html", payload=payload)
+
+
+@dashboard_bp.route("/product/final/write", methods=["POST"])
+@admin_required
+def product_final_dashboard_write():
+    release_name = request.form.get("release_name") or None
+    result = _v996_write_final_product_release_index(actor=session.get("user"), release_name=release_name)
+    audit("product_final_release_index_write", details=result.get("artifacts_written"))
+    flash("Final product release index and version freeze written.", "success")
+    return redirect(url_for("dashboard.product_final_dashboard_view"))
+# ---- end v9.9.6 final product release dashboard ----

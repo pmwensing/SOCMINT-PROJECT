@@ -439,3 +439,16 @@ distribution-readiness-hardening-smoke:
 
 zip995:
 	cd .. && zip -r SOCMINT-PROJECT-v9.9.5-distribution-readiness.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-final-dashboard-smoke:
+	PYTHONPATH=src python3 scripts/product_final_dashboard_smoke_v9_9_6.py
+
+test996:
+	PYTHONPATH=src python3 scripts/product_final_dashboard_smoke_v9_9_6.py
+
+final-product-dashboard-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_final_dashboard_hardening_v9_9_6.py
+
+zip996:
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.6-final-product-dashboard.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
