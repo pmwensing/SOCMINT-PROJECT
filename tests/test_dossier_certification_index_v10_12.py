@@ -45,7 +45,7 @@ def test_v10_12_index_entry_reports_export_artifacts_verification_and_certificat
     assert entry["artifact_count"] == 2
     assert entry["hash_count"] == 2
     assert entry["missing_hash_count"] == 0
-    assert entry["verification_status"] == "verified"
+    assert entry["verification_status"] == "pass"
     assert entry["gate_decision"] == "allow"
     assert entry["certified"] is True
     assert entry["safe_to_distribute"] is True
