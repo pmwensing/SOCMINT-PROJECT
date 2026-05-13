@@ -491,3 +491,16 @@ v10-bootstrap-hardening-smoke:
 
 zip999:
 	cd .. && zip -r SOCMINT-PROJECT-v9.9.9-v10-bootstrap.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-v10-foundation-smoke:
+	PYTHONPATH=src python3 scripts/product_v10_foundation_smoke_v10_0_0.py
+
+test1000:
+	PYTHONPATH=src python3 scripts/product_v10_foundation_smoke_v10_0_0.py
+
+v10-foundation-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_v10_foundation_hardening_v10_0_0.py
+
+zip1000:
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.0-product-foundation.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'

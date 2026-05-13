@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Product v10 Foundation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+    .ok { color: #86efac; font-weight: 700; }
+    .warn { color: #fde68a; font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Product v10 Foundation</h1>
+  <p>Clean architecture split foundation with v9.9.x final-release compatibility preserved.</p>
+
+  <section class="card">
+    <h2>Architecture Status</h2>
+    <p>Status: <strong class="{{ manifest.status }}">{{ manifest.status|upper }}</strong></p>
+    <p>Version: <strong>v{{ manifest.version }}</strong></p>
+    <p>Release line: {{ manifest.release_line }}</p>
+    <p>Source closed line: {{ manifest.source_closed_line }}</p>
+    <p>Compatibility routes: {{ manifest.compatibility.present_route_count }}/{{ manifest.compatibility.required_route_count }}</p>
+    <p>
+      <a href="/api/v1/product/v10/architecture">Architecture JSON</a> |
+      <a href="/api/v1/product/v10/compatibility">Compatibility JSON</a> |
+      <a href="/product/final/v10-bootstrap">v9.9.9 Bootstrap Gate</a>
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>v10 Foundation Strategy</h2>
+    <ul>
+      {% for item in manifest.foundation.strategy %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>v9.9.x Compatibility Routes</h2>
+    <table>
+      <thead><tr><th>Route</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for item in manifest.compatibility.routes %}
+        <tr>
+          <td><code>{{ item.route }}</code></td>
+          <td>{% if item.present %}<span class="ok">PRESENT</span>{% else %}<span class="warn">MISSING</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>
