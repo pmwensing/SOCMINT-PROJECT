@@ -1,0 +1,2504 @@
+{
+  "actor": "v999-bootstrap-smoke",
+  "artifacts": [
+    {
+      "exists": true,
+      "path": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+      "sha256": "1ae834662d47176c730c2e0bf99afd878e9420b46175b59882a3e580a3cb2897",
+      "size_bytes": 5478
+    },
+    {
+      "exists": true,
+      "path": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+      "sha256": "28a749e385615c1fa0ca1adb9db66043ae9df46a0a8ef08daf3de067c4fbcf8d",
+      "size_bytes": 4730
+    },
+    {
+      "exists": true,
+      "path": "release/V9_9_2_FINAL_RELEASE_PUBLISH_MANIFEST.json",
+      "sha256": "9411c180a45f3d8dc615b4508590a2b522cdeb8e9bba35c14f90ca7d636deaad",
+      "size_bytes": 8220
+    },
+    {
+      "exists": true,
+      "path": "release/V9_9_3_FINAL_RELEASE_ARCHIVE_SEAL.json",
+      "sha256": "829af97ca6b0f648a2d06dc9bc8379fb589f191683438aa28015bf9aa3298cf1",
+      "size_bytes": 5105
+    },
+    {
+      "exists": true,
+      "path": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json",
+      "sha256": "b0220713e3d614595856e5cc351cb3d815bf390a5196231e0c01298014e1c0c0",
+      "size_bytes": 4838
+    },
+    {
+      "exists": true,
+      "path": "release/V9_9_5_DISTRIBUTION_READINESS_REPORT.json",
+      "sha256": "71a03f55290334668cdb28499a44ece4d51433f9d50592bfb4b2ceed2234bbc9",
+      "size_bytes": 7215
+    },
+    {
+      "exists": true,
+      "path": "release/V9_9_6_FINAL_PRODUCT_RELEASE_INDEX.json",
+      "sha256": "df9cebb2a77eaae8f23d849e9caa09c3a57f5da8440e3805da47525af86d38de",
+      "size_bytes": 27891
+    },
+    {
+      "exists": true,
+      "path": "release/V9_9_6_FINAL_PRODUCT_VERSION_FREEZE.json",
+      "sha256": "d194a884f5781e84dfc808fcea75701068cdd0d94634144103cd23d87b6d30e8",
+      "size_bytes": 555
+    },
+    {
+      "exists": true,
+      "path": "release/V9_9_7_OPERATOR_HANDOFF_MANIFEST.json",
+      "sha256": "04fd683eb850f9922f23b8721040a51817e44105a4fea86e5981a8a1359cb381",
+      "size_bytes": 13075
+    },
+    {
+      "exists": true,
+      "path": "release/V9_9_8_POST_RELEASE_MAINTENANCE_REPORT.json",
+      "sha256": "eb30df4a690c0647f86969e1edceef5a73ac329baf164af655172cb99c610e44",
+      "size_bytes": 94699
+    }
+  ],
+  "bootstrap_state": {
+    "actor": "v999-bootstrap-smoke",
+    "bootstrap_manifest_sha256": "77408e6d4013977a41d3b9062a447c826835bb746831bc80e04cb89af5ab3156",
+    "closure_manifest_sha256": "a6160c732148c34d03d8e6e1294edf99f1fd5bdaa8d16d3bca3b48d22134dd27",
+    "decision": "v10_bootstrap_ready",
+    "reason": "approve v10 bootstrap smoke",
+    "release_name": "v9_9_9_bootstrap_release",
+    "updated_at": "2026-05-13T04:08:13.239033+00:00",
+    "v10_bootstrap_ready": true,
+    "v9_closed": true,
+    "version": "9.9.9"
+  },
+  "generated_at": "2026-05-13T04:08:13.269646+00:00",
+  "maintenance_state": {
+    "actor": "v999-bootstrap-smoke",
+    "decision": "safe_to_start_v10",
+    "reason": "safe bootstrap smoke",
+    "release_name": "v9_9_9_bootstrap_release",
+    "safe_to_start_v10": true,
+    "updated_at": "2026-05-13T04:08:13.039103+00:00",
+    "version": "9.9.8"
+  },
+  "missing": [],
+  "recommended_next_action": "v9.9.x is closed and v10 bootstrap is ready.",
+  "release_name": "v9_9_9_bootstrap_release",
+  "required_present": 10,
+  "required_total": 10,
+  "safe_to_start_v10": true,
+  "self_test": {
+    "actor": "v999-bootstrap-smoke",
+    "archive": {
+      "actor": "v999-bootstrap-smoke",
+      "archive_tar_exists": true,
+      "archive_tar_path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz",
+      "archive_tar_size_bytes": 4388,
+      "archive_zip_exists": true,
+      "archive_zip_path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip",
+      "archive_zip_size_bytes": 8566,
+      "download_tar_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.tar.gz",
+      "download_zip_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.zip",
+      "integrity_manifest_exists": true,
+      "integrity_manifest_path": "storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json",
+      "modified_at": "2026-05-13T04:08:12.960878+00:00",
+      "publish_manifest_path": "storage/final_releases/v9_9_9_bootstrap_release/PUBLISH_MANIFEST.json",
+      "published_at": "2026-05-13T04:08:12.958125+00:00",
+      "release_name": "v9_9_9_bootstrap_release",
+      "release_path": "storage/final_releases/v9_9_9_bootstrap_release",
+      "status": "published"
+    },
+    "checks": [
+      {
+        "detail": {
+          "artifact": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+          "status": "pass"
+        },
+        "key": "release_candidate",
+        "label": "Release candidate manifest status is pass",
+        "ok": true
+      },
+      {
+        "detail": {
+          "approved": true,
+          "gate_status": "approved"
+        },
+        "key": "final_gate",
+        "label": "Final gate is approved",
+        "ok": true
+      },
+      {
+        "detail": {
+          "archive": {
+            "actor": "v999-bootstrap-smoke",
+            "archive_tar_exists": true,
+            "archive_tar_path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz",
+            "archive_tar_size_bytes": 4388,
+            "archive_zip_exists": true,
+            "archive_zip_path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip",
+            "archive_zip_size_bytes": 8566,
+            "download_tar_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.tar.gz",
+            "download_zip_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.zip",
+            "integrity_manifest_exists": true,
+            "integrity_manifest_path": "storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json",
+            "modified_at": "2026-05-13T04:08:12.960878+00:00",
+            "publish_manifest_path": "storage/final_releases/v9_9_9_bootstrap_release/PUBLISH_MANIFEST.json",
+            "published_at": "2026-05-13T04:08:12.958125+00:00",
+            "release_name": "v9_9_9_bootstrap_release",
+            "release_path": "storage/final_releases/v9_9_9_bootstrap_release",
+            "status": "published"
+          },
+          "release_name": "v9_9_9_bootstrap_release"
+        },
+        "key": "archive",
+        "label": "Final release archive exists with ZIP, TAR, and integrity manifest",
+        "ok": true
+      },
+      {
+        "detail": {
+          "checks_passed": 16,
+          "checks_total": 16,
+          "failures": [],
+          "status": "pass"
+        },
+        "key": "verification",
+        "label": "Final release verification status is pass",
+        "ok": true
+      },
+      {
+        "detail": {
+          "distribution_status": "ready",
+          "locked": true,
+          "ready": true
+        },
+        "key": "distribution",
+        "label": "Distribution readiness status is ready",
+        "ok": true
+      },
+      {
+        "detail": {
+          "distribution_ready": true,
+          "status": "ready"
+        },
+        "key": "final_dashboard",
+        "label": "Final product dashboard status is ready",
+        "ok": true
+      },
+      {
+        "detail": {
+          "distribution_ready": true,
+          "required_present": 16,
+          "required_total": 16,
+          "status": "ready"
+        },
+        "key": "operator_handoff",
+        "label": "Operator handoff pack preview is ready",
+        "ok": true
+      },
+      {
+        "detail": {
+          "artifact": "release/V9_9_7_OPERATOR_HANDOFF_MANIFEST.json",
+          "status": "ready"
+        },
+        "key": "operator_handoff_manifest",
+        "label": "Operator handoff manifest artifact exists and is ready",
+        "ok": true
+      }
+    ],
+    "checks_passed": 8,
+    "checks_total": 8,
+    "distribution": {
+      "actor": "v999-bootstrap-smoke",
+      "audit_event_count": 3,
+      "can_mark_ready": false,
+      "distribution_status": "ready",
+      "generated_at": "2026-05-13T04:08:13.249765+00:00",
+      "latest_audit_event": {
+        "action": "distribution_ready",
+        "actor": "v999-bootstrap-smoke",
+        "after": {
+          "actor": "v999-bootstrap-smoke",
+          "decision": "ready",
+          "lock_manifest_sha256": "cc035e8050ef28ce6d1c3109cc1044f90af6e9e76cc8b9cbb9fc2644c61ac316",
+          "locked": true,
+          "ready": true,
+          "reason": "ready bootstrap smoke",
+          "release_name": "v9_9_9_bootstrap_release",
+          "updated_at": "2026-05-13T04:08:12.976360+00:00",
+          "version": "9.9.5"
+        },
+        "before": {
+          "actor": "v998-self-test-smoke",
+          "decision": "ready",
+          "lock_manifest_sha256": "cc035e8050ef28ce6d1c3109cc1044f90af6e9e76cc8b9cbb9fc2644c61ac316",
+          "locked": true,
+          "ready": true,
+          "reason": "ready self-test smoke",
+          "release_name": "v9_9_8_self_test_release",
+          "updated_at": "2026-05-13T04:08:11.965013+00:00",
+          "version": "9.9.5"
+        },
+        "event_id": "b4d1135c1f1d438584bee0446fbc8be8",
+        "reason": "ready bootstrap smoke",
+        "timestamp": "2026-05-13T04:08:12.976577+00:00",
+        "verification_status": "pass",
+        "version": "9.9.5"
+      },
+      "recommended_next_action": "Final release is locked and ready to distribute.",
+      "release_name": "v9_9_9_bootstrap_release",
+      "state": {
+        "actor": "v999-bootstrap-smoke",
+        "decision": "ready",
+        "lock_manifest_sha256": "cc035e8050ef28ce6d1c3109cc1044f90af6e9e76cc8b9cbb9fc2644c61ac316",
+        "locked": true,
+        "ready": true,
+        "reason": "ready bootstrap smoke",
+        "release_name": "v9_9_9_bootstrap_release",
+        "updated_at": "2026-05-13T04:08:12.976360+00:00",
+        "version": "9.9.5"
+      },
+      "status": "ok",
+      "verification": {
+        "archive_tar_path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz",
+        "archive_zip_path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip",
+        "artifacts_written": {
+          "json": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json",
+          "markdown": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.md"
+        },
+        "checks": [
+          {
+            "detail": {
+              "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/RELEASE_NOTES.md"
+            },
+            "key": "release_notes",
+            "label": "Required file exists: RELEASE_NOTES.md",
+            "ok": true
+          },
+          {
+            "detail": {
+              "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/FINAL_RELEASE_CHECKLIST.json"
+            },
+            "key": "checklist",
+            "label": "Required file exists: FINAL_RELEASE_CHECKLIST.json",
+            "ok": true
+          },
+          {
+            "detail": {
+              "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/PUBLISH_MANIFEST.json"
+            },
+            "key": "publish_manifest",
+            "label": "Required file exists: PUBLISH_MANIFEST.json",
+            "ok": true
+          },
+          {
+            "detail": {
+              "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json"
+            },
+            "key": "integrity_manifest",
+            "label": "Required file exists: INTEGRITY_MANIFEST.json",
+            "ok": true
+          },
+          {
+            "detail": {
+              "status": "published"
+            },
+            "key": "publish_manifest_published",
+            "label": "Publish manifest status is published",
+            "ok": true
+          },
+          {
+            "detail": {
+              "approved": true,
+              "gate_status": "approved"
+            },
+            "key": "final_gate_approved",
+            "label": "Final gate is approved",
+            "ok": true
+          },
+          {
+            "detail": {
+              "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json"
+            },
+            "key": "integrity_manifest_present",
+            "label": "Integrity manifest is present and valid JSON",
+            "ok": true
+          },
+          {
+            "detail": {
+              "required_presence": {
+                "checklist": true,
+                "final_gate_manifest": true,
+                "package_zip": true,
+                "publish_manifest": true,
+                "rc_manifest": true,
+                "release_notes": true,
+                "signoff_audit": true
+              }
+            },
+            "key": "integrity_required_presence",
+            "label": "Integrity manifest confirms required evidence presence",
+            "ok": true
+          },
+          {
+            "detail": {
+              "failure_count": 0,
+              "failures": []
+            },
+            "key": "integrity_file_checksums",
+            "label": "All integrity-manifest file SHA256 checks match",
+            "ok": true
+          },
+          {
+            "detail": {
+              "path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip"
+            },
+            "key": "archive_zip_exists",
+            "label": "Archive ZIP exists",
+            "ok": true
+          },
+          {
+            "detail": {
+              "path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz"
+            },
+            "key": "archive_tar_exists",
+            "label": "Archive TAR.GZ exists",
+            "ok": true
+          },
+          {
+            "detail": {
+              "actual": "75e508f4538feab17136c45cc49730bb5ece37bbbb603aacce08842cc10f0943",
+              "expected": "75e508f4538feab17136c45cc49730bb5ece37bbbb603aacce08842cc10f0943"
+            },
+            "key": "archive_zip_checksum",
+            "label": "Archive ZIP checksum matches integrity seal when seal is available",
+            "ok": true
+          },
+          {
+            "detail": {
+              "actual": "c44e27cb93cbc84ca7e542353b60eb408f2a78998392565365168d203cad9b7d",
+              "expected": "c44e27cb93cbc84ca7e542353b60eb408f2a78998392565365168d203cad9b7d"
+            },
+            "key": "archive_tar_checksum",
+            "label": "Archive TAR.GZ checksum matches integrity seal when seal is available",
+            "ok": true
+          },
+          {
+            "detail": {
+              "entry_count": 12
+            },
+            "key": "zip_required_files",
+            "label": "ZIP contains required final release files",
+            "ok": true
+          },
+          {
+            "detail": {
+              "entry_count": 12
+            },
+            "key": "tar_required_files",
+            "label": "TAR.GZ contains required final release files",
+            "ok": true
+          },
+          {
+            "detail": {
+              "failures": [],
+              "package_zip_count": 2
+            },
+            "key": "package_zips_present",
+            "label": "Package ZIPs referenced by publish manifest are present",
+            "ok": true
+          }
+        ],
+        "checks_passed": 16,
+        "checks_total": 16,
+        "download_tar_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.tar.gz",
+        "download_zip_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.zip",
+        "failures": [],
+        "generated_at": "2026-05-13T04:08:13.249342+00:00",
+        "recommended_next_action": "Final release verified.",
+        "release_name": "v9_9_9_bootstrap_release",
+        "release_path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release",
+        "status": "pass",
+        "version": "9.9.4"
+      },
+      "verification_status": "pass",
+      "version": "9.9.5"
+    },
+    "failures": [],
+    "final_dashboard": {
+      "actor": "v999-bootstrap-smoke",
+      "archives": [
+        {
+          "actor": "v999-bootstrap-smoke",
+          "archive_tar_exists": true,
+          "archive_tar_path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz",
+          "archive_tar_size_bytes": 4388,
+          "archive_zip_exists": true,
+          "archive_zip_path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip",
+          "archive_zip_size_bytes": 8566,
+          "download_tar_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.tar.gz",
+          "download_zip_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.zip",
+          "integrity_manifest_exists": true,
+          "integrity_manifest_path": "storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json",
+          "modified_at": "2026-05-13T04:08:12.960878+00:00",
+          "publish_manifest_path": "storage/final_releases/v9_9_9_bootstrap_release/PUBLISH_MANIFEST.json",
+          "published_at": "2026-05-13T04:08:12.958125+00:00",
+          "release_name": "v9_9_9_bootstrap_release",
+          "release_path": "storage/final_releases/v9_9_9_bootstrap_release",
+          "status": "published"
+        },
+        {
+          "actor": "v998-self-test-smoke",
+          "archive_tar_exists": true,
+          "archive_tar_path": "storage/final_release_archives/v9_9_8_self_test_release.tar.gz",
+          "archive_tar_size_bytes": 4264,
+          "archive_zip_exists": true,
+          "archive_zip_path": "storage/final_release_archives/v9_9_8_self_test_release.zip",
+          "archive_zip_size_bytes": 8471,
+          "download_tar_url": "/product/final-release/archive/download/v9_9_8_self_test_release.tar.gz",
+          "download_zip_url": "/product/final-release/archive/download/v9_9_8_self_test_release.zip",
+          "integrity_manifest_exists": true,
+          "integrity_manifest_path": "storage/final_releases/v9_9_8_self_test_release/INTEGRITY_MANIFEST.json",
+          "modified_at": "2026-05-13T04:08:11.951246+00:00",
+          "publish_manifest_path": "storage/final_releases/v9_9_8_self_test_release/PUBLISH_MANIFEST.json",
+          "published_at": "2026-05-13T04:08:11.949331+00:00",
+          "release_name": "v9_9_8_self_test_release",
+          "release_path": "storage/final_releases/v9_9_8_self_test_release",
+          "status": "published"
+        }
+      ],
+      "chain": {
+        "archive": {
+          "integrity_manifest_exists": true,
+          "tar_exists": true,
+          "zip_exists": true
+        },
+        "distribution": {
+          "decision": "ready",
+          "locked": true,
+          "ready": true,
+          "status": "ready"
+        },
+        "final_gate": {
+          "approved": true,
+          "manifest": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+          "rc_status": "pass",
+          "status": "approved"
+        },
+        "final_release": {
+          "archive_tar": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz",
+          "archive_zip": "storage/final_release_archives/v9_9_9_bootstrap_release.zip",
+          "release_name": "v9_9_9_bootstrap_release",
+          "status": "published"
+        },
+        "release_candidate": {
+          "manifest": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+          "required_passed": 6,
+          "required_total": 6,
+          "status": "pass"
+        },
+        "verification": {
+          "checks_passed": 16,
+          "checks_total": 16,
+          "failures": [],
+          "status": "pass"
+        }
+      },
+      "distribution": {
+        "actor": "v999-bootstrap-smoke",
+        "audit_event_count": 3,
+        "can_mark_ready": false,
+        "distribution_status": "ready",
+        "generated_at": "2026-05-13T04:08:13.259273+00:00",
+        "latest_audit_event": {
+          "action": "distribution_ready",
+          "actor": "v999-bootstrap-smoke",
+          "after": {
+            "actor": "v999-bootstrap-smoke",
+            "decision": "ready",
+            "lock_manifest_sha256": "cc035e8050ef28ce6d1c3109cc1044f90af6e9e76cc8b9cbb9fc2644c61ac316",
+            "locked": true,
+            "ready": true,
+            "reason": "ready bootstrap smoke",
+            "release_name": "v9_9_9_bootstrap_release",
+            "updated_at": "2026-05-13T04:08:12.976360+00:00",
+            "version": "9.9.5"
+          },
+          "before": {
+            "actor": "v998-self-test-smoke",
+            "decision": "ready",
+            "lock_manifest_sha256": "cc035e8050ef28ce6d1c3109cc1044f90af6e9e76cc8b9cbb9fc2644c61ac316",
+            "locked": true,
+            "ready": true,
+            "reason": "ready self-test smoke",
+            "release_name": "v9_9_8_self_test_release",
+            "updated_at": "2026-05-13T04:08:11.965013+00:00",
+            "version": "9.9.5"
+          },
+          "event_id": "b4d1135c1f1d438584bee0446fbc8be8",
+          "reason": "ready bootstrap smoke",
+          "timestamp": "2026-05-13T04:08:12.976577+00:00",
+          "verification_status": "pass",
+          "version": "9.9.5"
+        },
+        "recommended_next_action": "Final release is locked and ready to distribute.",
+        "release_name": "v9_9_9_bootstrap_release",
+        "state": {
+          "actor": "v999-bootstrap-smoke",
+          "decision": "ready",
+          "lock_manifest_sha256": "cc035e8050ef28ce6d1c3109cc1044f90af6e9e76cc8b9cbb9fc2644c61ac316",
+          "locked": true,
+          "ready": true,
+          "reason": "ready bootstrap smoke",
+          "release_name": "v9_9_9_bootstrap_release",
+          "updated_at": "2026-05-13T04:08:12.976360+00:00",
+          "version": "9.9.5"
+        },
+        "status": "ok",
+        "verification": {
+          "archive_tar_path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz",
+          "archive_zip_path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip",
+          "artifacts_written": {
+            "json": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json",
+            "markdown": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.md"
+          },
+          "checks": [
+            {
+              "detail": {
+                "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/RELEASE_NOTES.md"
+              },
+              "key": "release_notes",
+              "label": "Required file exists: RELEASE_NOTES.md",
+              "ok": true
+            },
+            {
+              "detail": {
+                "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/FINAL_RELEASE_CHECKLIST.json"
+              },
+              "key": "checklist",
+              "label": "Required file exists: FINAL_RELEASE_CHECKLIST.json",
+              "ok": true
+            },
+            {
+              "detail": {
+                "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/PUBLISH_MANIFEST.json"
+              },
+              "key": "publish_manifest",
+              "label": "Required file exists: PUBLISH_MANIFEST.json",
+              "ok": true
+            },
+            {
+              "detail": {
+                "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json"
+              },
+              "key": "integrity_manifest",
+              "label": "Required file exists: INTEGRITY_MANIFEST.json",
+              "ok": true
+            },
+            {
+              "detail": {
+                "status": "published"
+              },
+              "key": "publish_manifest_published",
+              "label": "Publish manifest status is published",
+              "ok": true
+            },
+            {
+              "detail": {
+                "approved": true,
+                "gate_status": "approved"
+              },
+              "key": "final_gate_approved",
+              "label": "Final gate is approved",
+              "ok": true
+            },
+            {
+              "detail": {
+                "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json"
+              },
+              "key": "integrity_manifest_present",
+              "label": "Integrity manifest is present and valid JSON",
+              "ok": true
+            },
+            {
+              "detail": {
+                "required_presence": {
+                  "checklist": true,
+                  "final_gate_manifest": true,
+                  "package_zip": true,
+                  "publish_manifest": true,
+                  "rc_manifest": true,
+                  "release_notes": true,
+                  "signoff_audit": true
+                }
+              },
+              "key": "integrity_required_presence",
+              "label": "Integrity manifest confirms required evidence presence",
+              "ok": true
+            },
+            {
+              "detail": {
+                "failure_count": 0,
+                "failures": []
+              },
+              "key": "integrity_file_checksums",
+              "label": "All integrity-manifest file SHA256 checks match",
+              "ok": true
+            },
+            {
+              "detail": {
+                "path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip"
+              },
+              "key": "archive_zip_exists",
+              "label": "Archive ZIP exists",
+              "ok": true
+            },
+            {
+              "detail": {
+                "path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz"
+              },
+              "key": "archive_tar_exists",
+              "label": "Archive TAR.GZ exists",
+              "ok": true
+            },
+            {
+              "detail": {
+                "actual": "75e508f4538feab17136c45cc49730bb5ece37bbbb603aacce08842cc10f0943",
+                "expected": "75e508f4538feab17136c45cc49730bb5ece37bbbb603aacce08842cc10f0943"
+              },
+              "key": "archive_zip_checksum",
+              "label": "Archive ZIP checksum matches integrity seal when seal is available",
+              "ok": true
+            },
+            {
+              "detail": {
+                "actual": "c44e27cb93cbc84ca7e542353b60eb408f2a78998392565365168d203cad9b7d",
+                "expected": "c44e27cb93cbc84ca7e542353b60eb408f2a78998392565365168d203cad9b7d"
+              },
+              "key": "archive_tar_checksum",
+              "label": "Archive TAR.GZ checksum matches integrity seal when seal is available",
+              "ok": true
+            },
+            {
+              "detail": {
+                "entry_count": 12
+              },
+              "key": "zip_required_files",
+              "label": "ZIP contains required final release files",
+              "ok": true
+            },
+            {
+              "detail": {
+                "entry_count": 12
+              },
+              "key": "tar_required_files",
+              "label": "TAR.GZ contains required final release files",
+              "ok": true
+            },
+            {
+              "detail": {
+                "failures": [],
+                "package_zip_count": 2
+              },
+              "key": "package_zips_present",
+              "label": "Package ZIPs referenced by publish manifest are present",
+              "ok": true
+            }
+          ],
+          "checks_passed": 16,
+          "checks_total": 16,
+          "download_tar_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.tar.gz",
+          "download_zip_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.zip",
+          "failures": [],
+          "generated_at": "2026-05-13T04:08:13.258835+00:00",
+          "recommended_next_action": "Final release verified.",
+          "release_name": "v9_9_9_bootstrap_release",
+          "release_path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release",
+          "status": "pass",
+          "version": "9.9.4"
+        },
+        "verification_status": "pass",
+        "version": "9.9.5"
+      },
+      "distribution_ready": true,
+      "final_gate": {
+        "actor": "v999-bootstrap-smoke",
+        "audit_event_count": 3,
+        "can_approve": true,
+        "gate_status": "approved",
+        "generated_at": "2026-05-13T04:08:13.255156+00:00",
+        "latest_audit_event": {
+          "action": "signoff_approve",
+          "actor": "v999-bootstrap-smoke",
+          "after": {
+            "actor": "v999-bootstrap-smoke",
+            "approved": true,
+            "blocked": false,
+            "decision": "approved",
+            "reason": "approve bootstrap smoke",
+            "updated_at": "2026-05-13T04:08:12.934667+00:00",
+            "version": "9.9.1"
+          },
+          "before": {
+            "actor": "v998-self-test-smoke",
+            "approved": true,
+            "blocked": false,
+            "decision": "approved",
+            "reason": "approve self-test smoke",
+            "updated_at": "2026-05-13T04:08:11.927003+00:00",
+            "version": "9.9.1"
+          },
+          "event_id": "ba0536b386c64434b8bd239d9a57731b",
+          "rc_status": "pass",
+          "reason": "approve bootstrap smoke",
+          "timestamp": "2026-05-13T04:08:12.934889+00:00",
+          "version": "9.9.1"
+        },
+        "rc_status": "pass",
+        "rc_summary": {
+          "missing_stage_keys": [],
+          "required_missing": 0,
+          "required_passed": 6,
+          "required_total": 6,
+          "stages": [
+            {
+              "artifact": "release/V9_7_PRODUCT_SMOKE_REPORT.md",
+              "artifact_download_url": "/product/artifacts/download/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+              "artifact_exists": true,
+              "artifact_view_url": "/product/artifacts/view/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+              "key": "product_smoke",
+              "label": "Product Smoke",
+              "required": true,
+              "status": "pass",
+              "target": "make product-smoke"
+            },
+            {
+              "artifact": "release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+              "artifact_download_url": "/product/artifacts/download/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+              "artifact_exists": true,
+              "artifact_view_url": "/product/artifacts/view/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+              "key": "artifact_review",
+              "label": "Artifact Review",
+              "required": true,
+              "status": "pass",
+              "target": "make product-artifact-review-smoke"
+            },
+            {
+              "artifact": "release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+              "artifact_download_url": "/product/artifacts/download/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+              "artifact_exists": true,
+              "artifact_view_url": "/product/artifacts/view/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+              "key": "artifact_review_audit",
+              "label": "Artifact Review Audit",
+              "required": true,
+              "status": "pass",
+              "target": "make product-artifact-review-audit-smoke"
+            },
+            {
+              "artifact": "release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+              "artifact_download_url": "/product/artifacts/download/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+              "artifact_exists": true,
+              "artifact_view_url": "/product/artifacts/view/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+              "key": "export_manifest",
+              "label": "Evidence Chain Export Manifest",
+              "required": true,
+              "status": "pass",
+              "target": "make product-artifact-export-manifest-smoke"
+            },
+            {
+              "artifact": "release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+              "artifact_download_url": "/product/artifacts/download/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+              "artifact_exists": true,
+              "artifact_view_url": "/product/artifacts/view/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+              "key": "release_package",
+              "label": "Release Package Builder",
+              "required": true,
+              "status": "pass",
+              "target": "make product-release-package-smoke"
+            },
+            {
+              "artifact": "release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+              "artifact_download_url": "/product/artifacts/download/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+              "artifact_exists": true,
+              "artifact_view_url": "/product/artifacts/view/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+              "key": "zip_export",
+              "label": "Release Package ZIP Export",
+              "required": true,
+              "status": "pass",
+              "target": "make product-release-package-zip-smoke"
+            }
+          ],
+          "status": "pass"
+        },
+        "recommended_next_action": "Release candidate approved. Ready for final release/tag.",
+        "signoff": {
+          "actor": "v999-bootstrap-smoke",
+          "approved": true,
+          "blocked": false,
+          "decision": "approved",
+          "reason": "approve bootstrap smoke",
+          "updated_at": "2026-05-13T04:08:12.934667+00:00",
+          "version": "9.9.1"
+        },
+        "status": "ok",
+        "version": "9.9.1"
+      },
+      "generated_at": "2026-05-13T04:08:13.259287+00:00",
+      "rc_manifest": {
+        "actor": "v999-bootstrap-smoke",
+        "built_package_count": 2,
+        "export_manifest_summary": {
+          "archived": 0,
+          "audit_events": 0,
+          "important": 0,
+          "reviewed": 0
+        },
+        "generated_at": "2026-05-13T04:08:13.244889+00:00",
+        "package_preview_count": 0,
+        "packages": [
+          {
+            "copied_artifact_count": 1,
+            "generated_at": null,
+            "index_path": "storage/product_packages/v9_9_8_self_test_package/PACKAGE_INDEX.md",
+            "manifest_path": "storage/product_packages/v9_9_8_self_test_package/PACKAGE_MANIFEST.json",
+            "metadata_file_count": 2,
+            "modified_at": "2026-05-13T04:08:11.943001+00:00",
+            "package_name": "v9_9_8_self_test_package",
+            "package_path": "storage/product_packages/v9_9_8_self_test_package",
+            "selected_count": 1,
+            "zip_download_url": "/product/release-package/download/v9_9_8_self_test_package",
+            "zip_entries": [
+              "PACKAGE_MANIFEST.json",
+              "PACKAGE_INDEX.md"
+            ],
+            "zip_exists": true,
+            "zip_path": "storage/product_packages/v9_9_8_self_test_package.zip",
+            "zip_size_bytes": 258
+          },
+          {
+            "copied_artifact_count": 1,
+            "generated_at": null,
+            "index_path": "storage/product_packages/v9_9_9_bootstrap_package/PACKAGE_INDEX.md",
+            "manifest_path": "storage/product_packages/v9_9_9_bootstrap_package/PACKAGE_MANIFEST.json",
+            "metadata_file_count": 2,
+            "modified_at": "2026-05-13T04:08:10.683230+00:00",
+            "package_name": "v9_9_9_bootstrap_package",
+            "package_path": "storage/product_packages/v9_9_9_bootstrap_package",
+            "selected_count": 1,
+            "zip_download_url": "/product/release-package/download/v9_9_9_bootstrap_package",
+            "zip_entries": [
+              "PACKAGE_MANIFEST.json",
+              "PACKAGE_INDEX.md"
+            ],
+            "zip_exists": true,
+            "zip_path": "storage/product_packages/v9_9_9_bootstrap_package.zip",
+            "zip_size_bytes": 258
+          }
+        ],
+        "release_candidate": {
+          "base_line": "v9.8.0-v9.8.9",
+          "name": "SOCMINT Workbench v9.9.0 Release Candidate",
+          "recommended_next_action": "Cut v9.9.0 release candidate tag"
+        },
+        "status": "pass",
+        "summary": {
+          "missing_stage_keys": [],
+          "required_missing": 0,
+          "required_passed": 6,
+          "required_total": 6,
+          "stages": [
+            {
+              "artifact": "release/V9_7_PRODUCT_SMOKE_REPORT.md",
+              "artifact_download_url": "/product/artifacts/download/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+              "artifact_exists": true,
+              "artifact_view_url": "/product/artifacts/view/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+              "key": "product_smoke",
+              "label": "Product Smoke",
+              "required": true,
+              "status": "pass",
+              "target": "make product-smoke"
+            },
+            {
+              "artifact": "release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+              "artifact_download_url": "/product/artifacts/download/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+              "artifact_exists": true,
+              "artifact_view_url": "/product/artifacts/view/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+              "key": "artifact_review",
+              "label": "Artifact Review",
+              "required": true,
+              "status": "pass",
+              "target": "make product-artifact-review-smoke"
+            },
+            {
+              "artifact": "release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+              "artifact_download_url": "/product/artifacts/download/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+              "artifact_exists": true,
+              "artifact_view_url": "/product/artifacts/view/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+              "key": "artifact_review_audit",
+              "label": "Artifact Review Audit",
+              "required": true,
+              "status": "pass",
+              "target": "make product-artifact-review-audit-smoke"
+            },
+            {
+              "artifact": "release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+              "artifact_download_url": "/product/artifacts/download/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+              "artifact_exists": true,
+              "artifact_view_url": "/product/artifacts/view/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+              "key": "export_manifest",
+              "label": "Evidence Chain Export Manifest",
+              "required": true,
+              "status": "pass",
+              "target": "make product-artifact-export-manifest-smoke"
+            },
+            {
+              "artifact": "release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+              "artifact_download_url": "/product/artifacts/download/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+              "artifact_exists": true,
+              "artifact_view_url": "/product/artifacts/view/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+              "key": "release_package",
+              "label": "Release Package Builder",
+              "required": true,
+              "status": "pass",
+              "target": "make product-release-package-smoke"
+            },
+            {
+              "artifact": "release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+              "artifact_download_url": "/product/artifacts/download/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+              "artifact_exists": true,
+              "artifact_view_url": "/product/artifacts/view/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+              "key": "zip_export",
+              "label": "Release Package ZIP Export",
+              "required": true,
+              "status": "pass",
+              "target": "make product-release-package-zip-smoke"
+            }
+          ],
+          "status": "pass"
+        },
+        "version": "9.9.0"
+      },
+      "recommended_next_action": "Final product release is distribution-ready.",
+      "release_name": "v9_9_9_bootstrap_release",
+      "status": "ready",
+      "verification": {
+        "archive_tar_path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz",
+        "archive_zip_path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip",
+        "artifacts_written": {
+          "json": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json",
+          "markdown": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.md"
+        },
+        "checks": [
+          {
+            "detail": {
+              "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/RELEASE_NOTES.md"
+            },
+            "key": "release_notes",
+            "label": "Required file exists: RELEASE_NOTES.md",
+            "ok": true
+          },
+          {
+            "detail": {
+              "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/FINAL_RELEASE_CHECKLIST.json"
+            },
+            "key": "checklist",
+            "label": "Required file exists: FINAL_RELEASE_CHECKLIST.json",
+            "ok": true
+          },
+          {
+            "detail": {
+              "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/PUBLISH_MANIFEST.json"
+            },
+            "key": "publish_manifest",
+            "label": "Required file exists: PUBLISH_MANIFEST.json",
+            "ok": true
+          },
+          {
+            "detail": {
+              "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json"
+            },
+            "key": "integrity_manifest",
+            "label": "Required file exists: INTEGRITY_MANIFEST.json",
+            "ok": true
+          },
+          {
+            "detail": {
+              "status": "published"
+            },
+            "key": "publish_manifest_published",
+            "label": "Publish manifest status is published",
+            "ok": true
+          },
+          {
+            "detail": {
+              "approved": true,
+              "gate_status": "approved"
+            },
+            "key": "final_gate_approved",
+            "label": "Final gate is approved",
+            "ok": true
+          },
+          {
+            "detail": {
+              "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json"
+            },
+            "key": "integrity_manifest_present",
+            "label": "Integrity manifest is present and valid JSON",
+            "ok": true
+          },
+          {
+            "detail": {
+              "required_presence": {
+                "checklist": true,
+                "final_gate_manifest": true,
+                "package_zip": true,
+                "publish_manifest": true,
+                "rc_manifest": true,
+                "release_notes": true,
+                "signoff_audit": true
+              }
+            },
+            "key": "integrity_required_presence",
+            "label": "Integrity manifest confirms required evidence presence",
+            "ok": true
+          },
+          {
+            "detail": {
+              "failure_count": 0,
+              "failures": []
+            },
+            "key": "integrity_file_checksums",
+            "label": "All integrity-manifest file SHA256 checks match",
+            "ok": true
+          },
+          {
+            "detail": {
+              "path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip"
+            },
+            "key": "archive_zip_exists",
+            "label": "Archive ZIP exists",
+            "ok": true
+          },
+          {
+            "detail": {
+              "path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz"
+            },
+            "key": "archive_tar_exists",
+            "label": "Archive TAR.GZ exists",
+            "ok": true
+          },
+          {
+            "detail": {
+              "actual": "75e508f4538feab17136c45cc49730bb5ece37bbbb603aacce08842cc10f0943",
+              "expected": "75e508f4538feab17136c45cc49730bb5ece37bbbb603aacce08842cc10f0943"
+            },
+            "key": "archive_zip_checksum",
+            "label": "Archive ZIP checksum matches integrity seal when seal is available",
+            "ok": true
+          },
+          {
+            "detail": {
+              "actual": "c44e27cb93cbc84ca7e542353b60eb408f2a78998392565365168d203cad9b7d",
+              "expected": "c44e27cb93cbc84ca7e542353b60eb408f2a78998392565365168d203cad9b7d"
+            },
+            "key": "archive_tar_checksum",
+            "label": "Archive TAR.GZ checksum matches integrity seal when seal is available",
+            "ok": true
+          },
+          {
+            "detail": {
+              "entry_count": 12
+            },
+            "key": "zip_required_files",
+            "label": "ZIP contains required final release files",
+            "ok": true
+          },
+          {
+            "detail": {
+              "entry_count": 12
+            },
+            "key": "tar_required_files",
+            "label": "TAR.GZ contains required final release files",
+            "ok": true
+          },
+          {
+            "detail": {
+              "failures": [],
+              "package_zip_count": 2
+            },
+            "key": "package_zips_present",
+            "label": "Package ZIPs referenced by publish manifest are present",
+            "ok": true
+          }
+        ],
+        "checks_passed": 16,
+        "checks_total": 16,
+        "download_tar_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.tar.gz",
+        "download_zip_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.zip",
+        "failures": [],
+        "generated_at": "2026-05-13T04:08:13.256965+00:00",
+        "recommended_next_action": "Final release verified.",
+        "release_name": "v9_9_9_bootstrap_release",
+        "release_path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release",
+        "status": "pass",
+        "version": "9.9.4"
+      },
+      "version": "9.9.6",
+      "version_freeze": {
+        "distribution_ready": true,
+        "final_version": "v9.9.6",
+        "frozen_at": "2026-05-13T04:08:13.259285+00:00",
+        "frozen_by": "v999-bootstrap-smoke",
+        "product": "SOCMINT Workbench",
+        "release_line": "v9.9.x final product release line",
+        "release_name": "v9_9_9_bootstrap_release",
+        "source_versions": {
+          "archive_integrity": "v9.9.3",
+          "distribution_readiness": "v9.9.5",
+          "final_dashboard": "v9.9.6",
+          "final_gate": "v9.9.1",
+          "final_release_publisher": "v9.9.2",
+          "release_candidate": "v9.9.0",
+          "verification": "v9.9.4"
+        }
+      }
+    },
+    "final_gate": {
+      "actor": "v999-bootstrap-smoke",
+      "audit_event_count": 3,
+      "can_approve": true,
+      "gate_status": "approved",
+      "generated_at": "2026-05-13T04:08:13.245321+00:00",
+      "latest_audit_event": {
+        "action": "signoff_approve",
+        "actor": "v999-bootstrap-smoke",
+        "after": {
+          "actor": "v999-bootstrap-smoke",
+          "approved": true,
+          "blocked": false,
+          "decision": "approved",
+          "reason": "approve bootstrap smoke",
+          "updated_at": "2026-05-13T04:08:12.934667+00:00",
+          "version": "9.9.1"
+        },
+        "before": {
+          "actor": "v998-self-test-smoke",
+          "approved": true,
+          "blocked": false,
+          "decision": "approved",
+          "reason": "approve self-test smoke",
+          "updated_at": "2026-05-13T04:08:11.927003+00:00",
+          "version": "9.9.1"
+        },
+        "event_id": "ba0536b386c64434b8bd239d9a57731b",
+        "rc_status": "pass",
+        "reason": "approve bootstrap smoke",
+        "timestamp": "2026-05-13T04:08:12.934889+00:00",
+        "version": "9.9.1"
+      },
+      "rc_status": "pass",
+      "rc_summary": {
+        "missing_stage_keys": [],
+        "required_missing": 0,
+        "required_passed": 6,
+        "required_total": 6,
+        "stages": [
+          {
+            "artifact": "release/V9_7_PRODUCT_SMOKE_REPORT.md",
+            "artifact_download_url": "/product/artifacts/download/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+            "artifact_exists": true,
+            "artifact_view_url": "/product/artifacts/view/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+            "key": "product_smoke",
+            "label": "Product Smoke",
+            "required": true,
+            "status": "pass",
+            "target": "make product-smoke"
+          },
+          {
+            "artifact": "release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+            "artifact_download_url": "/product/artifacts/download/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+            "artifact_exists": true,
+            "artifact_view_url": "/product/artifacts/view/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+            "key": "artifact_review",
+            "label": "Artifact Review",
+            "required": true,
+            "status": "pass",
+            "target": "make product-artifact-review-smoke"
+          },
+          {
+            "artifact": "release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+            "artifact_download_url": "/product/artifacts/download/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+            "artifact_exists": true,
+            "artifact_view_url": "/product/artifacts/view/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+            "key": "artifact_review_audit",
+            "label": "Artifact Review Audit",
+            "required": true,
+            "status": "pass",
+            "target": "make product-artifact-review-audit-smoke"
+          },
+          {
+            "artifact": "release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+            "artifact_download_url": "/product/artifacts/download/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+            "artifact_exists": true,
+            "artifact_view_url": "/product/artifacts/view/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+            "key": "export_manifest",
+            "label": "Evidence Chain Export Manifest",
+            "required": true,
+            "status": "pass",
+            "target": "make product-artifact-export-manifest-smoke"
+          },
+          {
+            "artifact": "release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+            "artifact_download_url": "/product/artifacts/download/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+            "artifact_exists": true,
+            "artifact_view_url": "/product/artifacts/view/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+            "key": "release_package",
+            "label": "Release Package Builder",
+            "required": true,
+            "status": "pass",
+            "target": "make product-release-package-smoke"
+          },
+          {
+            "artifact": "release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+            "artifact_download_url": "/product/artifacts/download/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+            "artifact_exists": true,
+            "artifact_view_url": "/product/artifacts/view/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+            "key": "zip_export",
+            "label": "Release Package ZIP Export",
+            "required": true,
+            "status": "pass",
+            "target": "make product-release-package-zip-smoke"
+          }
+        ],
+        "status": "pass"
+      },
+      "recommended_next_action": "Release candidate approved. Ready for final release/tag.",
+      "signoff": {
+        "actor": "v999-bootstrap-smoke",
+        "approved": true,
+        "blocked": false,
+        "decision": "approved",
+        "reason": "approve bootstrap smoke",
+        "updated_at": "2026-05-13T04:08:12.934667+00:00",
+        "version": "9.9.1"
+      },
+      "status": "ok",
+      "version": "9.9.1"
+    },
+    "generated_at": "2026-05-13T04:08:13.269273+00:00",
+    "handoff": {
+      "actor": "v999-bootstrap-smoke",
+      "distribution_ready": true,
+      "final_dashboard": {
+        "actor": "v999-bootstrap-smoke",
+        "archives": [
+          {
+            "actor": "v999-bootstrap-smoke",
+            "archive_tar_exists": true,
+            "archive_tar_path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz",
+            "archive_tar_size_bytes": 4388,
+            "archive_zip_exists": true,
+            "archive_zip_path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip",
+            "archive_zip_size_bytes": 8566,
+            "download_tar_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.tar.gz",
+            "download_zip_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.zip",
+            "integrity_manifest_exists": true,
+            "integrity_manifest_path": "storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json",
+            "modified_at": "2026-05-13T04:08:12.960878+00:00",
+            "publish_manifest_path": "storage/final_releases/v9_9_9_bootstrap_release/PUBLISH_MANIFEST.json",
+            "published_at": "2026-05-13T04:08:12.958125+00:00",
+            "release_name": "v9_9_9_bootstrap_release",
+            "release_path": "storage/final_releases/v9_9_9_bootstrap_release",
+            "status": "published"
+          },
+          {
+            "actor": "v998-self-test-smoke",
+            "archive_tar_exists": true,
+            "archive_tar_path": "storage/final_release_archives/v9_9_8_self_test_release.tar.gz",
+            "archive_tar_size_bytes": 4264,
+            "archive_zip_exists": true,
+            "archive_zip_path": "storage/final_release_archives/v9_9_8_self_test_release.zip",
+            "archive_zip_size_bytes": 8471,
+            "download_tar_url": "/product/final-release/archive/download/v9_9_8_self_test_release.tar.gz",
+            "download_zip_url": "/product/final-release/archive/download/v9_9_8_self_test_release.zip",
+            "integrity_manifest_exists": true,
+            "integrity_manifest_path": "storage/final_releases/v9_9_8_self_test_release/INTEGRITY_MANIFEST.json",
+            "modified_at": "2026-05-13T04:08:11.951246+00:00",
+            "publish_manifest_path": "storage/final_releases/v9_9_8_self_test_release/PUBLISH_MANIFEST.json",
+            "published_at": "2026-05-13T04:08:11.949331+00:00",
+            "release_name": "v9_9_8_self_test_release",
+            "release_path": "storage/final_releases/v9_9_8_self_test_release",
+            "status": "published"
+          }
+        ],
+        "chain": {
+          "archive": {
+            "integrity_manifest_exists": true,
+            "tar_exists": true,
+            "zip_exists": true
+          },
+          "distribution": {
+            "decision": "ready",
+            "locked": true,
+            "ready": true,
+            "status": "ready"
+          },
+          "final_gate": {
+            "approved": true,
+            "manifest": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+            "rc_status": "pass",
+            "status": "approved"
+          },
+          "final_release": {
+            "archive_tar": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz",
+            "archive_zip": "storage/final_release_archives/v9_9_9_bootstrap_release.zip",
+            "release_name": "v9_9_9_bootstrap_release",
+            "status": "published"
+          },
+          "release_candidate": {
+            "manifest": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+            "required_passed": 6,
+            "required_total": 6,
+            "status": "pass"
+          },
+          "verification": {
+            "checks_passed": 16,
+            "checks_total": 16,
+            "failures": [],
+            "status": "pass"
+          }
+        },
+        "distribution": {
+          "actor": "v999-bootstrap-smoke",
+          "audit_event_count": 3,
+          "can_mark_ready": false,
+          "distribution_status": "ready",
+          "generated_at": "2026-05-13T04:08:13.268681+00:00",
+          "latest_audit_event": {
+            "action": "distribution_ready",
+            "actor": "v999-bootstrap-smoke",
+            "after": {
+              "actor": "v999-bootstrap-smoke",
+              "decision": "ready",
+              "lock_manifest_sha256": "cc035e8050ef28ce6d1c3109cc1044f90af6e9e76cc8b9cbb9fc2644c61ac316",
+              "locked": true,
+              "ready": true,
+              "reason": "ready bootstrap smoke",
+              "release_name": "v9_9_9_bootstrap_release",
+              "updated_at": "2026-05-13T04:08:12.976360+00:00",
+              "version": "9.9.5"
+            },
+            "before": {
+              "actor": "v998-self-test-smoke",
+              "decision": "ready",
+              "lock_manifest_sha256": "cc035e8050ef28ce6d1c3109cc1044f90af6e9e76cc8b9cbb9fc2644c61ac316",
+              "locked": true,
+              "ready": true,
+              "reason": "ready self-test smoke",
+              "release_name": "v9_9_8_self_test_release",
+              "updated_at": "2026-05-13T04:08:11.965013+00:00",
+              "version": "9.9.5"
+            },
+            "event_id": "b4d1135c1f1d438584bee0446fbc8be8",
+            "reason": "ready bootstrap smoke",
+            "timestamp": "2026-05-13T04:08:12.976577+00:00",
+            "verification_status": "pass",
+            "version": "9.9.5"
+          },
+          "recommended_next_action": "Final release is locked and ready to distribute.",
+          "release_name": "v9_9_9_bootstrap_release",
+          "state": {
+            "actor": "v999-bootstrap-smoke",
+            "decision": "ready",
+            "lock_manifest_sha256": "cc035e8050ef28ce6d1c3109cc1044f90af6e9e76cc8b9cbb9fc2644c61ac316",
+            "locked": true,
+            "ready": true,
+            "reason": "ready bootstrap smoke",
+            "release_name": "v9_9_9_bootstrap_release",
+            "updated_at": "2026-05-13T04:08:12.976360+00:00",
+            "version": "9.9.5"
+          },
+          "status": "ok",
+          "verification": {
+            "archive_tar_path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz",
+            "archive_zip_path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip",
+            "artifacts_written": {
+              "json": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json",
+              "markdown": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.md"
+            },
+            "checks": [
+              {
+                "detail": {
+                  "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/RELEASE_NOTES.md"
+                },
+                "key": "release_notes",
+                "label": "Required file exists: RELEASE_NOTES.md",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/FINAL_RELEASE_CHECKLIST.json"
+                },
+                "key": "checklist",
+                "label": "Required file exists: FINAL_RELEASE_CHECKLIST.json",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/PUBLISH_MANIFEST.json"
+                },
+                "key": "publish_manifest",
+                "label": "Required file exists: PUBLISH_MANIFEST.json",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json"
+                },
+                "key": "integrity_manifest",
+                "label": "Required file exists: INTEGRITY_MANIFEST.json",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "status": "published"
+                },
+                "key": "publish_manifest_published",
+                "label": "Publish manifest status is published",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "approved": true,
+                  "gate_status": "approved"
+                },
+                "key": "final_gate_approved",
+                "label": "Final gate is approved",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json"
+                },
+                "key": "integrity_manifest_present",
+                "label": "Integrity manifest is present and valid JSON",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "required_presence": {
+                    "checklist": true,
+                    "final_gate_manifest": true,
+                    "package_zip": true,
+                    "publish_manifest": true,
+                    "rc_manifest": true,
+                    "release_notes": true,
+                    "signoff_audit": true
+                  }
+                },
+                "key": "integrity_required_presence",
+                "label": "Integrity manifest confirms required evidence presence",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "failure_count": 0,
+                  "failures": []
+                },
+                "key": "integrity_file_checksums",
+                "label": "All integrity-manifest file SHA256 checks match",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip"
+                },
+                "key": "archive_zip_exists",
+                "label": "Archive ZIP exists",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz"
+                },
+                "key": "archive_tar_exists",
+                "label": "Archive TAR.GZ exists",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "actual": "75e508f4538feab17136c45cc49730bb5ece37bbbb603aacce08842cc10f0943",
+                  "expected": "75e508f4538feab17136c45cc49730bb5ece37bbbb603aacce08842cc10f0943"
+                },
+                "key": "archive_zip_checksum",
+                "label": "Archive ZIP checksum matches integrity seal when seal is available",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "actual": "c44e27cb93cbc84ca7e542353b60eb408f2a78998392565365168d203cad9b7d",
+                  "expected": "c44e27cb93cbc84ca7e542353b60eb408f2a78998392565365168d203cad9b7d"
+                },
+                "key": "archive_tar_checksum",
+                "label": "Archive TAR.GZ checksum matches integrity seal when seal is available",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "entry_count": 12
+                },
+                "key": "zip_required_files",
+                "label": "ZIP contains required final release files",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "entry_count": 12
+                },
+                "key": "tar_required_files",
+                "label": "TAR.GZ contains required final release files",
+                "ok": true
+              },
+              {
+                "detail": {
+                  "failures": [],
+                  "package_zip_count": 2
+                },
+                "key": "package_zips_present",
+                "label": "Package ZIPs referenced by publish manifest are present",
+                "ok": true
+              }
+            ],
+            "checks_passed": 16,
+            "checks_total": 16,
+            "download_tar_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.tar.gz",
+            "download_zip_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.zip",
+            "failures": [],
+            "generated_at": "2026-05-13T04:08:13.268268+00:00",
+            "recommended_next_action": "Final release verified.",
+            "release_name": "v9_9_9_bootstrap_release",
+            "release_path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release",
+            "status": "pass",
+            "version": "9.9.4"
+          },
+          "verification_status": "pass",
+          "version": "9.9.5"
+        },
+        "distribution_ready": true,
+        "final_gate": {
+          "actor": "v999-bootstrap-smoke",
+          "audit_event_count": 3,
+          "can_approve": true,
+          "gate_status": "approved",
+          "generated_at": "2026-05-13T04:08:13.264656+00:00",
+          "latest_audit_event": {
+            "action": "signoff_approve",
+            "actor": "v999-bootstrap-smoke",
+            "after": {
+              "actor": "v999-bootstrap-smoke",
+              "approved": true,
+              "blocked": false,
+              "decision": "approved",
+              "reason": "approve bootstrap smoke",
+              "updated_at": "2026-05-13T04:08:12.934667+00:00",
+              "version": "9.9.1"
+            },
+            "before": {
+              "actor": "v998-self-test-smoke",
+              "approved": true,
+              "blocked": false,
+              "decision": "approved",
+              "reason": "approve self-test smoke",
+              "updated_at": "2026-05-13T04:08:11.927003+00:00",
+              "version": "9.9.1"
+            },
+            "event_id": "ba0536b386c64434b8bd239d9a57731b",
+            "rc_status": "pass",
+            "reason": "approve bootstrap smoke",
+            "timestamp": "2026-05-13T04:08:12.934889+00:00",
+            "version": "9.9.1"
+          },
+          "rc_status": "pass",
+          "rc_summary": {
+            "missing_stage_keys": [],
+            "required_missing": 0,
+            "required_passed": 6,
+            "required_total": 6,
+            "stages": [
+              {
+                "artifact": "release/V9_7_PRODUCT_SMOKE_REPORT.md",
+                "artifact_download_url": "/product/artifacts/download/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+                "artifact_exists": true,
+                "artifact_view_url": "/product/artifacts/view/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+                "key": "product_smoke",
+                "label": "Product Smoke",
+                "required": true,
+                "status": "pass",
+                "target": "make product-smoke"
+              },
+              {
+                "artifact": "release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+                "artifact_download_url": "/product/artifacts/download/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+                "artifact_exists": true,
+                "artifact_view_url": "/product/artifacts/view/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+                "key": "artifact_review",
+                "label": "Artifact Review",
+                "required": true,
+                "status": "pass",
+                "target": "make product-artifact-review-smoke"
+              },
+              {
+                "artifact": "release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+                "artifact_download_url": "/product/artifacts/download/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+                "artifact_exists": true,
+                "artifact_view_url": "/product/artifacts/view/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+                "key": "artifact_review_audit",
+                "label": "Artifact Review Audit",
+                "required": true,
+                "status": "pass",
+                "target": "make product-artifact-review-audit-smoke"
+              },
+              {
+                "artifact": "release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+                "artifact_download_url": "/product/artifacts/download/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+                "artifact_exists": true,
+                "artifact_view_url": "/product/artifacts/view/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+                "key": "export_manifest",
+                "label": "Evidence Chain Export Manifest",
+                "required": true,
+                "status": "pass",
+                "target": "make product-artifact-export-manifest-smoke"
+              },
+              {
+                "artifact": "release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+                "artifact_download_url": "/product/artifacts/download/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+                "artifact_exists": true,
+                "artifact_view_url": "/product/artifacts/view/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+                "key": "release_package",
+                "label": "Release Package Builder",
+                "required": true,
+                "status": "pass",
+                "target": "make product-release-package-smoke"
+              },
+              {
+                "artifact": "release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+                "artifact_download_url": "/product/artifacts/download/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+                "artifact_exists": true,
+                "artifact_view_url": "/product/artifacts/view/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+                "key": "zip_export",
+                "label": "Release Package ZIP Export",
+                "required": true,
+                "status": "pass",
+                "target": "make product-release-package-zip-smoke"
+              }
+            ],
+            "status": "pass"
+          },
+          "recommended_next_action": "Release candidate approved. Ready for final release/tag.",
+          "signoff": {
+            "actor": "v999-bootstrap-smoke",
+            "approved": true,
+            "blocked": false,
+            "decision": "approved",
+            "reason": "approve bootstrap smoke",
+            "updated_at": "2026-05-13T04:08:12.934667+00:00",
+            "version": "9.9.1"
+          },
+          "status": "ok",
+          "version": "9.9.1"
+        },
+        "generated_at": "2026-05-13T04:08:13.268693+00:00",
+        "rc_manifest": {
+          "actor": "v999-bootstrap-smoke",
+          "built_package_count": 2,
+          "export_manifest_summary": {
+            "archived": 0,
+            "audit_events": 0,
+            "important": 0,
+            "reviewed": 0
+          },
+          "generated_at": "2026-05-13T04:08:13.254748+00:00",
+          "package_preview_count": 0,
+          "packages": [
+            {
+              "copied_artifact_count": 1,
+              "generated_at": null,
+              "index_path": "storage/product_packages/v9_9_8_self_test_package/PACKAGE_INDEX.md",
+              "manifest_path": "storage/product_packages/v9_9_8_self_test_package/PACKAGE_MANIFEST.json",
+              "metadata_file_count": 2,
+              "modified_at": "2026-05-13T04:08:11.943001+00:00",
+              "package_name": "v9_9_8_self_test_package",
+              "package_path": "storage/product_packages/v9_9_8_self_test_package",
+              "selected_count": 1,
+              "zip_download_url": "/product/release-package/download/v9_9_8_self_test_package",
+              "zip_entries": [
+                "PACKAGE_MANIFEST.json",
+                "PACKAGE_INDEX.md"
+              ],
+              "zip_exists": true,
+              "zip_path": "storage/product_packages/v9_9_8_self_test_package.zip",
+              "zip_size_bytes": 258
+            },
+            {
+              "copied_artifact_count": 1,
+              "generated_at": null,
+              "index_path": "storage/product_packages/v9_9_9_bootstrap_package/PACKAGE_INDEX.md",
+              "manifest_path": "storage/product_packages/v9_9_9_bootstrap_package/PACKAGE_MANIFEST.json",
+              "metadata_file_count": 2,
+              "modified_at": "2026-05-13T04:08:10.683230+00:00",
+              "package_name": "v9_9_9_bootstrap_package",
+              "package_path": "storage/product_packages/v9_9_9_bootstrap_package",
+              "selected_count": 1,
+              "zip_download_url": "/product/release-package/download/v9_9_9_bootstrap_package",
+              "zip_entries": [
+                "PACKAGE_MANIFEST.json",
+                "PACKAGE_INDEX.md"
+              ],
+              "zip_exists": true,
+              "zip_path": "storage/product_packages/v9_9_9_bootstrap_package.zip",
+              "zip_size_bytes": 258
+            }
+          ],
+          "release_candidate": {
+            "base_line": "v9.8.0-v9.8.9",
+            "name": "SOCMINT Workbench v9.9.0 Release Candidate",
+            "recommended_next_action": "Cut v9.9.0 release candidate tag"
+          },
+          "status": "pass",
+          "summary": {
+            "missing_stage_keys": [],
+            "required_missing": 0,
+            "required_passed": 6,
+            "required_total": 6,
+            "stages": [
+              {
+                "artifact": "release/V9_7_PRODUCT_SMOKE_REPORT.md",
+                "artifact_download_url": "/product/artifacts/download/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+                "artifact_exists": true,
+                "artifact_view_url": "/product/artifacts/view/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+                "key": "product_smoke",
+                "label": "Product Smoke",
+                "required": true,
+                "status": "pass",
+                "target": "make product-smoke"
+              },
+              {
+                "artifact": "release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+                "artifact_download_url": "/product/artifacts/download/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+                "artifact_exists": true,
+                "artifact_view_url": "/product/artifacts/view/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+                "key": "artifact_review",
+                "label": "Artifact Review",
+                "required": true,
+                "status": "pass",
+                "target": "make product-artifact-review-smoke"
+              },
+              {
+                "artifact": "release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+                "artifact_download_url": "/product/artifacts/download/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+                "artifact_exists": true,
+                "artifact_view_url": "/product/artifacts/view/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+                "key": "artifact_review_audit",
+                "label": "Artifact Review Audit",
+                "required": true,
+                "status": "pass",
+                "target": "make product-artifact-review-audit-smoke"
+              },
+              {
+                "artifact": "release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+                "artifact_download_url": "/product/artifacts/download/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+                "artifact_exists": true,
+                "artifact_view_url": "/product/artifacts/view/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+                "key": "export_manifest",
+                "label": "Evidence Chain Export Manifest",
+                "required": true,
+                "status": "pass",
+                "target": "make product-artifact-export-manifest-smoke"
+              },
+              {
+                "artifact": "release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+                "artifact_download_url": "/product/artifacts/download/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+                "artifact_exists": true,
+                "artifact_view_url": "/product/artifacts/view/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+                "key": "release_package",
+                "label": "Release Package Builder",
+                "required": true,
+                "status": "pass",
+                "target": "make product-release-package-smoke"
+              },
+              {
+                "artifact": "release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+                "artifact_download_url": "/product/artifacts/download/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+                "artifact_exists": true,
+                "artifact_view_url": "/product/artifacts/view/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+                "key": "zip_export",
+                "label": "Release Package ZIP Export",
+                "required": true,
+                "status": "pass",
+                "target": "make product-release-package-zip-smoke"
+              }
+            ],
+            "status": "pass"
+          },
+          "version": "9.9.0"
+        },
+        "recommended_next_action": "Final product release is distribution-ready.",
+        "release_name": "v9_9_9_bootstrap_release",
+        "status": "ready",
+        "verification": {
+          "archive_tar_path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz",
+          "archive_zip_path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip",
+          "artifacts_written": {
+            "json": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json",
+            "markdown": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.md"
+          },
+          "checks": [
+            {
+              "detail": {
+                "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/RELEASE_NOTES.md"
+              },
+              "key": "release_notes",
+              "label": "Required file exists: RELEASE_NOTES.md",
+              "ok": true
+            },
+            {
+              "detail": {
+                "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/FINAL_RELEASE_CHECKLIST.json"
+              },
+              "key": "checklist",
+              "label": "Required file exists: FINAL_RELEASE_CHECKLIST.json",
+              "ok": true
+            },
+            {
+              "detail": {
+                "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/PUBLISH_MANIFEST.json"
+              },
+              "key": "publish_manifest",
+              "label": "Required file exists: PUBLISH_MANIFEST.json",
+              "ok": true
+            },
+            {
+              "detail": {
+                "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json"
+              },
+              "key": "integrity_manifest",
+              "label": "Required file exists: INTEGRITY_MANIFEST.json",
+              "ok": true
+            },
+            {
+              "detail": {
+                "status": "published"
+              },
+              "key": "publish_manifest_published",
+              "label": "Publish manifest status is published",
+              "ok": true
+            },
+            {
+              "detail": {
+                "approved": true,
+                "gate_status": "approved"
+              },
+              "key": "final_gate_approved",
+              "label": "Final gate is approved",
+              "ok": true
+            },
+            {
+              "detail": {
+                "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json"
+              },
+              "key": "integrity_manifest_present",
+              "label": "Integrity manifest is present and valid JSON",
+              "ok": true
+            },
+            {
+              "detail": {
+                "required_presence": {
+                  "checklist": true,
+                  "final_gate_manifest": true,
+                  "package_zip": true,
+                  "publish_manifest": true,
+                  "rc_manifest": true,
+                  "release_notes": true,
+                  "signoff_audit": true
+                }
+              },
+              "key": "integrity_required_presence",
+              "label": "Integrity manifest confirms required evidence presence",
+              "ok": true
+            },
+            {
+              "detail": {
+                "failure_count": 0,
+                "failures": []
+              },
+              "key": "integrity_file_checksums",
+              "label": "All integrity-manifest file SHA256 checks match",
+              "ok": true
+            },
+            {
+              "detail": {
+                "path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip"
+              },
+              "key": "archive_zip_exists",
+              "label": "Archive ZIP exists",
+              "ok": true
+            },
+            {
+              "detail": {
+                "path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz"
+              },
+              "key": "archive_tar_exists",
+              "label": "Archive TAR.GZ exists",
+              "ok": true
+            },
+            {
+              "detail": {
+                "actual": "75e508f4538feab17136c45cc49730bb5ece37bbbb603aacce08842cc10f0943",
+                "expected": "75e508f4538feab17136c45cc49730bb5ece37bbbb603aacce08842cc10f0943"
+              },
+              "key": "archive_zip_checksum",
+              "label": "Archive ZIP checksum matches integrity seal when seal is available",
+              "ok": true
+            },
+            {
+              "detail": {
+                "actual": "c44e27cb93cbc84ca7e542353b60eb408f2a78998392565365168d203cad9b7d",
+                "expected": "c44e27cb93cbc84ca7e542353b60eb408f2a78998392565365168d203cad9b7d"
+              },
+              "key": "archive_tar_checksum",
+              "label": "Archive TAR.GZ checksum matches integrity seal when seal is available",
+              "ok": true
+            },
+            {
+              "detail": {
+                "entry_count": 12
+              },
+              "key": "zip_required_files",
+              "label": "ZIP contains required final release files",
+              "ok": true
+            },
+            {
+              "detail": {
+                "entry_count": 12
+              },
+              "key": "tar_required_files",
+              "label": "TAR.GZ contains required final release files",
+              "ok": true
+            },
+            {
+              "detail": {
+                "failures": [],
+                "package_zip_count": 2
+              },
+              "key": "package_zips_present",
+              "label": "Package ZIPs referenced by publish manifest are present",
+              "ok": true
+            }
+          ],
+          "checks_passed": 16,
+          "checks_total": 16,
+          "download_tar_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.tar.gz",
+          "download_zip_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.zip",
+          "failures": [],
+          "generated_at": "2026-05-13T04:08:13.266417+00:00",
+          "recommended_next_action": "Final release verified.",
+          "release_name": "v9_9_9_bootstrap_release",
+          "release_path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release",
+          "status": "pass",
+          "version": "9.9.4"
+        },
+        "version": "9.9.6",
+        "version_freeze": {
+          "distribution_ready": true,
+          "final_version": "v9.9.6",
+          "frozen_at": "2026-05-13T04:08:13.268691+00:00",
+          "frozen_by": "v999-bootstrap-smoke",
+          "product": "SOCMINT Workbench",
+          "release_line": "v9.9.x final product release line",
+          "release_name": "v9_9_9_bootstrap_release",
+          "source_versions": {
+            "archive_integrity": "v9.9.3",
+            "distribution_readiness": "v9.9.5",
+            "final_dashboard": "v9.9.6",
+            "final_gate": "v9.9.1",
+            "final_release_publisher": "v9.9.2",
+            "release_candidate": "v9.9.0",
+            "verification": "v9.9.4"
+          }
+        }
+      },
+      "final_dashboard_status": "ready",
+      "generated_at": "2026-05-13T04:08:13.269154+00:00",
+      "missing": [],
+      "recommended_next_action": "Generate operator handoff pack.",
+      "release_name": "v9_9_9_bootstrap_release",
+      "required_present": 16,
+      "required_total": 16,
+      "sources": [
+        {
+          "exists": true,
+          "key": "release_candidate_manifest_json",
+          "label": "Release Candidate Manifest JSON",
+          "path": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+          "sha256": "1ae834662d47176c730c2e0bf99afd878e9420b46175b59882a3e580a3cb2897",
+          "size_bytes": 5478,
+          "version": "v9.9.0"
+        },
+        {
+          "exists": true,
+          "key": "release_candidate_manifest_md",
+          "label": "Release Candidate Manifest MD",
+          "path": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.md",
+          "sha256": "d628aa3167f28bb29ee95ce1dce5dff7613f2c51c53014e5b1c2c1bd0a179224",
+          "size_bytes": 1327,
+          "version": "v9.9.0"
+        },
+        {
+          "exists": true,
+          "key": "final_gate_manifest_json",
+          "label": "Final Gate Manifest JSON",
+          "path": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+          "sha256": "28a749e385615c1fa0ca1adb9db66043ae9df46a0a8ef08daf3de067c4fbcf8d",
+          "size_bytes": 4730,
+          "version": "v9.9.1"
+        },
+        {
+          "exists": true,
+          "key": "final_gate_manifest_md",
+          "label": "Final Gate Manifest MD",
+          "path": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.md",
+          "sha256": "22e4ce15a26e3cca40ab3f3d44b985fb63eaf6790691bc71da8b7da215f7bd90",
+          "size_bytes": 406,
+          "version": "v9.9.1"
+        },
+        {
+          "exists": true,
+          "key": "final_release_notes",
+          "label": "Final Release Notes",
+          "path": "release/V9_9_2_FINAL_RELEASE_NOTES.md",
+          "sha256": "1c0bd3769876d71d3aaeff0c9835e918ce8b1462a2b4986b8cab15bc81cb156a",
+          "size_bytes": 1268,
+          "version": "v9.9.2"
+        },
+        {
+          "exists": true,
+          "key": "final_release_publish_manifest",
+          "label": "Final Release Publish Manifest",
+          "path": "release/V9_9_2_FINAL_RELEASE_PUBLISH_MANIFEST.json",
+          "sha256": "9411c180a45f3d8dc615b4508590a2b522cdeb8e9bba35c14f90ca7d636deaad",
+          "size_bytes": 8220,
+          "version": "v9.9.2"
+        },
+        {
+          "exists": true,
+          "key": "archive_seal_json",
+          "label": "Archive Integrity Seal JSON",
+          "path": "release/V9_9_3_FINAL_RELEASE_ARCHIVE_SEAL.json",
+          "sha256": "829af97ca6b0f648a2d06dc9bc8379fb589f191683438aa28015bf9aa3298cf1",
+          "size_bytes": 5105,
+          "version": "v9.9.3"
+        },
+        {
+          "exists": true,
+          "key": "archive_seal_md",
+          "label": "Archive Integrity Seal MD",
+          "path": "release/V9_9_3_FINAL_RELEASE_ARCHIVE_SEAL.md",
+          "sha256": "bad0b7ea2bb650ac32927c116ebec6738bbd760bc8e00c069217fa707cb3d3b1",
+          "size_bytes": 568,
+          "version": "v9.9.3"
+        },
+        {
+          "exists": true,
+          "key": "integrity_manifest",
+          "label": "Final Release Integrity Manifest",
+          "path": "release/V9_9_3_FINAL_RELEASE_INTEGRITY_MANIFEST.json",
+          "sha256": "83f0258139f4598cf8b117062fd3df4590405a6afa0d9b86a21ee8e0dc523e70",
+          "size_bytes": 2546,
+          "version": "v9.9.3"
+        },
+        {
+          "exists": true,
+          "key": "verification_report_json",
+          "label": "Final Verification Report JSON",
+          "path": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json",
+          "sha256": "b0220713e3d614595856e5cc351cb3d815bf390a5196231e0c01298014e1c0c0",
+          "size_bytes": 4838,
+          "version": "v9.9.4"
+        },
+        {
+          "exists": true,
+          "key": "verification_report_md",
+          "label": "Final Verification Report MD",
+          "path": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.md",
+          "sha256": "715bfb1a1404a5f64f3a8f7cb8ee340cae0faca03fc1e56e6c18b5f4bc090883",
+          "size_bytes": 1708,
+          "version": "v9.9.4"
+        },
+        {
+          "exists": true,
+          "key": "distribution_report_json",
+          "label": "Distribution Readiness Report JSON",
+          "path": "release/V9_9_5_DISTRIBUTION_READINESS_REPORT.json",
+          "sha256": "71a03f55290334668cdb28499a44ece4d51433f9d50592bfb4b2ceed2234bbc9",
+          "size_bytes": 7215,
+          "version": "v9.9.5"
+        },
+        {
+          "exists": true,
+          "key": "distribution_report_md",
+          "label": "Distribution Readiness Report MD",
+          "path": "release/V9_9_5_DISTRIBUTION_READINESS_REPORT.md",
+          "sha256": "4c037e651f195619f2a9f82a77b167286e15d8005bbf942d7f4fec644b689c5b",
+          "size_bytes": 515,
+          "version": "v9.9.5"
+        },
+        {
+          "exists": true,
+          "key": "final_dashboard_index_json",
+          "label": "Final Dashboard Index JSON",
+          "path": "release/V9_9_6_FINAL_PRODUCT_RELEASE_INDEX.json",
+          "sha256": "df9cebb2a77eaae8f23d849e9caa09c3a57f5da8440e3805da47525af86d38de",
+          "size_bytes": 27891,
+          "version": "v9.9.6"
+        },
+        {
+          "exists": true,
+          "key": "final_dashboard_index_md",
+          "label": "Final Dashboard Index MD",
+          "path": "release/V9_9_6_FINAL_PRODUCT_RELEASE_INDEX.md",
+          "sha256": "62e62862b1c7341bcfeabb45bab24d06aeb1790744d879dcb003aa375651f3f1",
+          "size_bytes": 535,
+          "version": "v9.9.6"
+        },
+        {
+          "exists": true,
+          "key": "version_freeze",
+          "label": "Version Freeze",
+          "path": "release/V9_9_6_FINAL_PRODUCT_VERSION_FREEZE.json",
+          "sha256": "d194a884f5781e84dfc808fcea75701068cdd0d94634144103cd23d87b6d30e8",
+          "size_bytes": 555,
+          "version": "v9.9.6"
+        }
+      ],
+      "status": "ready",
+      "version": "9.9.7"
+    },
+    "maintenance_state": {
+      "actor": "v999-bootstrap-smoke",
+      "decision": "safe_to_start_v10",
+      "reason": "safe bootstrap smoke",
+      "release_name": "v9_9_9_bootstrap_release",
+      "safe_to_start_v10": true,
+      "updated_at": "2026-05-13T04:08:13.039103+00:00",
+      "version": "9.9.8"
+    },
+    "rc_manifest": {
+      "actor": "v999-bootstrap-smoke",
+      "built_package_count": 2,
+      "export_manifest_summary": {
+        "archived": 0,
+        "audit_events": 0,
+        "important": 0,
+        "reviewed": 0
+      },
+      "generated_at": "2026-05-13T04:08:13.233216+00:00",
+      "package_preview_count": 0,
+      "packages": [
+        {
+          "copied_artifact_count": 1,
+          "generated_at": null,
+          "index_path": "storage/product_packages/v9_9_8_self_test_package/PACKAGE_INDEX.md",
+          "manifest_path": "storage/product_packages/v9_9_8_self_test_package/PACKAGE_MANIFEST.json",
+          "metadata_file_count": 2,
+          "modified_at": "2026-05-13T04:08:11.943001+00:00",
+          "package_name": "v9_9_8_self_test_package",
+          "package_path": "storage/product_packages/v9_9_8_self_test_package",
+          "selected_count": 1,
+          "zip_download_url": "/product/release-package/download/v9_9_8_self_test_package",
+          "zip_entries": [
+            "PACKAGE_MANIFEST.json",
+            "PACKAGE_INDEX.md"
+          ],
+          "zip_exists": true,
+          "zip_path": "storage/product_packages/v9_9_8_self_test_package.zip",
+          "zip_size_bytes": 258
+        },
+        {
+          "copied_artifact_count": 1,
+          "generated_at": null,
+          "index_path": "storage/product_packages/v9_9_9_bootstrap_package/PACKAGE_INDEX.md",
+          "manifest_path": "storage/product_packages/v9_9_9_bootstrap_package/PACKAGE_MANIFEST.json",
+          "metadata_file_count": 2,
+          "modified_at": "2026-05-13T04:08:10.683230+00:00",
+          "package_name": "v9_9_9_bootstrap_package",
+          "package_path": "storage/product_packages/v9_9_9_bootstrap_package",
+          "selected_count": 1,
+          "zip_download_url": "/product/release-package/download/v9_9_9_bootstrap_package",
+          "zip_entries": [
+            "PACKAGE_MANIFEST.json",
+            "PACKAGE_INDEX.md"
+          ],
+          "zip_exists": true,
+          "zip_path": "storage/product_packages/v9_9_9_bootstrap_package.zip",
+          "zip_size_bytes": 258
+        }
+      ],
+      "release_candidate": {
+        "base_line": "v9.8.0-v9.8.9",
+        "name": "SOCMINT Workbench v9.9.0 Release Candidate",
+        "recommended_next_action": "Cut v9.9.0 release candidate tag"
+      },
+      "status": "pass",
+      "summary": {
+        "missing_stage_keys": [],
+        "required_missing": 0,
+        "required_passed": 6,
+        "required_total": 6,
+        "stages": [
+          {
+            "artifact": "release/V9_7_PRODUCT_SMOKE_REPORT.md",
+            "artifact_download_url": "/product/artifacts/download/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+            "artifact_exists": true,
+            "artifact_view_url": "/product/artifacts/view/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+            "key": "product_smoke",
+            "label": "Product Smoke",
+            "required": true,
+            "status": "pass",
+            "target": "make product-smoke"
+          },
+          {
+            "artifact": "release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+            "artifact_download_url": "/product/artifacts/download/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+            "artifact_exists": true,
+            "artifact_view_url": "/product/artifacts/view/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+            "key": "artifact_review",
+            "label": "Artifact Review",
+            "required": true,
+            "status": "pass",
+            "target": "make product-artifact-review-smoke"
+          },
+          {
+            "artifact": "release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+            "artifact_download_url": "/product/artifacts/download/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+            "artifact_exists": true,
+            "artifact_view_url": "/product/artifacts/view/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+            "key": "artifact_review_audit",
+            "label": "Artifact Review Audit",
+            "required": true,
+            "status": "pass",
+            "target": "make product-artifact-review-audit-smoke"
+          },
+          {
+            "artifact": "release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+            "artifact_download_url": "/product/artifacts/download/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+            "artifact_exists": true,
+            "artifact_view_url": "/product/artifacts/view/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+            "key": "export_manifest",
+            "label": "Evidence Chain Export Manifest",
+            "required": true,
+            "status": "pass",
+            "target": "make product-artifact-export-manifest-smoke"
+          },
+          {
+            "artifact": "release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+            "artifact_download_url": "/product/artifacts/download/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+            "artifact_exists": true,
+            "artifact_view_url": "/product/artifacts/view/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+            "key": "release_package",
+            "label": "Release Package Builder",
+            "required": true,
+            "status": "pass",
+            "target": "make product-release-package-smoke"
+          },
+          {
+            "artifact": "release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+            "artifact_download_url": "/product/artifacts/download/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+            "artifact_exists": true,
+            "artifact_view_url": "/product/artifacts/view/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+            "key": "zip_export",
+            "label": "Release Package ZIP Export",
+            "required": true,
+            "status": "pass",
+            "target": "make product-release-package-zip-smoke"
+          }
+        ],
+        "status": "pass"
+      },
+      "version": "9.9.0"
+    },
+    "recommended_next_action": "Safe to start v10 maintenance branch after operator confirmation.",
+    "release_name": "v9_9_9_bootstrap_release",
+    "safe_to_start_v10_allowed": true,
+    "status": "pass",
+    "verification": {
+      "archive_tar_path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz",
+      "archive_zip_path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip",
+      "artifacts_written": {
+        "json": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json",
+        "markdown": "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.md"
+      },
+      "checks": [
+        {
+          "detail": {
+            "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/RELEASE_NOTES.md"
+          },
+          "key": "release_notes",
+          "label": "Required file exists: RELEASE_NOTES.md",
+          "ok": true
+        },
+        {
+          "detail": {
+            "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/FINAL_RELEASE_CHECKLIST.json"
+          },
+          "key": "checklist",
+          "label": "Required file exists: FINAL_RELEASE_CHECKLIST.json",
+          "ok": true
+        },
+        {
+          "detail": {
+            "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/PUBLISH_MANIFEST.json"
+          },
+          "key": "publish_manifest",
+          "label": "Required file exists: PUBLISH_MANIFEST.json",
+          "ok": true
+        },
+        {
+          "detail": {
+            "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json"
+          },
+          "key": "integrity_manifest",
+          "label": "Required file exists: INTEGRITY_MANIFEST.json",
+          "ok": true
+        },
+        {
+          "detail": {
+            "status": "published"
+          },
+          "key": "publish_manifest_published",
+          "label": "Publish manifest status is published",
+          "ok": true
+        },
+        {
+          "detail": {
+            "approved": true,
+            "gate_status": "approved"
+          },
+          "key": "final_gate_approved",
+          "label": "Final gate is approved",
+          "ok": true
+        },
+        {
+          "detail": {
+            "path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release/INTEGRITY_MANIFEST.json"
+          },
+          "key": "integrity_manifest_present",
+          "label": "Integrity manifest is present and valid JSON",
+          "ok": true
+        },
+        {
+          "detail": {
+            "required_presence": {
+              "checklist": true,
+              "final_gate_manifest": true,
+              "package_zip": true,
+              "publish_manifest": true,
+              "rc_manifest": true,
+              "release_notes": true,
+              "signoff_audit": true
+            }
+          },
+          "key": "integrity_required_presence",
+          "label": "Integrity manifest confirms required evidence presence",
+          "ok": true
+        },
+        {
+          "detail": {
+            "failure_count": 0,
+            "failures": []
+          },
+          "key": "integrity_file_checksums",
+          "label": "All integrity-manifest file SHA256 checks match",
+          "ok": true
+        },
+        {
+          "detail": {
+            "path": "storage/final_release_archives/v9_9_9_bootstrap_release.zip"
+          },
+          "key": "archive_zip_exists",
+          "label": "Archive ZIP exists",
+          "ok": true
+        },
+        {
+          "detail": {
+            "path": "storage/final_release_archives/v9_9_9_bootstrap_release.tar.gz"
+          },
+          "key": "archive_tar_exists",
+          "label": "Archive TAR.GZ exists",
+          "ok": true
+        },
+        {
+          "detail": {
+            "actual": "75e508f4538feab17136c45cc49730bb5ece37bbbb603aacce08842cc10f0943",
+            "expected": "75e508f4538feab17136c45cc49730bb5ece37bbbb603aacce08842cc10f0943"
+          },
+          "key": "archive_zip_checksum",
+          "label": "Archive ZIP checksum matches integrity seal when seal is available",
+          "ok": true
+        },
+        {
+          "detail": {
+            "actual": "c44e27cb93cbc84ca7e542353b60eb408f2a78998392565365168d203cad9b7d",
+            "expected": "c44e27cb93cbc84ca7e542353b60eb408f2a78998392565365168d203cad9b7d"
+          },
+          "key": "archive_tar_checksum",
+          "label": "Archive TAR.GZ checksum matches integrity seal when seal is available",
+          "ok": true
+        },
+        {
+          "detail": {
+            "entry_count": 12
+          },
+          "key": "zip_required_files",
+          "label": "ZIP contains required final release files",
+          "ok": true
+        },
+        {
+          "detail": {
+            "entry_count": 12
+          },
+          "key": "tar_required_files",
+          "label": "TAR.GZ contains required final release files",
+          "ok": true
+        },
+        {
+          "detail": {
+            "failures": [],
+            "package_zip_count": 2
+          },
+          "key": "package_zips_present",
+          "label": "Package ZIPs referenced by publish manifest are present",
+          "ok": true
+        }
+      ],
+      "checks_passed": 16,
+      "checks_total": 16,
+      "download_tar_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.tar.gz",
+      "download_zip_url": "/product/final-release/archive/download/v9_9_9_bootstrap_release.zip",
+      "failures": [],
+      "generated_at": "2026-05-13T04:08:13.247487+00:00",
+      "recommended_next_action": "Final release verified.",
+      "release_name": "v9_9_9_bootstrap_release",
+      "release_path": "/home/kali/SOCMINT-PROJECT/storage/final_releases/v9_9_9_bootstrap_release",
+      "status": "pass",
+      "version": "9.9.4"
+    },
+    "version": "9.9.8"
+  },
+  "self_test_status": "pass",
+  "status": "closed",
+  "v10_bootstrap_ready": true,
+  "v9_closed": true,
+  "version": "9.9.9"
+}

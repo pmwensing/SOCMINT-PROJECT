@@ -6488,3 +6488,456 @@ def product_final_self_test_maintenance():
         flash("Post-release maintenance gate decision recorded.", "success")
     return redirect(url_for("dashboard.product_final_self_test_view"))
 # ---- end v9.9.8 final release self-test maintenance gate ----
+
+
+
+# ---- v9.9.9 Final v9 Line Closure + v10 Bootstrap Gate ----
+def _v999_bootstrap_state_path():
+    from pathlib import Path
+
+    path = Path("storage/product_qa/v10_bootstrap_state.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _v999_bootstrap_audit_path():
+    from pathlib import Path
+
+    path = Path("storage/product_qa/v10_bootstrap_audit.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _v999_load_bootstrap_state():
+    path = _v999_bootstrap_state_path()
+    if not path.exists():
+        return {
+            "version": "9.9.9",
+            "v9_closed": False,
+            "v10_bootstrap_ready": False,
+            "decision": "pending",
+            "actor": None,
+            "reason": "",
+            "release_name": None,
+            "updated_at": None,
+            "closure_manifest_sha256": None,
+            "bootstrap_manifest_sha256": None,
+        }
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    data.setdefault("version", "9.9.9")
+    data.setdefault("v9_closed", False)
+    data.setdefault("v10_bootstrap_ready", False)
+    data.setdefault("decision", "pending")
+    data.setdefault("actor", None)
+    data.setdefault("reason", "")
+    data.setdefault("release_name", None)
+    data.setdefault("updated_at", None)
+    data.setdefault("closure_manifest_sha256", None)
+    data.setdefault("bootstrap_manifest_sha256", None)
+    return data
+
+
+def _v999_save_bootstrap_state(state):
+    state["version"] = "9.9.9"
+    _v999_bootstrap_state_path().write_text(json.dumps(state, indent=2, sort_keys=True))
+    return state
+
+
+def _v999_load_bootstrap_audit():
+    path = _v999_bootstrap_audit_path()
+    if not path.exists():
+        return {"version": "9.9.9", "events": []}
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    data.setdefault("version", "9.9.9")
+    data.setdefault("events", [])
+    return data
+
+
+def _v999_save_bootstrap_audit(data):
+    data["version"] = "9.9.9"
+    _v999_bootstrap_audit_path().write_text(json.dumps(data, indent=2, sort_keys=True))
+    return data
+
+
+def _v999_append_bootstrap_audit(action, actor, before, after, safe_to_start_v10, reason=""):
+    from datetime import datetime, timezone
+    from uuid import uuid4
+
+    data = _v999_load_bootstrap_audit()
+    event = {
+        "event_id": uuid4().hex,
+        "version": "9.9.9",
+        "action": action,
+        "actor": actor,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "reason": reason,
+        "safe_to_start_v10": bool(safe_to_start_v10),
+        "before": before,
+        "after": after,
+    }
+    data.setdefault("events", []).append(event)
+    _v999_save_bootstrap_audit(data)
+    return event
+
+
+def _v999_required_closure_artifacts():
+    return [
+        "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+        "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+        "release/V9_9_2_FINAL_RELEASE_PUBLISH_MANIFEST.json",
+        "release/V9_9_3_FINAL_RELEASE_ARCHIVE_SEAL.json",
+        "release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json",
+        "release/V9_9_5_DISTRIBUTION_READINESS_REPORT.json",
+        "release/V9_9_6_FINAL_PRODUCT_RELEASE_INDEX.json",
+        "release/V9_9_6_FINAL_PRODUCT_VERSION_FREEZE.json",
+        "release/V9_9_7_OPERATOR_HANDOFF_MANIFEST.json",
+        "release/V9_9_8_POST_RELEASE_MAINTENANCE_REPORT.json",
+    ]
+
+
+def _v999_closure_payload(actor=None, release_name=None):
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    self_test = _v998_final_self_test_payload(actor=actor, release_name=release_name)
+    maintenance = _v998_load_maintenance_state()
+    state = _v999_load_bootstrap_state()
+
+    artifacts = []
+    missing = []
+    for rel in _v999_required_closure_artifacts():
+        path = Path(rel)
+        exists = path.exists() and path.is_file()
+        item = {
+            "path": rel,
+            "exists": exists,
+            "size_bytes": path.stat().st_size if exists else 0,
+            "sha256": _v993_sha256_file(path) if exists else None,
+        }
+        artifacts.append(item)
+        if not exists:
+            missing.append(rel)
+
+    safe_to_start_v10 = (
+        self_test.get("status") == "pass"
+        and self_test.get("safe_to_start_v10_allowed") is True
+        and maintenance.get("safe_to_start_v10") is True
+        and not missing
+    )
+
+    status = "closed" if safe_to_start_v10 and state.get("v9_closed") else ("ready" if safe_to_start_v10 else "blocked")
+
+    return {
+        "status": status,
+        "version": "9.9.9",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "actor": actor,
+        "release_name": self_test.get("release_name"),
+        "safe_to_start_v10": safe_to_start_v10,
+        "v9_closed": bool(state.get("v9_closed")),
+        "v10_bootstrap_ready": bool(state.get("v10_bootstrap_ready")),
+        "self_test_status": self_test.get("status"),
+        "maintenance_state": maintenance,
+        "bootstrap_state": state,
+        "required_total": len(artifacts),
+        "required_present": sum(1 for item in artifacts if item["exists"]),
+        "missing": missing,
+        "artifacts": artifacts,
+        "self_test": self_test,
+        "recommended_next_action": (
+            "Close v9.9.x and approve v10 bootstrap."
+            if safe_to_start_v10 and not state.get("v10_bootstrap_ready")
+            else "v9.9.x is closed and v10 bootstrap is ready."
+            if state.get("v10_bootstrap_ready")
+            else "Complete v9.9.8 safe-to-start-v10 gate before v10 bootstrap."
+        ),
+    }
+
+
+def _v999_write_closure_and_bootstrap_manifests(actor=None, release_name=None):
+    from pathlib import Path
+
+    payload = _v999_closure_payload(actor=actor, release_name=release_name)
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+
+    closure_json = release_dir / "V9_9_9_FINAL_V9_CLOSURE_MANIFEST.json"
+    closure_md = release_dir / "V9_9_9_FINAL_V9_CLOSURE_MANIFEST.md"
+    bootstrap_json = release_dir / "V9_9_9_V10_BOOTSTRAP_READINESS_MANIFEST.json"
+    bootstrap_md = release_dir / "V9_9_9_V10_BOOTSTRAP_READINESS_MANIFEST.md"
+
+    closure_json.write_text(json.dumps(payload, indent=2, sort_keys=True))
+
+    closure_rows = [
+        "# v9.9.9 Final v9 Line Closure Manifest",
+        "",
+        f"Generated: {payload['generated_at']}",
+        f"Status: **{payload['status']}**",
+        f"Release: `{payload.get('release_name')}`",
+        f"Safe to start v10: {payload.get('safe_to_start_v10')}",
+        f"v9 closed: {payload.get('v9_closed')}",
+        f"v10 bootstrap ready: {payload.get('v10_bootstrap_ready')}",
+        "",
+        f"Artifacts present: {payload.get('required_present')}/{payload.get('required_total')}",
+        "",
+        "## Missing",
+        "",
+        *([f"- `{x}`" for x in payload.get("missing", [])] or ["- None"]),
+        "",
+        "## Required Artifacts",
+        "",
+    ]
+    for item in payload.get("artifacts", []):
+        closure_rows.append(f"- {'PRESENT' if item['exists'] else 'MISSING'} `{item['path']}` sha256=`{item.get('sha256')}`")
+    closure_md.write_text("\n".join(closure_rows))
+
+    bootstrap = {
+        "status": "ready" if payload.get("v10_bootstrap_ready") else ("allowed" if payload.get("safe_to_start_v10") else "blocked"),
+        "version": "9.9.9",
+        "generated_at": payload["generated_at"],
+        "release_name": payload.get("release_name"),
+        "safe_to_start_v10": payload.get("safe_to_start_v10"),
+        "v9_closed": payload.get("v9_closed"),
+        "v10_bootstrap_ready": payload.get("v10_bootstrap_ready"),
+        "rules": {
+            "requires_v998_safe_to_start_v10": True,
+            "requires_all_v9_closure_artifacts": True,
+            "requires_operator_bootstrap_decision": True,
+        },
+        "recommended_next_action": payload.get("recommended_next_action"),
+    }
+    bootstrap_json.write_text(json.dumps(bootstrap, indent=2, sort_keys=True))
+    bootstrap_md.write_text(
+        "\n".join(
+            [
+                "# v9.9.9 v10 Bootstrap Readiness Manifest",
+                "",
+                f"Generated: {bootstrap['generated_at']}",
+                f"Status: **{bootstrap['status']}**",
+                f"Release: `{bootstrap.get('release_name')}`",
+                f"Safe to start v10: {bootstrap.get('safe_to_start_v10')}",
+                f"v9 closed: {bootstrap.get('v9_closed')}",
+                f"v10 bootstrap ready: {bootstrap.get('v10_bootstrap_ready')}",
+                "",
+                "## Recommended Next Action",
+                "",
+                bootstrap.get("recommended_next_action", ""),
+                "",
+            ]
+        )
+    )
+
+    payload["artifacts_written"] = {
+        "closure_json": closure_json.as_posix(),
+        "closure_markdown": closure_md.as_posix(),
+        "bootstrap_json": bootstrap_json.as_posix(),
+        "bootstrap_markdown": bootstrap_md.as_posix(),
+    }
+    return payload
+
+
+def _v999_apply_bootstrap_decision(decision, actor=None, release_name=None, reason=""):
+    from copy import deepcopy
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    payload = _v999_closure_payload(actor=actor, release_name=release_name)
+    before = deepcopy(_v999_load_bootstrap_state())
+    decision = str(decision or "").strip().lower()
+
+    if decision not in {"close_v9", "approve_v10_bootstrap", "block_v10_bootstrap", "reset"}:
+        abort(400)
+
+    if decision in {"close_v9", "approve_v10_bootstrap"} and not payload.get("safe_to_start_v10"):
+        after = deepcopy(before)
+        event = _v999_append_bootstrap_audit(
+            action=f"{decision}_denied",
+            actor=actor,
+            before=before,
+            after=after,
+            safe_to_start_v10=False,
+            reason=reason or "Denied because v9.9.8 safe-to-start-v10 gate is not true.",
+        )
+        return {
+            "status": "blocked",
+            "version": "9.9.9",
+            "decision": decision,
+            "reason": "v10 bootstrap requires v9.9.8 safe-to-start-v10 gate to be true.",
+            "audit_event": event,
+            "closure": payload,
+        }
+
+    closure_manifest = Path("release/V9_9_9_FINAL_V9_CLOSURE_MANIFEST.json")
+    bootstrap_manifest = Path("release/V9_9_9_V10_BOOTSTRAP_READINESS_MANIFEST.json")
+
+    if decision == "close_v9":
+        after = {
+            "version": "9.9.9",
+            "v9_closed": True,
+            "v10_bootstrap_ready": False,
+            "decision": "v9_closed",
+            "actor": actor,
+            "reason": reason or "v9.9.x line closed.",
+            "release_name": payload.get("release_name"),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "closure_manifest_sha256": _v993_sha256_file(closure_manifest) if closure_manifest.exists() else None,
+            "bootstrap_manifest_sha256": _v993_sha256_file(bootstrap_manifest) if bootstrap_manifest.exists() else None,
+        }
+    elif decision == "approve_v10_bootstrap":
+        after = {
+            "version": "9.9.9",
+            "v9_closed": True,
+            "v10_bootstrap_ready": True,
+            "decision": "v10_bootstrap_ready",
+            "actor": actor,
+            "reason": reason or "v9.9.x closed and v10 bootstrap approved.",
+            "release_name": payload.get("release_name"),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "closure_manifest_sha256": _v993_sha256_file(closure_manifest) if closure_manifest.exists() else before.get("closure_manifest_sha256"),
+            "bootstrap_manifest_sha256": _v993_sha256_file(bootstrap_manifest) if bootstrap_manifest.exists() else before.get("bootstrap_manifest_sha256"),
+        }
+    elif decision == "block_v10_bootstrap":
+        after = {
+            "version": "9.9.9",
+            "v9_closed": before.get("v9_closed", False),
+            "v10_bootstrap_ready": False,
+            "decision": "v10_bootstrap_blocked",
+            "actor": actor,
+            "reason": reason or "v10 bootstrap blocked by operator.",
+            "release_name": payload.get("release_name"),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "closure_manifest_sha256": before.get("closure_manifest_sha256"),
+            "bootstrap_manifest_sha256": before.get("bootstrap_manifest_sha256"),
+        }
+    else:
+        after = {
+            "version": "9.9.9",
+            "v9_closed": False,
+            "v10_bootstrap_ready": False,
+            "decision": "pending",
+            "actor": actor,
+            "reason": reason or "v10 bootstrap gate reset.",
+            "release_name": payload.get("release_name"),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "closure_manifest_sha256": None,
+            "bootstrap_manifest_sha256": None,
+        }
+
+    _v999_save_bootstrap_state(after)
+    event = _v999_append_bootstrap_audit(
+        action=f"bootstrap_{decision}",
+        actor=actor,
+        before=before,
+        after=after,
+        safe_to_start_v10=payload.get("safe_to_start_v10"),
+        reason=after.get("reason", ""),
+    )
+    manifests = _v999_write_closure_and_bootstrap_manifests(actor=actor, release_name=release_name)
+    return {
+        "status": "ok",
+        "version": "9.9.9",
+        "decision": decision,
+        "state": after,
+        "audit_event": event,
+        "closure": manifests,
+    }
+
+
+@dashboard_bp.route("/api/v1/product/final/v10-bootstrap")
+@login_required
+def api_v999_v10_bootstrap():
+    release_name = request.args.get("release_name")
+    return jsonify(_v999_closure_payload(actor=session.get("user"), release_name=release_name))
+
+
+@dashboard_bp.route("/api/v1/product/final/v10-bootstrap/write", methods=["POST"])
+@admin_required
+def api_v999_v10_bootstrap_write():
+    payload = request.get_json(silent=True) or request.form
+    result = _v999_write_closure_and_bootstrap_manifests(
+        actor=session.get("user"),
+        release_name=payload.get("release_name") or None,
+    )
+    audit("product_v9_closure_v10_bootstrap_write", details=result.get("artifacts_written"))
+    return jsonify(result)
+
+
+@dashboard_bp.route("/api/v1/product/final/v10-bootstrap/decision", methods=["POST"])
+@admin_required
+def api_v999_v10_bootstrap_decision():
+    payload = request.get_json(silent=True) or request.form
+    result = _v999_apply_bootstrap_decision(
+        decision=payload.get("decision"),
+        actor=session.get("user"),
+        release_name=payload.get("release_name") or None,
+        reason=payload.get("reason", ""),
+    )
+    audit("product_v10_bootstrap_decision", details={"decision": payload.get("decision"), "status": result.get("status")})
+    return jsonify(result)
+
+
+@dashboard_bp.route("/api/v1/product/final/v10-bootstrap/audit")
+@login_required
+def api_v999_v10_bootstrap_audit():
+    data = _v999_load_bootstrap_audit()
+    return jsonify(
+        {
+            "status": "ok",
+            "version": "9.9.9",
+            "count": len(data.get("events", [])),
+            "events": data.get("events", []),
+            "audit_path": str(_v999_bootstrap_audit_path()),
+        }
+    )
+
+
+@dashboard_bp.route("/product/final/v10-bootstrap")
+@login_required
+def product_v10_bootstrap_view():
+    release_name = request.args.get("release_name")
+    payload = _v999_closure_payload(actor=session.get("user"), release_name=release_name)
+    audit_data = _v999_load_bootstrap_audit()
+    return render_template(
+        "product_v10_bootstrap.html",
+        payload=payload,
+        audit_events=audit_data.get("events", []),
+    )
+
+
+@dashboard_bp.route("/product/final/v10-bootstrap/write", methods=["POST"])
+@admin_required
+def product_v10_bootstrap_write():
+    result = _v999_write_closure_and_bootstrap_manifests(
+        actor=session.get("user"),
+        release_name=request.form.get("release_name") or None,
+    )
+    audit("product_v9_closure_v10_bootstrap_write", details=result.get("artifacts_written"))
+    flash("v9 closure and v10 bootstrap manifests written.", "success")
+    return redirect(url_for("dashboard.product_v10_bootstrap_view"))
+
+
+@dashboard_bp.route("/product/final/v10-bootstrap/decision", methods=["POST"])
+@admin_required
+def product_v10_bootstrap_decision():
+    result = _v999_apply_bootstrap_decision(
+        decision=request.form.get("decision"),
+        actor=session.get("user"),
+        release_name=request.form.get("release_name") or None,
+        reason=request.form.get("reason", ""),
+    )
+    if result.get("status") == "blocked":
+        flash("v10 bootstrap blocked until v9.9.8 safe-to-start-v10 is true.", "error")
+    else:
+        flash("v10 bootstrap decision recorded.", "success")
+    return redirect(url_for("dashboard.product_v10_bootstrap_view"))
+# ---- end v9.9.9 final v9 line closure v10 bootstrap gate ----

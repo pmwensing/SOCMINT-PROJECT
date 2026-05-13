@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-05-13T04:08:13.269646+00:00",
+  "recommended_next_action": "v9.9.x is closed and v10 bootstrap is ready.",
+  "release_name": "v9_9_9_bootstrap_release",
+  "rules": {
+    "requires_all_v9_closure_artifacts": true,
+    "requires_operator_bootstrap_decision": true,
+    "requires_v998_safe_to_start_v10": true
+  },
+  "safe_to_start_v10": true,
+  "status": "ready",
+  "v10_bootstrap_ready": true,
+  "v9_closed": true,
+  "version": "9.9.9"
+}
