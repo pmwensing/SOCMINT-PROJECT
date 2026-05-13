@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .dossier_export_audit import audit_event
 from .dossier_export_store import DEFAULT_EXPORT_ROOT
 from .dossier_export_store import DOSSIER_EXPORT_STORE_SCHEMA
 from .dossier_export_store import export_directory
@@ -77,41 +78,108 @@ def find_export_entry(case_id: str, subject_id: str, root: str | Path = DEFAULT_
     }
 
 
+def _audit_download(
+    result: dict[str, Any],
+    case_id: str,
+    subject_id: str,
+    filename: str,
+    root: str | Path,
+    actor: str | None,
+    audit: bool,
+) -> dict[str, Any]:
+    if not audit:
+        return result
+    action = {
+        "ready": "download_resolved",
+        "missing": "download_missing",
+        "blocked": "download_blocked",
+    }.get(str(result.get("status")), "download_blocked")
+    result["audit_event"] = audit_event(
+        action,
+        case_id=case_id,
+        subject_id=subject_id,
+        actor=actor,
+        detail={
+            "filename": filename,
+            "resolved_filename": result.get("filename"),
+            "status": result.get("status"),
+            "reason": result.get("reason"),
+            "path": result.get("path"),
+        },
+        root=root,
+    )
+    return result
+
+
 def resolve_export_download_path(
     case_id: str,
     subject_id: str,
     filename: str,
     root: str | Path = DEFAULT_EXPORT_ROOT,
+    actor: str | None = None,
+    audit: bool = False,
 ) -> dict[str, Any]:
     safe_filename = safe_slug(filename, "manifest.json")
     if safe_filename not in ALLOWED_DOWNLOAD_FILES:
-        return {
-            "schema": DOSSIER_EXPORT_INDEX_SCHEMA,
-            "status": "blocked",
-            "reason": "unsupported_filename",
-            "filename": filename,
-        }
+        return _audit_download(
+            {
+                "schema": DOSSIER_EXPORT_INDEX_SCHEMA,
+                "status": "blocked",
+                "reason": "unsupported_filename",
+                "filename": filename,
+            },
+            case_id,
+            subject_id,
+            filename,
+            root,
+            actor,
+            audit,
+        )
     directory = export_directory(subject_id, case_id, root=root).resolve()
     path = (directory / safe_filename).resolve()
     try:
         path.relative_to(directory)
     except ValueError:
-        return {
-            "schema": DOSSIER_EXPORT_INDEX_SCHEMA,
-            "status": "blocked",
-            "reason": "path_escape",
-            "filename": filename,
-        }
+        return _audit_download(
+            {
+                "schema": DOSSIER_EXPORT_INDEX_SCHEMA,
+                "status": "blocked",
+                "reason": "path_escape",
+                "filename": filename,
+            },
+            case_id,
+            subject_id,
+            filename,
+            root,
+            actor,
+            audit,
+        )
     if not path.exists():
-        return {
+        return _audit_download(
+            {
+                "schema": DOSSIER_EXPORT_INDEX_SCHEMA,
+                "status": "missing",
+                "filename": safe_filename,
+                "path": str(path),
+            },
+            case_id,
+            subject_id,
+            filename,
+            root,
+            actor,
+            audit,
+        )
+    return _audit_download(
+        {
             "schema": DOSSIER_EXPORT_INDEX_SCHEMA,
-            "status": "missing",
+            "status": "ready",
             "filename": safe_filename,
             "path": str(path),
-        }
-    return {
-        "schema": DOSSIER_EXPORT_INDEX_SCHEMA,
-        "status": "ready",
-        "filename": safe_filename,
-        "path": str(path),
-    }
+        },
+        case_id,
+        subject_id,
+        filename,
+        root,
+        actor,
+        audit,
+    )
