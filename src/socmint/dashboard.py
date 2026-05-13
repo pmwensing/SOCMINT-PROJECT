@@ -4263,3 +4263,276 @@ def product_final_gate_signoff():
         flash("Final gate decision recorded.", "success")
     return redirect(url_for("dashboard.product_final_gate_view"))
 # ---- end v9.9.1 release candidate sign-off gate ----
+
+
+
+# ---- v9.9.2 Final Release Publisher + Release Notes Pack ----
+def _v992_final_release_root(release_name=None):
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    base = Path("storage/final_releases")
+    base.mkdir(parents=True, exist_ok=True)
+    if not release_name:
+        release_name = "v9_9_2_" + datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    return base / _v988_package_slug(release_name)
+
+
+def _v992_load_json_file(path):
+    from pathlib import Path
+
+    p = Path(path)
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text())
+    except Exception:
+        return None
+
+
+def _v992_final_release_preview(actor=None):
+    from datetime import datetime, timezone
+
+    gate = _v991_final_gate_payload(actor=actor)
+    rc_manifest = _v992_load_json_file("release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json")
+    final_gate_manifest = _v992_load_json_file("release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json")
+    packages = []
+    try:
+        packages = _v989_list_release_packages()
+    except Exception:
+        packages = []
+
+    final_gate_approved = gate.get("gate_status") == "approved" and bool(gate.get("signoff", {}).get("approved"))
+    can_publish = final_gate_approved and gate.get("rc_status") == "pass"
+
+    checklist = [
+        {
+            "key": "rc_manifest",
+            "label": "Release candidate manifest exists",
+            "pass": rc_manifest is not None,
+            "artifact": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+        },
+        {
+            "key": "final_gate_manifest",
+            "label": "Final product gate manifest exists",
+            "pass": final_gate_manifest is not None,
+            "artifact": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+        },
+        {
+            "key": "final_gate_approved",
+            "label": "Final product gate is approved",
+            "pass": final_gate_approved,
+            "artifact": "storage/product_qa/release_candidate_signoff_state.json",
+        },
+        {
+            "key": "rc_chain_pass",
+            "label": "RC chain status is pass",
+            "pass": gate.get("rc_status") == "pass",
+            "artifact": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+        },
+        {
+            "key": "release_packages",
+            "label": "At least one release package exists",
+            "pass": len(packages) > 0,
+            "artifact": "storage/product_packages/",
+        },
+    ]
+
+    return {
+        "status": "ok",
+        "version": "9.9.2",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "actor": actor,
+        "can_publish": can_publish,
+        "publish_status": "ready" if can_publish else "blocked",
+        "recommended_next_action": (
+            "Publish final release notes pack."
+            if can_publish
+            else "Approve the final product gate before publishing."
+        ),
+        "gate": gate,
+        "rc_manifest": rc_manifest,
+        "final_gate_manifest": final_gate_manifest,
+        "packages": packages,
+        "checklist": checklist,
+        "checklist_passed": sum(1 for item in checklist if item["pass"]),
+        "checklist_total": len(checklist),
+    }
+
+
+def _v992_generate_release_notes(preview, release_name):
+    gate = preview.get("gate", {})
+    signoff = gate.get("signoff", {})
+    rc_summary = gate.get("rc_summary", {}) or {}
+
+    lines = [
+        "# SOCMINT Workbench Final Release Notes",
+        "",
+        f"Release: {release_name}",
+        "Version: v9.9.2",
+        f"Publish status: {preview.get('publish_status')}",
+        f"Generated: {preview.get('generated_at')}",
+        "",
+        "## Final Gate",
+        "",
+        f"- Gate status: {gate.get('gate_status')}",
+        f"- RC status: {gate.get('rc_status')}",
+        f"- Sign-off decision: {signoff.get('decision')}",
+        f"- Approved: {signoff.get('approved')}",
+        f"- Actor: {signoff.get('actor')}",
+        f"- Reason: {signoff.get('reason')}",
+        "",
+        "## RC Chain",
+        "",
+        f"- Required passed: {rc_summary.get('required_passed')}/{rc_summary.get('required_total')}",
+        f"- Missing: {rc_summary.get('required_missing')}",
+        "",
+        "## Release Package Inventory",
+        "",
+    ]
+
+    for package in preview.get("packages", []):
+        lines.extend(
+            [
+                f"### {package.get('package_name')}",
+                "",
+                f"- Selected count: {package.get('selected_count')}",
+                f"- Copied artifact count: {package.get('copied_artifact_count')}",
+                f"- Metadata file count: {package.get('metadata_file_count')}",
+                f"- ZIP exists: {package.get('zip_exists')}",
+                f"- ZIP path: `{package.get('zip_path')}`",
+                "",
+            ]
+        )
+
+    lines.extend(["## Publish Checklist", ""])
+    for item in preview.get("checklist", []):
+        marker = "PASS" if item.get("pass") else "BLOCK"
+        lines.append(f"- [{marker}] {item.get('label')} — `{item.get('artifact')}`")
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _v992_publish_final_release(release_name=None, actor=None):
+    from pathlib import Path
+    import shutil
+
+    preview = _v992_final_release_preview(actor=actor)
+    if not preview.get("can_publish"):
+        return {
+            "status": "blocked",
+            "version": "9.9.2",
+            "reason": "Final release cannot publish unless the final product gate is approved and RC status is pass.",
+            "preview": preview,
+        }
+
+    root = _v992_final_release_root(release_name)
+    if root.exists():
+        shutil.rmtree(root)
+    root.mkdir(parents=True, exist_ok=True)
+
+    release_name = root.name
+    notes = _v992_generate_release_notes(preview, release_name)
+
+    copied_files = []
+    for src in [
+        "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+        "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.md",
+        "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+        "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.md",
+        "storage/product_qa/release_candidate_signoff_state.json",
+        "storage/product_qa/release_candidate_signoff_audit.json",
+    ]:
+        p = Path(src)
+        if p.exists() and p.is_file():
+            dest = root / "evidence" / src
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(p, dest)
+            copied_files.append({"source": src, "package_path": dest.as_posix(), "size_bytes": dest.stat().st_size})
+
+    package_zips = []
+    for package in preview.get("packages", []):
+        zip_path = package.get("zip_path")
+        if zip_path:
+            p = Path(zip_path)
+            if p.exists() and p.is_file():
+                dest = root / "packages" / p.name
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(p, dest)
+                package_zips.append({"source": p.as_posix(), "package_path": dest.as_posix(), "size_bytes": dest.stat().st_size})
+
+    publish_manifest = {
+        "status": "published",
+        "version": "9.9.2",
+        "release_name": release_name,
+        "release_path": root.as_posix(),
+        "actor": actor,
+        "published_at": preview.get("generated_at"),
+        "checklist": preview.get("checklist"),
+        "checklist_passed": preview.get("checklist_passed"),
+        "checklist_total": preview.get("checklist_total"),
+        "final_gate": preview.get("gate"),
+        "copied_files": copied_files,
+        "package_zips": package_zips,
+        "release_notes": (root / "RELEASE_NOTES.md").as_posix(),
+    }
+
+    (root / "RELEASE_NOTES.md").write_text(notes)
+    (root / "FINAL_RELEASE_CHECKLIST.json").write_text(json.dumps(preview.get("checklist"), indent=2, sort_keys=True))
+    (root / "PUBLISH_MANIFEST.json").write_text(json.dumps(publish_manifest, indent=2, sort_keys=True))
+
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+    latest_notes = release_dir / "V9_9_2_FINAL_RELEASE_NOTES.md"
+    latest_checklist = release_dir / "V9_9_2_FINAL_RELEASE_CHECKLIST.json"
+    latest_manifest = release_dir / "V9_9_2_FINAL_RELEASE_PUBLISH_MANIFEST.json"
+
+    latest_notes.write_text(notes)
+    latest_checklist.write_text(json.dumps(preview.get("checklist"), indent=2, sort_keys=True))
+    latest_manifest.write_text(json.dumps(publish_manifest, indent=2, sort_keys=True))
+
+    publish_manifest["artifacts_written"] = {
+        "release_notes": latest_notes.as_posix(),
+        "checklist": latest_checklist.as_posix(),
+        "publish_manifest": latest_manifest.as_posix(),
+        "package_release_notes": (root / "RELEASE_NOTES.md").as_posix(),
+        "package_manifest": (root / "PUBLISH_MANIFEST.json").as_posix(),
+    }
+    return publish_manifest
+
+
+@dashboard_bp.route("/api/v1/product/final-release")
+@login_required
+def api_v992_final_release_preview():
+    return jsonify(_v992_final_release_preview(actor=session.get("user")))
+
+
+@dashboard_bp.route("/api/v1/product/final-release/publish", methods=["POST"])
+@admin_required
+def api_v992_final_release_publish():
+    payload = request.get_json(silent=True) or request.form
+    release_name = payload.get("release_name") or None
+    result = _v992_publish_final_release(release_name=release_name, actor=session.get("user"))
+    audit("product_final_release_publish", details={"status": result.get("status"), "release_name": release_name})
+    return jsonify(result)
+
+
+@dashboard_bp.route("/product/final-release")
+@login_required
+def product_final_release_view():
+    preview = _v992_final_release_preview(actor=session.get("user"))
+    return render_template("product_final_release.html", preview=preview)
+
+
+@dashboard_bp.route("/product/final-release/publish", methods=["POST"])
+@admin_required
+def product_final_release_publish():
+    release_name = request.form.get("release_name") or None
+    result = _v992_publish_final_release(release_name=release_name, actor=session.get("user"))
+    if result.get("status") == "published":
+        flash("Final release notes pack published.", "success")
+    else:
+        flash("Final release blocked until final gate approval.", "error")
+    return redirect(url_for("dashboard.product_final_release_view"))
+# ---- end v9.9.2 final release publisher ----

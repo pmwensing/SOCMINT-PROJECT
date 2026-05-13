@@ -1,0 +1,32 @@
+[
+  {
+    "artifact": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+    "key": "rc_manifest",
+    "label": "Release candidate manifest exists",
+    "pass": true
+  },
+  {
+    "artifact": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+    "key": "final_gate_manifest",
+    "label": "Final product gate manifest exists",
+    "pass": true
+  },
+  {
+    "artifact": "storage/product_qa/release_candidate_signoff_state.json",
+    "key": "final_gate_approved",
+    "label": "Final product gate is approved",
+    "pass": true
+  },
+  {
+    "artifact": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+    "key": "rc_chain_pass",
+    "label": "RC chain status is pass",
+    "pass": true
+  },
+  {
+    "artifact": "storage/product_packages/",
+    "key": "release_packages",
+    "label": "At least one release package exists",
+    "pass": true
+  }
+]
