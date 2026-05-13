@@ -504,3 +504,16 @@ v10-foundation-hardening-smoke:
 
 zip1000:
 	cd .. && zip -r SOCMINT-PROJECT-v10.0.0-product-foundation.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-route-extraction-smoke:
+	PYTHONPATH=src python3 scripts/product_route_extraction_smoke_v10_0_1.py
+
+test1001:
+	PYTHONPATH=src python3 scripts/product_route_extraction_smoke_v10_0_1.py
+
+route-extraction-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_route_extraction_hardening_v10_0_1.py
+
+zip1001:
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.1-route-extraction-phase-1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
