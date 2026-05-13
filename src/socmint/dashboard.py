@@ -3697,3 +3697,213 @@ def product_release_package_download(package_name):
         download_name=zip_path.name,
     )
 # ---- end v9.8.9 product release package ZIP export ----
+
+
+
+# ---- v9.9.0 Product Release Candidate Console ----
+def _v990_rc_stage_definitions():
+    return [
+        {
+            "key": "product_smoke",
+            "label": "Product Smoke",
+            "target": "make product-smoke",
+            "artifact": "release/V9_7_PRODUCT_SMOKE_REPORT.md",
+            "required": True,
+        },
+        {
+            "key": "artifact_review",
+            "label": "Artifact Review",
+            "target": "make product-artifact-review-smoke",
+            "artifact": "release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+            "required": True,
+        },
+        {
+            "key": "artifact_review_audit",
+            "label": "Artifact Review Audit",
+            "target": "make product-artifact-review-audit-smoke",
+            "artifact": "release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+            "required": True,
+        },
+        {
+            "key": "export_manifest",
+            "label": "Evidence Chain Export Manifest",
+            "target": "make product-artifact-export-manifest-smoke",
+            "artifact": "release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+            "required": True,
+        },
+        {
+            "key": "release_package",
+            "label": "Release Package Builder",
+            "target": "make product-release-package-smoke",
+            "artifact": "release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+            "required": True,
+        },
+        {
+            "key": "zip_export",
+            "label": "Release Package ZIP Export",
+            "target": "make product-release-package-zip-smoke",
+            "artifact": "release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+            "required": True,
+        },
+    ]
+
+
+def _v990_artifact_exists(path):
+    from pathlib import Path
+
+    p = Path(path)
+    return p.exists() and p.is_file()
+
+
+def _v990_rc_stage_status():
+    stages = []
+    for stage in _v990_rc_stage_definitions():
+        artifact_exists = _v990_artifact_exists(stage["artifact"])
+        status = "pass" if artifact_exists else "warn"
+        stages.append(
+            {
+                **stage,
+                "status": status,
+                "artifact_exists": artifact_exists,
+                "artifact_view_url": f"/product/artifacts/view/{stage['artifact']}" if artifact_exists else None,
+                "artifact_download_url": f"/product/artifacts/download/{stage['artifact']}" if artifact_exists else None,
+            }
+        )
+    return stages
+
+
+def _v990_rc_summary():
+    stages = _v990_rc_stage_status()
+    required = [stage for stage in stages if stage.get("required")]
+    passed = [stage for stage in required if stage.get("status") == "pass"]
+    missing = [stage for stage in required if stage.get("status") != "pass"]
+    status = "pass" if len(passed) == len(required) else "warn"
+    return {
+        "status": status,
+        "required_total": len(required),
+        "required_passed": len(passed),
+        "required_missing": len(missing),
+        "missing_stage_keys": [stage["key"] for stage in missing],
+        "stages": stages,
+    }
+
+
+def _v990_build_rc_manifest(actor=None):
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    summary = _v990_rc_summary()
+    package_preview = None
+    export_manifest = None
+    packages = []
+
+    try:
+        export_manifest = _v987_export_manifest_payload(include_archived=False, actor=actor)
+    except Exception as exc:
+        export_manifest = {"status": "warn", "error": str(exc)}
+
+    try:
+        package_preview = _v987_export_manifest_payload(include_archived=False, actor=actor)
+    except Exception as exc:
+        package_preview = {"status": "warn", "error": str(exc)}
+
+    try:
+        packages = _v989_list_release_packages()
+    except Exception:
+        packages = []
+
+    manifest = {
+        "status": summary["status"],
+        "version": "9.9.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "actor": actor,
+        "release_candidate": {
+            "name": "SOCMINT Workbench v9.9.0 Release Candidate",
+            "base_line": "v9.8.0-v9.8.9",
+            "recommended_next_action": (
+                "Cut v9.9.0 release candidate tag"
+                if summary["status"] == "pass"
+                else "Run missing v9.8 chain smoke targets before cutting RC"
+            ),
+        },
+        "summary": summary,
+        "export_manifest_summary": export_manifest.get("summary") if isinstance(export_manifest, dict) else None,
+        "package_preview_count": package_preview.get("count") if isinstance(package_preview, dict) else None,
+        "built_package_count": len(packages),
+        "packages": packages,
+    }
+
+    release_dir = Path("release")
+    release_dir.mkdir(exist_ok=True)
+    json_path = release_dir / "V9_9_0_RELEASE_CANDIDATE_MANIFEST.json"
+    md_path = release_dir / "V9_9_0_RELEASE_CANDIDATE_MANIFEST.md"
+
+    json_path.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+
+    rows = [
+        "# v9.9.0 Release Candidate Manifest",
+        "",
+        f"Generated: {manifest['generated_at']}",
+        f"Status: **{manifest['status']}**",
+        f"Actor: {actor or 'unknown'}",
+        "",
+        "## Summary",
+        "",
+        f"- Required passed: {summary['required_passed']}/{summary['required_total']}",
+        f"- Missing: {summary['required_missing']}",
+        f"- Recommended next action: {manifest['release_candidate']['recommended_next_action']}",
+        "",
+        "## Stage Status",
+        "",
+    ]
+    for stage in summary["stages"]:
+        rows.extend(
+            [
+                f"### {stage['label']}",
+                "",
+                f"- Status: {stage['status']}",
+                f"- Target: `{stage['target']}`",
+                f"- Artifact: `{stage['artifact']}`",
+                f"- Artifact exists: {stage['artifact_exists']}",
+                "",
+            ]
+        )
+
+    md_path.write_text("\n".join(rows))
+
+    manifest["artifacts_written"] = {
+        "json": json_path.as_posix(),
+        "markdown": md_path.as_posix(),
+    }
+    return manifest
+
+
+@dashboard_bp.route("/api/v1/product/release-candidate")
+@login_required
+def api_v990_release_candidate():
+    return jsonify(_v990_build_rc_manifest(actor=session.get("user")))
+
+
+@dashboard_bp.route("/api/v1/product/release-candidate/write", methods=["POST"])
+@admin_required
+def api_v990_release_candidate_write():
+    manifest = _v990_build_rc_manifest(actor=session.get("user"))
+    audit("product_release_candidate_manifest_write", details=manifest.get("artifacts_written"))
+    return jsonify(manifest)
+
+
+@dashboard_bp.route("/product/release-candidate")
+@login_required
+def product_release_candidate_console():
+    manifest = _v990_build_rc_manifest(actor=session.get("user"))
+    return render_template("product_release_candidate.html", manifest=manifest)
+
+
+@dashboard_bp.route("/product/release-candidate/write", methods=["POST"])
+@admin_required
+def product_release_candidate_write():
+    manifest = _v990_build_rc_manifest(actor=session.get("user"))
+    audit("product_release_candidate_manifest_write", details=manifest.get("artifacts_written"))
+    flash("Release candidate manifest written.", "success")
+    return redirect(url_for("dashboard.product_release_candidate_console"))
+# ---- end v9.9.0 product release candidate console ----
