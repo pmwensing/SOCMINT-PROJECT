@@ -1,0 +1,204 @@
+{
+  "actor": "v992-final-release-smoke",
+  "checklist": [
+    {
+      "artifact": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+      "key": "rc_manifest",
+      "label": "Release candidate manifest exists",
+      "pass": true
+    },
+    {
+      "artifact": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+      "key": "final_gate_manifest",
+      "label": "Final product gate manifest exists",
+      "pass": true
+    },
+    {
+      "artifact": "storage/product_qa/release_candidate_signoff_state.json",
+      "key": "final_gate_approved",
+      "label": "Final product gate is approved",
+      "pass": true
+    },
+    {
+      "artifact": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+      "key": "rc_chain_pass",
+      "label": "RC chain status is pass",
+      "pass": true
+    },
+    {
+      "artifact": "storage/product_packages/",
+      "key": "release_packages",
+      "label": "At least one release package exists",
+      "pass": true
+    }
+  ],
+  "checklist_passed": 5,
+  "checklist_total": 5,
+  "copied_files": [
+    {
+      "package_path": "storage/final_releases/v9_9_2_final_release_smoke/evidence/release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+      "size_bytes": 4729,
+      "source": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json"
+    },
+    {
+      "package_path": "storage/final_releases/v9_9_2_final_release_smoke/evidence/release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.md",
+      "size_bytes": 1331,
+      "source": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.md"
+    },
+    {
+      "package_path": "storage/final_releases/v9_9_2_final_release_smoke/evidence/release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json",
+      "size_bytes": 4687,
+      "source": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json"
+    },
+    {
+      "package_path": "storage/final_releases/v9_9_2_final_release_smoke/evidence/release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.md",
+      "size_bytes": 414,
+      "source": "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.md"
+    },
+    {
+      "package_path": "storage/final_releases/v9_9_2_final_release_smoke/evidence/storage/product_qa/release_candidate_signoff_state.json",
+      "size_bytes": 224,
+      "source": "storage/product_qa/release_candidate_signoff_state.json"
+    },
+    {
+      "package_path": "storage/final_releases/v9_9_2_final_release_smoke/evidence/storage/product_qa/release_candidate_signoff_audit.json",
+      "size_bytes": 841,
+      "source": "storage/product_qa/release_candidate_signoff_audit.json"
+    }
+  ],
+  "final_gate": {
+    "actor": "v992-final-release-smoke",
+    "audit_event_count": 1,
+    "can_approve": true,
+    "gate_status": "approved",
+    "generated_at": "2026-05-13T03:08:43.209101+00:00",
+    "latest_audit_event": {
+      "action": "signoff_approve",
+      "actor": "v992-final-release-smoke",
+      "after": {
+        "actor": "v992-final-release-smoke",
+        "approved": true,
+        "blocked": false,
+        "decision": "approved",
+        "reason": "approve final release smoke",
+        "updated_at": "2026-05-13T03:08:43.187639+00:00",
+        "version": "9.9.1"
+      },
+      "before": {
+        "actor": null,
+        "approved": false,
+        "blocked": false,
+        "decision": "pending",
+        "reason": "",
+        "updated_at": null,
+        "version": "9.9.1"
+      },
+      "event_id": "5927b4f9c3bc4bac8e273928c7ed6d9e",
+      "rc_status": "pass",
+      "reason": "approve final release smoke",
+      "timestamp": "2026-05-13T03:08:43.187746+00:00",
+      "version": "9.9.1"
+    },
+    "rc_status": "pass",
+    "rc_summary": {
+      "missing_stage_keys": [],
+      "required_missing": 0,
+      "required_passed": 6,
+      "required_total": 6,
+      "stages": [
+        {
+          "artifact": "release/V9_7_PRODUCT_SMOKE_REPORT.md",
+          "artifact_download_url": "/product/artifacts/download/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+          "artifact_exists": true,
+          "artifact_view_url": "/product/artifacts/view/release/V9_7_PRODUCT_SMOKE_REPORT.md",
+          "key": "product_smoke",
+          "label": "Product Smoke",
+          "required": true,
+          "status": "pass",
+          "target": "make product-smoke"
+        },
+        {
+          "artifact": "release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+          "artifact_download_url": "/product/artifacts/download/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+          "artifact_exists": true,
+          "artifact_view_url": "/product/artifacts/view/release/V9_8_5_ARTIFACT_REVIEW_HARDENING_REPORT.md",
+          "key": "artifact_review",
+          "label": "Artifact Review",
+          "required": true,
+          "status": "pass",
+          "target": "make product-artifact-review-smoke"
+        },
+        {
+          "artifact": "release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+          "artifact_download_url": "/product/artifacts/download/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+          "artifact_exists": true,
+          "artifact_view_url": "/product/artifacts/view/release/V9_8_6_ARTIFACT_REVIEW_AUDIT_HARDENING_REPORT.md",
+          "key": "artifact_review_audit",
+          "label": "Artifact Review Audit",
+          "required": true,
+          "status": "pass",
+          "target": "make product-artifact-review-audit-smoke"
+        },
+        {
+          "artifact": "release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+          "artifact_download_url": "/product/artifacts/download/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+          "artifact_exists": true,
+          "artifact_view_url": "/product/artifacts/view/release/V9_8_7_EXPORT_MANIFEST_HARDENING_REPORT.md",
+          "key": "export_manifest",
+          "label": "Evidence Chain Export Manifest",
+          "required": true,
+          "status": "pass",
+          "target": "make product-artifact-export-manifest-smoke"
+        },
+        {
+          "artifact": "release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+          "artifact_download_url": "/product/artifacts/download/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+          "artifact_exists": true,
+          "artifact_view_url": "/product/artifacts/view/release/V9_8_8_RELEASE_PACKAGE_HARDENING_REPORT.md",
+          "key": "release_package",
+          "label": "Release Package Builder",
+          "required": true,
+          "status": "pass",
+          "target": "make product-release-package-smoke"
+        },
+        {
+          "artifact": "release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+          "artifact_download_url": "/product/artifacts/download/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+          "artifact_exists": true,
+          "artifact_view_url": "/product/artifacts/view/release/V9_8_9_RELEASE_PACKAGE_ZIP_HARDENING_REPORT.md",
+          "key": "zip_export",
+          "label": "Release Package ZIP Export",
+          "required": true,
+          "status": "pass",
+          "target": "make product-release-package-zip-smoke"
+        }
+      ],
+      "status": "pass"
+    },
+    "recommended_next_action": "Release candidate approved. Ready for final release/tag.",
+    "signoff": {
+      "actor": "v992-final-release-smoke",
+      "approved": true,
+      "blocked": false,
+      "decision": "approved",
+      "reason": "approve final release smoke",
+      "updated_at": "2026-05-13T03:08:43.187639+00:00",
+      "version": "9.9.1"
+    },
+    "status": "ok",
+    "version": "9.9.1"
+  },
+  "package_zips": [
+    {
+      "package_path": "storage/final_releases/v9_9_2_final_release_smoke/packages/v9_9_2_final_release_smoke_package.zip",
+      "size_bytes": 258,
+      "source": "storage/product_packages/v9_9_2_final_release_smoke_package.zip"
+    }
+  ],
+  "published_at": "2026-05-13T03:08:43.209345+00:00",
+  "release_name": "v9_9_2_final_release_smoke",
+  "release_notes": "storage/final_releases/v9_9_2_final_release_smoke/RELEASE_NOTES.md",
+  "release_path": "storage/final_releases/v9_9_2_final_release_smoke",
+  "status": "published",
+  "version": "9.9.2"
+}
