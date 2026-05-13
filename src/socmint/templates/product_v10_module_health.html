@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Product Module Health</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+    a { color: #93c5fd; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin: 14px 0; box-shadow: 0 10px 30px #0005; }
+    code { color: #bfdbfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #334155; padding: 8px; vertical-align: top; }
+    .healthy { color: #86efac; font-weight: 700; }
+    .needs_attention { color: #fde68a; font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Product Module Health Console + Extraction Readiness Score</h1>
+  <p>v10.0.5 health scoring for extracted modules before deeper blueprint ownership migration.</p>
+
+  <section class="card">
+    <h2>Overall Readiness</h2>
+    <p>Status: <strong class="{{ health.status }}">{{ health.status|upper }}</strong></p>
+    <p>Overall score: <strong>{{ health.overall_score }}</strong></p>
+    <p>Healthy modules: {{ health.healthy_count }}/{{ health.module_count }}</p>
+    <p>Ready for deeper blueprint extraction: {{ health.ready_for_deeper_blueprint_extraction }}</p>
+    <p>Recommended next action: {{ health.recommended_next_action }}</p>
+    <p>
+      <a href="/api/v1/product/v10/module-health">Health JSON</a> |
+      <a href="/api/v1/product/v10/modules">Module Registry JSON</a> |
+      <a href="/product/v10/modules">Module Registry</a>
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>Module Scores</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Module</th>
+          <th>Status</th>
+          <th>Total</th>
+          <th>Routes</th>
+          <th>Helpers</th>
+          <th>Smoke Targets</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for item in health.modules %}
+        <tr>
+          <td>{{ item.label }}<br><code>{{ item.module }}</code></td>
+          <td><span class="{{ item.status }}">{{ item.status|upper }}</span></td>
+          <td>{{ item.total_score }}</td>
+          <td>{{ item.route_score }}<br>{{ item.present_route_count }}/{{ item.route_count }}</td>
+          <td>{{ item.helper_score }}<br>{{ item.helper_export_count }}/{{ item.helper_export_floor }}</td>
+          <td>
+            {{ item.smoke_score }}<br>
+            {% if item.missing_smoke_targets %}
+              Missing: <code>{{ item.missing_smoke_targets }}</code>
+            {% else %}
+              All present
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

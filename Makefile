@@ -556,3 +556,16 @@ module-registry-hardening-smoke:
 
 zip1004:
 	cd .. && zip -r SOCMINT-PROJECT-v10.0.4-product-module-registry.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+
+product-module-health-smoke:
+	PYTHONPATH=src python3 scripts/product_module_health_smoke_v10_0_5.py
+
+test1005:
+	PYTHONPATH=src python3 scripts/product_module_health_smoke_v10_0_5.py
+
+module-health-hardening-smoke:
+	PYTHONPATH=src python3 scripts/product_module_health_hardening_v10_0_5.py
+
+zip1005:
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.5-product-module-health.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
