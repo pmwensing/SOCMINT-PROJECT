@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .intel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 16px 0; }
+  .intel-card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 14px; box-shadow: 0 10px 25px #0004; }
+  .intel-card strong { display: block; font-size: 28px; color: #bfdbfe; }
+  .intel-muted { color: #64748b; }
+  .intel-table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  .intel-table th, .intel-table td { text-align: left; vertical-align: top; border-bottom: 1px solid #e2e8f0; padding: 8px; }
+  .intel-form textarea { width: 100%; min-height: 150px; font-family: monospace; padding: 10px; }
+  .intel-form button { padding: 8px 12px; margin-top: 8px; }
+  .intel-error { color: #991b1b; font-weight: 700; }
+  pre.intel-markdown { white-space: pre-wrap; background: #0f172a; color: #e5e7eb; padding: 12px; border-radius: 12px; overflow: auto; }
+</style>
+
+<section class="intel-card">
+  <h1>Entity Profile Intelligence Dossier</h1>
+  <p class="intel-muted">v10.21 analyst UI for the v10.20 intelligence core: identity, accounts, attributes, timeline, relationships, contradictions, risk, confidence, citations, and markdown preview.</p>
+  {% if error %}<p class="intel-error">{{ error }}</p>{% endif %}
+</section>
+
+<section class="intel-card">
+  <h2>Input</h2>
+  <form class="intel-form" method="post" action="/dossier/entity-profile-intelligence">
+    <label>Subject JSON</label>
+    <textarea name="subject_json">{{ subject_json }}</textarea>
+    <label>Evidence JSON</label>
+    <textarea name="evidence_json">{{ evidence_json }}</textarea>
+    <label><input type="checkbox" name="analyst_reviewed" checked> Analyst reviewed</label><br>
+    <button type="submit">Build intelligence dossier</button>
+  </form>
+  <p><a href="/api/v1/dossier-builder/v3/intelligence/sample">Sample JSON</a></p>
+</section>
+
+<section class="intel-grid">
+  <div class="intel-card"><span class="intel-muted">Accounts</span><strong>{{ summary.account_count }}</strong></div>
+  <div class="intel-card"><span class="intel-muted">Attributes</span><strong>{{ summary.attribute_count }}</strong></div>
+  <div class="intel-card"><span class="intel-muted">Timeline</span><strong>{{ summary.timeline_event_count }}</strong></div>
+  <div class="intel-card"><span class="intel-muted">Relationships</span><strong>{{ summary.relationship_count }}</strong></div>
+  <div class="intel-card"><span class="intel-muted">Contradictions</span><strong>{{ summary.contradiction_count }}</strong></div>
+  <div class="intel-card"><span class="intel-muted">Risk</span><strong>{{ summary.risk_level }}</strong></div>
+</section>
+
+<section class="intel-card">
+  <h2>Identity</h2>
+  <p><strong>{{ payload.identity_summary.primary_name }}</strong></p>
+  <p>Subject ID: <code>{{ payload.subject.subject_id }}</code> · Case ID: <code>{{ payload.subject.case_id }}</code></p>
+  <p>Aliases: {{ payload.identity_summary.aliases|join(', ') or 'none' }}</p>
+  <p>Handles: {{ payload.identity_summary.handles|join(', ') or 'none' }}</p>
+</section>
+
+<section class="intel-card">
+  <h2>Accounts / Platforms</h2>
+  <table class="intel-table"><thead><tr><th>Platform</th><th>Handle/URL</th><th>Confidence</th><th>Evidence</th></tr></thead><tbody>
+  {% for item in payload.accounts %}<tr><td>{{ item.platform }}</td><td>{{ item.handle or item.url }}</td><td>{{ item.confidence }}</td><td>{{ item.evidence_refs|join(', ') }}</td></tr>{% else %}<tr><td colspan="4">none</td></tr>{% endfor %}
+  </tbody></table>
+</section>
+
+<section class="intel-card">
+  <h2>Evidence-backed Attributes</h2>
+  <table class="intel-table"><thead><tr><th>Name</th><th>Value</th><th>Source</th><th>Confidence</th><th>Evidence</th></tr></thead><tbody>
+  {% for item in payload.evidence_backed_attributes %}<tr><td>{{ item.name }}</td><td>{{ item.value }}</td><td>{{ item.source }}</td><td>{{ item.confidence }}</td><td>{{ item.evidence_refs|join(', ') }}</td></tr>{% else %}<tr><td colspan="5">none</td></tr>{% endfor %}
+  </tbody></table>
+</section>
+
+<section class="intel-card">
+  <h2>Timeline</h2>
+  <table class="intel-table"><thead><tr><th>Date</th><th>Event</th><th>Source</th><th>Evidence</th></tr></thead><tbody>
+  {% for item in payload.timeline %}<tr><td>{{ item.date }}</td><td>{{ item.event }}</td><td>{{ item.source }}</td><td>{{ item.evidence_refs|join(', ') }}</td></tr>{% else %}<tr><td colspan="4">none</td></tr>{% endfor %}
+  </tbody></table>
+</section>
+
+<section class="intel-card">
+  <h2>Relationships</h2>
+  <table class="intel-table"><thead><tr><th>Target</th><th>Relationship</th><th>Source</th><th>Evidence</th></tr></thead><tbody>
+  {% for item in payload.relationships %}<tr><td>{{ item.target }}</td><td>{{ item.relationship }}</td><td>{{ item.source }}</td><td>{{ item.evidence_refs|join(', ') }}</td></tr>{% else %}<tr><td colspan="4">none</td></tr>{% endfor %}
+  </tbody></table>
+</section>
+
+<section class="intel-card">
+  <h2>Contradictions</h2>
+  <table class="intel-table"><thead><tr><th>Claim</th><th>Values</th><th>Evidence</th></tr></thead><tbody>
+  {% for item in payload.contradictions %}<tr><td>{{ item.claim }}</td><td>{{ item.values|join(', ') }}</td><td>{{ item.evidence_refs|join(', ') }}</td></tr>{% else %}<tr><td colspan="3">none</td></tr>{% endfor %}
+  </tbody></table>
+</section>
+
+<section class="intel-card">
+  <h2>Markdown Preview</h2>
+  <pre class="intel-markdown">{{ markdown }}</pre>
+</section>
+{% endblock %}
