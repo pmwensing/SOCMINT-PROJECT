@@ -17,7 +17,7 @@
 
 <section class="ledger-card">
   <h1>Release Ledger Dashboard / Case Distribution Console</h1>
-  <p class="ledger-muted">v10.18 case-wide view of released, ready-to-seal, and held dossier distribution exports.</p>
+  <p class="ledger-muted">v10.19 handoff view: release ledger summary, seal statements, verification summaries, ZIP hashes, and operator handoff links.</p>
   <form class="ledger-form" method="get" action="/dossier/release-ledger-dashboard">
     <label>Case ID <input name="case_id" value="{{ case_id }}" placeholder="case id"></label>
     <button type="submit">Open release ledger</button>
@@ -43,7 +43,9 @@
     <a href="/dossier/certification-dashboard?case_id={{ payload.case_id }}">Certification dashboard</a> |
     <a href="/api/v1/dossier-builder/v3/release-ledger-dashboard/{{ payload.case_id }}">Dashboard JSON</a> |
     <a href="/api/v1/dossier-builder/v3/release-ledger-dashboard/{{ payload.case_id }}/markdown">Dashboard markdown</a> |
-    <a href="/api/v1/dossier-builder/v3/distribution-release-ledger/{{ payload.case_id }}">Raw release ledger</a>
+    <a href="/api/v1/dossier-builder/v3/distribution-release-ledger/{{ payload.case_id }}">Raw release ledger</a> |
+    <a href="/api/v1/dossier-builder/v3/distribution-handoff/{{ payload.case_id }}">Handoff JSON</a> |
+    <a href="/api/v1/dossier-builder/v3/distribution-handoff/{{ payload.case_id }}/markdown">Handoff markdown</a>
   </p>
 </section>
 
