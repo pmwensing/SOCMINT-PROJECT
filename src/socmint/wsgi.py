@@ -16,6 +16,7 @@ from .connector_sdk_routes import register_connector_sdk_routes
 from .production_release_routes import register_production_release_routes
 from .certification_dashboard_routes import register_certification_dashboard_routes
 from .distribution_action_routes import register_distribution_action_routes
+from .distribution_packet_export_routes import register_distribution_packet_export_routes
 
 app = create_app()
 register_full_report_aliases(app)
@@ -35,3 +36,4 @@ register_connector_sdk_routes(app)
 register_production_release_routes(app)
 register_certification_dashboard_routes(app)
 register_distribution_action_routes(app)
+register_distribution_packet_export_routes(app)
