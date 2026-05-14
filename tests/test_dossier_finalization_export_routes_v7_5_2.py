@@ -113,7 +113,8 @@ def test_wrapped_request_shape_works():
     assert response.status_code == 200
     data = response.get_json()
     assert data["package_name"] == "wrapped-packet"
-    assert data["component_status"] if "component_status" in data else data["finalization"]["component_status"]
+    assert data["finalization"]["component_status"]["connector_compliance"] == "pass"
+    assert data["finalization"]["component_status"]["policy_coverage"] == "pass"
 
 
 def test_raw_dossier_request_shape_works():
