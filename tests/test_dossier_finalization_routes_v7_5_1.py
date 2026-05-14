@@ -1,6 +1,9 @@
 from socmint.dashboard import create_app
 from socmint.dossier_finalization_routes_v7_5_1 import register_dossier_finalization_routes
 
+CSRF_TOKEN = "test-csrf-token"
+CSRF_HEADERS = {"X-CSRF-Token": CSRF_TOKEN}
+
 
 def base_payload():
     return {
@@ -16,12 +19,19 @@ def base_payload():
 def app_client():
     app = create_app()
     register_dossier_finalization_routes(app)
-    return app.test_client()
+    client = app.test_client()
+    with client.session_transaction() as session:
+        session["_csrf_token"] = CSRF_TOKEN
+    return client
+
+
+def post_json(client, path, payload):
+    return client.post(path, json=payload, headers=CSRF_HEADERS)
 
 
 def test_json_route_returns_packet():
     client = app_client()
-    response = client.post("/api/v1/dossier-builder/v3/intelligence/finalization", json={"dossier": base_payload(), "export_mode": "final"})
+    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization", {"dossier": base_payload(), "export_mode": "final"})
 
     assert response.status_code == 200
     data = response.get_json()
@@ -31,7 +41,7 @@ def test_json_route_returns_packet():
 
 def test_markdown_route_returns_packet_text():
     client = app_client()
-    response = client.post("/api/v1/dossier-builder/v3/intelligence/finalization/markdown", json={"dossier": base_payload(), "export_mode": "final"})
+    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/markdown", {"dossier": base_payload(), "export_mode": "final"})
 
     assert response.status_code == 200
     text = response.get_data(as_text=True)
@@ -44,9 +54,10 @@ def test_wrapped_request_shape_uses_connectors_and_policy_events():
     payload.pop("connector_compliance")
     payload.pop("policy_coverage")
     client = app_client()
-    response = client.post(
+    response = post_json(
+        client,
         "/api/v1/dossier-builder/v3/intelligence/finalization",
-        json={
+        {
             "dossier": payload,
             "connectors": [
                 {
@@ -86,7 +97,7 @@ def test_wrapped_request_shape_uses_connectors_and_policy_events():
 
 def test_raw_dossier_request_shape_works():
     client = app_client()
-    response = client.post("/api/v1/dossier-builder/v3/intelligence/finalization", json=base_payload())
+    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization", base_payload())
 
     assert response.status_code == 200
     assert response.get_json()["schema"] == "socmint.v7_5_1.dossier_finalization"
@@ -100,6 +111,6 @@ def test_route_treats_connectors_as_metadata_only(monkeypatch):
 
     monkeypatch.setattr(finalization, "execute_connector", explode, raising=False)
     client = app_client()
-    response = client.post("/api/v1/dossier-builder/v3/intelligence/finalization", json={"dossier": base_payload(), "connectors": []})
+    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization", {"dossier": base_payload(), "connectors": []})
 
     assert response.status_code == 200
