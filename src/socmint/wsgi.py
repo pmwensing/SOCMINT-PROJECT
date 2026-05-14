@@ -19,6 +19,7 @@ from .distribution_action_routes import register_distribution_action_routes
 from .distribution_packet_export_routes import register_distribution_packet_export_routes
 from .distribution_export_verification_routes import register_distribution_export_verification_routes
 from .distribution_release_ledger_routes import register_distribution_release_ledger_routes
+from .release_ledger_dashboard_routes import register_release_ledger_dashboard_routes
 
 app = create_app()
 register_full_report_aliases(app)
@@ -41,3 +42,4 @@ register_distribution_action_routes(app)
 register_distribution_packet_export_routes(app)
 register_distribution_export_verification_routes(app)
 register_distribution_release_ledger_routes(app)
+register_release_ledger_dashboard_routes(app)
