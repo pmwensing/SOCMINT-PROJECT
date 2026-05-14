@@ -52,4 +52,7 @@ pytest -q \
   tests/test_build_audit_report_v7_5.py \
   tests/test_dossier_quality_v7_5.py \
   tests/test_dossier_export_enforcement_v7_5.py \
-  tests/test_dossier_evidence_manifest_v7_5.py
+  tests/test_dossier_evidence_manifest_v7_5.py \
+  tests/test_connector_compliance_v7_5.py \
+  tests/test_identity_confidence_v7_5.py \
+  tests/test_v7_5_governance_report.py
