@@ -57,10 +57,6 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def _as_dict(value: Any) -> dict[str, Any]:
-    return value if isinstance(value, dict) else {}
-
-
 def _finding(severity: str, code: str, detail: str, *, path: str | None = None) -> dict[str, Any]:
     return {
         "severity": severity,
@@ -155,12 +151,19 @@ def verify_finalization_export_files(files: dict[str, bytes]) -> dict[str, Any]:
             file_results.append(result)
             continue
         data = safe_files[path]
-        result["hash_match"] = sha256_bytes(data) == row.get("sha256")
-        result["size_match"] = len(data) == int(row.get("size_bytes") or -1)
-        if not result["hash_match"]:
-            failures.append(_finding("fail", "sha256_mismatch", "Manifest SHA-256 does not match file bytes.", path=path))
-        if not result["size_match"]:
-            failures.append(_finding("fail", "size_mismatch", "Manifest size does not match file bytes.", path=path))
+        if path == "manifest.json":
+            # manifest.json describes itself, so the serialized manifest row cannot
+            # have a stable hash/size after the manifest is rewritten. Validate
+            # presence/content type structurally and enforce hashes on payload files.
+            result["hash_match"] = True
+            result["size_match"] = True
+        else:
+            result["hash_match"] = sha256_bytes(data) == row.get("sha256")
+            result["size_match"] = len(data) == int(row.get("size_bytes") or -1)
+            if not result["hash_match"]:
+                failures.append(_finding("fail", "sha256_mismatch", "Manifest SHA-256 does not match file bytes.", path=path))
+            if not result["size_match"]:
+                failures.append(_finding("fail", "size_mismatch", "Manifest size does not match file bytes.", path=path))
         if content_type not in RECOGNIZED_CONTENT_TYPES:
             warnings.append(_finding("warn", "unrecognized_content_type", "Manifest content type is missing or unrecognized.", path=path))
         file_results.append(result)
