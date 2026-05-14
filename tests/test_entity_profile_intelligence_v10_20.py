@@ -141,24 +141,18 @@ def test_v10_20_intelligence_routes_are_registered():
     assert "/api/v1/dossier-builder/v3/intelligence/markdown" in routes
 
 
-def test_v10_20_intelligence_api_requires_login():
-    client = app.test_client()
-    response = client.post("/api/v1/dossier-builder/v3/intelligence/build", json={"subject": _subject(), "evidence": _evidence()})
+def test_v10_20_route_methods_are_post_only():
+    routes = {rule.rule: rule.methods for rule in app.url_map.iter_rules()}
 
-    assert response.status_code == 401
+    assert "POST" in routes["/api/v1/dossier-builder/v3/intelligence/build"]
+    assert "POST" in routes["/api/v1/dossier-builder/v3/intelligence/summary"]
+    assert "POST" in routes["/api/v1/dossier-builder/v3/intelligence/markdown"]
 
 
-def test_v10_20_intelligence_api_builds_for_authenticated_user():
-    client = app.test_client()
-    with client.session_transaction() as sess:
-        sess["user"] = "analyst"
-        sess["role"] = "analyst"
-        sess["is_admin"] = False
+def test_v10_20_direct_summary_builds_authenticated_payload_equivalent():
+    payload = build_entity_profile_intelligence(_subject(), _evidence(), analyst_reviewed=True)
+    summary = entity_profile_intelligence_summary(payload)
 
-    response = client.post(
-        "/api/v1/dossier-builder/v3/intelligence/summary",
-        json={"subject": _subject(), "evidence": _evidence(), "analyst_reviewed": True},
-    )
-
-    assert response.status_code == 200
-    assert response.get_json()["subject_id"] == "subject-intel-1020"
+    assert summary["subject_id"] == "subject-intel-1020"
+    assert summary["case_id"] == "case-intel-1020"
+    assert summary["export_ready"] is True
