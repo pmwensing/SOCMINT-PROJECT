@@ -19,6 +19,11 @@ Adds a listable certification index across persisted dossier exports so operator
 - `GET /api/v1/dossier-builder/v3/export-certification-index/summary`
 - `GET /api/v1/dossier-builder/v3/export-certification-index/review`
 
+## Validation
+
+- Full CI must pass before merge.
+- Certification index tests must validate certified, review-required, and empty-root states.
+
 ## Merge gate
 
 Full CI must pass before merge.
