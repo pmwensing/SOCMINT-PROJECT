@@ -21,7 +21,7 @@
 
 <section class="cert-card">
   <h1>Certification Index UI / Distribution Readiness Dashboard</h1>
-  <p class="cert-muted">v10.15 export builder for approved distribution packets: build ZIPs with certification data, operator decisions, manifests, and dossier artifacts.</p>
+  <p class="cert-muted">v10.16 integrity console for distribution ZIPs: verify required files, hashes, artifact counts, manifest consistency, and export readiness.</p>
   <form class="cert-form" method="get" action="/dossier/certification-dashboard">
     <label>Case ID <input name="case_id" value="{{ payload.case_id }}" placeholder="case id"></label>
     <label>Subject ID <input name="subject_id" value="{{ payload.subject_id }}" placeholder="optional subject id"></label>
@@ -98,6 +98,8 @@
           <a href="/api/v1/dossier-builder/v3/distribution-packet/{{ payload.case_id }}/{{ entry.subject_id }}/markdown">packet markdown</a>
           <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ entry.subject_id }}">export manifest</a>
           <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ entry.subject_id }}/download">download ZIP</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ entry.subject_id }}/verify">verify ZIP</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ entry.subject_id }}/verify/markdown">verify markdown</a>
           <form class="cert-action-form" method="post" action="/api/v1/dossier-builder/v3/distribution-actions/{{ payload.case_id }}/{{ entry.subject_id }}">
             <input name="note" placeholder="operator note">
             <button name="action" value="mark_reviewed" type="submit">mark reviewed</button>
@@ -126,7 +128,9 @@
     <a href="/api/v1/dossier-builder/v3/distribution-packet/{{ payload.case_id }}/{{ payload.entry.subject_id }}">Distribution packet JSON</a> |
     <a href="/api/v1/dossier-builder/v3/distribution-packet/{{ payload.case_id }}/{{ payload.entry.subject_id }}/markdown">Distribution packet markdown</a> |
     <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ payload.entry.subject_id }}">Distribution export manifest</a> |
-    <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ payload.entry.subject_id }}/download">Download distribution ZIP</a>
+    <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ payload.entry.subject_id }}/download">Download distribution ZIP</a> |
+    <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ payload.entry.subject_id }}/verify">Verify distribution ZIP</a> |
+    <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ payload.entry.subject_id }}/verify/markdown">Verification markdown</a>
   </p>
   <h3>Attached artifacts</h3>
   <table class="cert-table">
