@@ -59,6 +59,15 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _issued_certificate_digest(certificate: dict[str, Any]) -> str:
+    # v7.5.4 stamps certificate_sha256 before the final compact summary is
+    # attached. Recreate that issuance state so verification matches already
+    # issued certificates instead of hashing post-issuance metadata.
+    issued = deepcopy(certificate or {})
+    issued["summary"] = {}
+    return certificate_digest(issued)
+
+
 def _finding(severity: str, code: str, detail: str, *, path: str | None = None) -> dict[str, Any]:
     return {
         "severity": severity,
@@ -181,7 +190,7 @@ def verify_certificate_bundle_files(files: dict[str, bytes]) -> dict[str, Any]:
             failures.append(_finding("fail", "certificate_status_mismatch", "Certificate summary status differs from certificate status.", path="certificate_summary.json"))
         if bool(certificate.get("valid")) != bool(summary.get("valid")):
             failures.append(_finding("fail", "certificate_valid_mismatch", "Certificate summary validity differs from certificate valid flag.", path="certificate_summary.json"))
-        if certificate_digest(certificate) != certificate.get("certificate_sha256"):
+        if _issued_certificate_digest(certificate) != certificate.get("certificate_sha256"):
             failures.append(_finding("fail", "certificate_digest_mismatch", "Certificate digest does not match certificate_sha256.", path="certificate.json"))
         if certificate.get("status") in {"failed", "needs_human_review"}:
             warnings.append(_finding("warn", "non_valid_certificate", "Certificate bundle is structurally intact but certificate is not valid.", path="certificate.json"))
