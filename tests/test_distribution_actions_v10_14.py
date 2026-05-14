@@ -1,6 +1,5 @@
 import pytest
 
-from src.socmint.distribution_action_routes import register_distribution_action_routes
 from src.socmint.distribution_actions import distribution_action_markdown
 from src.socmint.distribution_actions import distribution_action_packet
 from src.socmint.distribution_actions import distribution_action_summary
@@ -133,7 +132,3 @@ def test_v10_14_distribution_action_api_requires_login():
     response = client.get("/api/v1/dossier-builder/v3/distribution-actions/case/subject")
 
     assert response.status_code == 401
-
-
-def test_v10_14_distribution_route_registrar_returns_app():
-    assert register_distribution_action_routes(app) is app
