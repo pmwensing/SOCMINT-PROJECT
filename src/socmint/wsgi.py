@@ -22,6 +22,7 @@ from .distribution_release_ledger_routes import register_distribution_release_le
 from .release_ledger_dashboard_routes import register_release_ledger_dashboard_routes
 from .distribution_handoff_packet_routes import register_distribution_handoff_packet_routes
 from .entity_profile_intelligence_routes import register_entity_profile_intelligence_routes
+from .entity_profile_intelligence_ui_routes import register_entity_profile_intelligence_ui_routes
 
 app = create_app()
 register_full_report_aliases(app)
@@ -47,3 +48,4 @@ register_distribution_release_ledger_routes(app)
 register_release_ledger_dashboard_routes(app)
 register_distribution_handoff_packet_routes(app)
 register_entity_profile_intelligence_routes(app)
+register_entity_profile_intelligence_ui_routes(app)
