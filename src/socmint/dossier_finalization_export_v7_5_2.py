@@ -122,6 +122,7 @@ def build_finalization_export_files(packet: dict[str, Any]) -> dict[str, bytes]:
     }
     preview_packet = {key: value for key, value in packet.items() if key not in {"manifest", "files"}}
     files["README.md"] = _readme(preview_packet).encode("utf-8")
+    files["manifest.json"] = b"{}\n"
     manifest = finalization_export_manifest(files)
     files["manifest.json"] = canonical_json(manifest).encode("utf-8")
     return {path: files[path] for path in sorted(files)}
