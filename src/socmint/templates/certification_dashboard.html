@@ -13,12 +13,15 @@
   .cert-form input { padding: 8px; margin: 4px; min-width: 220px; }
   .cert-form button { padding: 8px 12px; }
   .cert-actions a { display: inline-block; margin: 2px 6px 2px 0; }
+  .cert-action-form { margin-top: 6px; display: grid; gap: 4px; }
+  .cert-action-form input { min-width: 160px; padding: 5px; }
+  .cert-action-form button { padding: 5px 8px; }
   pre.cert-markdown { white-space: pre-wrap; background: #0f172a; color: #e5e7eb; padding: 12px; border-radius: 12px; overflow: auto; }
 </style>
 
 <section class="cert-card">
   <h1>Certification Index UI / Distribution Readiness Dashboard</h1>
-  <p class="cert-muted">v10.13 analyst view for v10.12 certification index results: exports, artifacts, verification, blockers, audit coverage, and safe-to-distribute decisions.</p>
+  <p class="cert-muted">v10.14 action console for certification index results: review, approve, hold, reject, and export operator decision packets.</p>
   <form class="cert-form" method="get" action="/dossier/certification-dashboard">
     <label>Case ID <input name="case_id" value="{{ payload.case_id }}" placeholder="case id"></label>
     <label>Subject ID <input name="subject_id" value="{{ payload.subject_id }}" placeholder="optional subject id"></label>
@@ -70,7 +73,7 @@
         <th>Audit</th>
         <th>Blockers</th>
         <th>Safe bundle</th>
-        <th>Links</th>
+        <th>Links + actions</th>
       </tr>
     </thead>
     <tbody>
@@ -90,6 +93,16 @@
           <a href="/dossier/certification-dashboard?case_id={{ payload.case_id }}&subject_id={{ entry.subject_id }}">focus</a>
           <a href="/api/v1/dossier-builder/v3/certification-index/{{ payload.case_id }}/{{ entry.subject_id }}">entry JSON</a>
           <a href="/api/v1/dossier-builder/v3/export-certification/{{ payload.case_id }}/{{ entry.subject_id }}">certification JSON</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-actions/{{ payload.case_id }}/{{ entry.subject_id }}">actions JSON</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-packet/{{ payload.case_id }}/{{ entry.subject_id }}">packet JSON</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-packet/{{ payload.case_id }}/{{ entry.subject_id }}/markdown">packet markdown</a>
+          <form class="cert-action-form" method="post" action="/api/v1/dossier-builder/v3/distribution-actions/{{ payload.case_id }}/{{ entry.subject_id }}">
+            <input name="note" placeholder="operator note">
+            <button name="action" value="mark_reviewed" type="submit">mark reviewed</button>
+            <button name="action" value="approve" type="submit" {% if not entry.safe_to_distribute %}disabled{% endif %}>approve distribution</button>
+            <button name="action" value="hold" type="submit">hold</button>
+            <button name="action" value="reject" type="submit">reject</button>
+          </form>
         </td>
       </tr>
     {% else %}
@@ -103,6 +116,11 @@
 <section class="cert-card">
   <h2>Focused subject: {{ payload.entry.subject_id }}</h2>
   <p><strong>Decision:</strong> {{ payload.entry.distribution_decision }} · <strong>Certified:</strong> {{ payload.entry.certified }} · <strong>Verification:</strong> {{ payload.entry.verification_status }}</p>
+  <p>
+    <a href="/api/v1/dossier-builder/v3/distribution-actions/{{ payload.case_id }}/{{ payload.entry.subject_id }}">Operator actions JSON</a> |
+    <a href="/api/v1/dossier-builder/v3/distribution-packet/{{ payload.case_id }}/{{ payload.entry.subject_id }}">Distribution packet JSON</a> |
+    <a href="/api/v1/dossier-builder/v3/distribution-packet/{{ payload.case_id }}/{{ payload.entry.subject_id }}/markdown">Distribution packet markdown</a>
+  </p>
   <h3>Attached artifacts</h3>
   <table class="cert-table">
     <thead><tr><th>Filename</th><th>Media type</th><th>SHA-256</th><th>Path</th></tr></thead>
