@@ -24,6 +24,7 @@ from .distribution_handoff_packet_routes import register_distribution_handoff_pa
 from .entity_profile_intelligence_routes import register_entity_profile_intelligence_routes
 from .entity_profile_intelligence_ui_routes import register_entity_profile_intelligence_ui_routes
 from .scope_lock_routes import register_scope_lock_routes
+from .build_audit_routes import register_build_audit_routes
 
 app = create_app()
 register_full_report_aliases(app)
@@ -51,3 +52,4 @@ register_distribution_handoff_packet_routes(app)
 register_entity_profile_intelligence_routes(app)
 register_entity_profile_intelligence_ui_routes(app)
 register_scope_lock_routes(app)
+register_build_audit_routes(app)
