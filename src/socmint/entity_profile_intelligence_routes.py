@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import Response, jsonify, request, session
 
+from .dossier_evidence_manifest_v7_5 import attach_evidence_appendix
 from .dossier_export_enforcement_v7_5 import attach_export_enforcement
 from .dossier_export_enforcement_v7_5 import export_block_message
 from .entity_profile_intelligence import build_entity_profile_intelligence
@@ -21,10 +22,15 @@ def _export_mode(payload: dict) -> str:
     return str(payload.get("export_mode") or request.args.get("mode") or "draft")
 
 
+def _raw_evidence(payload: dict) -> list[dict]:
+    evidence = payload.get("evidence") or []
+    return evidence if isinstance(evidence, list) else []
+
+
 def _build_from_payload(payload: dict) -> dict:
     return build_entity_profile_intelligence(
         payload.get("subject") or {},
-        evidence=payload.get("evidence") or [],
+        evidence=_raw_evidence(payload),
         analyst_reviewed=bool(payload.get("analyst_reviewed")),
         analyst_notes=payload.get("analyst_notes") or [],
     )
@@ -33,6 +39,7 @@ def _build_from_payload(payload: dict) -> dict:
 def _build_from_request() -> dict:
     payload = _request_payload()
     built = _build_from_payload(payload)
+    built = attach_evidence_appendix(built, raw_evidence=_raw_evidence(payload))
     return attach_export_enforcement(built, mode=_export_mode(payload))
 
 
