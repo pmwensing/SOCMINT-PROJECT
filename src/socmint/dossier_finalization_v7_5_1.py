@@ -308,7 +308,10 @@ def render_finalization_markdown(packet: dict[str, Any]) -> str:
         "## Component Status",
         "",
     ]
-    lines.extend((f"- **{component}**: `{status}`" for component, status in sorted(component_status.items())) or ["None."])
+    if component_status:
+        lines.extend(f"- **{component}**: `{status}`" for component, status in sorted(component_status.items()))
+    else:
+        lines.append("None.")
     lines.extend(["", "## Blocking Findings", ""])
     lines.extend(_lines_for_findings(list(packet.get("blocking_findings") or [])))
     lines.extend(["", "## Warnings", ""])
@@ -319,5 +322,8 @@ def render_finalization_markdown(packet: dict[str, Any]) -> str:
     else:
         lines.append("None.")
     lines.extend(["", "## Recommended Actions", ""])
-    lines.extend((f"- {action}" for action in actions) or ["None."])
+    if actions:
+        lines.extend(f"- {action}" for action in actions)
+    else:
+        lines.append("None.")
     return "\n".join(lines) + "\n"
