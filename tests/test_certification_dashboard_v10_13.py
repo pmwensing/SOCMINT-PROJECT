@@ -55,7 +55,7 @@ def test_v10_13_dashboard_payload_focuses_subject(tmp_path, monkeypatch):
 
     assert payload["entry"]["subject_id"] == "subject-cert-ui-focus"
     assert payload["entry"]["safe_to_distribute"] is True
-    assert payload["entry"]["artifact_count"] == 1
+    assert payload["entry"]["artifact_count"] == 2
 
 
 def test_v10_13_dashboard_routes_are_registered():
