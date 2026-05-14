@@ -21,7 +21,7 @@
 
 <section class="cert-card">
   <h1>Certification Index UI / Distribution Readiness Dashboard</h1>
-  <p class="cert-muted">v10.14 action console for certification index results: review, approve, hold, reject, and export operator decision packets.</p>
+  <p class="cert-muted">v10.15 export builder for approved distribution packets: build ZIPs with certification data, operator decisions, manifests, and dossier artifacts.</p>
   <form class="cert-form" method="get" action="/dossier/certification-dashboard">
     <label>Case ID <input name="case_id" value="{{ payload.case_id }}" placeholder="case id"></label>
     <label>Subject ID <input name="subject_id" value="{{ payload.subject_id }}" placeholder="optional subject id"></label>
@@ -96,12 +96,17 @@
           <a href="/api/v1/dossier-builder/v3/distribution-actions/{{ payload.case_id }}/{{ entry.subject_id }}">actions JSON</a>
           <a href="/api/v1/dossier-builder/v3/distribution-packet/{{ payload.case_id }}/{{ entry.subject_id }}">packet JSON</a>
           <a href="/api/v1/dossier-builder/v3/distribution-packet/{{ payload.case_id }}/{{ entry.subject_id }}/markdown">packet markdown</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ entry.subject_id }}">export manifest</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ entry.subject_id }}/download">download ZIP</a>
           <form class="cert-action-form" method="post" action="/api/v1/dossier-builder/v3/distribution-actions/{{ payload.case_id }}/{{ entry.subject_id }}">
             <input name="note" placeholder="operator note">
             <button name="action" value="mark_reviewed" type="submit">mark reviewed</button>
             <button name="action" value="approve" type="submit" {% if not entry.safe_to_distribute %}disabled{% endif %}>approve distribution</button>
             <button name="action" value="hold" type="submit">hold</button>
             <button name="action" value="reject" type="submit">reject</button>
+          </form>
+          <form class="cert-action-form" method="post" action="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ entry.subject_id }}/build">
+            <button type="submit" {% if not entry.safe_to_distribute %}disabled{% endif %}>build distribution ZIP</button>
           </form>
         </td>
       </tr>
@@ -119,7 +124,9 @@
   <p>
     <a href="/api/v1/dossier-builder/v3/distribution-actions/{{ payload.case_id }}/{{ payload.entry.subject_id }}">Operator actions JSON</a> |
     <a href="/api/v1/dossier-builder/v3/distribution-packet/{{ payload.case_id }}/{{ payload.entry.subject_id }}">Distribution packet JSON</a> |
-    <a href="/api/v1/dossier-builder/v3/distribution-packet/{{ payload.case_id }}/{{ payload.entry.subject_id }}/markdown">Distribution packet markdown</a>
+    <a href="/api/v1/dossier-builder/v3/distribution-packet/{{ payload.case_id }}/{{ payload.entry.subject_id }}/markdown">Distribution packet markdown</a> |
+    <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ payload.entry.subject_id }}">Distribution export manifest</a> |
+    <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ payload.entry.subject_id }}/download">Download distribution ZIP</a>
   </p>
   <h3>Attached artifacts</h3>
   <table class="cert-table">
