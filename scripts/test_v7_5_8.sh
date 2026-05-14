@@ -3,22 +3,10 @@ set -euo pipefail
 
 export PYTHONPATH="$PWD/src:${PYTHONPATH:-}"
 
-if [ -f .env ]; then
-  set +u
-  set -a
-  . ./.env
-  set +a
-  set -u
-fi
+echo "[+] Compile v7.5.8"
+python3 -m compileall -q src/socmint
 
-echo "[+] v7.5.8 compile"
-python3 -m compileall -q src/socmint scripts/command_center_smoke_v7_5_8.py scripts/full_report_retention_ui_smoke_v7_5_7.py
-
-echo "[+] v7.5.8 command center UX smoke"
-python3 scripts/command_center_smoke_v7_5_8.py
-
-echo "[+] v7.5.8 retention UI regression"
-python3 scripts/full_report_retention_ui_smoke_v7_5_7.py
-
-echo "[+] v7.5.8 full dossier regression"
-pytest -q tests/test_entity_dossier_v7_5.py
+echo "[+] v7.5.8 handoff index export bundle tests"
+pytest -q \
+  tests/test_dossier_finalization_handoff_export_bundle_v7_5_8.py \
+  tests/test_dossier_finalization_handoff_export_bundle_routes_v7_5_8.py
