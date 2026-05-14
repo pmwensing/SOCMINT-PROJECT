@@ -3,26 +3,10 @@ set -euo pipefail
 
 export PYTHONPATH="$PWD/src:${PYTHONPATH:-}"
 
-if [ -f .env ]; then
-  set +u
-  set -a
-  . ./.env
-  set +a
-  set -u
-fi
-
-echo "[+] v7.5.1 compile"
+echo "[+] Compile v7.5.1"
 python3 -m compileall -q src/socmint
 
-echo "[+] v7.5.1 route check"
-python3 - <<'PY'
-from socmint.dashboard import create_app
-
-app = create_app()
-for rule in sorted(app.url_map.iter_rules(), key=lambda r: r.rule):
-    if "dossier-v2" in rule.rule or "full-report" in rule.rule:
-        print(rule.rule, sorted(rule.methods - {"HEAD", "OPTIONS"}))
-PY
-
-echo "[+] v7.5.1 tests"
-pytest -q tests/test_entity_dossier_v7_5.py
+echo "[+] v7.5.1 finalization tests"
+pytest -q \
+  tests/test_dossier_finalization_v7_5_1.py \
+  tests/test_dossier_finalization_routes_v7_5_1.py
