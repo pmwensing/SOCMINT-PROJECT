@@ -21,7 +21,7 @@
 
 <section class="cert-card">
   <h1>Certification Index UI / Distribution Readiness Dashboard</h1>
-  <p class="cert-muted">v10.16 integrity console for distribution ZIPs: verify required files, hashes, artifact counts, manifest consistency, and export readiness.</p>
+  <p class="cert-muted">v10.17 release seal ledger: seal verified distribution ZIPs, preserve release state, and audit final release decisions.</p>
   <form class="cert-form" method="get" action="/dossier/certification-dashboard">
     <label>Case ID <input name="case_id" value="{{ payload.case_id }}" placeholder="case id"></label>
     <label>Subject ID <input name="subject_id" value="{{ payload.subject_id }}" placeholder="optional subject id"></label>
@@ -48,7 +48,8 @@
     <a href="/api/v1/dossier-builder/v3/certification-index/{{ payload.case_id }}">Index JSON</a> |
     <a href="/api/v1/dossier-builder/v3/certification-index/{{ payload.case_id }}/summary">Summary JSON</a> |
     <a href="/api/v1/dossier-builder/v3/certification-index/{{ payload.case_id }}/markdown">Markdown</a> |
-    <a href="/api/v1/dossier-builder/v3/certification-dashboard/{{ payload.case_id }}">Dashboard JSON</a>
+    <a href="/api/v1/dossier-builder/v3/certification-dashboard/{{ payload.case_id }}">Dashboard JSON</a> |
+    <a href="/api/v1/dossier-builder/v3/distribution-release-ledger/{{ payload.case_id }}">Release ledger</a>
   </p>
   {% if payload.summary.blocker_counts %}
     <h3>Remaining blockers</h3>
@@ -100,6 +101,8 @@
           <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ entry.subject_id }}/download">download ZIP</a>
           <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ entry.subject_id }}/verify">verify ZIP</a>
           <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ entry.subject_id }}/verify/markdown">verify markdown</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-release/{{ payload.case_id }}/{{ entry.subject_id }}">release state</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-release/{{ payload.case_id }}/{{ entry.subject_id }}/markdown">seal markdown</a>
           <form class="cert-action-form" method="post" action="/api/v1/dossier-builder/v3/distribution-actions/{{ payload.case_id }}/{{ entry.subject_id }}">
             <input name="note" placeholder="operator note">
             <button name="action" value="mark_reviewed" type="submit">mark reviewed</button>
@@ -109,6 +112,10 @@
           </form>
           <form class="cert-action-form" method="post" action="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ entry.subject_id }}/build">
             <button type="submit" {% if not entry.safe_to_distribute %}disabled{% endif %}>build distribution ZIP</button>
+          </form>
+          <form class="cert-action-form" method="post" action="/api/v1/dossier-builder/v3/distribution-release/{{ payload.case_id }}/{{ entry.subject_id }}/seal">
+            <input name="note" placeholder="release seal note">
+            <button type="submit" {% if not entry.safe_to_distribute %}disabled{% endif %}>seal release</button>
           </form>
         </td>
       </tr>
@@ -130,7 +137,9 @@
     <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ payload.entry.subject_id }}">Distribution export manifest</a> |
     <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ payload.entry.subject_id }}/download">Download distribution ZIP</a> |
     <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ payload.entry.subject_id }}/verify">Verify distribution ZIP</a> |
-    <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ payload.entry.subject_id }}/verify/markdown">Verification markdown</a>
+    <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ payload.entry.subject_id }}/verify/markdown">Verification markdown</a> |
+    <a href="/api/v1/dossier-builder/v3/distribution-release/{{ payload.case_id }}/{{ payload.entry.subject_id }}">Release state</a> |
+    <a href="/api/v1/dossier-builder/v3/distribution-release/{{ payload.case_id }}/{{ payload.entry.subject_id }}/markdown">Release seal markdown</a>
   </p>
   <h3>Attached artifacts</h3>
   <table class="cert-table">
