@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .ledger-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 16px 0; }
+  .ledger-card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 14px; box-shadow: 0 10px 25px #0004; }
+  .ledger-card strong { display: block; font-size: 28px; color: #bfdbfe; }
+  .ledger-muted { color: #64748b; }
+  .ledger-ok { color: #166534; font-weight: 700; }
+  .ledger-hold { color: #991b1b; font-weight: 700; }
+  .ledger-ready { color: #92400e; font-weight: 700; }
+  .ledger-table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  .ledger-table th, .ledger-table td { text-align: left; vertical-align: top; border-bottom: 1px solid #e2e8f0; padding: 8px; }
+  .ledger-form input { padding: 8px; margin: 4px; min-width: 260px; }
+  .ledger-form button { padding: 8px 12px; }
+  .ledger-actions a { display: inline-block; margin: 2px 6px 2px 0; }
+</style>
+
+<section class="ledger-card">
+  <h1>Release Ledger Dashboard / Case Distribution Console</h1>
+  <p class="ledger-muted">v10.18 case-wide view of released, ready-to-seal, and held dossier distribution exports.</p>
+  <form class="ledger-form" method="get" action="/dossier/release-ledger-dashboard">
+    <label>Case ID <input name="case_id" value="{{ case_id }}" placeholder="case id"></label>
+    <button type="submit">Open release ledger</button>
+  </form>
+</section>
+
+{% if not payload %}
+<section class="ledger-card">
+  <h2>No case selected</h2>
+  <p>Enter a case ID to load the release ledger dashboard.</p>
+</section>
+{% else %}
+<section class="ledger-grid">
+  <div class="ledger-card"><span class="ledger-muted">Exports</span><strong>{{ payload.export_count }}</strong></div>
+  <div class="ledger-card"><span class="ledger-muted">Released</span><strong>{{ payload.counts.released }}</strong></div>
+  <div class="ledger-card"><span class="ledger-muted">Ready to seal</span><strong>{{ payload.counts.ready_to_seal }}</strong></div>
+  <div class="ledger-card"><span class="ledger-muted">Held</span><strong>{{ payload.counts.held }}</strong></div>
+</section>
+
+<section class="ledger-card">
+  <h2>Case links</h2>
+  <p>
+    <a href="/dossier/certification-dashboard?case_id={{ payload.case_id }}">Certification dashboard</a> |
+    <a href="/api/v1/dossier-builder/v3/release-ledger-dashboard/{{ payload.case_id }}">Dashboard JSON</a> |
+    <a href="/api/v1/dossier-builder/v3/release-ledger-dashboard/{{ payload.case_id }}/markdown">Dashboard markdown</a> |
+    <a href="/api/v1/dossier-builder/v3/distribution-release-ledger/{{ payload.case_id }}">Raw release ledger</a>
+  </p>
+</section>
+
+<section class="ledger-card">
+  <h2>Release rows</h2>
+  <table class="ledger-table">
+    <thead>
+      <tr>
+        <th>Subject</th>
+        <th>State</th>
+        <th>Seal</th>
+        <th>ZIP</th>
+        <th>Verification</th>
+        <th>Links</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for row in payload.rows %}
+      <tr>
+        <td><code>{{ row.subject_id }}</code></td>
+        <td class="{% if row.release_state == 'released' %}ledger-ok{% elif row.release_state == 'ready_to_seal' %}ledger-ready{% else %}ledger-hold{% endif %}">{{ row.release_state }}</td>
+        <td>
+          {% if row.seal_id %}<code>{{ row.seal_id }}</code><br>{{ row.released_at }}<br>{{ row.actor }}{% else %}<span class="ledger-muted">not sealed</span>{% endif %}
+        </td>
+        <td>{% if row.zip_sha256 %}<code>{{ row.zip_sha256 }}</code>{% else %}<span class="ledger-muted">none</span>{% endif %}</td>
+        <td>{{ row.verification_status or 'unknown' }}</td>
+        <td class="ledger-actions">
+          <a href="/dossier/certification-dashboard?case_id={{ payload.case_id }}&subject_id={{ row.subject_id }}">focus</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ row.subject_id }}/verify">verify</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-export/{{ payload.case_id }}/{{ row.subject_id }}/download">download ZIP</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-release/{{ payload.case_id }}/{{ row.subject_id }}">release state</a>
+          <a href="/api/v1/dossier-builder/v3/distribution-release/{{ payload.case_id }}/{{ row.subject_id }}/markdown">seal markdown</a>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6">No distribution exports found for this case.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}
