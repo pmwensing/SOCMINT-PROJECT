@@ -6,6 +6,7 @@ from typing import Any
 
 from .dossier_builder_v3 import build_dossier_payload
 from .dossier_builder_v3 import clamp_confidence
+from .dossier_quality_v7_5 import evaluate_dossier_quality
 
 ENTITY_PROFILE_INTELLIGENCE_SCHEMA = "socmint.entity_profile_intelligence.v10_20_0"
 
@@ -202,7 +203,16 @@ def build_entity_profile_intelligence(
         "source_citations",
         "analyst_notes",
     ]
+    payload["quality_gate"] = evaluate_dossier_quality(payload)
+    payload["export_ready"] = payload["quality_gate"]["status"] == "pass"
     return payload
+
+
+def _summary_export_ready(payload: dict[str, Any]) -> Any:
+    preflight = payload.get("export_preflight") or {}
+    if isinstance(preflight, dict) and "ready" in preflight:
+        return preflight.get("ready")
+    return payload.get("export_ready")
 
 
 def entity_profile_intelligence_summary(payload: dict[str, Any]) -> dict[str, Any]:
@@ -217,7 +227,9 @@ def entity_profile_intelligence_summary(payload: dict[str, Any]) -> dict[str, An
         "contradiction_count": len(payload.get("contradictions", [])),
         "risk_level": payload.get("risk_scoring", {}).get("risk_level"),
         "confidence": payload.get("confidence_scoring", {}).get("score"),
-        "export_ready": payload.get("export_preflight", {}).get("ready"),
+        "export_ready": _summary_export_ready(payload),
+        "quality_status": payload.get("quality_gate", {}).get("status"),
+        "quality_finding_count": payload.get("quality_gate", {}).get("finding_count"),
     }
 
 
@@ -230,6 +242,7 @@ def entity_profile_intelligence_markdown(payload: dict[str, Any]) -> str:
         f"Case ID: {subject.get('case_id')}",
         f"Confidence: {payload.get('confidence_scoring', {}).get('score')}",
         f"Risk: {payload.get('risk_scoring', {}).get('risk_level')}",
+        f"Quality Gate: {payload.get('quality_gate', {}).get('status', 'not_checked')}",
         "",
         "## Aliases / Handles",
     ]
@@ -253,4 +266,8 @@ def entity_profile_intelligence_markdown(payload: dict[str, Any]) -> str:
         lines.append(f"- {conflict.get('claim')}: {', '.join(conflict.get('values', []))} [{', '.join(conflict.get('evidence_refs', []))}]")
     if not payload.get("contradictions"):
         lines.append("- none")
+    quality = payload.get("quality_gate") or {}
+    lines.extend(["", "## Quality Gate"])
+    lines.append(f"- Status: {quality.get('status', 'not_checked')}")
+    lines.append(f"- Findings: {quality.get('finding_count', 0)}")
     return "\n".join(lines) + "\n"
