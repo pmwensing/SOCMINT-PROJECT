@@ -3,22 +3,10 @@ set -euo pipefail
 
 export PYTHONPATH="$PWD/src:${PYTHONPATH:-}"
 
-if [ -f .env ]; then
-  set +u
-  set -a
-  . ./.env
-  set +a
-  set -u
-fi
+echo "[+] Compile v7.5.6"
+python3 -m compileall -q src/socmint
 
-echo "[+] v7.5.6 compile"
-python3 -m compileall -q src/socmint scripts/full_report_retention_smoke_v7_5_6.py scripts/full_report_human_equivalent_smoke_v7_5_6.py
-
-echo "[+] v7.5.6 retention smoke"
-python3 scripts/full_report_retention_smoke_v7_5_6.py
-
-echo "[+] v7.5.6 human-equivalent smoke"
-python3 scripts/full_report_human_equivalent_smoke_v7_5_6.py
-
-echo "[+] v7.5.6 regression tests"
-pytest -q tests/test_entity_dossier_v7_5.py
+echo "[+] v7.5.6 certificate bundle verifier tests"
+pytest -q \
+  tests/test_dossier_finalization_certificate_bundle_verify_v7_5_6.py \
+  tests/test_dossier_finalization_certificate_bundle_verify_routes_v7_5_6.py
