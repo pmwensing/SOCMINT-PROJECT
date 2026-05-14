@@ -39,6 +39,16 @@ def _safe_arcname(path: Path, prefix: str) -> str:
     return f"{prefix}/{safe_slug(path.name, 'artifact')}"
 
 
+def _manifest_source_path(manifest: dict[str, Any]) -> Path | None:
+    manifest_path = manifest.get("manifest_path")
+    if manifest_path:
+        return Path(str(manifest_path))
+    directory = manifest.get("directory")
+    if directory:
+        return Path(str(directory)) / "manifest.json"
+    return None
+
+
 def build_distribution_packet_export(
     case_id: str,
     subject_id: str,
@@ -73,11 +83,18 @@ def build_distribution_packet_export(
         archive.write(statement_path, "distribution_statement.md")
         archive.write(packet_json_path, "distribution_packet.json")
 
-        if manifest.get("status") != "missing" and manifest.get("manifest_path"):
-            source_manifest = Path(str(manifest["manifest_path"]))
-            if source_manifest.exists():
+        if manifest.get("status") != "missing":
+            source_manifest = _manifest_source_path(manifest)
+            if source_manifest and source_manifest.exists():
                 archive.write(source_manifest, "dossier_manifest.json")
-                files.append({"role": "dossier_manifest", "path": str(source_manifest), "arcname": "dossier_manifest.json", "sha256": _sha256_file(source_manifest)})
+                files.append(
+                    {
+                        "role": "dossier_manifest",
+                        "path": str(source_manifest),
+                        "arcname": "dossier_manifest.json",
+                        "sha256": _sha256_file(source_manifest),
+                    }
+                )
 
         if action_log.exists():
             archive.write(action_log, "operator_action_log.jsonl")
