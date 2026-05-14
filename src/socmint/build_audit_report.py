@@ -112,17 +112,32 @@ def build_drift_report(app=None) -> dict[str, Any]:
     }
 
 
+def _safe_audit_events(limit: int):
+    try:
+        return db.get_audit_events(limit=limit)
+    except Exception:
+        return []
+
+
+def _safe_policy_events(limit: int):
+    try:
+        return db.list_policy_gate_events(limit=limit)
+    except Exception:
+        return []
+
+
+def _safe_workbench_jobs(limit: int):
+    try:
+        return db.list_workbench_jobs(limit=limit)
+    except Exception:
+        return []
+
+
 def build_audit_report(app=None, limit: int = 100) -> dict[str, Any]:
     db.ensure_configured()
-    audit_events = db.get_audit_events(limit=limit)
-    try:
-        policy_events = db.list_policy_gate_events(limit=limit)
-    except Exception:
-        policy_events = []
-    try:
-        jobs = db.list_workbench_jobs(limit=limit)
-    except Exception:
-        jobs = []
+    audit_events = _safe_audit_events(limit)
+    policy_events = _safe_policy_events(limit)
+    jobs = _safe_workbench_jobs(limit)
 
     audit_action_counts = Counter(event.action for event in audit_events)
     policy_action_counts = Counter(event.action for event in policy_events)
