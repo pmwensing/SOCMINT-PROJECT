@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .cert-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 16px 0; }
+  .cert-card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 14px; box-shadow: 0 10px 25px #0004; }
+  .cert-card strong { display: block; font-size: 28px; color: #bfdbfe; }
+  .cert-muted { color: #64748b; }
+  .cert-ok { color: #166534; font-weight: 700; }
+  .cert-hold { color: #991b1b; font-weight: 700; }
+  .cert-pill { display: inline-block; border: 1px solid #cbd5e1; border-radius: 999px; padding: 2px 8px; margin: 2px; font-size: 12px; }
+  .cert-table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  .cert-table th, .cert-table td { text-align: left; vertical-align: top; border-bottom: 1px solid #e2e8f0; padding: 8px; }
+  .cert-form input { padding: 8px; margin: 4px; min-width: 220px; }
+  .cert-form button { padding: 8px 12px; }
+  .cert-actions a { display: inline-block; margin: 2px 6px 2px 0; }
+  pre.cert-markdown { white-space: pre-wrap; background: #0f172a; color: #e5e7eb; padding: 12px; border-radius: 12px; overflow: auto; }
+</style>
+
+<section class="cert-card">
+  <h1>Certification Index UI / Distribution Readiness Dashboard</h1>
+  <p class="cert-muted">v10.13 analyst view for v10.12 certification index results: exports, artifacts, verification, blockers, audit coverage, and safe-to-distribute decisions.</p>
+  <form class="cert-form" method="get" action="/dossier/certification-dashboard">
+    <label>Case ID <input name="case_id" value="{{ payload.case_id }}" placeholder="case id"></label>
+    <label>Subject ID <input name="subject_id" value="{{ payload.subject_id }}" placeholder="optional subject id"></label>
+    <button type="submit">Open dashboard</button>
+  </form>
+</section>
+
+{% if payload.status == 'empty' %}
+<section class="cert-card">
+  <h2>No case selected</h2>
+  <p>Enter a case ID to load distribution readiness across dossier exports.</p>
+</section>
+{% else %}
+<section class="cert-grid">
+  <div class="cert-card"><span class="cert-muted">Exports</span><strong>{{ payload.summary.export_count }}</strong></div>
+  <div class="cert-card"><span class="cert-muted">Safe to distribute</span><strong>{{ payload.summary.safe_to_distribute_count }}</strong></div>
+  <div class="cert-card"><span class="cert-muted">Held</span><strong>{{ payload.summary.hold_count }}</strong></div>
+  <div class="cert-card"><span class="cert-muted">Blocker types</span><strong>{{ payload.summary.blocker_counts|length }}</strong></div>
+</section>
+
+<section class="cert-card">
+  <h2>Distribution readiness</h2>
+  <p>
+    <a href="/api/v1/dossier-builder/v3/certification-index/{{ payload.case_id }}">Index JSON</a> |
+    <a href="/api/v1/dossier-builder/v3/certification-index/{{ payload.case_id }}/summary">Summary JSON</a> |
+    <a href="/api/v1/dossier-builder/v3/certification-index/{{ payload.case_id }}/markdown">Markdown</a> |
+    <a href="/api/v1/dossier-builder/v3/certification-dashboard/{{ payload.case_id }}">Dashboard JSON</a>
+  </p>
+  {% if payload.summary.blocker_counts %}
+    <h3>Remaining blockers</h3>
+    {% for blocker, count in payload.summary.blocker_counts.items() %}
+      <span class="cert-pill">{{ blocker }}: {{ count }}</span>
+    {% endfor %}
+  {% else %}
+    <p class="cert-ok">No blockers present for indexed exports.</p>
+  {% endif %}
+</section>
+
+<section class="cert-card">
+  <h2>Dossier exports</h2>
+  <table class="cert-table">
+    <thead>
+      <tr>
+        <th>Subject</th>
+        <th>Decision</th>
+        <th>Certified</th>
+        <th>Artifacts</th>
+        <th>Verification</th>
+        <th>Audit</th>
+        <th>Blockers</th>
+        <th>Safe bundle</th>
+        <th>Links</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for entry in payload.index.entries %}
+      <tr>
+        <td><code>{{ entry.subject_id }}</code></td>
+        <td class="{% if entry.safe_to_distribute %}cert-ok{% else %}cert-hold{% endif %}">{{ entry.distribution_decision }}</td>
+        <td>{{ entry.certified }}</td>
+        <td>{{ entry.artifact_count }} attached<br>{{ entry.hash_count }} hashed<br>{{ entry.missing_hash_count }} missing hashes</td>
+        <td>{{ entry.verification_status }}<br>{{ entry.gate_decision }}</td>
+        <td>{{ entry.audit_event_count }} events</td>
+        <td>
+          {% for blocker in entry.blockers %}<span class="cert-pill">{{ blocker }}</span>{% else %}<span class="cert-ok">none</span>{% endfor %}
+        </td>
+        <td>{% if entry.recommended_bundle %}<code>{{ entry.recommended_bundle }}</code>{% else %}<span class="cert-hold">hold</span>{% endif %}</td>
+        <td class="cert-actions">
+          <a href="/dossier/certification-dashboard?case_id={{ payload.case_id }}&subject_id={{ entry.subject_id }}">focus</a>
+          <a href="/api/v1/dossier-builder/v3/certification-index/{{ payload.case_id }}/{{ entry.subject_id }}">entry JSON</a>
+          <a href="/api/v1/dossier-builder/v3/export-certification/{{ payload.case_id }}/{{ entry.subject_id }}">certification JSON</a>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="9">No dossier exports found for this case.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if payload.entry %}
+<section class="cert-card">
+  <h2>Focused subject: {{ payload.entry.subject_id }}</h2>
+  <p><strong>Decision:</strong> {{ payload.entry.distribution_decision }} · <strong>Certified:</strong> {{ payload.entry.certified }} · <strong>Verification:</strong> {{ payload.entry.verification_status }}</p>
+  <h3>Attached artifacts</h3>
+  <table class="cert-table">
+    <thead><tr><th>Filename</th><th>Media type</th><th>SHA-256</th><th>Path</th></tr></thead>
+    <tbody>
+    {% for artifact in payload.entry.artifacts %}
+      <tr><td>{{ artifact.filename }}</td><td>{{ artifact.media_type }}</td><td><code>{{ artifact.sha256 }}</code></td><td><code>{{ artifact.path }}</code></td></tr>
+    {% else %}
+      <tr><td colspan="4">No attached artifacts.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<section class="cert-card">
+  <h2>Markdown readiness report</h2>
+  <pre class="cert-markdown">{{ payload.markdown }}</pre>
+</section>
+{% endif %}
+{% endblock %}
