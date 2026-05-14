@@ -34,11 +34,10 @@ def test_v10_13_dashboard_payload_empty_without_case():
 
 
 def test_v10_13_dashboard_payload_summarizes_case_exports(tmp_path, monkeypatch):
-    monkeypatch.setattr("src.socmint.certification_dashboard_routes.DEFAULT_EXPORT_ROOT", tmp_path, raising=False)
-    persist_export_pack(_subject("subject-cert-ui-safe"), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True)
-    persist_export_pack(_subject("subject-cert-ui-held"), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False)
+    monkeypatch.chdir(tmp_path)
+    persist_export_pack(_subject("subject-cert-ui-safe"), _evidence(), analyst_reviewed=True, audit=True)
+    persist_export_pack(_subject("subject-cert-ui-held"), _evidence(), analyst_reviewed=True, audit=False)
 
-    monkeypatch.setattr("src.socmint.dossier_certification_index.DEFAULT_EXPORT_ROOT", tmp_path)
     payload = _dashboard_payload(case_id="case-cert-ui-1013")
 
     assert payload["status"] == "ready"
@@ -49,8 +48,8 @@ def test_v10_13_dashboard_payload_summarizes_case_exports(tmp_path, monkeypatch)
 
 
 def test_v10_13_dashboard_payload_focuses_subject(tmp_path, monkeypatch):
-    persist_export_pack(_subject("subject-cert-ui-focus"), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True)
-    monkeypatch.setattr("src.socmint.dossier_certification_index.DEFAULT_EXPORT_ROOT", tmp_path)
+    monkeypatch.chdir(tmp_path)
+    persist_export_pack(_subject("subject-cert-ui-focus"), _evidence(), analyst_reviewed=True, audit=True)
 
     payload = _dashboard_payload(case_id="case-cert-ui-1013", subject_id="subject-cert-ui-focus")
 
