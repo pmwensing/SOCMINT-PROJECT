@@ -77,7 +77,7 @@ def test_zip_contains_all_required_files():
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as archive:
         assert set(archive.namelist()) == REQUIRED_FILES
         manifest = json.loads(archive.read("manifest.json"))
-        assert manifest["file_count"] == len(REQUIRED_FILES) - 1
+        assert manifest["file_count"] == len(REQUIRED_FILES)
 
 
 def test_safe_package_name_strips_unsafe_path_characters():
