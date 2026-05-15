@@ -14,6 +14,7 @@ ACTION_CLOSEOUT = "closeout_ready"
 ACTION_REVIEW = "human_review_required"
 ACTION_REGENERATE = "regenerate_export"
 CHAIN_STAGE = "handoff_export_verified"
+ARCHIVE_READY_ACTIONS = {"archive_ready", "archive_and_deliver"}
 
 
 def utc_now() -> str:
@@ -23,7 +24,7 @@ def utc_now() -> str:
 def recommended_closeout_action(verification_report: dict[str, Any]) -> str:
     status = str((verification_report or {}).get("status") or "").strip().lower()
     handoff_action = str((verification_report or {}).get("recommended_action") or "").strip().lower()
-    if status == "verified" and handoff_action == "archive_ready":
+    if status == "verified" and handoff_action in ARCHIVE_READY_ACTIONS:
         return ACTION_CLOSEOUT
     if status == "needs_human_review":
         return ACTION_REVIEW
