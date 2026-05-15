@@ -1,0 +1,222 @@
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+
+REPO = "pmwensing/SOCMINT-PROJECT"
+DEFAULT_BASE_BRANCH = "master"
+DEFAULT_LOCAL_CHECKS = (
+    ("ruff", "check", "src", "tests", "scripts"),
+    ("pytest", "-q"),
+    ("docker", "compose", "config"),
+)
+
+
+@dataclass(frozen=True)
+class ReleaseStep:
+    version: str
+    branch: str
+    title: str
+    release_note: str
+
+
+@dataclass(frozen=True)
+class CommandResult:
+    command: tuple[str, ...]
+    returncode: int
+    stdout: str = ""
+    stderr: str = ""
+    dry_run: bool = False
+
+
+def normalize_version(version: str) -> str:
+    cleaned = version.strip()
+    if not cleaned:
+        raise ValueError("version is required")
+    return cleaned if cleaned.startswith("v") else f"v{cleaned}"
+
+
+def release_branch(version: str) -> str:
+    normalized = normalize_version(version)
+    slug = normalized.replace(".", "-").lower()
+    return f"release/{normalized}-automated-build" if "." not in slug else f"release/{normalized}-automated-build"
+
+
+def release_note_path(version: str) -> str:
+    normalized = normalize_version(version).upper().replace(".", "_")
+    return f"release/{normalized}_AUTOMATED_BUILD.md"
+
+
+def build_release_plan(versions: list[str], *, base_branch: str = DEFAULT_BASE_BRANCH) -> dict[str, Any]:
+    steps = []
+    for version in versions:
+        normalized = normalize_version(version)
+        steps.append(
+            ReleaseStep(
+                version=normalized,
+                branch=release_branch(normalized),
+                title=f"{normalized} Automated Build",
+                release_note=release_note_path(normalized),
+            )
+        )
+    return {
+        "schema": "socmint.release_engine.v10_24_0.plan",
+        "base_branch": base_branch,
+        "step_count": len(steps),
+        "steps": [step.__dict__ for step in steps],
+    }
+
+
+def command_text(command: tuple[str, ...]) -> str:
+    return " ".join(command)
+
+
+def run_command(command: tuple[str, ...], *, dry_run: bool = True, cwd: str | None = None) -> CommandResult:
+    if dry_run:
+        return CommandResult(command=command, returncode=0, stdout=command_text(command), dry_run=True)
+    proc = subprocess.run(command, cwd=cwd, capture_output=True, text=True, check=False)
+    return CommandResult(command=command, returncode=proc.returncode, stdout=proc.stdout, stderr=proc.stderr, dry_run=False)
+
+
+def local_check_commands() -> list[tuple[str, ...]]:
+    return list(DEFAULT_LOCAL_CHECKS)
+
+
+def git_branch_commands(step: ReleaseStep, *, base_branch: str = DEFAULT_BASE_BRANCH) -> list[tuple[str, ...]]:
+    return [
+        ("git", "checkout", base_branch),
+        ("git", "pull", "origin", base_branch),
+        ("git", "checkout", "-B", step.branch),
+    ]
+
+
+def pr_create_command(step: ReleaseStep, *, repo: str = REPO, base_branch: str = DEFAULT_BASE_BRANCH) -> tuple[str, ...]:
+    return (
+        "gh",
+        "pr",
+        "create",
+        "--repo",
+        repo,
+        "--base",
+        base_branch,
+        "--head",
+        step.branch,
+        "--title",
+        step.title,
+        "--body",
+        f"Automated build for {step.version}. Full CI must pass before merge.",
+    )
+
+
+def ci_watch_command(step: ReleaseStep, *, repo: str = REPO) -> tuple[str, ...]:
+    return ("gh", "run", "watch", "--repo", repo, "--branch", step.branch)
+
+
+def merge_command(step: ReleaseStep, *, repo: str = REPO) -> tuple[str, ...]:
+    return (
+        "gh",
+        "pr",
+        "merge",
+        "--repo",
+        repo,
+        "--merge",
+        "--auto",
+        "--delete-branch",
+        step.branch,
+    )
+
+
+def classify_ci_jobs(jobs: list[dict[str, Any]]) -> dict[str, Any]:
+    failed = [job for job in jobs if job.get("conclusion") == "failure"]
+    cancelled = [job for job in jobs if job.get("conclusion") == "cancelled"]
+    active = [job for job in jobs if job.get("status") not in {"completed"}]
+    skipped = [job for job in jobs if job.get("conclusion") == "skipped"]
+    success = [job for job in jobs if job.get("conclusion") == "success"]
+
+    if failed:
+        status = "failed"
+    elif cancelled:
+        status = "cancelled"
+    elif active:
+        status = "running"
+    else:
+        status = "passed"
+
+    return {
+        "schema": "socmint.release_engine.v10_24_0.ci_summary",
+        "status": status,
+        "success_count": len(success),
+        "skipped_count": len(skipped),
+        "failed_count": len(failed),
+        "cancelled_count": len(cancelled),
+        "active_count": len(active),
+        "failed_jobs": [job.get("name") for job in failed],
+    }
+
+
+def write_release_note(step: ReleaseStep, *, root: Path = Path("."), dry_run: bool = True) -> dict[str, Any]:
+    path = root / step.release_note
+    body = "\n".join(
+        [
+            f"# SOCMINT {step.version} — Automated Build",
+            "",
+            "## Summary",
+            "",
+            "Generated by the SOCMINT release engine.",
+            "",
+            "## Gates",
+            "",
+            "- Local checks must pass.",
+            "- GitHub Actions CI must pass.",
+            "- Merge must only happen after a green CI result.",
+            "",
+        ]
+    )
+    if not dry_run:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(body)
+    return {"path": str(path), "content": body, "dry_run": dry_run}
+
+
+def execute_plan(versions: list[str], *, dry_run: bool = True) -> dict[str, Any]:
+    plan = build_release_plan(versions)
+    executed: list[dict[str, Any]] = []
+    for raw_step in plan["steps"]:
+        step = ReleaseStep(**raw_step)
+        commands = [*git_branch_commands(step), *local_check_commands(), pr_create_command(step), ci_watch_command(step), merge_command(step)]
+        executed.append(
+            {
+                "version": step.version,
+                "branch": step.branch,
+                "release_note": write_release_note(step, dry_run=dry_run),
+                "commands": [run_command(command, dry_run=dry_run).__dict__ for command in commands],
+            }
+        )
+    return {"schema": "socmint.release_engine.v10_24_0.execution", "dry_run": dry_run, "executed": executed}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="SOCMINT release automation engine")
+    parser.add_argument("versions", nargs="+", help="Release versions, for example v10.25.0 v11.0.0")
+    parser.add_argument("--execute", action="store_true", help="Run commands instead of printing a dry-run plan")
+    parser.add_argument("--json", action="store_true", help="Print JSON output")
+    args = parser.parse_args()
+
+    result = execute_plan(args.versions, dry_run=not args.execute)
+    if args.json:
+        print(json.dumps(result, indent=2, sort_keys=True))
+    else:
+        for item in result["executed"]:
+            print(f"[release] {item['version']} -> {item['branch']}")
+            for command in item["commands"]:
+                print(f"  $ {command_text(tuple(command['command']))}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
