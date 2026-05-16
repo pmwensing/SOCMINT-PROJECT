@@ -79,9 +79,20 @@ def _base_payload_files(bundle: dict[str, Any]) -> dict[str, bytes]:
     }
 
 
-def _manifest(files: dict[str, bytes]) -> dict[str, Any]:
+def _manifest(files: dict[str, bytes], *, generated_at: str | None = None) -> dict[str, Any]:
     rows = []
     for path in REQUIRED_FILES:
+        if path == "manifest.json":
+            rows.append(
+                {
+                    "path": path,
+                    "content_type": CONTENT_TYPES[path],
+                    "size_bytes": 0,
+                    "sha256": "",
+                    "self_reference": True,
+                }
+            )
+            continue
         data = files.get(path, b"")
         rows.append(
             {
@@ -94,7 +105,7 @@ def _manifest(files: dict[str, bytes]) -> dict[str, Any]:
     return {
         "schema": MASTER_DELIVERY_EXPORT_MANIFEST_SCHEMA,
         "approved_line": APPROVED_LINE,
-        "generated_at": utc_now(),
+        "generated_at": generated_at or utc_now(),
         "file_count": len(REQUIRED_FILES),
         "files": rows,
     }
@@ -116,10 +127,7 @@ def build_master_delivery_export_bundle(index: dict[str, Any], *, bundle_name: s
         "index": safe_index,
     }
     files = _base_payload_files(bundle)
-    files["manifest.json"] = b""
-    manifest = _manifest(files)
-    files["manifest.json"] = canonical_json(manifest).encode("utf-8")
-    manifest = _manifest(files)
+    manifest = _manifest(files, generated_at=bundle["generated_at"])
     bundle["manifest"] = manifest
     bundle["files"] = deepcopy(manifest["files"])
     return bundle
