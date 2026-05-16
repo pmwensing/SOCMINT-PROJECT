@@ -28,6 +28,11 @@ def _workspace(console: dict[str, Any]) -> dict[str, Any]:
     return console.get("workspace") if isinstance(console.get("workspace"), dict) else {}
 
 
+def _package_file_paths(workspace: dict[str, Any]) -> list[str]:
+    rows = workspace.get("package_files") if isinstance(workspace.get("package_files"), list) else []
+    return sorted(str(row.get("path")) for row in rows if isinstance(row, dict) and row.get("path"))
+
+
 def summarize_evidence_capsule(capsule: dict[str, Any]) -> dict[str, Any]:
     return {
         "schema": FINAL_DELIVERY_EVIDENCE_CAPSULE_SUMMARY_SCHEMA,
@@ -48,16 +53,18 @@ def summarize_evidence_capsule(capsule: dict[str, Any]) -> dict[str, Any]:
 def _capsule_core(audit_trail: dict[str, Any]) -> dict[str, Any]:
     console = _console(audit_trail)
     workspace = _workspace(console)
+    receipt = audit_trail.get("operator_receipt") if isinstance(audit_trail.get("operator_receipt"), dict) else {}
     return {
         "schema": FINAL_DELIVERY_EVIDENCE_CAPSULE_SCHEMA,
         "version": VERSION,
         "readiness": audit_trail.get("readiness"),
         "bundle_name": audit_trail.get("bundle_name"),
-        "package_files": deepcopy(workspace.get("package_files") or []),
-        "cards": deepcopy(console.get("cards") or []),
-        "commands": deepcopy(console.get("commands") or []),
-        "operator_receipt": deepcopy(audit_trail.get("operator_receipt") or {}),
-        "audit_id": audit_trail.get("audit_id"),
+        "package_file_paths": _package_file_paths(workspace),
+        "card_types": [str(card.get("type")) for card in console.get("cards") or [] if isinstance(card, dict) and card.get("type")],
+        "command_ids": [str(command.get("id")) for command in console.get("commands") or [] if isinstance(command, dict) and command.get("id")],
+        "export_available": bool(receipt.get("export_available")),
+        "finding_count": int(receipt.get("finding_count") or 0),
+        "file_count": int(receipt.get("file_count") or 0),
     }
 
 
