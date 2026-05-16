@@ -23,7 +23,7 @@ def verified_verification_report():
         "verified": True,
         "failure_count": 0,
         "warning_count": 0,
-        "recommended_action": "archive_and_deliver",
+        "recommended_action": "archive_ready",
         "verification_status": "verified",
         "certificate_status": "valid",
         "missing_files": [],
