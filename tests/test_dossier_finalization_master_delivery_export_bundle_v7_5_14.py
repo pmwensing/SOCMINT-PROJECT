@@ -73,12 +73,17 @@ def test_manifest_has_five_rows_and_correct_file_count():
     assert {row["path"] for row in bundle["manifest"]["files"]} == REQUIRED_FILES
 
 
-def test_manifest_hashes_and_sizes_match_file_bytes():
+def test_manifest_hashes_and_sizes_match_payload_file_bytes():
     bundle = build_master_delivery_export_bundle(delivery_index())
     files = build_master_delivery_export_bundle_files(bundle)
 
     for row in bundle["manifest"]["files"]:
         path = row["path"]
+        if path == "manifest.json":
+            assert row["self_reference"] is True
+            assert row["size_bytes"] == 0
+            assert row["sha256"] == ""
+            continue
         assert row["size_bytes"] == len(files[path])
         assert row["sha256"] == sha256_bytes(files[path])
 
