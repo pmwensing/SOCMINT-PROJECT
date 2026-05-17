@@ -28,7 +28,8 @@ CONNECTORS = {
     "maigret": ConnectorSpec(
         name="maigret",
         target_types=("username", "email"),
-        command=("python", "-m", "maigret", "{username}", "--json"),
+        command=("python", "-m", "maigret", "{username}", "-J", "simple", "--timeout", "15"),
+        timeout=60,
     ),
     "h8mail": ConnectorSpec(
         name="h8mail",
