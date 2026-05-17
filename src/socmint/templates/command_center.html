@@ -3,32 +3,57 @@
 <section class="hero command-hero">
   <div>
     <p class="eyebrow">SOCMINT Command Center</p>
-    <h1>Next action, evidence status, enrichment health, and full-report control in one place.</h1>
-    <p class="muted">Start with a Spine subject for the v7.5.x Full Entity Profile Dossier workflow. The older target-job flow is still available, but it is now clearly marked as legacy/local scan processing.</p>
+    <h1>Operator readiness, evidence status, enrichment health, and full-report control in one place.</h1>
+    <p class="muted">Current baseline: {{ payload.v11_readiness.baseline }} · Release gate: {{ payload.v11_readiness.release_gate.decision|upper }} · {{ payload.v11_readiness.next_action }}</p>
   </div>
   <div class="hero-actions">
     <a class="button-link" href="{{ url_for('dashboard.spine_subjects') }}">Create / Open Subject</a>
     <a class="button-link secondary" href="{{ url_for('dashboard.jobs') }}">Review Jobs</a>
     <a class="button-link secondary" href="{{ url_for('dashboard.spine_enrichment_review') }}">Enrichment Review</a>
-    <a class="button-link secondary" href="{{ url_for('connector_runtime_health_view') }}">Connector Runtime</a>
+    <a class="button-link secondary" href="/api/v1/admin/v11/readiness-summary">v11 Readiness JSON</a>
   </div>
 </section>
 
 <section class="metric-grid">
   <article class="metric-card"><span>Subjects</span><strong>{{ payload.summary.subject_count }}</strong></article>
   <article class="metric-card"><span>Queued jobs</span><strong>{{ payload.summary.queued_jobs }}</strong></article>
-  <article class="metric-card"><span>Running jobs</span><strong>{{ payload.summary.running_jobs }}</strong></article>
   <article class="metric-card"><span>Failed jobs</span><strong>{{ payload.summary.failed_jobs }}</strong></article>
-  <article class="metric-card"><span>Findings</span><strong>{{ payload.summary.findings_count }}</strong></article>
+  <article class="metric-card"><span>Reports</span><strong>{{ payload.summary.report_count }}</strong></article>
   <article class="metric-card"><span>Smoke subjects</span><strong>{{ payload.summary.test_subject_count }}</strong></article>
   <article class="metric-card"><span>Runtime imports</span><strong>{{ payload.summary.runtime_import_status|upper }}</strong></article>
+  <article class="metric-card"><span>v11 readiness</span><strong>{{ payload.summary.v11_readiness_percentage }}%</strong></article>
+</section>
+
+<section class="panel v11-readiness-panel">
+  <div class="section-header">
+    <div>
+      <h2>v11 Readiness</h2>
+      <p class="muted">Combined release gate for frontend audit, subject workflow, test-data hygiene, runtime imports, Tor, and worker status.</p>
+    </div>
+    <a class="button-link secondary" href="/api/v1/admin/v11/readiness-summary">Release gate report JSON</a>
+  </div>
+  <div class="card-grid">
+    <article class="card status-card {{ 'ok' if payload.v11_readiness.ready else 'warning' }}">
+      <span class="status-label">Release Gate</span>
+      <strong>{{ payload.v11_readiness.release_gate.decision|upper }}</strong>
+      <p class="muted">{{ payload.v11_readiness.passed_checks }}/{{ payload.v11_readiness.total_checks }} checks passed · {{ payload.v11_readiness.percentage }}%</p>
+      <p class="muted">{{ payload.v11_readiness.next_action }}</p>
+    </article>
+    {% for check in payload.v11_readiness.checks %}
+    <article class="card status-card {{ 'ok' if check.passed else 'warning' }}">
+      <span class="status-label">{{ check.name.replace('_', ' ') }}</span>
+      <strong>{{ check.status|upper }}</strong>
+      <p class="muted">{{ check.summary }}</p>
+    </article>
+    {% endfor %}
+  </div>
 </section>
 
 <section class="panel v11-status-board">
   <div class="section-header">
     <div>
       <h2>System status</h2>
-      <p class="muted">Live frontend summary for Tor, worker queue, subjects, jobs, report readiness, runtime import health, and test-data hygiene.</p>
+      <p class="muted">Live summary for Tor, worker queue, reports, runtime import health, and test-data hygiene.</p>
     </div>
     <a class="button-link secondary" href="/api/v1/tor/status">Tor status JSON</a>
   </div>
@@ -42,16 +67,6 @@
       <span class="status-label">Worker / Queue</span>
       <strong>{{ payload.summary.worker_status|upper }}</strong>
       <p class="muted">{{ payload.summary.queued_jobs }} queued · {{ payload.summary.running_jobs }} running · {{ payload.summary.failed_jobs }} failed</p>
-    </article>
-    <article class="card status-card {{ 'ok' if payload.summary.subject_count else 'warning' }}">
-      <span class="status-label">Subjects</span>
-      <strong>{{ payload.summary.subject_count }}</strong>
-      <p class="muted">Spine subjects available for dossier workflows.</p>
-    </article>
-    <article class="card status-card {{ 'ok' if payload.summary.report_count else 'warning' }}">
-      <span class="status-label">Reports</span>
-      <strong>{{ payload.summary.report_count }}</strong>
-      <p class="muted">Full report exports currently tracked.</p>
     </article>
     <article class="card status-card {{ 'warning' if payload.test_data.cleanup_available else 'ok' }}">
       <span class="status-label">Test Data</span>
@@ -71,7 +86,7 @@
   <div class="section-header">
     <div>
       <h2>Analyst next steps</h2>
-      <p class="muted">Follow the guided v7.5.x flow: subject → enrichment/connectors → review → full report → retention.</p>
+      <p class="muted">Follow the guided flow: subject → enrichment/connectors → review → full report → readiness gate.</p>
     </div>
     {% if session.get('is_admin') or session.get('role') == 'analyst' %}
     <form method="post" action="{{ url_for('command_center_process_jobs') }}">
@@ -86,7 +101,7 @@
     <a href="{{ url_for('dashboard.spine_enrichment_review') }}"><strong>3</strong><span>Review enrichment</span></a>
     <a href="{{ url_for('dashboard.spine_subjects') }}"><strong>4</strong><span>Select subject → Generate Full Report</span></a>
     <a href="{{ url_for('dashboard.report_export_center_view') }}"><strong>5</strong><span>Export / evidence readiness</span></a>
-    <a href="{{ url_for('connector_runtime_health_view') }}"><strong>6</strong><span>Verify connector runtime</span></a>
+    <a href="/api/v1/admin/v11/readiness-summary"><strong>6</strong><span>Review v11 release gate</span></a>
   </div>
   <p class="status-banner {{ 'warning' if payload.summary.queued_jobs else 'ok' }}">{{ payload.summary.worker_hint }}</p>
 </section>
@@ -129,25 +144,6 @@
   {% endif %}
 </section>
 
-{% if payload.compatibility_warnings %}
-<section class="panel warning-panel">
-  <h2>Enrichment compatibility warnings</h2>
-  <p class="muted">These jobs may complete but produce weak results because the selected tool does not match the target type.</p>
-  <div class="card-grid">
-    {% for job in payload.compatibility_warnings %}
-    <article class="card danger-card">
-      <h3>Job {{ job.id }} — {{ job.target }}</h3>
-      <p><strong>Target type:</strong> {{ job.target_type }}</p>
-      <p><strong>Tools:</strong> {{ job.tools | join(', ') }}</p>
-      {% for warning in job.compatibility.warnings %}<p class="warning-text">{{ warning }}</p>{% endfor %}
-      {% for suggestion in job.compatibility.suggestions %}<p class="muted">Suggestion: {{ suggestion }}</p>{% endfor %}
-      <a class="card-link" href="{{ url_for('dashboard.jobs') }}">Open jobs</a>
-    </article>
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
-
 <section class="panel">
   <div class="section-header">
     <div>
@@ -167,7 +163,6 @@
         <a href="{{ url_for('dashboard.spine_dossier', subject_id=subject.id) }}">Subject dossier</a>
         <a href="/spine/subjects/{{ subject.id }}/dossier">Full Dossier v2</a>
         <a href="/spine/subjects/{{ subject.id }}/full-report/history">Export history</a>
-        <a href="/spine/subjects/{{ subject.id }}/full-report/retention">Retention / Pins</a>
       </div>
     </article>
     {% else %}
@@ -203,26 +198,4 @@
     </table>
   </div>
 </section>
-
-<section class="panel">
-  <h2>Tool compatibility guide</h2>
-  <div class="card-grid">
-    {% for item in payload.tool_guidance %}<article class="card"><h3>{{ item.target_type }}</h3><p>{{ item.recommended }}</p></article>{% endfor %}
-  </div>
-</section>
-
-{% if session.get('is_admin') or session.get('role') == 'analyst' %}
-<section class="panel legacy-panel">
-  <h2>Legacy local target scan</h2>
-  <p class="muted">Use this for quick local tool tests. For case-grade workflow, create a Spine subject above.</p>
-  <form method="post" action="{{ url_for('dashboard.run_target') }}" class="inline-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label for="target">Target</label><input type="text" id="target" name="target" placeholder="username, email, or phone" required>
-    <label for="tools">Tools</label><input type="text" id="tools" name="tools" placeholder="sherlock,maigret">
-    <label class="checkbox-label"><input type="checkbox" name="enrich" value="1"> Enrich discovered profiles</label>
-    <button type="submit">Queue legacy scan</button>
-  </form>
-  <p class="warning-text">Hint: email + Sherlock/Maigret is usually a mismatch. Use a username target for those tools.</p>
-</section>
-{% endif %}
 {% endblock %}
