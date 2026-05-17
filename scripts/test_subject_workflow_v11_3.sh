@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -99,10 +100,16 @@ require(discovery and discovery.id > 0, "discovery not created")
 
 print("[+] Export twice and verify re-run-safe history")
 first = verify_export(subject_id)
+# export_full_entity_dossier_v2 currently uses second-level timestamps in filenames.
+# Sleep across the boundary so this smoke verifies repeated export history rather than
+# failing due to same-second filename collision/overwrite.
+time.sleep(1.2)
 second = verify_export(subject_id)
+require(first["zip_path"] != second["zip_path"], "exports collided on zip_path")
+require(first["result_path"] != second["result_path"], "exports collided on result_path")
 history = full_report_export_history(subject_id, limit=10)
 exports = history.get("exports") or []
-require(history.get("count", 0) >= 2, "history missing repeated exports")
+require(history.get("count", 0) >= 2, f"history missing repeated exports: count={history.get('count')} exports={len(exports)}")
 zip_names = [item.get("zip_name") for item in exports if item.get("zip_name")]
 require(len(set(zip_names)) >= 2, "history zip names are not unique")
 require("zip_bundle" in set((exports[0] or {}).get("artifact_roles") or []), "latest history missing zip bundle")
