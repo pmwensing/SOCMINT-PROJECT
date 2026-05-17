@@ -164,7 +164,7 @@ test752:
 	PYTHONPATH=$(PWD)/src ./scripts/test_v7_5_2.sh
 
 zip752:
-	cd .. && zip -r SOCMINT-PROJECT-v7.5.2.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
+	cd .. && zip -r SOCMINT-PROJECT-v7.5.2.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/.env'
 
 
 test753:
@@ -661,7 +661,10 @@ test-v11-6: test-v11-5
 	./scripts/test_v11_6.sh
 
 test-v11-7: test-v11-6
-	./scripts/test_v11_7.sh
+	bash ./scripts/test_v11_7.sh
 
 test-v11-8: test-v11-7
-	./scripts/test_v11_8.sh
+	bash ./scripts/test_v11_8.sh
+
+test-v11-9: test-v11-8
+	bash ./scripts/test_v11_9.sh
