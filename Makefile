@@ -637,3 +637,8 @@ zip1010:
 
 test-frontend-v11:
 	./scripts/test_frontend_routes_v11.sh
+
+test-subject-workflow-v11-2:
+	./scripts/test_subject_workflow_v11_2.sh
+
+test-v11-2: test-frontend-v11 test-subject-workflow-v11-2
