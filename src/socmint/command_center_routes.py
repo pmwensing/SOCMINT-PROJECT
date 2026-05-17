@@ -4,6 +4,7 @@ from flask import flash, jsonify, redirect, render_template, session, url_for
 
 from .command_center import command_center_payload
 from .jobs import process_scan_jobs
+from .runtime_import_health import runtime_import_health_report
 from .test_data_controls import clean_test_data, test_data_summary
 
 
@@ -24,6 +25,10 @@ def register_command_center_routes(app) -> None:
     @login_required
     def api_test_data_summary():
         return jsonify(test_data_summary())
+
+    @login_required
+    def api_runtime_import_health():
+        return jsonify(runtime_import_health_report())
 
     @run_required
     def api_test_data_clean():
@@ -86,6 +91,12 @@ def register_command_center_routes(app) -> None:
         "/api/v1/admin/test-data/summary",
         endpoint="api_test_data_summary",
         view_func=api_test_data_summary,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/admin/runtime/import-health",
+        endpoint="api_runtime_import_health",
+        view_func=api_runtime_import_health,
         methods=["GET"],
     )
     app.add_url_rule(

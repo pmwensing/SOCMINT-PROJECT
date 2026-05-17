@@ -6,6 +6,7 @@ from typing import Any
 
 from . import database as db
 from .full_report_history import full_report_export_history
+from .runtime_import_health import runtime_import_health_report
 from .test_data_controls import is_smoke_label, test_data_summary
 from .tor_production import hidden_service_status
 
@@ -27,7 +28,6 @@ def tool_compatibility(target_type: str, tools: list[str]) -> dict[str, Any]:
     warnings = []
     suggestions = []
     compatible = True
-
     if target_type == "email" and normalized & USERNAME_TOOLS:
         compatible = False
         warnings.append("Email targets do not work well with username-first tools such as Sherlock or Maigret.")
@@ -90,6 +90,7 @@ def command_center_payload() -> dict[str, Any]:
         connector_runs = session.query(db.SpineConnectorRun).order_by(db.SpineConnectorRun.created_at.desc()).limit(10).all()
         findings_count = session.query(db.Finding).count()
         test_data = test_data_summary()
+        runtime_import_health = runtime_import_health_report()
         total_report_count = 0
         for subject in subjects:
             try:
@@ -109,7 +110,7 @@ def command_center_payload() -> dict[str, Any]:
         compatibility_warnings = [job for job in serialized_jobs if job["compatibility"]["warnings"]]
         latest_processed = completed_jobs[0] if completed_jobs else None
         return {
-            "schema": "socmint.command_center.v11_4",
+            "schema": "socmint.command_center.v11_5",
             "summary": {
                 "subject_count": len(subjects),
                 "target_count": len(targets),
@@ -127,10 +128,12 @@ def command_center_payload() -> dict[str, Any]:
                 "tor_onion_hostname": tor_status.get("onion_hostname"),
                 "test_subject_count": (test_data.get("counts") or {}).get("subjects", 0),
                 "test_data_status": test_data.get("status"),
+                "runtime_import_status": runtime_import_health.get("status"),
                 "worker_hint": "Jobs are queued. Run Process queued jobs now or start process-jobs." if queued_count else "No queued jobs waiting.",
             },
             "tor": tor_status,
             "test_data": test_data,
+            "runtime_import_health": runtime_import_health,
             "subjects": [_serialize_subject(subject) for subject in subjects],
             "targets": [_serialize_target(target) for target in targets],
             "jobs": serialized_jobs,
