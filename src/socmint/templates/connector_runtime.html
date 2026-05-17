@@ -53,7 +53,7 @@
     <table>
       <thead><tr><th>Dependency</th><th>Status</th><th>Path</th></tr></thead>
       <tbody>
-      {% for item in payload.native_dependencies.items %}
+      {% for item in payload.native_dependencies['items'] %}
         <tr>
           <td>{{ item.name }}</td>
           <td><span class="status-pill {{ 'completed' if item.available else 'failed' }}">{{ 'available' if item.available else 'missing' }}</span></td>
