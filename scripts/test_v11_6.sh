@@ -31,12 +31,11 @@ print("PASS v11.6 readiness direct payload")
 PY
 
 echo "[+] Authenticated route/page smoke"
-python3 scripts/test_frontend_routes_v11.sh | tee /tmp/socmint-v11-6-frontend.log
+bash scripts/test_frontend_routes_v11.sh | tee /tmp/socmint-v11-6-frontend.log
 grep -q '/api/v1/admin/v11/readiness-summary' /tmp/socmint-v11-6-frontend.log
 
 docker compose exec -T app python - <<'PY'
 import json
-import urllib.request
 
 # Route is login-protected in normal browser use. This direct internal import verifies the payload shape,
 # while the frontend route audit verifies the authenticated route returns 200.
