@@ -662,3 +662,6 @@ test-v11-6: test-v11-5
 
 test-v11-7: test-v11-6
 	./scripts/test_v11_7.sh
+
+test-v11-8: test-v11-7
+	./scripts/test_v11_8.sh
