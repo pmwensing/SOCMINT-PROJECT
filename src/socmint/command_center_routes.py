@@ -6,6 +6,7 @@ from .command_center import command_center_payload
 from .jobs import process_scan_jobs
 from .runtime_import_health import runtime_import_health_report
 from .test_data_controls import clean_test_data, test_data_summary
+from .v11_readiness import v11_readiness_summary
 
 
 def register_command_center_routes(app) -> None:
@@ -29,6 +30,10 @@ def register_command_center_routes(app) -> None:
     @login_required
     def api_runtime_import_health():
         return jsonify(runtime_import_health_report())
+
+    @login_required
+    def api_v11_readiness_summary():
+        return jsonify(v11_readiness_summary())
 
     @run_required
     def api_test_data_clean():
@@ -97,6 +102,12 @@ def register_command_center_routes(app) -> None:
         "/api/v1/admin/runtime/import-health",
         endpoint="api_runtime_import_health",
         view_func=api_runtime_import_health,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/admin/v11/readiness-summary",
+        endpoint="api_v11_readiness_summary",
+        view_func=api_v11_readiness_summary,
         methods=["GET"],
     )
     app.add_url_rule(

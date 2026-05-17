@@ -9,6 +9,7 @@ from .full_report_history import full_report_export_history
 from .runtime_import_health import runtime_import_health_report
 from .test_data_controls import is_smoke_label, test_data_summary
 from .tor_production import hidden_service_status
+from .v11_readiness import v11_readiness_summary
 
 USERNAME_TOOLS = {"sherlock", "maigret", "social-analyzer", "social_analyzer"}
 EMAIL_TOOLS = {"holehe", "h8mail", "emailrep", "breach", "email"}
@@ -91,6 +92,7 @@ def command_center_payload() -> dict[str, Any]:
         findings_count = session.query(db.Finding).count()
         test_data = test_data_summary()
         runtime_import_health = runtime_import_health_report()
+        readiness = v11_readiness_summary()
         total_report_count = 0
         for subject in subjects:
             try:
@@ -110,7 +112,7 @@ def command_center_payload() -> dict[str, Any]:
         compatibility_warnings = [job for job in serialized_jobs if job["compatibility"]["warnings"]]
         latest_processed = completed_jobs[0] if completed_jobs else None
         return {
-            "schema": "socmint.command_center.v11_5",
+            "schema": "socmint.command_center.v11_6",
             "summary": {
                 "subject_count": len(subjects),
                 "target_count": len(targets),
@@ -129,11 +131,14 @@ def command_center_payload() -> dict[str, Any]:
                 "test_subject_count": (test_data.get("counts") or {}).get("subjects", 0),
                 "test_data_status": test_data.get("status"),
                 "runtime_import_status": runtime_import_health.get("status"),
+                "v11_readiness_status": readiness.get("status"),
+                "v11_readiness_percentage": readiness.get("percentage"),
                 "worker_hint": "Jobs are queued. Run Process queued jobs now or start process-jobs." if queued_count else "No queued jobs waiting.",
             },
             "tor": tor_status,
             "test_data": test_data,
             "runtime_import_health": runtime_import_health,
+            "v11_readiness": readiness,
             "subjects": [_serialize_subject(subject) for subject in subjects],
             "targets": [_serialize_target(target) for target in targets],
             "jobs": serialized_jobs,
@@ -144,6 +149,7 @@ def command_center_payload() -> dict[str, Any]:
                 {"label": "Review queued jobs", "href": "/jobs", "priority": "secondary"},
                 {"label": "Open enrichment review", "href": "/spine/enrichment-review", "priority": "secondary"},
                 {"label": "Open export center", "href": "/reports/export-center", "priority": "secondary"},
+                {"label": "Review v11 readiness", "href": "/api/v1/admin/v11/readiness-summary", "priority": "secondary"},
             ],
             "tool_guidance": [
                 {"target_type": "username", "recommended": "Sherlock, Maigret, Social Analyzer"},
