@@ -19,7 +19,7 @@
 
 {% if session.get('is_admin') or session.get('role') == 'analyst' %}
 <section class="panel">
-    <h1>Run Dossier</h1>
+    <h1>Run Legacy Dossier</h1>
     <form method="post" action="{{ url_for('dashboard.run_target') }}" class="inline-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label for="target">Target</label>
@@ -45,7 +45,7 @@
             <a class="card-link" href="{{ url_for('dashboard.target_detail', target_id=target.id) }}">View details</a>
         </article>
         {% else %}
-        <p>No targets stored yet. Run the CLI to generate a dossier.</p>
+        <p>No targets stored yet. Create a subject, open the Command Center, or run a dossier workflow to begin.</p>
         {% endfor %}
     </div>
 </section>

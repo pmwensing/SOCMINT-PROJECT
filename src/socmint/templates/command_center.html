@@ -22,6 +22,42 @@
   <article class="metric-card"><span>Findings</span><strong>{{ payload.summary.findings_count }}</strong></article>
 </section>
 
+<section class="panel v11-status-board">
+  <div class="section-header">
+    <div>
+      <h2>System status</h2>
+      <p class="muted">Live frontend summary for Tor, worker queue, subjects, jobs, and report readiness.</p>
+    </div>
+    <a class="button-link secondary" href="/api/v1/tor/status">Tor status JSON</a>
+  </div>
+  <div class="card-grid">
+    <article class="card status-card {{ 'ok' if payload.summary.tor_status == 'ready' else 'warning' }}">
+      <span class="status-label">Tor</span>
+      <strong>{{ payload.summary.tor_status|upper }}</strong>
+      {% if payload.summary.tor_onion_hostname %}
+      <p class="muted">{{ payload.summary.tor_onion_hostname }}</p>
+      {% else %}
+      <p class="muted">No onion hostname registered.</p>
+      {% endif %}
+    </article>
+    <article class="card status-card {{ 'warning' if payload.summary.queued_jobs or payload.summary.failed_jobs else 'ok' }}">
+      <span class="status-label">Worker / Queue</span>
+      <strong>{{ payload.summary.worker_status|upper }}</strong>
+      <p class="muted">{{ payload.summary.queued_jobs }} queued · {{ payload.summary.running_jobs }} running · {{ payload.summary.failed_jobs }} failed</p>
+    </article>
+    <article class="card status-card {{ 'ok' if payload.summary.subject_count else 'warning' }}">
+      <span class="status-label">Subjects</span>
+      <strong>{{ payload.summary.subject_count }}</strong>
+      <p class="muted">Spine subjects available for dossier workflows.</p>
+    </article>
+    <article class="card status-card {{ 'ok' if payload.summary.report_count else 'warning' }}">
+      <span class="status-label">Reports</span>
+      <strong>{{ payload.summary.report_count }}</strong>
+      <p class="muted">Full report exports currently tracked.</p>
+    </article>
+  </div>
+</section>
+
 <section class="panel command-panel">
   <div class="section-header">
     <div>
@@ -39,7 +75,7 @@
     <a href="{{ url_for('dashboard.spine_subjects') }}"><strong>1</strong><span>Create/select subject</span></a>
     <a href="{{ url_for('dashboard.spine_subjects') }}"><strong>2</strong><span>Add seeds + run connectors</span></a>
     <a href="{{ url_for('dashboard.spine_enrichment_review') }}"><strong>3</strong><span>Review enrichment</span></a>
-    <a href="/spine/subjects/1/dossier"><strong>4</strong><span>Generate Full Report</span></a>
+    <a href="{{ url_for('dashboard.spine_subjects') }}"><strong>4</strong><span>Select subject → Generate Full Report</span></a>
     <a href="{{ url_for('dashboard.report_export_center_view') }}"><strong>5</strong><span>Export / evidence readiness</span></a>
     <a href="{{ url_for('connector_runtime_health_view') }}"><strong>6</strong><span>Verify connector runtime</span></a>
   </div>
@@ -88,7 +124,11 @@
       </div>
     </article>
     {% else %}
-    <p>No Spine subjects yet. Create a disposable/test subject to start the v7.5.x workflow.</p>
+    <div class="empty-state">
+      <h3>No Spine subjects yet</h3>
+      <p>Create a disposable test subject to start the v11 Command Center workflow.</p>
+      <a class="button-link" href="{{ url_for('dashboard.spine_subjects') }}">Create / Open Subject</a>
+    </div>
     {% endfor %}
   </div>
 </section>
