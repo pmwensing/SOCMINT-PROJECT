@@ -21,13 +21,14 @@
   <article class="metric-card"><span>Failed jobs</span><strong>{{ payload.summary.failed_jobs }}</strong></article>
   <article class="metric-card"><span>Findings</span><strong>{{ payload.summary.findings_count }}</strong></article>
   <article class="metric-card"><span>Smoke subjects</span><strong>{{ payload.summary.test_subject_count }}</strong></article>
+  <article class="metric-card"><span>Runtime imports</span><strong>{{ payload.summary.runtime_import_status|upper }}</strong></article>
 </section>
 
 <section class="panel v11-status-board">
   <div class="section-header">
     <div>
       <h2>System status</h2>
-      <p class="muted">Live frontend summary for Tor, worker queue, subjects, jobs, report readiness, and test-data hygiene.</p>
+      <p class="muted">Live frontend summary for Tor, worker queue, subjects, jobs, report readiness, runtime import health, and test-data hygiene.</p>
     </div>
     <a class="button-link secondary" href="/api/v1/tor/status">Tor status JSON</a>
   </div>
@@ -56,6 +57,12 @@
       <span class="status-label">Test Data</span>
       <strong>{{ payload.test_data.status|upper }}</strong>
       <p class="muted">{{ payload.test_data.counts.subjects }} smoke subjects · {{ payload.test_data.counts.dossier_files }} dossier files · {{ payload.test_data.counts.artifact_dirs }} artifact dirs</p>
+    </article>
+    <article class="card status-card {{ 'ok' if payload.runtime_import_health.status == 'pass' else 'warning' }}">
+      <span class="status-label">Runtime Imports</span>
+      <strong>{{ payload.runtime_import_health.status|upper }}</strong>
+      <p class="muted">{{ payload.runtime_import_health.source_scan.hit_count }} legacy hits · {{ payload.runtime_import_health.package_probe.failure_count }} import failures</p>
+      <a class="card-link" href="/api/v1/admin/runtime/import-health">Import health JSON</a>
     </article>
   </div>
 </section>
