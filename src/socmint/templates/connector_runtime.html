@@ -53,7 +53,7 @@
     <table>
       <thead><tr><th>Dependency</th><th>Status</th><th>Path</th></tr></thead>
       <tbody>
-      {% for item in payload.native_dependencies.items %}
+      {% for item in payload.native_dependencies['items'] %}
         <tr>
           <td>{{ item.name }}</td>
           <td><span class="status-pill {{ 'completed' if item.available else 'failed' }}">{{ 'available' if item.available else 'missing' }}</span></td>
@@ -70,6 +70,9 @@
 <section class="panel warning-panel">
   <h2>Install/activate connector toolchain</h2>
   <p class="warning-text">The app will keep recording safe dry-runs until missing tools are installed in this runtime.</p>
+  <pre>docker compose build --build-arg SOCMINT_INSTALL_CONNECTORS=true app worker
+docker compose up -d app</pre>
+  <p>Optional local installer:</p>
   <pre>bash {{ payload.installer.script }}
 source .connector-tools/bin/socmint-connectors-env
 make connectors-health</pre>
@@ -120,5 +123,6 @@ make connectors-health</pre>
   <p><strong>Ready</strong> means the executable/version probe is available and the app can attempt a real run.</p>
   <p><strong>Missing</strong> means the app will record dry-run payloads unless that tool is installed in the runtime.</p>
   <p><strong>Disabled</strong> currently applies to ArchiveBox when installed but not enabled with <code>SOCMINT_ARCHIVEBOX_ENABLED=true</code>.</p>
+  <p><strong>PhoneInfoga and ArchiveBox</strong> remain optional/manual in v11.7.</p>
 </section>
 {% endblock %}

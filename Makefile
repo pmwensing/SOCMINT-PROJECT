@@ -171,7 +171,7 @@ test753:
 	PYTHONPATH=$(PWD)/src ./scripts/test_v7_5_3.sh
 
 zip753:
-	cd .. && zip -r SOCMINT-PROJECT-v7.5.3.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
+	cd .. && zip -r SOCMINT-PROJECT-v7.5.3.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/.env'
 
 
 test754:
@@ -321,7 +321,7 @@ artifact-review-audit-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_artifact_review_audit_hardening_v9_8_6.py
 
 zip986:
-	cd .. && zip -r SOCMINT-PROJECT-v9.8.6-product-artifact-review-audit.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v9.8.6-product-artifact-review-audit.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-artifact-export-manifest-smoke:
@@ -360,7 +360,7 @@ release-package-zip-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_release_package_zip_hardening_v9_8_9.py
 
 zip989:
-	cd .. && zip -r SOCMINT-PROJECT-v9.8.9-product-release-package-zip.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v9.8.9-product-release-package-zip.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-release-candidate-smoke:
@@ -373,7 +373,7 @@ release-candidate-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_release_candidate_hardening_v9_9_0.py
 
 zip990:
-	cd .. && zip -r SOCMINT-PROJECT-v9.9.0-product-release-candidate-console.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.0-product-release-candidate-console.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-final-gate-smoke:
@@ -386,7 +386,7 @@ final-gate-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_final_gate_hardening_v9_9_1.py
 
 zip991:
-	cd .. && zip -r SOCMINT-PROJECT-v9.9.1-final-product-gate.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.1-final-product-gate.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-final-release-smoke:
@@ -399,7 +399,7 @@ final-release-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_final_release_hardening_v9_9_2.py
 
 zip992:
-	cd .. && zip -r SOCMINT-PROJECT-v9.9.2-final-release-publisher.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.2-final-release-publisher.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-final-release-archive-smoke:
@@ -412,7 +412,7 @@ final-release-archive-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_final_release_archive_hardening_v9_9_3.py
 
 zip993:
-	cd .. && zip -r SOCMINT-PROJECT-v9.9.3-final-release-archive-integrity.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.3-final-release-archive-integrity.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-final-release-verify-smoke:
@@ -425,7 +425,7 @@ final-release-verify-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_final_release_verify_hardening_v9_9_4.py
 
 zip994:
-	cd .. && zip -r SOCMINT-PROJECT-v9.9.4-final-release-verification-console.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.4-final-release-verification-console.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-distribution-readiness-smoke:
@@ -438,7 +438,7 @@ distribution-readiness-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_distribution_readiness_hardening_v9_9_5.py
 
 zip995:
-	cd .. && zip -r SOCMINT-PROJECT-v9.9.5-distribution-readiness.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.5-distribution-readiness.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-final-dashboard-smoke:
@@ -451,7 +451,7 @@ final-product-dashboard-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_final_dashboard_hardening_v9_9_6.py
 
 zip996:
-	cd .. && zip -r SOCMINT-PROJECT-v9.9.6-final-product-dashboard.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.6-final-product-dashboard.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-operator-handoff-smoke:
@@ -464,7 +464,7 @@ operator-handoff-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_operator_handoff_hardening_v9_9_7.py
 
 zip997:
-	cd .. && zip -r SOCMINT-PROJECT-v9.9.7-operator-handoff.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.7-operator-handoff.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-final-self-test-smoke:
@@ -477,7 +477,7 @@ final-self-test-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_final_self_test_hardening_v9_9_8.py
 
 zip998:
-	cd .. && zip -r SOCMINT-PROJECT-v9.9.8-final-self-test-maintenance.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.8-final-self-test-maintenance.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-v10-bootstrap-smoke:
@@ -490,7 +490,7 @@ v10-bootstrap-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_v10_bootstrap_hardening_v9_9_9.py
 
 zip999:
-	cd .. && zip -r SOCMINT-PROJECT-v9.9.9-v10-bootstrap.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v9.9.9-v10-bootstrap.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-v10-foundation-smoke:
@@ -503,7 +503,7 @@ v10-foundation-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_v10_foundation_hardening_v10_0_0.py
 
 zip1000:
-	cd .. && zip -r SOCMINT-PROJECT-v10.0.0-product-foundation.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.0-product-foundation.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-route-extraction-smoke:
@@ -516,7 +516,7 @@ route-extraction-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_route_extraction_hardening_v10_0_1.py
 
 zip1001:
-	cd .. && zip -r SOCMINT-PROJECT-v10.0.1-route-extraction-phase-1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.1-route-extraction-phase-1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-post-release-extraction-smoke:
@@ -529,7 +529,7 @@ post-release-extraction-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_post_release_extraction_hardening_v10_0_2.py
 
 zip1002:
-	cd .. && zip -r SOCMINT-PROJECT-v10.0.2-post-release-extraction.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.2-post-release-extraction.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-artifact-pipeline-extraction-smoke:
@@ -542,7 +542,7 @@ artifact-pipeline-extraction-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_artifact_pipeline_extraction_hardening_v10_0_3.py
 
 zip1003:
-	cd .. && zip -r SOCMINT-PROJECT-v10.0.3-artifact-pipeline-split.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.3-artifact-pipeline-split.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-module-registry-smoke:
@@ -555,7 +555,7 @@ module-registry-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_module_registry_hardening_v10_0_4.py
 
 zip1004:
-	cd .. && zip -r SOCMINT-PROJECT-v10.0.4-product-module-registry.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.4-product-module-registry.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-module-health-smoke:
@@ -568,7 +568,7 @@ module-health-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_module_health_hardening_v10_0_5.py
 
 zip1005:
-	cd .. && zip -r SOCMINT-PROJECT-v10.0.5-product-module-health.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.5-product-module-health.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-migration-plan-smoke:
@@ -581,7 +581,7 @@ migration-plan-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_migration_plan_hardening_v10_0_6.py
 
 zip1006:
-	cd .. && zip -r SOCMINT-PROJECT-v10.0.6-blueprint-migration-plan.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.6-blueprint-migration-plan.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-blueprint-wave1-smoke:
@@ -594,7 +594,7 @@ blueprint-wave1-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_blueprint_wave1_hardening_v10_0_7.py
 
 zip1007:
-	cd .. && zip -r SOCMINT-PROJECT-v10.0.7-blueprint-migration-wave1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.7-blueprint-migration-wave1.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-blueprint-guardrails-smoke:
@@ -607,7 +607,7 @@ blueprint-guardrails-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_blueprint_guardrails_hardening_v10_0_8.py
 
 zip1008:
-	cd .. && zip -r SOCMINT-PROJECT-v10.0.8-blueprint-guardrails.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.8-blueprint-guardrails.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-blueprint-wave2-smoke:
@@ -620,7 +620,7 @@ blueprint-wave2-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_blueprint_wave2_hardening_v10_0_9.py
 
 zip1009:
-	cd .. && zip -r SOCMINT-PROJECT-v10.0.9-blueprint-wave2-readonly-api.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v10.0.9-blueprint-wave2-readonly-api.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 
 product-action-route-readiness-smoke:
@@ -633,7 +633,7 @@ action-route-readiness-hardening-smoke:
 	PYTHONPATH=src python3 scripts/product_action_route_readiness_hardening_v10_1_0.py
 
 zip1010:
-	cd .. && zip -r SOCMINT-PROJECT-v10.1.0-action-route-readiness.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+	cd .. && zip -r SOCMINT-PROJECT-v10.1.0-action-route-readiness.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/__pycache__/*'
 
 test-frontend-v11:
 	./scripts/test_frontend_routes_v11.sh
@@ -659,3 +659,6 @@ test-v11-5: test-v11-4
 
 test-v11-6: test-v11-5
 	./scripts/test_v11_6.sh
+
+test-v11-7: test-v11-6
+	./scripts/test_v11_7.sh
