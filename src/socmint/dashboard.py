@@ -2332,9 +2332,9 @@ def create_app(database_url=None):
     app.after_request(add_security_headers)
     # v10.0.7 wave 1 blueprint-owned read-only route registration
     try:
-        from socmint.product_artifacts import product_artifacts_bp
-        from socmint.product_post_release import product_post_release_bp
-        from socmint.product_release_flow import product_release_flow_bp
+        from .product_artifacts import product_artifacts_bp
+        from .product_post_release import product_post_release_bp
+        from .product_release_flow import product_release_flow_bp
 
         app.register_blueprint(product_release_flow_bp)
         app.register_blueprint(product_post_release_bp)
@@ -2346,7 +2346,7 @@ def create_app(database_url=None):
 
     # v10.0.4 product module registry blueprint
     try:
-        from socmint.product_registry import product_registry_bp
+        from .product_registry import product_registry_bp
 
         app.register_blueprint(product_registry_bp)
     except Exception as exc:
@@ -2354,7 +2354,7 @@ def create_app(database_url=None):
 
     # v10.0.0 product foundation blueprint
     try:
-        from socmint.product_v10 import product_v10_bp
+        from .product_v10 import product_v10_bp
 
         app.register_blueprint(product_v10_bp)
     except Exception as exc:

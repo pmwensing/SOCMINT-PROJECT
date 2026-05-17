@@ -5,9 +5,9 @@ from typing import Any
 
 from flask import Blueprint, current_app, jsonify, render_template
 
-from socmint.product_artifacts import product_artifacts_manifest
-from socmint.product_post_release import product_post_release_manifest
-from socmint.product_release_flow import product_release_flow_manifest
+from .product_artifacts import product_artifacts_manifest
+from .product_post_release import product_post_release_manifest
+from .product_release_flow import product_release_flow_manifest
 
 
 product_registry_bp = Blueprint("product_registry", __name__)
@@ -379,16 +379,16 @@ def _makefile_targets() -> set[str]:
 def _helper_export_count(module_key: str) -> int:
     try:
         if module_key == "release_flow":
-            from socmint import product_release_flow as module
+            from . import product_release_flow as module
             return sum(1 for name in dir(module) if name.startswith("_v99"))
         if module_key == "post_release":
-            from socmint import product_post_release as module
+            from . import product_post_release as module
             return sum(1 for name in dir(module) if name.startswith(("_v995", "_v996", "_v997", "_v998", "_v999")))
         if module_key == "artifact_pipeline":
-            from socmint import product_artifacts as module
+            from . import product_artifacts as module
             return sum(1 for name in dir(module) if name.startswith(("_v984", "_v985", "_v986", "_v987", "_v988", "_v989", "_v98")))
         if module_key == "module_registry":
-            from socmint import product_registry as module
+            from . import product_registry as module
             registry_helpers = {
                 "_route_inventory",
                 "_route_exists",

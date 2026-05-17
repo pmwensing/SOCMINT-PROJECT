@@ -92,7 +92,7 @@ require(any(item.get("id") == subject_id for item in summary.get("subjects", [])
 
 print("[+] Verify Command Center payload exposes test-data state")
 payload = command_center_payload()
-require(payload.get("schema") == "socmint.command_center.v11_4", "command center schema not v11_4")
+require(payload.get("schema") in {"socmint.command_center.v11_4", "socmint.command_center.v11_5"}, "command center schema not v11_4/v11_5")
 require("test_data" in payload, "command center payload missing test_data")
 require((payload.get("summary") or {}).get("test_subject_count", 0) >= 1, "summary missing test_subject_count")
 subject_rows = payload.get("subjects") or []

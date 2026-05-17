@@ -11,7 +11,7 @@ from flask import Blueprint as _Blueprint, current_app as _current_app
 
 from typing import Any
 
-from socmint import dashboard as _dashboard
+from . import dashboard as _dashboard
 
 
 EXTRACTED_VERSION_RANGE = "v9.9.0-v9.9.4"
