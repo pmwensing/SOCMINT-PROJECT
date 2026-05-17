@@ -97,6 +97,19 @@ seen = set()
 results = []
 all_links = {}
 
+source_hits = []
+for template_path in [
+    "src/socmint/templates/base.html",
+    "src/socmint/templates/command_center.html",
+]:
+    try:
+        text = open(template_path, "r", encoding="utf-8").read()
+    except FileNotFoundError:
+        continue
+    if "/spine/subjects/1/dossier" in text:
+        source_hits.append(template_path)
+
+
 for path in seed_paths:
     if path in seen:
         continue
@@ -114,8 +127,10 @@ for path in seed_paths:
         issues = []
         if status >= 400:
             issues.append("bad_status")
-        if "/spine/subjects/1/dossier" in links or "/spine/subjects/1/dossier" in body:
-            issues.append("hardcoded_subject_1")
+        # v11.2 functional smoke creates real subjects. Once subject id 1 exists,
+        # rendered pages may legitimately include /spine/subjects/1/dossier.
+        # The original bug was a hard-coded literal in active templates, so enforce
+        # that separately with a source scan below instead of flagging dynamic HTML.
         if "Run the CLI" in body:
             issues.append("legacy_cli_copy")
         if path in {"/", "/command-center"} and "/api/v1/command-center" in links:
@@ -147,6 +162,13 @@ print()
 print("=== GLOBAL NAV LINKS FROM / ===")
 for link in all_links.get("/", []):
     print(link)
+
+if source_hits:
+    print()
+    print("=== SOURCE TEMPLATE HARD-CODE FINDINGS ===")
+    for path in source_hits:
+        print(path)
+    failed = True
 
 if failed:
     print()
