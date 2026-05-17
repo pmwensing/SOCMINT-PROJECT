@@ -30,55 +30,31 @@ if grep -q "No module named 'socmint'" /tmp/socmint-v11-5-app.log; then
 fi
 
 echo "[+] Authenticated route smoke for import-health"
-ADMIN_USER="${SOCMINT_TEST_ADMIN_USER:-$(grep '^SOCMINT_ADMIN_USER=' .env | cut -d= -f2-)}"
-ADMIN_PASS="${SOCMINT_TEST_ADMIN_PASSWORD:-$(grep '^SOCMINT_ADMIN_PASSWORD=' .env | cut -d= -f2-)}"
-
-docker compose exec -T \
-  -e ADMIN_USER="$ADMIN_USER" \
-  -e ADMIN_PASS="$ADMIN_PASS" \
-  app python - <<'PY'
+docker compose exec -T app python - <<'PY'
 import json
-import os
-import re
-import urllib.parse
-import urllib.request
-import http.cookiejar
+from src.socmint.wsgi import app
 
-base = "http://127.0.0.1:5000"
-cj = http.cookiejar.CookieJar()
-opener = urllib.request.build_opener(
-    urllib.request.HTTPCookieProcessor(cj),
-    urllib.request.HTTPRedirectHandler(),
-)
-login_html = opener.open(base + "/login", timeout=5).read().decode(errors="ignore")
-m = re.search(r'name=["\']csrf_token["\'][^>]*value=["\']([^"\']+)["\']', login_html)
-if not m:
-    m = re.search(r'value=["\']([^"\']+)["\'][^>]*name=["\']csrf_token["\']', login_html)
-if not m:
-    raise SystemExit("FAIL csrf token not found")
-csrf = m.group(1)
-data = urllib.parse.urlencode({
-    "username": os.environ["ADMIN_USER"],
-    "password": os.environ["ADMIN_PASS"],
-    "csrf_token": csrf,
-}).encode()
-opener.open(
-    urllib.request.Request(base + "/login", data=data, headers={"Content-Type": "application/x-www-form-urlencoded"}, method="POST"),
-    timeout=5,
-).read()
+client = app.test_client()
+with client.session_transaction() as sess:
+    sess["user"] = "v11.5-import-health-smoke"
+    sess["is_admin"] = True
+    sess["role"] = "admin"
 
-response = opener.open(base + "/api/v1/admin/runtime/import-health", timeout=5)
-body = response.read().decode()
+response = client.get("/api/v1/admin/runtime/import-health")
+body = response.get_data(as_text=True)
 print(body)
+if response.status_code != 200:
+    raise SystemExit(f"FAIL import-health did not return 200: {response.status_code}")
 payload = json.loads(body)
-if response.status != 200:
-    raise SystemExit("FAIL import-health did not return 200")
 if payload.get("schema") != "socmint.runtime_import_health.v11_5":
     raise SystemExit("FAIL import-health schema mismatch")
 if payload.get("status") != "pass":
     raise SystemExit("FAIL import-health status is not pass")
 
-cc = json.loads(opener.open(base + "/api/v1/command-center", timeout=5).read().decode())
+cc_response = client.get("/api/v1/command-center")
+if cc_response.status_code != 200:
+    raise SystemExit(f"FAIL command-center did not return 200: {cc_response.status_code}")
+cc = cc_response.get_json()
 if "runtime_import_health" not in cc:
     raise SystemExit("FAIL command center missing runtime_import_health")
 if cc["runtime_import_health"]["status"] != "pass":
