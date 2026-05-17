@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from flask import jsonify, redirect, render_template, url_for, flash, session
+from flask import flash, jsonify, redirect, render_template, session, url_for
 
 from .command_center import command_center_payload
 from .jobs import process_scan_jobs
+from .test_data_controls import clean_test_data, test_data_summary
 
 
 def register_command_center_routes(app) -> None:
@@ -19,6 +20,34 @@ def register_command_center_routes(app) -> None:
     @login_required
     def api_command_center():
         return jsonify(command_center_payload())
+
+    @login_required
+    def api_test_data_summary():
+        return jsonify(test_data_summary())
+
+    @run_required
+    def api_test_data_clean():
+        actor = session.get("user")
+        result = clean_test_data(actor=actor)
+        audit(
+            "test_data_clean",
+            actor=actor,
+            details=result,
+        )
+        return jsonify(result)
+
+    @run_required
+    def command_center_clean_test_data():
+        actor = session.get("user")
+        result = clean_test_data(actor=actor)
+        audit(
+            "command_center_clean_test_data",
+            actor=actor,
+            details=result,
+        )
+        deleted = result.get("subjects_deleted", 0)
+        flash(f"Cleaned v11 smoke/test data. Subjects deleted: {deleted}.", "success")
+        return redirect(url_for("command_center_index"))
 
     @run_required
     def command_center_process_jobs():
@@ -52,6 +81,24 @@ def register_command_center_routes(app) -> None:
         endpoint="api_command_center",
         view_func=api_command_center,
         methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/admin/test-data/summary",
+        endpoint="api_test_data_summary",
+        view_func=api_test_data_summary,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/admin/test-data/clean",
+        endpoint="api_test_data_clean",
+        view_func=api_test_data_clean,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/command-center/test-data/clean",
+        endpoint="command_center_clean_test_data",
+        view_func=command_center_clean_test_data,
+        methods=["POST"],
     )
     app.add_url_rule(
         "/command-center/process-jobs",

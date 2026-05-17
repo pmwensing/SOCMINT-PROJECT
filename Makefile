@@ -650,3 +650,6 @@ test-subject-workflow-v11-3:
 	./scripts/test_subject_workflow_v11_3.sh
 
 test-v11-3: test-v11-2 test-subject-workflow-v11-3
+
+test-v11-4: test-v11-3
+	./scripts/test_v11_4.sh

@@ -6,6 +6,7 @@ from typing import Any
 
 from . import database as db
 from .full_report_history import full_report_export_history
+from .test_data_controls import is_smoke_label, test_data_summary
 from .tor_production import hidden_service_status
 
 USERNAME_TOOLS = {"sherlock", "maigret", "social-analyzer", "social_analyzer"}
@@ -29,9 +30,7 @@ def tool_compatibility(target_type: str, tools: list[str]) -> dict[str, Any]:
 
     if target_type == "email" and normalized & USERNAME_TOOLS:
         compatible = False
-        warnings.append(
-            "Email targets do not work well with username-first tools such as Sherlock or Maigret."
-        )
+        warnings.append("Email targets do not work well with username-first tools such as Sherlock or Maigret.")
         suggestions.append("Use email exposure/account-discovery connectors for email targets.")
     if target_type in {"username", "handle"} and not normalized & USERNAME_TOOLS:
         suggestions.append("Username targets are usually best tested with Sherlock/Maigret-style tools.")
@@ -39,17 +38,9 @@ def tool_compatibility(target_type: str, tools: list[str]) -> dict[str, Any]:
         suggestions.append("Phone targets need phone-specific enrichment tools.")
     if target_type in {"url", "domain"} and not normalized & URL_TOOLS:
         suggestions.append("URL/domain targets benefit from web capture and metadata connectors.")
-
     if not tools:
         suggestions.append("No tools selected. Choose tools matched to the seed type before running.")
-
-    return {
-        "compatible": compatible,
-        "warnings": warnings,
-        "suggestions": suggestions,
-        "target_type": target_type,
-        "tools": sorted(normalized),
-    }
+    return {"compatible": compatible, "warnings": warnings, "suggestions": suggestions, "target_type": target_type, "tools": sorted(normalized)}
 
 
 def _serialize_job(job) -> dict[str, Any]:
@@ -72,23 +63,20 @@ def _serialize_job(job) -> dict[str, Any]:
 
 
 def _serialize_target(target) -> dict[str, Any]:
-    return {
-        "id": target.id,
-        "value": target.value,
-        "type": target.type,
-        "created_at": target.created_at.isoformat() if target.created_at else None,
-    }
+    return {"id": target.id, "value": target.value, "type": target.type, "created_at": target.created_at.isoformat() if target.created_at else None}
 
 
 def _serialize_subject(subject) -> dict[str, Any]:
     history = full_report_export_history(subject.id, limit=5)
+    label = subject.label or f"Subject {subject.id}"
     return {
         "id": subject.id,
-        "label": subject.label or f"Subject {subject.id}",
+        "label": label,
         "created_at": subject.created_at.isoformat() if subject.created_at else None,
         "latest_report_available": bool(history.get("exports")),
         "latest_report_name": (history.get("exports") or [{}])[0].get("name"),
         "report_count": history.get("count", 0),
+        "is_test_data": is_smoke_label(label),
     }
 
 
@@ -96,31 +84,12 @@ def command_center_payload() -> dict[str, Any]:
     db.ensure_configured()
     session = db.Session()
     try:
-        jobs = (
-            session.query(db.ScanJob)
-            .order_by(db.ScanJob.created_at.desc())
-            .limit(25)
-            .all()
-        )
-        targets = (
-            session.query(db.Target)
-            .order_by(db.Target.created_at.desc())
-            .limit(10)
-            .all()
-        )
-        subjects = (
-            session.query(db.SpineSubject)
-            .order_by(db.SpineSubject.created_at.desc())
-            .limit(10)
-            .all()
-        )
-        connector_runs = (
-            session.query(db.SpineConnectorRun)
-            .order_by(db.SpineConnectorRun.created_at.desc())
-            .limit(10)
-            .all()
-        )
+        jobs = session.query(db.ScanJob).order_by(db.ScanJob.created_at.desc()).limit(25).all()
+        targets = session.query(db.Target).order_by(db.Target.created_at.desc()).limit(10).all()
+        subjects = session.query(db.SpineSubject).order_by(db.SpineSubject.created_at.desc()).limit(10).all()
+        connector_runs = session.query(db.SpineConnectorRun).order_by(db.SpineConnectorRun.created_at.desc()).limit(10).all()
         findings_count = session.query(db.Finding).count()
+        test_data = test_data_summary()
         total_report_count = 0
         for subject in subjects:
             try:
@@ -130,26 +99,17 @@ def command_center_payload() -> dict[str, Any]:
         try:
             tor_status = hidden_service_status("socmint")
         except Exception as exc:
-            tor_status = {
-                "schema": "socmint.tor_production.v8_4_0",
-                "status": "unavailable",
-                "enabled": False,
-                "onion_hostname": None,
-                "error": str(exc),
-            }
+            tor_status = {"schema": "socmint.tor_production.v8_4_0", "status": "unavailable", "enabled": False, "onion_hostname": None, "error": str(exc)}
         statuses = Counter(job.status for job in jobs)
         queued_count = statuses.get("queued", 0)
         running_count = statuses.get("running", 0)
         failed_jobs = [job for job in jobs if job.status == "failed"]
         completed_jobs = [job for job in jobs if job.status == "completed"]
-        compatibility_warnings = [
-            _serialize_job(job)
-            for job in jobs
-            if _serialize_job(job)["compatibility"]["warnings"]
-        ]
+        serialized_jobs = [_serialize_job(job) for job in jobs]
+        compatibility_warnings = [job for job in serialized_jobs if job["compatibility"]["warnings"]]
         latest_processed = completed_jobs[0] if completed_jobs else None
         return {
-            "schema": "socmint.command_center.v7_5_8",
+            "schema": "socmint.command_center.v11_4",
             "summary": {
                 "subject_count": len(subjects),
                 "target_count": len(targets),
@@ -165,12 +125,15 @@ def command_center_payload() -> dict[str, Any]:
                 "tor_status": tor_status.get("status", "unknown"),
                 "tor_enabled": bool(tor_status.get("enabled")),
                 "tor_onion_hostname": tor_status.get("onion_hostname"),
+                "test_subject_count": (test_data.get("counts") or {}).get("subjects", 0),
+                "test_data_status": test_data.get("status"),
                 "worker_hint": "Jobs are queued. Run Process queued jobs now or start process-jobs." if queued_count else "No queued jobs waiting.",
             },
             "tor": tor_status,
+            "test_data": test_data,
             "subjects": [_serialize_subject(subject) for subject in subjects],
             "targets": [_serialize_target(target) for target in targets],
-            "jobs": [_serialize_job(job) for job in jobs],
+            "jobs": serialized_jobs,
             "compatibility_warnings": compatibility_warnings,
             "latest_processed_job": _serialize_job(latest_processed) if latest_processed else None,
             "next_actions": [
