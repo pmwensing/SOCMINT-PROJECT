@@ -178,42 +178,42 @@ test754:
 	PYTHONPATH=$(PWD)/src bash ./scripts/test_v7_5_4.sh
 
 zip754:
-	cd .. && zip -r SOCMINT-PROJECT-v7.5.4.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
+	cd .. && zip -r SOCMINT-PROJECT-v7.5.4.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/.env'
 
 
 test755:
 	PYTHONPATH=$(PWD)/src bash ./scripts/test_v7_5_5.sh
 
 zip755:
-	cd .. && zip -r SOCMINT-PROJECT-v7.5.5.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
+	cd .. && zip -r SOCMINT-PROJECT-v7.5.5.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/.env'
 
 
 test756:
 	PYTHONPATH=$(PWD)/src bash ./scripts/test_v7_5_6.sh
 
 zip756:
-	cd .. && zip -r SOCMINT-PROJECT-v7.5.6.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
+	cd .. && zip -r SOCMINT-PROJECT-v7.5.6.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/.env'
 
 
 test757:
 	PYTHONPATH=$(PWD)/src bash ./scripts/test_v7_5_7.sh
 
 zip757:
-	cd .. && zip -r SOCMINT-PROJECT-v7.5.7.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
+	cd .. && zip -r SOCMINT-PROJECT-v7.5.7.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/.env'
 
 
 test758:
 	PYTHONPATH=$(PWD)/src bash ./scripts/test_v7_5_8.sh
 
 zip758:
-	cd .. && zip -r SOCMINT-PROJECT-v7.5.8.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
+	cd .. && zip -r SOCMINT-PROJECT-v7.5.8.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/.env'
 
 
 test759:
 	PYTHONPATH=$(PWD)/src bash ./scripts/test_v7_5_9.sh
 
 zip759:
-	cd .. && zip -r SOCMINT-PROJECT-v7.5.9.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/var/*' -x 'SOCMINT-PROJECT/.env'
+	cd .. && zip -r SOCMINT-PROJECT-v7.5.9.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/venv/*' -x 'SOCMINT-PROJECT/.pytest_cache/*' -x 'SOCMINT-PROJECT/.env' -x 'SOCMINT-PROJECT/.connector-tools/*'
 
 
 test760:
@@ -642,3 +642,11 @@ test-subject-workflow-v11-2:
 	./scripts/test_subject_workflow_v11_2.sh
 
 test-v11-2: test-frontend-v11 test-subject-workflow-v11-2
+
+clean-v11-smoke:
+	./scripts/clean_v11_smoke_data.sh
+
+test-subject-workflow-v11-3:
+	./scripts/test_subject_workflow_v11_3.sh
+
+test-v11-3: test-v11-2 test-subject-workflow-v11-3
