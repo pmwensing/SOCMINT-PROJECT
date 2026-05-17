@@ -3,9 +3,9 @@ from __future__ import annotations
 from flask import abort, flash, jsonify, redirect, render_template, request, session, url_for
 
 from .spine import run_spine_for_subject
-from .spine_intelligence import promote_observation_to_assertion
-from .spine_intelligence import review_spine_assertion
-from .spine_intelligence import spine_intelligence_payload
+from .spine_intelligence_v11_9 import promote_observation_to_assertion
+from .spine_intelligence_v11_9 import review_spine_assertion
+from .spine_intelligence_v11_9 import spine_intelligence_payload
 
 
 def register_spine_intelligence_routes(app) -> None:
