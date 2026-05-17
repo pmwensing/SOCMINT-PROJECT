@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, render_template
 
+from .connector_run_qa import connector_run_qa_report
 from .connector_runtime import connector_runtime_health
 
 
@@ -22,6 +23,10 @@ def register_connector_runtime_routes(app) -> None:
     def connector_runtime_health_api():
         return jsonify(connector_runtime_health())
 
+    @login_required
+    def connector_run_qa_api():
+        return jsonify(connector_run_qa_report())
+
     app.add_url_rule(
         "/connectors/runtime",
         endpoint="connector_runtime_health_view",
@@ -32,5 +37,11 @@ def register_connector_runtime_routes(app) -> None:
         "/api/v1/connectors/runtime",
         endpoint="connector_runtime_health_api",
         view_func=connector_runtime_health_api,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/admin/connectors/run-qa",
+        endpoint="connector_run_qa_api",
+        view_func=connector_run_qa_api,
         methods=["GET"],
     )
