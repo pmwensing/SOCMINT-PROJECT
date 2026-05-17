@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import json
+import shutil
 from datetime import UTC, datetime
 from typing import Any
 
 from .connector_normalizers import NORMALIZER_SCHEMA, normalize_connector_output
-from .connector_runtime import connector_runtime_health
 
 CONNECTOR_RUN_QA_SCHEMA = "socmint.connector_run_qa.v11_8"
+CORE_CONNECTORS = {"maigret", "sherlock", "socialscan", "holehe", "h8mail"}
+OPTIONAL_CONNECTORS = {"phoneinfoga", "archivebox"}
 
 SAMPLE_RESULTS: dict[str, dict[str, Any]] = {
     "sherlock": {
@@ -93,20 +95,37 @@ def normalization_qa_report() -> dict[str, Any]:
     }
 
 
+def _quick_connector_presence() -> dict[str, str | None]:
+    return {
+        "maigret": "python" if shutil.which("python") else None,
+        "sherlock": shutil.which("sherlock"),
+        "socialscan": shutil.which("socialscan"),
+        "holehe": shutil.which("holehe"),
+        "h8mail": shutil.which("h8mail"),
+        "phoneinfoga": shutil.which("phoneinfoga"),
+        "archivebox": shutil.which("archivebox"),
+    }
+
+
 def runtime_ready_report() -> dict[str, Any]:
-    runtime = connector_runtime_health()
-    ready = {item["name"] for item in runtime.get("connectors", []) if item.get("status") == "ready"}
-    core = {"maigret", "sherlock", "socialscan", "holehe", "h8mail"}
-    missing_core = sorted(core - ready)
-    optional_missing = sorted({"phoneinfoga", "archivebox"} - ready)
+    executables = _quick_connector_presence()
+    ready = {name for name, path in executables.items() if path}
+    missing_core = sorted(CORE_CONNECTORS - ready)
+    optional_missing = sorted(OPTIONAL_CONNECTORS - ready)
     return {
         "schema": CONNECTOR_RUN_QA_SCHEMA,
         "status": "pass" if not missing_core else "needs_connector_build",
-        "runtime_schema": runtime.get("schema"),
-        "summary": runtime.get("summary", {}),
-        "ready_core_connectors": sorted(core.intersection(ready)),
+        "runtime_schema": "socmint.connector_runtime.fast_presence.v11_8",
+        "summary": {
+            "ready": len(ready),
+            "missing_core": len(missing_core),
+            "optional_missing": len(optional_missing),
+        },
+        "ready_core_connectors": sorted(CORE_CONNECTORS.intersection(ready)),
         "missing_core_connectors": missing_core,
         "optional_missing_connectors": optional_missing,
+        "executables": executables,
+        "note": "Fast QA route uses shutil.which only so frontend audit does not block on version probes.",
     }
 
 
