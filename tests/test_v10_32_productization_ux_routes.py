@@ -1,7 +1,6 @@
 from flask import Flask
 import pytest
 
-from src.socmint.v10_32_productization_ux_layer import ProductizationUX
 from src.socmint.v10_32_productization_ux_routes import register_v10_32_productization_ux_routes
 
 @pytest.fixture

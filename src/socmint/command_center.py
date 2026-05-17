@@ -6,6 +6,7 @@ from typing import Any
 
 from . import database as db
 from .full_report_history import full_report_export_history
+from .tor_production import hidden_service_status
 
 USERNAME_TOOLS = {"sherlock", "maigret", "social-analyzer", "social_analyzer"}
 EMAIL_TOOLS = {"holehe", "h8mail", "emailrep", "breach", "email"}
@@ -120,6 +121,22 @@ def command_center_payload() -> dict[str, Any]:
             .all()
         )
         findings_count = session.query(db.Finding).count()
+        total_report_count = 0
+        for subject in subjects:
+            try:
+                total_report_count += int(full_report_export_history(subject.id, limit=1).get("count", 0))
+            except Exception:
+                pass
+        try:
+            tor_status = hidden_service_status("socmint")
+        except Exception as exc:
+            tor_status = {
+                "schema": "socmint.tor_production.v8_4_0",
+                "status": "unavailable",
+                "enabled": False,
+                "onion_hostname": None,
+                "error": str(exc),
+            }
         statuses = Counter(job.status for job in jobs)
         queued_count = statuses.get("queued", 0)
         running_count = statuses.get("running", 0)
@@ -143,8 +160,14 @@ def command_center_payload() -> dict[str, Any]:
                 "completed_jobs": len(completed_jobs),
                 "spine_connector_runs": len(connector_runs),
                 "findings_count": findings_count,
+                "report_count": total_report_count,
+                "worker_status": "attention" if (queued_count or running_count or failed_jobs) else "healthy",
+                "tor_status": tor_status.get("status", "unknown"),
+                "tor_enabled": bool(tor_status.get("enabled")),
+                "tor_onion_hostname": tor_status.get("onion_hostname"),
                 "worker_hint": "Jobs are queued. Run Process queued jobs now or start process-jobs." if queued_count else "No queued jobs waiting.",
             },
+            "tor": tor_status,
             "subjects": [_serialize_subject(subject) for subject in subjects],
             "targets": [_serialize_target(target) for target in targets],
             "jobs": [_serialize_job(job) for job in jobs],

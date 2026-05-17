@@ -41,6 +41,13 @@ def register_command_center_routes(app) -> None:
 
     app.view_functions["dashboard.index"] = command_center_index
     app.add_url_rule(
+        "/command-center",
+        endpoint="command_center_index",
+        view_func=command_center_index,
+        methods=["GET"],
+    )
+
+    app.add_url_rule(
         "/api/v1/command-center",
         endpoint="api_command_center",
         view_func=api_command_center,

@@ -634,3 +634,6 @@ action-route-readiness-hardening-smoke:
 
 zip1010:
 	cd .. && zip -r SOCMINT-PROJECT-v10.1.0-action-route-readiness.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/__pycache__/*'
+
+test-frontend-v11:
+	./scripts/test_frontend_routes_v11.sh
