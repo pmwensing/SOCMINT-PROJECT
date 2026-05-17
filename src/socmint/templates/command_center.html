@@ -20,13 +20,14 @@
   <article class="metric-card"><span>Running jobs</span><strong>{{ payload.summary.running_jobs }}</strong></article>
   <article class="metric-card"><span>Failed jobs</span><strong>{{ payload.summary.failed_jobs }}</strong></article>
   <article class="metric-card"><span>Findings</span><strong>{{ payload.summary.findings_count }}</strong></article>
+  <article class="metric-card"><span>Smoke subjects</span><strong>{{ payload.summary.test_subject_count }}</strong></article>
 </section>
 
 <section class="panel v11-status-board">
   <div class="section-header">
     <div>
       <h2>System status</h2>
-      <p class="muted">Live frontend summary for Tor, worker queue, subjects, jobs, and report readiness.</p>
+      <p class="muted">Live frontend summary for Tor, worker queue, subjects, jobs, report readiness, and test-data hygiene.</p>
     </div>
     <a class="button-link secondary" href="/api/v1/tor/status">Tor status JSON</a>
   </div>
@@ -34,11 +35,7 @@
     <article class="card status-card {{ 'ok' if payload.summary.tor_status == 'ready' else 'warning' }}">
       <span class="status-label">Tor</span>
       <strong>{{ payload.summary.tor_status|upper }}</strong>
-      {% if payload.summary.tor_onion_hostname %}
-      <p class="muted">{{ payload.summary.tor_onion_hostname }}</p>
-      {% else %}
-      <p class="muted">No onion hostname registered.</p>
-      {% endif %}
+      {% if payload.summary.tor_onion_hostname %}<p class="muted">{{ payload.summary.tor_onion_hostname }}</p>{% else %}<p class="muted">No onion hostname registered.</p>{% endif %}
     </article>
     <article class="card status-card {{ 'warning' if payload.summary.queued_jobs or payload.summary.failed_jobs else 'ok' }}">
       <span class="status-label">Worker / Queue</span>
@@ -54,6 +51,11 @@
       <span class="status-label">Reports</span>
       <strong>{{ payload.summary.report_count }}</strong>
       <p class="muted">Full report exports currently tracked.</p>
+    </article>
+    <article class="card status-card {{ 'warning' if payload.test_data.cleanup_available else 'ok' }}">
+      <span class="status-label">Test Data</span>
+      <strong>{{ payload.test_data.status|upper }}</strong>
+      <p class="muted">{{ payload.test_data.counts.subjects }} smoke subjects · {{ payload.test_data.counts.dossier_files }} dossier files · {{ payload.test_data.counts.artifact_dirs }} artifact dirs</p>
     </article>
   </div>
 </section>
@@ -80,6 +82,44 @@
     <a href="{{ url_for('connector_runtime_health_view') }}"><strong>6</strong><span>Verify connector runtime</span></a>
   </div>
   <p class="status-banner {{ 'warning' if payload.summary.queued_jobs else 'ok' }}">{{ payload.summary.worker_hint }}</p>
+</section>
+
+<section class="panel test-data-panel">
+  <div class="section-header">
+    <div>
+      <h2>Test Data Hygiene</h2>
+      <p class="muted">Operator QA dashboard for v11 smoke/test records. Namespace prefixes: {{ payload.test_data.namespace_prefixes | join(', ') }}</p>
+    </div>
+    <div class="hero-actions">
+      <a class="button-link secondary" href="/api/v1/admin/test-data/summary">Summary JSON</a>
+      {% if session.get('is_admin') or session.get('role') == 'analyst' %}
+      <form method="post" action="{{ url_for('command_center_clean_test_data') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Clean smoke data</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-grid">
+    {% for key, value in payload.test_data.counts.items() %}
+    <article class="card status-card {{ 'warning' if value else 'ok' }}">
+      <span class="status-label">{{ key.replace('_', ' ') }}</span>
+      <strong>{{ value }}</strong>
+    </article>
+    {% endfor %}
+  </div>
+  {% if payload.test_data.subjects %}
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>ID</th><th>Label</th><th>Created</th><th>Badge</th></tr></thead>
+      <tbody>
+      {% for subject in payload.test_data.subjects %}
+      <tr><td>{{ subject.id }}</td><td>{{ subject.label }}</td><td>{{ subject.created_at }}</td><td><span class="status-pill queued">test data</span></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
 </section>
 
 {% if payload.compatibility_warnings %}
@@ -111,8 +151,8 @@
   </div>
   <div class="card-grid">
     {% for subject in payload.subjects %}
-    <article class="card subject-card">
-      <h3>{{ subject.label }}</h3>
+    <article class="card subject-card {{ 'warning-card' if subject.is_test_data else '' }}">
+      <h3>{{ subject.label }} {% if subject.is_test_data %}<span class="status-pill queued">test data</span>{% endif %}</h3>
       <p>Subject ID: {{ subject.id }}</p>
       <p>Reports: {{ subject.report_count }}</p>
       {% if subject.latest_report_available %}<span class="status-pill completed">Latest report ready</span>{% else %}<span class="status-pill queued">No full report yet</span>{% endif %}
@@ -147,16 +187,11 @@
       <tbody>
       {% for job in payload.jobs[:8] %}
         <tr>
-          <td>{{ job.id }}</td>
-          <td>{{ job.target }}</td>
-          <td>{{ job.target_type }}</td>
-          <td>{{ job.tools | join(', ') }}</td>
+          <td>{{ job.id }}</td><td>{{ job.target }}</td><td>{{ job.target_type }}</td><td>{{ job.tools | join(', ') }}</td>
           <td><span class="status-pill {{ job.status }}">{{ job.status }}</span></td>
           <td>{% if job.target_id %}<a href="{{ url_for('dashboard.target_detail', target_id=job.target_id) }}">View result</a>{% elif job.error %}{{ job.error }}{% else %}Waiting{% endif %}</td>
         </tr>
-      {% else %}
-        <tr><td colspan="6">No jobs yet.</td></tr>
-      {% endfor %}
+      {% else %}<tr><td colspan="6">No jobs yet.</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>
@@ -165,12 +200,7 @@
 <section class="panel">
   <h2>Tool compatibility guide</h2>
   <div class="card-grid">
-    {% for item in payload.tool_guidance %}
-    <article class="card">
-      <h3>{{ item.target_type }}</h3>
-      <p>{{ item.recommended }}</p>
-    </article>
-    {% endfor %}
+    {% for item in payload.tool_guidance %}<article class="card"><h3>{{ item.target_type }}</h3><p>{{ item.recommended }}</p></article>{% endfor %}
   </div>
 </section>
 
@@ -180,10 +210,8 @@
   <p class="muted">Use this for quick local tool tests. For case-grade workflow, create a Spine subject above.</p>
   <form method="post" action="{{ url_for('dashboard.run_target') }}" class="inline-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label for="target">Target</label>
-    <input type="text" id="target" name="target" placeholder="username, email, or phone" required>
-    <label for="tools">Tools</label>
-    <input type="text" id="tools" name="tools" placeholder="sherlock,maigret">
+    <label for="target">Target</label><input type="text" id="target" name="target" placeholder="username, email, or phone" required>
+    <label for="tools">Tools</label><input type="text" id="tools" name="tools" placeholder="sherlock,maigret">
     <label class="checkbox-label"><input type="checkbox" name="enrich" value="1"> Enrich discovered profiles</label>
     <button type="submit">Queue legacy scan</button>
   </form>
