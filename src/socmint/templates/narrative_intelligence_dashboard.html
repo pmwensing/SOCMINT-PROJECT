@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Narrative Intelligence</p>
+    <h1>Story Reconstruction + Contradiction Engine</h1>
+    <p class="muted">Evidence-to-timeline reconstruction, claim validation, communication graph, confidence scoring, and court/lawyer-ready narrative drafting.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/api/v1/narrative/story-reconstruction">Narrative JSON</a>
+    <a class="button-link secondary" href="/forensic/intake">Forensic Intake</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>Timeline events</span><strong>{{ payload.timeline.event_count }}</strong></article>
+  <article class="metric-card"><span>Claims</span><strong>{{ payload.claims|length }}</strong></article>
+  <article class="metric-card"><span>Contradictions</span><strong>{{ payload.contradictions.contradiction_count }}</strong></article>
+  <article class="metric-card"><span>Narrative confidence</span><strong>{{ payload.narrative_confidence.rating|upper }}</strong></article>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Evidence-to-Timeline Reconstruction</h2><p class="muted">Court-safe chronology from preserved evidence and connector events.</p></div></div>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>Time</th><th>Type</th><th>Title</th><th>Evidence</th><th>Confidence</th></tr></thead>
+      <tbody>
+      {% for event in payload.event_sequence %}
+      <tr><td>{{ event.timestamp }}</td><td>{{ event.event_type }}</td><td>{{ event.title }}</td><td>{{ event.evidence_id or '-' }}</td><td>{{ event.confidence }}</td></tr>
+      {% else %}
+      <tr><td colspan="5">No narrative events yet. Run forensic intake or connector workflows first.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Claim Validation</h2><p class="muted">Maturity ladder for story assertions.</p></div></div>
+  <div class="card-grid">
+    {% for claim in payload.claim_validation.validated_claims[:40] %}
+    <article class="card">
+      <h3>{{ claim.maturity }}</h3>
+      <p>{{ claim.subject }} — {{ claim.predicate }} = {{ claim.value }}</p>
+      <p><span class="status-pill {{ 'completed' if claim.validated else 'queued' }}">confidence {{ claim.confidence }}</span></p>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Contradiction Engine</h2><p class="muted">Deterministic contradiction and review-issue detection.</p></div></div>
+  <div class="card-grid">
+    {% for issue in payload.contradictions.contradictions %}
+    <article class="card warning-card"><h3>{{ issue.type }}</h3><p>{{ issue.subject }} / {{ issue.predicate }}</p><p>{{ issue.severity }}</p></article>
+    {% else %}
+    <article class="card"><h3>No contradictions detected</h3><p>No deterministic contradictions were found in the current claim set.</p></article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Communication Graph</h2><p class="muted">People/contact mentions extracted from event evidence.</p></div></div>
+  <p>{{ payload.communication_graph.node_count }} nodes · {{ payload.communication_graph.edge_count }} edges</p>
+  <div class="metadata-table">
+    <table><thead><tr><th>Node</th><th>Type</th><th>Label</th></tr></thead><tbody>
+      {% for node in payload.communication_graph.nodes[:50] %}<tr><td>{{ node.id }}</td><td>{{ node.type }}</td><td>{{ node.label }}</td></tr>{% else %}<tr><td colspan="3">No communication entities found.</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Court/Lawyer-Ready Narrative Draft</h2><p class="muted">Human-review required before legal use.</p></div></div>
+  <pre>{{ payload.court_lawyer_ready_narrative.markdown }}</pre>
+</section>
+{% endblock %}
