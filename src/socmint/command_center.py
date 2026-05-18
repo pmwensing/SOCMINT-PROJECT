@@ -6,6 +6,7 @@ from typing import Any
 
 from . import database as db
 from .full_report_history import full_report_export_history
+from .narrative_export_v12_6_1 import narrative_dashboard_polish_payload
 from .runtime_import_health import runtime_import_health_report
 from .test_data_controls import is_smoke_label, test_data_summary
 from .tor_production import hidden_service_status
@@ -81,6 +82,24 @@ def _serialize_subject(subject) -> dict[str, Any]:
     }
 
 
+def _narrative_card(subjects: list[Any]) -> dict[str, Any]:
+    subject_id = subjects[0].id if subjects else None
+    try:
+        payload = narrative_dashboard_polish_payload(subject_id=subject_id)
+        confidence = payload.get("narrative_confidence_card") or {}
+        return {
+            "status": "ready" if confidence.get("rating") not in {None, "insufficient"} else "needs_data",
+            "subject_id": subject_id,
+            "rating": confidence.get("rating", "insufficient"),
+            "score": confidence.get("score", 0),
+            "timeline_events": len(payload.get("events", [])),
+            "contradiction_actions": len(payload.get("contradiction_review_actions", [])),
+            "href": f"/narrative/storyboard?subject_id={subject_id}" if subject_id else "/narrative/storyboard",
+        }
+    except Exception as exc:
+        return {"status": "unavailable", "subject_id": subject_id, "rating": "unavailable", "score": 0, "timeline_events": 0, "contradiction_actions": 0, "href": "/narrative/storyboard", "error": str(exc)}
+
+
 def command_center_payload() -> dict[str, Any]:
     db.ensure_configured()
     session = db.Session()
@@ -93,6 +112,7 @@ def command_center_payload() -> dict[str, Any]:
         test_data = test_data_summary()
         runtime_import_health = runtime_import_health_report()
         readiness = v11_readiness_summary()
+        narrative = _narrative_card(subjects)
         total_report_count = 0
         for subject in subjects:
             try:
@@ -112,7 +132,7 @@ def command_center_payload() -> dict[str, Any]:
         compatibility_warnings = [job for job in serialized_jobs if job["compatibility"]["warnings"]]
         latest_processed = completed_jobs[0] if completed_jobs else None
         return {
-            "schema": "socmint.command_center.v11_6",
+            "schema": "socmint.command_center.v12_6_1",
             "summary": {
                 "subject_count": len(subjects),
                 "target_count": len(targets),
@@ -133,12 +153,15 @@ def command_center_payload() -> dict[str, Any]:
                 "runtime_import_status": runtime_import_health.get("status"),
                 "v11_readiness_status": readiness.get("status"),
                 "v11_readiness_percentage": readiness.get("percentage"),
+                "narrative_rating": narrative.get("rating"),
+                "narrative_score": narrative.get("score"),
                 "worker_hint": "Jobs are queued. Run Process queued jobs now or start process-jobs." if queued_count else "No queued jobs waiting.",
             },
             "tor": tor_status,
             "test_data": test_data,
             "runtime_import_health": runtime_import_health,
             "v11_readiness": readiness,
+            "narrative_confidence": narrative,
             "subjects": [_serialize_subject(subject) for subject in subjects],
             "targets": [_serialize_target(target) for target in targets],
             "jobs": serialized_jobs,
@@ -146,6 +169,7 @@ def command_center_payload() -> dict[str, Any]:
             "latest_processed_job": _serialize_job(latest_processed) if latest_processed else None,
             "next_actions": [
                 {"label": "Create / open subject", "href": "/spine", "priority": "primary"},
+                {"label": "Review narrative storyboard", "href": narrative.get("href", "/narrative/storyboard"), "priority": "primary"},
                 {"label": "Review queued jobs", "href": "/jobs", "priority": "secondary"},
                 {"label": "Open enrichment review", "href": "/spine/enrichment-review", "priority": "secondary"},
                 {"label": "Open export center", "href": "/reports/export-center", "priority": "secondary"},
