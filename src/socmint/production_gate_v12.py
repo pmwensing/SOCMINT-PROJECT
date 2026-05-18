@@ -8,6 +8,7 @@ from typing import Any
 
 from .entity_dossier_v2 import export_full_entity_dossier_v2
 from .entity_dossier_v2 import sha256_file
+from .narrative_export_v12_6_1 import dossier_story_layer
 from .spine_intelligence_v11_9 import spine_intelligence_payload
 
 PRODUCTION_GATE_SCHEMA = "socmint.production_gate.v12_0"
@@ -195,6 +196,7 @@ def full_dossier_pack(subject_id: int) -> dict[str, Any]:
     manifest_verification = _verify_export_manifest(export)
     validation = analyst_validation_gate(subject_id)
     trust = connector_trust_scores(subject_id)
+    story = dossier_story_layer(subject_id)
     release_decision = "GO" if validation["status"] == "pass" and manifest_verification["status"] == "pass" else "HOLD"
     return {
         "schema": FULL_DOSSIER_SCHEMA,
@@ -205,6 +207,7 @@ def full_dossier_pack(subject_id: int) -> dict[str, Any]:
         "evidence_manifest_verification": manifest_verification,
         "analyst_validation_gate": validation,
         "connector_trust_scores": trust,
+        "narrative_story_layer": story,
         "chain_of_custody": export.get("manifest", {}),
     }
 
