@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Forensic Intake Command</p>
+    <h1>Evidence Intake + Vault Preservation Dashboard</h1>
+    <p class="muted">Drop-folder ingestion, vault preservation, manifest visibility, chain-of-custody, OCR/transcription readiness, and dossier promotion controls.</p>
+  </div>
+  <div class="hero-actions">
+    <form method="post" action="/forensic/intake/run">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Run Intake</button>
+    </form>
+    <a class="button-link secondary" href="/api/v1/forensic/intake">Dashboard JSON</a>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Drop-Folder Browser</h2><p class="muted">Pending evidence awaiting intake.</p></div></div>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>Path</th><th>Kind</th><th>Size</th></tr></thead>
+      <tbody>
+      {% for item in payload.dropzone_browser %}
+      <tr><td>{{ item.path }}</td><td>{{ item.kind }}</td><td>{{ item.size_bytes }}</td></tr>
+      {% else %}
+      <tr><td colspan="3">No pending intake files.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Evidence Vault Browser</h2><p class="muted">Immutable preserved originals.</p></div></div>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>Evidence ID</th><th>Kind</th><th>Path</th><th>Size</th></tr></thead>
+      <tbody>
+      {% for item in payload.vault_items %}
+      <tr><td>{{ item.evidence_id }}</td><td>{{ item.kind }}</td><td>{{ item.path }}</td><td>{{ item.size_bytes }}</td></tr>
+      {% else %}
+      <tr><td colspan="4">No preserved evidence yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Manifest + Chain-of-Custody Viewer</h2><p class="muted">Court-safe preservation records.</p></div></div>
+  <div class="card-grid">
+    {% for manifest in payload.manifest_index %}
+    <article class="card">
+      <h3>{{ manifest.name }}</h3>
+      <p><strong>Schema:</strong> {{ manifest.schema }}</p>
+      <p><strong>Generated:</strong> {{ manifest.generated_at }}</p>
+      <p><strong>Items:</strong> {{ manifest.item_count }}</p>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>OCR / Transcription Tool Readiness</h2><p class="muted">Operational readiness for deeper analysis.</p></div></div>
+  <div class="card-grid">
+    {% for tool, ready in payload.tool_readiness.items() %}
+    <article class="card">
+      <h3>{{ tool }}</h3>
+      <p><span class="status-pill {{ 'completed' if ready else 'warning' }}">{{ 'ready' if ready else 'not installed' }}</span></p>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Promotion + Dossier Linkage</h2><p class="muted">Controlled promotion into production intelligence.</p></div></div>
+  <div class="card-grid">
+    <article class="card warning-card">
+      <h3>Promotion Controls</h3>
+      <p>{{ payload.promotion_controls.note }}</p>
+    </article>
+    <article class="card">
+      <h3>Dossier Linkage</h3>
+      <p>{{ payload.dossier_linkage.note }}</p>
+    </article>
+  </div>
+</section>
+{% endblock %}
