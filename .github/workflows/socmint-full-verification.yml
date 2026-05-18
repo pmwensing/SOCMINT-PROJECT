@@ -1,0 +1,50 @@
+name: SOCMINT Full Verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/v11.0-command-center
+      - feat/v12.0-full-dossier-production-gate
+  pull_request:
+
+jobs:
+  full-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build SOCMINT runtime
+        run: |
+          docker compose build --no-cache --build-arg SOCMINT_INSTALL_CONNECTORS=true app worker
+
+      - name: Launch services
+        run: |
+          docker compose up -d tor
+          docker compose up -d app
+          sleep 15
+          docker compose --profile worker up -d worker
+
+      - name: Run full verification harness
+        run: |
+          make test-all-socmint | tee SOCMINT_FULL_AUDIT.log
+
+      - name: Archive verification artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: socmint-full-audit
+          path: |
+            SOCMINT_FULL_AUDIT.log
+            var/socmint/audits/**
+            var/socmint/dossiers/**
