@@ -3,11 +3,12 @@
 <section class="hero command-hero">
   <div>
     <p class="eyebrow">SOCMINT Command Center</p>
-    <h1>Operator readiness, evidence status, enrichment health, and full-report control in one place.</h1>
+    <h1>Operator readiness, evidence status, enrichment health, narrative confidence, and full-report control in one place.</h1>
     <p class="muted">Current baseline: {{ payload.v11_readiness.baseline }} · Release gate: {{ payload.v11_readiness.release_gate.decision|upper }} · {{ payload.v11_readiness.next_action }}</p>
   </div>
   <div class="hero-actions">
     <a class="button-link" href="{{ url_for('dashboard.spine_subjects') }}">Create / Open Subject</a>
+    <a class="button-link secondary" href="/narrative/storyboard">Narrative Storyboard</a>
     <a class="button-link secondary" href="{{ url_for('dashboard.jobs') }}">Review Jobs</a>
     <a class="button-link secondary" href="{{ url_for('dashboard.spine_enrichment_review') }}">Enrichment Review</a>
     <a class="button-link secondary" href="/api/v1/admin/v11/readiness-summary">v11 Readiness JSON</a>
@@ -22,6 +23,25 @@
   <article class="metric-card"><span>Smoke subjects</span><strong>{{ payload.summary.test_subject_count }}</strong></article>
   <article class="metric-card"><span>Runtime imports</span><strong>{{ payload.summary.runtime_import_status|upper }}</strong></article>
   <article class="metric-card"><span>v11 readiness</span><strong>{{ payload.summary.v11_readiness_percentage }}%</strong></article>
+  <article class="metric-card"><span>Narrative</span><strong>{{ payload.summary.narrative_rating|upper }}</strong></article>
+</section>
+
+<section class="panel narrative-confidence-panel">
+  <div class="section-header">
+    <div>
+      <h2>Narrative Confidence</h2>
+      <p class="muted">Story reconstruction readiness from evidence timeline, claim validation, and contradiction review.</p>
+    </div>
+    <a class="button-link secondary" href="{{ payload.narrative_confidence.href }}">Open Narrative Storyboard</a>
+  </div>
+  <div class="card-grid">
+    <article class="card status-card {{ 'ok' if payload.narrative_confidence.status == 'ready' else 'warning' }}">
+      <span class="status-label">Narrative rating</span>
+      <strong>{{ payload.narrative_confidence.rating|upper }}</strong>
+      <p class="muted">Score: {{ payload.narrative_confidence.score }} · Timeline events: {{ payload.narrative_confidence.timeline_events }} · Contradiction actions: {{ payload.narrative_confidence.contradiction_actions }}</p>
+      <a class="card-link" href="/api/v1/narrative/story-polish">Narrative polish JSON</a>
+    </article>
+  </div>
 </section>
 
 <section class="panel v11-readiness-panel">
@@ -86,7 +106,7 @@
   <div class="section-header">
     <div>
       <h2>Analyst next steps</h2>
-      <p class="muted">Follow the guided flow: subject → enrichment/connectors → review → full report → readiness gate.</p>
+      <p class="muted">Follow the guided flow: subject → enrichment/connectors → review → narrative → full report → readiness gate.</p>
     </div>
     {% if session.get('is_admin') or session.get('role') == 'analyst' %}
     <form method="post" action="{{ url_for('command_center_process_jobs') }}">
@@ -99,9 +119,9 @@
     <a href="{{ url_for('dashboard.spine_subjects') }}"><strong>1</strong><span>Create/select subject</span></a>
     <a href="{{ url_for('dashboard.spine_subjects') }}"><strong>2</strong><span>Add seeds + run connectors</span></a>
     <a href="{{ url_for('dashboard.spine_enrichment_review') }}"><strong>3</strong><span>Review enrichment</span></a>
-    <a href="{{ url_for('dashboard.spine_subjects') }}"><strong>4</strong><span>Select subject → Generate Full Report</span></a>
-    <a href="{{ url_for('dashboard.report_export_center_view') }}"><strong>5</strong><span>Export / evidence readiness</span></a>
-    <a href="/api/v1/admin/v11/readiness-summary"><strong>6</strong><span>Review v11 release gate</span></a>
+    <a href="/narrative/storyboard"><strong>4</strong><span>Review narrative story</span></a>
+    <a href="{{ url_for('dashboard.spine_subjects') }}"><strong>5</strong><span>Select subject → Generate Full Report</span></a>
+    <a href="{{ url_for('dashboard.report_export_center_view') }}"><strong>6</strong><span>Export / evidence readiness</span></a>
   </div>
   <p class="status-banner {{ 'warning' if payload.summary.queued_jobs else 'ok' }}">{{ payload.summary.worker_hint }}</p>
 </section>
@@ -162,13 +182,14 @@
       <div class="mini-actions">
         <a href="{{ url_for('dashboard.spine_dossier', subject_id=subject.id) }}">Subject dossier</a>
         <a href="/spine/subjects/{{ subject.id }}/dossier">Full Dossier v2</a>
+        <a href="/narrative/storyboard?subject_id={{ subject.id }}">Narrative</a>
         <a href="/spine/subjects/{{ subject.id }}/full-report/history">Export history</a>
       </div>
     </article>
     {% else %}
     <div class="empty-state">
       <h3>No Spine subjects yet</h3>
-      <p>Create a disposable test subject to start the v11 Command Center workflow.</p>
+      <p>Create a disposable test subject to start the Command Center workflow.</p>
       <a class="button-link" href="{{ url_for('dashboard.spine_subjects') }}">Create / Open Subject</a>
     </div>
     {% endfor %}
