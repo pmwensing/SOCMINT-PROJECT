@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Assertion Trust Gate</p>
+    <h1>Dossier Release + Assertion Trust Review</h1>
+    <p class="muted">Release checks for hold assertions, low-confidence exclusion, dossier-ready assertions, and analyst review queue surfacing.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/api/v1/assertions/trust/gate">Gate JSON</a>
+    <a class="button-link secondary" href="/api/v1/assertions/trust/report">Export Report</a>
+    <a class="button-link secondary" href="/assertions/trust">Assertion Trust</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>Decision</span><strong>{{ payload.gate.release_gate_decision }}</strong></article>
+  <article class="metric-card"><span>Assertions</span><strong>{{ payload.gate.summary.assertion_count }}</strong></article>
+  <article class="metric-card"><span>Dossier ready</span><strong>{{ payload.gate.summary.dossier_ready_count }}</strong></article>
+  <article class="metric-card"><span>Review queue</span><strong>{{ payload.gate.summary.review_queue_count }}</strong></article>
+  <article class="metric-card"><span>Hold</span><strong>{{ payload.gate.summary.hold_count }}</strong></article>
+  <article class="metric-card"><span>Avg trust</span><strong>{{ payload.gate.summary.avg_trust_score }}</strong></article>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Assertion Gate Checks</h2><p class="muted">Assertion trust must clear before dossier-ready status.</p></div></div>
+  <div class="card-grid">
+    {% for check in payload.gate.checks %}
+    <article class="card status-card {{ 'ok' if check.status == 'pass' else 'warning' }}">
+      <span class="status-label">{{ check.name.replace('_', ' ') }}</span>
+      <strong>{{ check.status|upper }}</strong>
+      <p class="muted">Actual: {{ check.actual }}</p>
+      {% if check.required %}<p class="muted">Required: {{ check.required }}</p>{% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Dossier-Ready Assertions</h2><p class="muted">Low-confidence and hold assertions are excluded from this list.</p></div></div>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>ID</th><th>Assertion</th><th>Evidence</th><th>Score</th><th>Rating</th></tr></thead>
+      <tbody>
+      {% for item in payload.gate.summary.dossier_ready_assertions %}
+      <tr><td>{{ item.assertion_id }}</td><td>{{ item.subject }} — {{ item.predicate }} = {{ item.value }}</td><td>{{ item.evidence_id or '-' }}</td><td>{{ item.trust_score }}</td><td>{{ item.trust_rating }}</td></tr>
+      {% else %}<tr><td colspan="5">No dossier-ready assertions yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Analyst Review Queue</h2><p class="muted">Assertions requiring review before dossier release.</p></div></div>
+  <div class="card-grid">
+    {% for item in payload.gate.summary.analyst_review_queue %}
+    <article class="card warning-card">
+      <h3>{{ item.assertion_id }} · {{ item.release_state }}</h3>
+      <p>{{ item.subject }} — {{ item.predicate }} = {{ item.value }}</p>
+      <p>Trust: {{ item.trust_score }} · {{ item.trust_rating }}</p>
+      <p>Evidence: {{ item.evidence_id or '-' }}</p>
+    </article>
+    {% else %}<article class="card"><h3>No assertion review queue</h3><p>No assertion review items currently require action.</p></article>{% endfor %}
+  </div>
+</section>
+{% endblock %}
