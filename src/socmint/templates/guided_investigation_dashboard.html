@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Guided Investigation Flow</p>
+    <h1>Visual Command Center and Analyst Guidance</h1>
+    <p class="muted">Evidence to integrity to narrative to assertion trust to release readiness.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/api/v1/investigation/flow">Flow JSON</a>
+    <a class="button-link secondary" href="/command-center">Command Center</a>
+    <a class="button-link secondary" href="{{ payload.guided_assistant.href }}">Next Step</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>Readiness</span><strong>{{ payload.readiness|upper }}</strong></article>
+  <article class="metric-card"><span>Score</span><strong>{{ payload.readiness_score }}</strong></article>
+  <article class="metric-card"><span>Actions</span><strong>{{ payload.action_queue|length }}</strong></article>
+  <article class="metric-card"><span>Priority</span><strong>{{ payload.next_action.priority|upper }}</strong></article>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>What should I do next?</h2><p class="muted">Guided analyst assistant panel.</p></div></div>
+  <article class="card warning-card">
+    <h3>{{ payload.guided_assistant.answer }}</h3>
+    <p>{{ payload.guided_assistant.reason }}</p>
+    <a class="button-link" href="{{ payload.guided_assistant.href }}">Open next action</a>
+  </article>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Case / Subject Progress Rail</h2><p class="muted">Red, yellow, green status across the investigation path.</p></div></div>
+  <div class="workflow-steps">
+    {% for step in payload.progress_rail %}
+    <a href="{{ step.href }}">
+      <strong>{{ loop.index }}</strong>
+      <span>{{ step.label }}</span>
+      <small>{{ step.status|upper }} · {{ step.score }}</small>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Flow Map</h2><p class="muted">Evidence, integrity, narrative, assertion trust, and release readiness.</p></div></div>
+  <div class="card-grid">
+    {% for node in payload.flow_map.nodes %}
+    <article class="card status-card {{ 'ok' if node.status == 'green' else 'warning' }}">
+      <span class="status-label">{{ node.key }}</span>
+      <h3>{{ node.label }}</h3>
+      <p>{{ node.detail }}</p>
+      <a class="card-link" href="{{ node.href }}">Open drilldown</a>
+    </article>
+    {% endfor %}
+  </div>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>From</th><th>To</th><th>Meaning</th></tr></thead>
+      <tbody>{% for edge in payload.flow_map.edges %}<tr><td>{{ edge.source }}</td><td>{{ edge.target }}</td><td>{{ edge.label }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Action Queue Across All Gates</h2><p class="muted">Prioritized issues from each stage.</p></div></div>
+  <div class="card-grid">
+    {% for action in payload.action_queue %}
+    <article class="card warning-card">
+      <h3>{{ action.priority|upper }} · {{ action.label }}</h3>
+      <p><strong>{{ action.step_label }}</strong></p>
+      <p>{{ action.reason }}</p>
+      <a class="card-link" href="{{ action.href }}">Open</a>
+    </article>
+    {% else %}
+    <article class="card"><h3>All clear</h3><p>No guided actions are pending.</p></article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>One-Click Drilldowns</h2><p class="muted">Jump directly to evidence, claims, contradictions, assertions, and release checks.</p></div></div>
+  <div class="hero-actions">
+    {% for label, href in payload.drilldowns.items() %}
+    <a class="button-link secondary" href="{{ href }}">{{ label|title }}</a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
