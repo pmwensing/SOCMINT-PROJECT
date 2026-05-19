@@ -30,6 +30,7 @@ from .authenticity_integrity_routes_v12_7 import register_authenticity_integrity
 from .integrity_gate_routes_v12_7_1 import register_integrity_gate_routes
 from .assertion_trust_routes_v12_8 import register_assertion_trust_routes
 from .assertion_trust_gate_routes_v12_8_1 import register_assertion_trust_gate_routes
+from .guided_investigation_routes_v12_9 import register_guided_investigation_routes
 
 app = create_app()
 register_full_report_aliases(app)
@@ -63,3 +64,4 @@ register_authenticity_integrity_routes(app)
 register_integrity_gate_routes(app)
 register_assertion_trust_routes(app)
 register_assertion_trust_gate_routes(app)
+register_guided_investigation_routes(app)
