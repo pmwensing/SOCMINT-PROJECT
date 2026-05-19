@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from . import spine_intelligence as legacy
@@ -9,6 +10,16 @@ INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v11_9"
 
 promote_observation_to_assertion = legacy.promote_observation_to_assertion
 review_spine_assertion = legacy.review_spine_assertion
+
+REVIEWED_ASSERTION_STATES = {"confirmed", "rejected", "suppressed"}
+DOSSIER_READY_ASSERTION_STATES = {"confirmed"}
+
+
+def minimum_reviewed_assertions() -> int:
+    try:
+        return max(1, int(os.environ.get("SOCMINT_MINIMUM_REVIEWED_ASSERTIONS", "1")))
+    except ValueError:
+        return 1
 
 
 def _run_badge(status: str, normalized_count: int, real_count: int, diagnostic_count: int) -> str:
@@ -52,6 +63,48 @@ def _normalize_for_run(run: dict[str, Any], seed_by_id: dict[int, dict[str, Any]
         return [{"type": "normalizer_error", "value": str(exc), "source": run.get("connector"), "confidence": 0.0}]
 
 
+def _assertion_review_counts(assertions: list[dict[str, Any]]) -> dict[str, int]:
+    reviewed = [item for item in assertions if item.get("validation_state") in REVIEWED_ASSERTION_STATES]
+    confirmed = [item for item in assertions if item.get("validation_state") in DOSSIER_READY_ASSERTION_STATES]
+    rejected = [item for item in assertions if item.get("validation_state") == "rejected"]
+    suppressed = [item for item in assertions if item.get("validation_state") == "suppressed"]
+    unreviewed = [item for item in assertions if item.get("validation_state") == "unreviewed"]
+    return {
+        "reviewed_assertions": len(reviewed),
+        "confirmed_assertions": len(confirmed),
+        "rejected_assertions": len(rejected),
+        "suppressed_assertions": len(suppressed),
+        "unreviewed_assertions": len(unreviewed),
+    }
+
+
+def _dossier_readiness_gate(assertions: list[dict[str, Any]]) -> dict[str, Any]:
+    minimum = minimum_reviewed_assertions()
+    counts = _assertion_review_counts(assertions)
+    reviewed = counts["reviewed_assertions"]
+    confirmed = counts["confirmed_assertions"]
+    missing = max(0, minimum - reviewed)
+    status = "pass" if reviewed >= minimum and confirmed > 0 else "hold"
+    if reviewed < minimum:
+        next_action = f"Review {missing} more assertion(s), then confirm at least one dossier-ready assertion."
+    elif confirmed <= 0:
+        next_action = "At least one reviewed assertion must be confirmed before the dossier is marked ready."
+    else:
+        next_action = "Open Full Dossier v2."
+    return {
+        "status": status,
+        "requires": f"At least {minimum} reviewed assertion(s), including at least one confirmed assertion, are required before the dossier is marked ready.",
+        "minimum_reviewed_assertions": minimum,
+        "reviewed_assertions": reviewed,
+        "confirmed_assertions": confirmed,
+        "rejected_assertions": counts["rejected_assertions"],
+        "suppressed_assertions": counts["suppressed_assertions"],
+        "unreviewed_assertions": counts["unreviewed_assertions"],
+        "missing_reviewed_assertions": missing,
+        "next_action": next_action,
+    }
+
+
 def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
     payload = legacy.spine_intelligence_payload(subject_id)
     payload["schema"] = INTELLIGENCE_SCHEMA
@@ -92,16 +145,16 @@ def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
         })
 
     summary = payload.setdefault("summary", {})
-    confirmed = int(summary.get("confirmed_assertions") or 0)
+    assertions = payload.get("assertions", [])
+    review_counts = _assertion_review_counts(assertions)
+    gate = _dossier_readiness_gate(assertions)
+    summary.update(review_counts)
     summary.update({
         "real_run_count": real_runs,
         "diagnostic_run_count": diagnostic_runs,
-        "dossier_ready": confirmed > 0,
-        "dossier_readiness_gate": {
-            "status": "pass" if confirmed > 0 else "hold",
-            "requires": "At least one reviewed/confirmed assertion is required before the dossier is marked ready.",
-            "confirmed_assertions": confirmed,
-            "next_action": "Open Full Dossier v2." if confirmed > 0 else "Promote a real observation, then confirm at least one assertion.",
-        },
+        "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"],
+        "dossier_ready": gate["status"] == "pass",
+        "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0,
+        "dossier_readiness_gate": gate,
     })
     return payload
