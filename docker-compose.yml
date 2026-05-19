@@ -1,11 +1,15 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        SOCMINT_INSTALL_CONNECTORS: ${SOCMINT_INSTALL_CONNECTORS:-true}
     restart: unless-stopped
     env_file: ${SOCMINT_ENV_FILE:-.env}
     environment:
       SOCMINT_DATA_DIR: /var/lib/socmint
       SOCMINT_TOR_PROXY: ${SOCMINT_TOR_PROXY:-}
+      SOCMINT_CONNECTOR_CLI_ENABLED: ${SOCMINT_CONNECTOR_CLI_ENABLED:-true}
     volumes:
       - socmint-data:/var/lib/socmint
     depends_on:
@@ -19,13 +23,17 @@ services:
       retries: 3
 
   worker:
-    build: .
+    build:
+      context: .
+      args:
+        SOCMINT_INSTALL_CONNECTORS: ${SOCMINT_INSTALL_CONNECTORS:-true}
     restart: unless-stopped
     profiles: ["worker"]
     env_file: ${SOCMINT_ENV_FILE:-.env}
     environment:
       SOCMINT_DATA_DIR: /var/lib/socmint
       SOCMINT_TOR_PROXY: ${SOCMINT_TOR_PROXY:-}
+      SOCMINT_CONNECTOR_CLI_ENABLED: ${SOCMINT_CONNECTOR_CLI_ENABLED:-true}
       SOCMINT_WORKER_INTERVAL: ${SOCMINT_WORKER_INTERVAL:-60}
       SOCMINT_WORKER_MAX_JOBS: ${SOCMINT_WORKER_MAX_JOBS:-1}
     volumes:
