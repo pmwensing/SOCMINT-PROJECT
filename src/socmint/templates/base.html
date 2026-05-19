@@ -14,16 +14,17 @@
 
     <header class="app-header">
         <div class="header-inner">
-            <a href="{{ url_for('dashboard.index') }}" class="brand">SOCMINT v11</a>
+            <a href="{{ url_for('dashboard.index') }}" class="brand">SOCMINT v12</a>
 
             <nav class="operator-nav" aria-label="Primary navigation">
                 {{ nav_link('/', 'Home') }}
                 {{ nav_link('/about', 'About') }}
 
                 {% if session.get('user') %}
-                <details class="nav-group" {% if current_path in ['/command-center', '/jobs', '/workbench/jobs', '/analyst/console', '/responsible-use'] or current_path.startswith('/workbench') %}open{% endif %}>
-                    <summary class="{{ 'active' if current_path in ['/command-center', '/jobs', '/workbench/jobs', '/analyst/console', '/responsible-use'] or current_path.startswith('/workbench') else '' }}">Operate</summary>
+                <details class="nav-group" {% if current_path.startswith('/command-center') or current_path.startswith('/investigation') or current_path in ['/jobs', '/workbench/jobs', '/analyst/console', '/responsible-use'] or current_path.startswith('/workbench') %}open{% endif %}>
+                    <summary class="{{ 'active' if current_path.startswith('/command-center') or current_path.startswith('/investigation') or current_path in ['/jobs', '/workbench/jobs', '/analyst/console', '/responsible-use'] or current_path.startswith('/workbench') else '' }}">Operate</summary>
                     {{ nav_link('/command-center', 'Command Center') }}
+                    {{ nav_link('/investigation/flow', 'Guided Investigation') }}
                     {{ nav_link('/jobs', 'Jobs') }}
                     {{ nav_link('/workbench/jobs', 'Workbench') }}
                     {{ nav_link('/analyst/console', 'Analyst Console') }}
@@ -57,6 +58,14 @@
                     {{ nav_link('/evidence/links', 'Evidence Linker') }}
                     {{ nav_link('/evidence/custody', 'Custody Ledger') }}
                     {{ nav_link('/evidence/integrity', 'Integrity Dashboard') }}
+                    {{ nav_link('/evidence/integrity/gate', 'Integrity Gate') }}
+                </details>
+
+                <details class="nav-group" {% if current_path.startswith('/narrative') or current_path.startswith('/assertions') %}open{% endif %}>
+                    <summary class="{{ 'active' if current_path.startswith('/narrative') or current_path.startswith('/assertions') else '' }}">Intelligence</summary>
+                    {{ nav_link('/narrative/storyboard', 'Narrative Storyboard') }}
+                    {{ nav_link('/assertions/trust', 'Assertion Trust') }}
+                    {{ nav_link('/assertions/trust/gate', 'Assertion Gate') }}
                 </details>
 
                 <details class="nav-group" {% if current_path.startswith('/product') %}open{% endif %}>
@@ -111,7 +120,7 @@
     </main>
 
     <footer class="app-footer">
-        <p>SOCMINT v11 Command Center test instance</p>
+        <p>SOCMINT v12 Command Center test instance</p>
     </footer>
 </body>
 </html>
