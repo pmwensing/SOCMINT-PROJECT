@@ -8,6 +8,8 @@ from typing import Any
 
 from .entity_dossier_v2 import export_full_entity_dossier_v2
 from .entity_dossier_v2 import sha256_file
+from .integrity_gate_v12_7_1 import evidence_integrity_summary
+from .integrity_gate_v12_7_1 import integrity_release_gate
 from .narrative_export_v12_6_1 import dossier_story_layer
 from .spine_intelligence_v11_9 import spine_intelligence_payload
 
@@ -197,7 +199,9 @@ def full_dossier_pack(subject_id: int) -> dict[str, Any]:
     validation = analyst_validation_gate(subject_id)
     trust = connector_trust_scores(subject_id)
     story = dossier_story_layer(subject_id)
-    release_decision = "GO" if validation["status"] == "pass" and manifest_verification["status"] == "pass" else "HOLD"
+    integrity_summary = evidence_integrity_summary()
+    integrity_gate = integrity_release_gate()
+    release_decision = "GO" if validation["status"] == "pass" and manifest_verification["status"] == "pass" and integrity_gate["status"] == "pass" else "HOLD"
     return {
         "schema": FULL_DOSSIER_SCHEMA,
         "generated_at": utc_now(),
@@ -208,6 +212,8 @@ def full_dossier_pack(subject_id: int) -> dict[str, Any]:
         "analyst_validation_gate": validation,
         "connector_trust_scores": trust,
         "narrative_story_layer": story,
+        "evidence_integrity_summary": integrity_summary,
+        "integrity_release_gate": integrity_gate,
         "chain_of_custody": export.get("manifest", {}),
     }
 
@@ -223,13 +229,19 @@ def production_release_gate(subject_id: int | None = None) -> dict[str, Any]:
         }
     validation = analyst_validation_gate(subject_id)
     trust = connector_trust_scores(subject_id)
+    integrity_gate = integrity_release_gate()
     trusted_connectors = trust.get("summary", {}).get("trusted", 0)
     checks = list(validation.get("checks", [])) + [
         {
             "name": "trusted_connector_available",
             "status": "pass" if trusted_connectors > 0 else "review",
             "actual": trusted_connectors,
-        }
+        },
+        {
+            "name": "evidence_integrity_gate",
+            "status": "pass" if integrity_gate.get("status") == "pass" else "review" if integrity_gate.get("status") == "review" else "fail",
+            "actual": integrity_gate.get("release_gate_decision"),
+        },
     ]
     fail_count = sum(1 for item in checks if item["status"] == "fail")
     review_count = sum(1 for item in checks if item["status"] == "review")
@@ -243,6 +255,7 @@ def production_release_gate(subject_id: int | None = None) -> dict[str, Any]:
         "checks": checks,
         "connector_trust_scores": trust,
         "analyst_validation_gate": validation,
+        "integrity_release_gate": integrity_gate,
         "summary": {
             "passed_checks": sum(1 for item in checks if item["status"] == "pass"),
             "review_checks": review_count,
