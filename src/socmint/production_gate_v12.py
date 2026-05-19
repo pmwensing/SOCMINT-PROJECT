@@ -6,6 +6,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from .assertion_trust_gate_v12_8_1 import assertion_release_gate
+from .assertion_trust_gate_v12_8_1 import assertion_trust_summary
 from .entity_dossier_v2 import export_full_entity_dossier_v2
 from .entity_dossier_v2 import sha256_file
 from .integrity_gate_v12_7_1 import evidence_integrity_summary
@@ -136,38 +138,13 @@ def analyst_validation_gate(subject_id: int, min_confirmed_assertions: int = 1) 
     dry_run_only = bool(runs) and all(run.get("badge") == "diagnostic" or run.get("status") == "dry_run" for run in runs)
     has_promoted = confirmed >= min_confirmed_assertions
     checks = [
-        {
-            "name": "minimum_reviewed_assertions",
-            "status": "pass" if has_promoted else "fail",
-            "required": min_confirmed_assertions,
-            "actual": confirmed,
-        },
-        {
-            "name": "promoted_findings_required",
-            "status": "pass" if confirmed > 0 else "fail",
-            "actual": confirmed,
-        },
-        {
-            "name": "dry_run_evidence_excluded",
-            "status": "pass" if not dry_run_only else "fail",
-            "actual": {"dry_run_only": dry_run_only, "runs": len(runs)},
-        },
-        {
-            "name": "real_observation_or_confirmed_assertion",
-            "status": "pass" if real_observations > 0 or confirmed > 0 else "fail",
-            "actual": {"real_observations": real_observations, "confirmed_assertions": confirmed},
-        },
+        {"name": "minimum_reviewed_assertions", "status": "pass" if has_promoted else "fail", "required": min_confirmed_assertions, "actual": confirmed},
+        {"name": "promoted_findings_required", "status": "pass" if confirmed > 0 else "fail", "actual": confirmed},
+        {"name": "dry_run_evidence_excluded", "status": "pass" if not dry_run_only else "fail", "actual": {"dry_run_only": dry_run_only, "runs": len(runs)}},
+        {"name": "real_observation_or_confirmed_assertion", "status": "pass" if real_observations > 0 or confirmed > 0 else "fail", "actual": {"real_observations": real_observations, "confirmed_assertions": confirmed}},
     ]
     passed = sum(1 for item in checks if item["status"] == "pass")
-    return {
-        "schema": PRODUCTION_GATE_SCHEMA,
-        "subject_id": subject_id,
-        "status": "pass" if passed == len(checks) else "hold",
-        "passed_checks": passed,
-        "total_checks": len(checks),
-        "checks": checks,
-        "summary": summary,
-    }
+    return {"schema": PRODUCTION_GATE_SCHEMA, "subject_id": subject_id, "status": "pass" if passed == len(checks) else "hold", "passed_checks": passed, "total_checks": len(checks), "checks": checks, "summary": summary}
 
 
 def _verify_export_manifest(export: dict[str, Any]) -> dict[str, Any]:
@@ -176,21 +153,8 @@ def _verify_export_manifest(export: dict[str, Any]) -> dict[str, Any]:
         path = Path(item.get("path", ""))
         exists = path.exists() and path.is_file()
         current = sha256_file(path) if exists else None
-        files.append(
-            {
-                **item,
-                "exists": exists,
-                "current_sha256": current,
-                "sha256_verified": bool(exists and current == item.get("sha256")),
-            }
-        )
-    return {
-        "schema": PRODUCTION_GATE_SCHEMA,
-        "status": "pass" if files and all(item["sha256_verified"] for item in files) else "fail",
-        "files": files,
-        "verified_files": sum(1 for item in files if item["sha256_verified"]),
-        "total_files": len(files),
-    }
+        files.append({**item, "exists": exists, "current_sha256": current, "sha256_verified": bool(exists and current == item.get("sha256"))})
+    return {"schema": PRODUCTION_GATE_SCHEMA, "status": "pass" if files and all(item["sha256_verified"] for item in files) else "fail", "files": files, "verified_files": sum(1 for item in files if item["sha256_verified"]), "total_files": len(files)}
 
 
 def full_dossier_pack(subject_id: int) -> dict[str, Any]:
@@ -201,7 +165,9 @@ def full_dossier_pack(subject_id: int) -> dict[str, Any]:
     story = dossier_story_layer(subject_id)
     integrity_summary = evidence_integrity_summary()
     integrity_gate = integrity_release_gate()
-    release_decision = "GO" if validation["status"] == "pass" and manifest_verification["status"] == "pass" and integrity_gate["status"] == "pass" else "HOLD"
+    assertion_summary = assertion_trust_summary(subject_id)
+    assertion_gate = assertion_release_gate(subject_id)
+    release_decision = "GO" if validation["status"] == "pass" and manifest_verification["status"] == "pass" and integrity_gate["status"] == "pass" and assertion_gate["status"] == "pass" else "HOLD"
     return {
         "schema": FULL_DOSSIER_SCHEMA,
         "generated_at": utc_now(),
@@ -214,34 +180,26 @@ def full_dossier_pack(subject_id: int) -> dict[str, Any]:
         "narrative_story_layer": story,
         "evidence_integrity_summary": integrity_summary,
         "integrity_release_gate": integrity_gate,
+        "assertion_trust_summary": assertion_summary,
+        "assertion_release_gate": assertion_gate,
+        "dossier_ready_assertions": assertion_summary.get("dossier_ready_assertions", []),
+        "assertion_review_queue": assertion_summary.get("analyst_review_queue", []),
         "chain_of_custody": export.get("manifest", {}),
     }
 
 
 def production_release_gate(subject_id: int | None = None) -> dict[str, Any]:
     if subject_id is None:
-        return {
-            "schema": PRODUCTION_GATE_SCHEMA,
-            "generated_at": utc_now(),
-            "status": "hold",
-            "release_gate_decision": "HOLD",
-            "reason": "subject_id is required for a production dossier release decision",
-        }
+        return {"schema": PRODUCTION_GATE_SCHEMA, "generated_at": utc_now(), "status": "hold", "release_gate_decision": "HOLD", "reason": "subject_id is required for a production dossier release decision"}
     validation = analyst_validation_gate(subject_id)
     trust = connector_trust_scores(subject_id)
     integrity_gate = integrity_release_gate()
+    assertion_gate = assertion_release_gate(subject_id)
     trusted_connectors = trust.get("summary", {}).get("trusted", 0)
     checks = list(validation.get("checks", [])) + [
-        {
-            "name": "trusted_connector_available",
-            "status": "pass" if trusted_connectors > 0 else "review",
-            "actual": trusted_connectors,
-        },
-        {
-            "name": "evidence_integrity_gate",
-            "status": "pass" if integrity_gate.get("status") == "pass" else "review" if integrity_gate.get("status") == "review" else "fail",
-            "actual": integrity_gate.get("release_gate_decision"),
-        },
+        {"name": "trusted_connector_available", "status": "pass" if trusted_connectors > 0 else "review", "actual": trusted_connectors},
+        {"name": "evidence_integrity_gate", "status": "pass" if integrity_gate.get("status") == "pass" else "review" if integrity_gate.get("status") == "review" else "fail", "actual": integrity_gate.get("release_gate_decision")},
+        {"name": "assertion_trust_gate", "status": "pass" if assertion_gate.get("status") == "pass" else "review" if assertion_gate.get("status") == "review" else "fail", "actual": assertion_gate.get("release_gate_decision")},
     ]
     fail_count = sum(1 for item in checks if item["status"] == "fail")
     review_count = sum(1 for item in checks if item["status"] == "review")
@@ -256,12 +214,8 @@ def production_release_gate(subject_id: int | None = None) -> dict[str, Any]:
         "connector_trust_scores": trust,
         "analyst_validation_gate": validation,
         "integrity_release_gate": integrity_gate,
-        "summary": {
-            "passed_checks": sum(1 for item in checks if item["status"] == "pass"),
-            "review_checks": review_count,
-            "failed_checks": fail_count,
-            "total_checks": len(checks),
-        },
+        "assertion_release_gate": assertion_gate,
+        "summary": {"passed_checks": sum(1 for item in checks if item["status"] == "pass"), "review_checks": review_count, "failed_checks": fail_count, "total_checks": len(checks)},
     }
 
 
@@ -273,16 +227,7 @@ def write_audit_report(report: dict[str, Any], root: str = "var/socmint/audits")
     json_path = base.with_suffix(".json")
     md_path = base.with_suffix(".md")
     json_path.write_text(json.dumps(report, indent=2, sort_keys=True))
-    lines = [
-        "# SOCMINT v12.0 Production Gate Report",
-        "",
-        f"- Generated: `{report.get('generated_at')}`",
-        f"- Decision: `{report.get('release_gate_decision')}`",
-        f"- Status: `{report.get('status')}`",
-        "",
-        "## Checks",
-        "",
-    ]
+    lines = ["# SOCMINT v12.0 Production Gate Report", "", f"- Generated: `{report.get('generated_at')}`", f"- Decision: `{report.get('release_gate_decision')}`", f"- Status: `{report.get('status')}`", "", "## Checks", ""]
     for check in report.get("checks", []):
         lines.append(f"- `{check.get('status')}` — {check.get('name')}: `{check.get('actual')}`")
     md_path.write_text("\n".join(lines) + "\n")
