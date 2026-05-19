@@ -4,7 +4,7 @@
   <div>
     <p class="eyebrow">Spine-Native Subject Intelligence</p>
     <h1>{{ payload.subject.label }}</h1>
-    <p class="muted">Dossier-first pipeline: seeds → connector runs → raw artifacts → real enrichment observations → assertions → Full Entity Profile Dossier.</p>
+    <p class="muted">Seeds are queued from the UI and processed by the worker to keep the web app responsive.</p>
   </div>
   <div class="hero-actions">
     <a class="button-link" href="{{ payload.dossier_url }}">Open Full Dossier v2</a>
@@ -12,6 +12,12 @@
     <a class="button-link secondary" href="{{ payload.export_history_url }}">Export History</a>
     <a class="button-link secondary" href="{{ payload.classic_subject_url }}">Classic Subject View</a>
   </div>
+</section>
+
+<section class="panel warning-panel">
+  <h2>Worker-only connector execution</h2>
+  <p class="warning-text">The Run button queues selected connector work. Long-running connector tools are handled by the worker, not the web request.</p>
+  <p class="muted">Requested mode: {{ payload.connector_mode.requested_mode if payload.connector_mode else 'unknown' }} · Effective web mode: {{ payload.connector_mode.effective_mode if payload.connector_mode else 'unknown' }} · {{ payload.connector_mode.reason if payload.connector_mode else '' }}</p>
 </section>
 
 <section class="metric-grid">
@@ -26,30 +32,16 @@
 
 <section class="panel {{ 'success-panel' if payload.summary.dossier_readiness_gate.status == 'pass' else 'warning-panel' }}">
   <div class="section-header">
-    <div>
-      <h2>Dossier Readiness Gate</h2>
-      <p class="muted">{{ payload.summary.dossier_readiness_gate.requires }}</p>
-    </div>
+    <div><h2>Dossier Readiness Gate</h2><p class="muted">{{ payload.summary.dossier_readiness_gate.requires }}</p></div>
     <span class="status-pill {{ 'completed' if payload.summary.dossier_readiness_gate.status == 'pass' else 'queued' }}">{{ payload.summary.dossier_readiness_gate.status|upper }}</span>
   </div>
   <p><strong>Confirmed assertions:</strong> {{ payload.summary.dossier_readiness_gate.confirmed_assertions }}</p>
   <p class="muted">{{ payload.summary.dossier_readiness_gate.next_action }}</p>
 </section>
 
-{% if not payload.summary.has_real_enrichment and payload.summary.connector_run_count > 0 %}
-<section class="panel warning-panel">
-  <h2>No real enrichment findings yet</h2>
-  <p class="warning-text">The connectors ran, but the normalizers did not extract profile URLs, account presence, exposure data, phone intelligence, archive captures, or other dossier-grade enrichment. Seed echoes are treated as diagnostics instead of evidence.</p>
-  <p class="muted">Open the run inspector below to verify whether the tool returned no useful result, returned output the normalizer does not yet understand, or hit a connector/runtime issue.</p>
-</section>
-{% endif %}
-
 <section class="panel command-panel">
   <div class="section-header">
-    <div>
-      <h2>Run subject intelligence</h2>
-      <p class="muted">Only compatible connectors are enabled for this subject's seed types.</p>
-    </div>
+    <div><h2>Queue subject intelligence</h2><p class="muted">Only compatible options are enabled for this subject's seed types. The worker processes queued jobs.</p></div>
     <span class="status-pill {{ 'queued' if payload.summary.needs_review else 'completed' }}">{{ 'Review needed' if payload.summary.needs_review else 'No review queue' }}</span>
   </div>
   <form method="post" action="{{ url_for('spine_intelligence_run', subject_id=payload.subject.id) }}">
@@ -64,126 +56,15 @@
       </label>
       {% endfor %}
     </div>
-    <button type="submit">Run selected connectors into Spine</button>
+    <button type="submit">Queue selected connectors for worker</button>
   </form>
 </section>
 
-<section class="panel">
-  <h2>Dossier Assertions</h2>
-  <div class="card-grid">
-    {% for assertion in payload.assertions %}
-    <article class="card">
-      <h3>{{ assertion.type }}</h3>
-      <p><span class="status-pill {{ 'completed' if assertion.validation_state == 'confirmed' else 'failed' if assertion.validation_state == 'rejected' else 'queued' }}">{{ assertion.validation_state }}</span></p>
-      <p><strong>Value:</strong> {{ assertion.value }}</p>
-      <p><strong>Confidence:</strong> {{ assertion.confidence }}</p>
-      <form method="post" action="{{ url_for('spine_intelligence_assertion_review', assertion_id=assertion.id) }}" class="inline-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="subject_id" value="{{ payload.subject.id }}">
-        <input type="text" name="note" placeholder="Analyst note">
-        <button name="action" value="confirmed" type="submit">Confirm</button>
-        <button name="action" value="rejected" type="submit">Reject</button>
-        <button name="action" value="suppressed" type="submit">Suppress</button>
-        <button name="action" value="unreviewed" type="submit">Reset</button>
-      </form>
-    </article>
-    {% else %}
-    <p>No dossier assertions yet. Promote a real observation to create one.</p>
-    {% endfor %}
-  </div>
-</section>
+<section class="panel"><h2>Dossier Assertions</h2><div class="card-grid">{% for assertion in payload.assertions %}<article class="card"><h3>{{ assertion.type }}</h3><p><span class="status-pill {{ 'completed' if assertion.validation_state == 'confirmed' else 'failed' if assertion.validation_state == 'rejected' else 'queued' }}">{{ assertion.validation_state }}</span></p><p><strong>Value:</strong> {{ assertion.value }}</p><p><strong>Confidence:</strong> {{ assertion.confidence }}</p><form method="post" action="{{ url_for('spine_intelligence_assertion_review', assertion_id=assertion.id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="subject_id" value="{{ payload.subject.id }}"><input type="text" name="note" placeholder="Analyst note"><button name="action" value="confirmed" type="submit">Confirm</button><button name="action" value="rejected" type="submit">Reject</button><button name="action" value="suppressed" type="submit">Suppress</button><button name="action" value="unreviewed" type="submit">Reset</button></form></article>{% else %}<p>No dossier assertions yet. Promote a real observation to create one.</p>{% endfor %}</div></section>
 
-<section class="panel">
-  <h2>Real Enrichment Observations</h2>
-  <p class="muted">Only dossier-grade observations appear here. Seed echoes and empty connector results are excluded.</p>
-  <div class="card-grid">
-    {% for observation in payload.observations %}
-    <article class="card">
-      <h3>{{ observation.type }}</h3>
-      <p><strong>Value:</strong> {{ observation.value }}</p>
-      <p><strong>Confidence:</strong> {{ observation.confidence }}</p>
-      <p class="muted">{{ observation.source_ref }} · {{ observation.evidence_ref }}</p>
-      <form method="post" action="{{ url_for('spine_observation_promote', observation_id=observation.id) }}" class="inline-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="subject_id" value="{{ payload.subject.id }}">
-        <input type="text" name="note" placeholder="Promotion note">
-        <button type="submit">Promote to confirmed assertion</button>
-      </form>
-    </article>
-    {% else %}
-    <p>No real enrichment observations yet.</p>
-    {% endfor %}
-  </div>
-</section>
+<section class="panel"><h2>Real Enrichment Observations</h2><p class="muted">Only dossier-grade observations appear here.</p><div class="card-grid">{% for observation in payload.observations %}<article class="card"><h3>{{ observation.type }}</h3><p><strong>Value:</strong> {{ observation.value }}</p><p><strong>Confidence:</strong> {{ observation.confidence }}</p><p class="muted">{{ observation.source_ref }} · {{ observation.evidence_ref }}</p><form method="post" action="{{ url_for('spine_observation_promote', observation_id=observation.id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="subject_id" value="{{ payload.subject.id }}"><input type="text" name="note" placeholder="Promotion note"><button type="submit">Promote to confirmed assertion</button></form></article>{% else %}<p>No real enrichment observations yet.</p>{% endfor %}</div></section>
 
-<section class="panel">
-  <h2>Connector Run Result Inspector</h2>
-  <p class="muted">Each run is tagged as real, diagnostic, or review-needed. Normalized findings are shown directly under the run before promotion.</p>
-  <div class="card-grid">
-    {% for run in payload.runs %}
-    <article class="card wide-card {{ 'success-card' if run.is_real else 'muted-card' if run.is_diagnostic else '' }}">
-      <h3>{{ run.connector }} · Run {{ run.id }}</h3>
-      <p>
-        <span class="status-pill {{ 'completed' if run.status == 'completed' else 'failed' if run.status in ['failed','timeout'] else 'queued' }}">{{ run.status }}</span>
-        <span class="status-pill {{ 'completed' if run.badge == 'real' else 'queued' if run.badge == 'review' else 'failed' }}">{{ run.badge }}</span>
-        Seed {{ run.seed_id }} · {{ run.seed_type }} · {{ run.seed_value }}
-      </p>
-      <p class="muted">{{ run.explanation }}</p>
-      <p><strong>Normalized findings:</strong> {{ run.finding_count }} · <strong>Real observations:</strong> {{ run.real_observation_count }} · <strong>Diagnostics:</strong> {{ run.diagnostic_count }} · <strong>Artifacts:</strong> {{ run.artifacts|length }}</p>
+<section class="panel"><h2>Connector Run Result Inspector</h2><p class="muted">Runs are tagged as real, diagnostic, or review-needed.</p><div class="card-grid">{% for run in payload.runs %}<article class="card wide-card {{ 'success-card' if run.is_real else 'muted-card' if run.is_diagnostic else '' }}"><h3>{{ run.connector }} · Run {{ run.id }}</h3><p><span class="status-pill {{ 'completed' if run.status == 'completed' else 'failed' if run.status in ['failed','timeout'] else 'queued' }}">{{ run.status }}</span> <span class="status-pill {{ 'completed' if run.badge == 'real' else 'queued' if run.badge == 'review' else 'failed' }}">{{ run.badge }}</span> Seed {{ run.seed_id }} · {{ run.seed_type }} · {{ run.seed_value }}</p><p class="muted">{{ run.explanation }}</p><p><strong>Normalized findings:</strong> {{ run.finding_count }} · <strong>Real observations:</strong> {{ run.real_observation_count }} · <strong>Diagnostics:</strong> {{ run.diagnostic_count }}</p></article>{% else %}<p>No Spine connector runs yet.</p>{% endfor %}</div></section>
 
-      {% if run.normalized_findings %}
-      <div class="metadata-table">
-        <table>
-          <thead><tr><th>Type</th><th>Value</th><th>Confidence</th><th>Source</th></tr></thead>
-          <tbody>
-          {% for finding in run.normalized_findings %}
-            <tr><td>{{ finding.type }}</td><td>{{ finding.value }}</td><td>{{ finding.confidence }}</td><td>{{ finding.source }}</td></tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% elif run.is_diagnostic %}
-      <p class="warning-text">No normalized findings were extracted. This is a failed/empty/diagnostic run, not dossier evidence.</p>
-      {% endif %}
-
-      {% if run.observations %}
-      <h4>Promotion-ready observations</h4>
-      {% for observation in run.observations %}
-      <form method="post" action="{{ url_for('spine_observation_promote', observation_id=observation.id) }}" class="inline-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="subject_id" value="{{ payload.subject.id }}">
-        <span>{{ observation.type }} — {{ observation.value }} — {{ observation.confidence }}</span>
-        <input type="text" name="note" placeholder="Promotion note">
-        <button type="submit">Promote to confirmed assertion</button>
-      </form>
-      {% endfor %}
-      {% endif %}
-
-      {% if run.artifacts %}
-      <ul>{% for artifact in run.artifacts %}<li><code>{{ artifact.sha256 }}</code> — {{ artifact.kind }} — {{ artifact.size_bytes }} bytes</li>{% endfor %}</ul>
-      {% endif %}
-      <details><summary>Raw stdout</summary><pre>{{ run.stdout or '' }}</pre></details>
-      <details><summary>Raw stderr</summary><pre>{{ run.stderr or '' }}</pre></details>
-      <details><summary>Raw JSON</summary><pre>{{ run.raw_result | tojson(indent=2) }}</pre></details>
-    </article>
-    {% else %}
-    <p>No Spine connector runs yet.</p>
-    {% endfor %}
-  </div>
-</section>
-
-<section class="panel">
-  <h2>Connector Diagnostics / No-Result Runs</h2>
-  <div class="card-grid">
-    {% for diagnostic in payload.diagnostics %}
-    <article class="card muted-card">
-      <h3>{{ diagnostic.type }}</h3>
-      <p><strong>Value:</strong> {{ diagnostic.value }}</p>
-      <p class="muted">{{ diagnostic.payload.note or 'Connector did not produce normalized enrichment findings.' }}</p>
-    </article>
-    {% else %}
-    <p>No connector diagnostics.</p>
-    {% endfor %}
-  </div>
-</section>
+<section class="panel"><h2>Connector Diagnostics / No-Result Runs</h2><div class="card-grid">{% for diagnostic in payload.diagnostics %}<article class="card muted-card"><h3>{{ diagnostic.type }}</h3><p><strong>Value:</strong> {{ diagnostic.value }}</p><p class="muted">{{ diagnostic.payload.note or 'Connector did not produce normalized enrichment findings.' }}</p></article>{% else %}<p>No connector diagnostics.</p>{% endfor %}</div></section>
 {% endblock %}
