@@ -1,6 +1,6 @@
 include Makefile
 
-.PHONY: test-v12-0 test-all-socmint test-v12-3-1 test-v12-3-2 test-v12-5 test-v12-5-1 test-v12-6 test-v12-6-1 test-v12-7 test-v12-7-1 test-v12-8 test-v12-8-1 test-v12-9 test-v12-9-1 test-v12-10 test-v12-full
+.PHONY: test-v12-0 test-all-socmint test-v12-3-1 test-v12-3-2 test-v12-5 test-v12-5-1 test-v12-6 test-v12-6-1 test-v12-7 test-v12-7-1 test-v12-8 test-v12-8-1 test-v12-9 test-v12-9-1 test-v12-10 test-v12-full test-connector-cli-enabled test-connector-cli-container test-connector-mode-switch test-worker-only-connector-mode
 
 test-v12-0:
 	bash ./scripts/test_v12_0.sh
@@ -49,3 +49,15 @@ test-v12-10:
 
 test-v12-full:
 	bash ./scripts/test_v12_full.sh
+
+test-connector-cli-enabled:
+	bash ./scripts/test_connector_cli_enabled.sh
+
+test-connector-cli-container:
+	bash ./scripts/test_connector_cli_container.sh
+
+test-connector-mode-switch:
+	bash ./scripts/test_connector_mode_switch.sh
+
+test-worker-only-connector-mode:
+	bash ./scripts/test_worker_only_connector_mode.sh

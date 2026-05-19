@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from flask import abort, flash, jsonify, redirect, render_template, request, session, url_for
 
+from .connectors import connector_mode_report
 from .spine import run_spine_for_subject
+from .spine_connector_queue_v12_10_1 import queue_subject_connector_jobs
 from .spine_intelligence_v11_9 import promote_observation_to_assertion
 from .spine_intelligence_v11_9 import review_spine_assertion
 from .spine_intelligence_v11_9 import spine_intelligence_payload
@@ -18,6 +20,7 @@ def register_spine_intelligence_routes(app) -> None:
     def spine_intelligence_view(subject_id: int):
         try:
             payload = spine_intelligence_payload(subject_id)
+            payload["connector_mode"] = connector_mode_report()
         except ValueError:
             abort(404)
         return render_template("spine_intelligence.html", payload=payload)
@@ -26,9 +29,14 @@ def register_spine_intelligence_routes(app) -> None:
     def spine_intelligence_run(subject_id: int):
         connectors = request.form.getlist("connectors")
         try:
-            result = run_spine_for_subject(subject_id, connectors or None)
-            audit("spine_intelligence_run", details=result)
-            flash(f"Ran {len(result['run_ids'])} Spine connector runs.", "success")
+            if request.form.get("run_inline") == "1":
+                result = run_spine_for_subject(subject_id, connectors or None)
+                audit("spine_intelligence_run_inline", details=result)
+                flash(f"Ran {len(result['run_ids'])} Spine connector runs inline.", "success")
+            else:
+                result = queue_subject_connector_jobs(subject_id, connectors or None, actor=session.get("user"))
+                audit("spine_intelligence_queue", details=result)
+                flash(f"Queued {result['queued_count']} connector job(s). Worker will run live connectors; web UI will not block.", "success")
         except Exception as exc:
             flash(str(exc), "error")
         return redirect(url_for("spine_intelligence_view", subject_id=subject_id))
@@ -38,11 +46,7 @@ def register_spine_intelligence_routes(app) -> None:
         subject_id = request.form.get("subject_id", type=int)
         note = request.form.get("note", "").strip() or None
         try:
-            result = promote_observation_to_assertion(
-                observation_id,
-                actor=session.get("user"),
-                note=note,
-            )
+            result = promote_observation_to_assertion(observation_id, actor=session.get("user"), note=note)
             audit("spine_observation_promote", details=result)
             flash(f"Observation promoted to assertion {result['assertion_id']}.", "success")
             subject_id = result["subject_id"]
@@ -56,12 +60,7 @@ def register_spine_intelligence_routes(app) -> None:
         action = request.form.get("action", "").strip()
         note = request.form.get("note", "").strip() or None
         try:
-            result = review_spine_assertion(
-                assertion_id,
-                action,
-                actor=session.get("user"),
-                note=note,
-            )
+            result = review_spine_assertion(assertion_id, action, actor=session.get("user"), note=note)
             audit("spine_intelligence_assertion_review", details=result)
             flash(f"Assertion marked {action}.", "success")
         except Exception as exc:
@@ -72,6 +71,7 @@ def register_spine_intelligence_routes(app) -> None:
     def api_spine_intelligence(subject_id: int):
         try:
             payload = spine_intelligence_payload(subject_id)
+            payload["connector_mode"] = connector_mode_report()
         except ValueError:
             abort(404)
         return jsonify(payload)
@@ -79,78 +79,33 @@ def register_spine_intelligence_routes(app) -> None:
     @run_required
     def api_spine_intelligence_run(subject_id: int):
         payload = request.get_json(silent=True) or {}
-        result = run_spine_for_subject(subject_id, payload.get("connectors") or None)
-        audit("spine_intelligence_run", details=result)
+        if payload.get("run_inline"):
+            result = run_spine_for_subject(subject_id, payload.get("connectors") or None)
+            audit("spine_intelligence_run_inline", details=result)
+            return jsonify(result), 202
+        result = queue_subject_connector_jobs(subject_id, payload.get("connectors") or None, actor=session.get("user"))
+        audit("spine_intelligence_queue", details=result)
         return jsonify(result), 202
 
     @run_required
     def api_spine_observation_promote(observation_id: int):
         payload = request.get_json(silent=True) or {}
-        result = promote_observation_to_assertion(
-            observation_id,
-            actor=session.get("user"),
-            note=payload.get("note"),
-        )
+        result = promote_observation_to_assertion(observation_id, actor=session.get("user"), note=payload.get("note"))
         audit("spine_observation_promote", details=result)
         return jsonify(result), 202
 
     @run_required
     def api_spine_intelligence_assertion_review(assertion_id: int):
         payload = request.get_json(silent=True) or {}
-        result = review_spine_assertion(
-            assertion_id,
-            payload.get("action", ""),
-            actor=session.get("user"),
-            note=payload.get("note"),
-        )
+        result = review_spine_assertion(assertion_id, payload.get("action", ""), actor=session.get("user"), note=payload.get("note"))
         audit("spine_intelligence_assertion_review", details=result)
         return jsonify(result), 202
 
-    app.add_url_rule(
-        "/spine/subjects/<int:subject_id>/intelligence",
-        endpoint="spine_intelligence_view",
-        view_func=spine_intelligence_view,
-        methods=["GET"],
-    )
-    app.add_url_rule(
-        "/spine/subjects/<int:subject_id>/intelligence/run",
-        endpoint="spine_intelligence_run",
-        view_func=spine_intelligence_run,
-        methods=["POST"],
-    )
-    app.add_url_rule(
-        "/spine/observations/<int:observation_id>/promote",
-        endpoint="spine_observation_promote",
-        view_func=spine_observation_promote,
-        methods=["POST"],
-    )
-    app.add_url_rule(
-        "/spine/intelligence/assertions/<int:assertion_id>/review",
-        endpoint="spine_intelligence_assertion_review",
-        view_func=spine_intelligence_assertion_review,
-        methods=["POST"],
-    )
-    app.add_url_rule(
-        "/api/v1/spine/subjects/<int:subject_id>/intelligence",
-        endpoint="api_spine_intelligence",
-        view_func=api_spine_intelligence,
-        methods=["GET"],
-    )
-    app.add_url_rule(
-        "/api/v1/spine/subjects/<int:subject_id>/intelligence/run",
-        endpoint="api_spine_intelligence_run",
-        view_func=api_spine_intelligence_run,
-        methods=["POST"],
-    )
-    app.add_url_rule(
-        "/api/v1/spine/observations/<int:observation_id>/promote",
-        endpoint="api_spine_observation_promote",
-        view_func=api_spine_observation_promote,
-        methods=["POST"],
-    )
-    app.add_url_rule(
-        "/api/v1/spine/intelligence/assertions/<int:assertion_id>/review",
-        endpoint="api_spine_intelligence_assertion_review",
-        view_func=api_spine_intelligence_assertion_review,
-        methods=["POST"],
-    )
+    app.add_url_rule("/spine/subjects/<int:subject_id>/intelligence", endpoint="spine_intelligence_view", view_func=spine_intelligence_view, methods=["GET"])
+    app.add_url_rule("/spine/subjects/<int:subject_id>/intelligence/run", endpoint="spine_intelligence_run", view_func=spine_intelligence_run, methods=["POST"])
+    app.add_url_rule("/spine/observations/<int:observation_id>/promote", endpoint="spine_observation_promote", view_func=spine_observation_promote, methods=["POST"])
+    app.add_url_rule("/spine/intelligence/assertions/<int:assertion_id>/review", endpoint="spine_intelligence_assertion_review", view_func=spine_intelligence_assertion_review, methods=["POST"])
+    app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/intelligence", endpoint="api_spine_intelligence", view_func=api_spine_intelligence, methods=["GET"])
+    app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/intelligence/run", endpoint="api_spine_intelligence_run", view_func=api_spine_intelligence_run, methods=["POST"])
+    app.add_url_rule("/api/v1/spine/observations/<int:observation_id>/promote", endpoint="api_spine_observation_promote", view_func=api_spine_observation_promote, methods=["POST"])
+    app.add_url_rule("/api/v1/spine/intelligence/assertions/<int:assertion_id>/review", endpoint="api_spine_intelligence_assertion_review", view_func=api_spine_intelligence_assertion_review, methods=["POST"])

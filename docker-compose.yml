@@ -1,16 +1,25 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        SOCMINT_INSTALL_CONNECTORS: ${SOCMINT_INSTALL_CONNECTORS:-true}
     restart: unless-stopped
     env_file: ${SOCMINT_ENV_FILE:-.env}
     environment:
       SOCMINT_DATA_DIR: /var/lib/socmint
       SOCMINT_TOR_PROXY: ${SOCMINT_TOR_PROXY:-}
+      SOCMINT_CONNECTOR_CLI_ENABLED: ${SOCMINT_CONNECTOR_CLI_ENABLED:-true}
+      SOCMINT_CONNECTOR_MODE: ${SOCMINT_APP_CONNECTOR_MODE:-diagnostic}
+      SOCMINT_AUTHORIZED_REALWORLD_CONNECTORS: ${SOCMINT_AUTHORIZED_REALWORLD_CONNECTORS:-false}
+      SOCMINT_WORKER_PROCESS: "false"
+      SOCMINT_ALLOW_WEB_REAL_CONNECTORS: ${SOCMINT_ALLOW_WEB_REAL_CONNECTORS:-false}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-180}
     volumes:
       - socmint-data:/var/lib/socmint
     depends_on:
       - tor
-    command: sh -c "alembic upgrade head && exec gunicorn --bind 127.0.0.1:5000 src.socmint.wsgi:app"
+    command: sh -c "alembic upgrade head && exec gunicorn --timeout $${GUNICORN_TIMEOUT:-180} --bind 127.0.0.1:5000 src.socmint.wsgi:app"
     network_mode: service:tor
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/readyz', timeout=3).read()"]
@@ -19,13 +28,20 @@ services:
       retries: 3
 
   worker:
-    build: .
+    build:
+      context: .
+      args:
+        SOCMINT_INSTALL_CONNECTORS: ${SOCMINT_INSTALL_CONNECTORS:-true}
     restart: unless-stopped
     profiles: ["worker"]
     env_file: ${SOCMINT_ENV_FILE:-.env}
     environment:
       SOCMINT_DATA_DIR: /var/lib/socmint
       SOCMINT_TOR_PROXY: ${SOCMINT_TOR_PROXY:-}
+      SOCMINT_CONNECTOR_CLI_ENABLED: ${SOCMINT_CONNECTOR_CLI_ENABLED:-true}
+      SOCMINT_CONNECTOR_MODE: ${SOCMINT_WORKER_CONNECTOR_MODE:-real}
+      SOCMINT_AUTHORIZED_REALWORLD_CONNECTORS: ${SOCMINT_AUTHORIZED_REALWORLD_CONNECTORS:-false}
+      SOCMINT_WORKER_PROCESS: "true"
       SOCMINT_WORKER_INTERVAL: ${SOCMINT_WORKER_INTERVAL:-60}
       SOCMINT_WORKER_MAX_JOBS: ${SOCMINT_WORKER_MAX_JOBS:-1}
     volumes:

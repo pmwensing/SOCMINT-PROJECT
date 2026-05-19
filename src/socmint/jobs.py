@@ -1,4 +1,5 @@
 import logging
+import re
 from collections import Counter
 from datetime import UTC, datetime, timedelta
 
@@ -6,18 +7,46 @@ from . import database as db
 
 logger = logging.getLogger(__name__)
 STALE_RUNNING_AFTER = timedelta(minutes=30)
+SPINE_REQUESTED_BY = re.compile(r"^spine:(?P<subject_id>\d+):")
 
 
 def build_dossier(target, target_type, enabled_tools=None):
     from .main import build_dossier as main_build_dossier
-
     return main_build_dossier(target, target_type, enabled_tools=enabled_tools)
 
 
 def enrich_dossier(dossier):
     from .enrichment import enrich_dossier as run_enrichment
-
     return run_enrichment(dossier)
+
+
+def _spine_subject_id(job: dict) -> int | None:
+    raw = str(job.get("requested_by") or "")
+    match = SPINE_REQUESTED_BY.match(raw)
+    return int(match.group("subject_id")) if match else None
+
+
+def _process_spine_job(job: dict, subject_id: int) -> dict:
+    from .spine import HIGH_VALUE_CONNECTORS, correlate_subject, run_connector_for_seed
+
+    seed = None
+    for candidate in db.list_spine_seeds(subject_id):
+        if candidate.seed_type == job["target_type"] and candidate.normalized_value == job["target_value"]:
+            seed = candidate
+            break
+    if seed is None:
+        raise ValueError(f"No matching spine seed for subject {subject_id}: {job['target_type']} {job['target_value']}")
+
+    run_ids = []
+    for key in job["tools"]:
+        spec = HIGH_VALUE_CONNECTORS.get(key)
+        if not spec or seed.seed_type not in spec["seed_types"]:
+            continue
+        run_ids.append(run_connector_for_seed(subject_id, seed, key, spec))
+    correlate_subject(subject_id)
+    db.finish_scan_job(job["id"], "completed", target_id=None)
+    logger.info("Completed spine scan job %s for subject %s", job["id"], subject_id)
+    return {"id": job["id"], "status": "completed", "subject_id": subject_id, "run_ids": run_ids, "spine": True}
 
 
 def process_next_scan_job():
@@ -26,17 +55,17 @@ def process_next_scan_job():
         return None
 
     try:
-        dossier = build_dossier(
-            job["target_value"],
-            job["target_type"],
-            enabled_tools=set(job["tools"]),
-        )
+        subject_id = _spine_subject_id(job)
+        if subject_id is not None:
+            return _process_spine_job(job, subject_id)
+
+        dossier = build_dossier(job["target_value"], job["target_type"], enabled_tools=set(job["tools"]))
         if job["enrich"]:
             dossier = enrich_dossier(dossier)
         target_id = db.save_dossier(dossier)
         db.finish_scan_job(job["id"], "completed", target_id=target_id)
         logger.info("Completed scan job %s", job["id"])
-        return {"id": job["id"], "status": "completed"}
+        return {"id": job["id"], "status": "completed", "target_id": target_id}
     except Exception as exc:
         logger.exception("Scan job %s failed", job["id"])
         db.finish_scan_job(job["id"], "failed", error=str(exc))
@@ -66,14 +95,7 @@ def scan_job_health(limit=250):
             started_at = started_at.replace(tzinfo=UTC)
         age_seconds = int((now - started_at).total_seconds())
         if age_seconds >= int(STALE_RUNNING_AFTER.total_seconds()):
-            stale.append(
-                {
-                    "id": job.id,
-                    "target_value": job.target_value,
-                    "started_at": job.started_at.isoformat(),
-                    "age_seconds": age_seconds,
-                }
-            )
+            stale.append({"id": job.id, "target_value": job.target_value, "started_at": job.started_at.isoformat(), "age_seconds": age_seconds})
     return {
         "schema": "socmint.scan_job_health.v7_8_1",
         "generated_at": now.isoformat(),
