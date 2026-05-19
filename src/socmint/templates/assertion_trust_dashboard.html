@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Cross-Source Corroboration</p>
+    <h1>Assertion Trust Engine</h1>
+    <p class="muted">Connector findings + forensic evidence + integrity scores + narrative claims + analyst decisions + contradiction checks = assertion-level trust.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/api/v1/assertions/trust">Trust JSON</a>
+    <a class="button-link secondary" href="/api/v1/corroboration/dashboard">Corroboration JSON</a>
+    <a class="button-link secondary" href="/narrative/storyboard">Narrative Storyboard</a>
+    <a class="button-link secondary" href="/evidence/integrity/gate">Integrity Gate</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>Assertions</span><strong>{{ payload.trust.assertion_count }}</strong></article>
+  <article class="metric-card"><span>Avg trust</span><strong>{{ payload.trust.summary.avg_trust_score }}</strong></article>
+  <article class="metric-card"><span>Dossier ready</span><strong>{{ payload.trust.summary.dossier_ready }}</strong></article>
+  <article class="metric-card"><span>Review</span><strong>{{ payload.trust.summary.analyst_review }}</strong></article>
+  <article class="metric-card"><span>Hold</span><strong>{{ payload.trust.summary.hold }}</strong></article>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Top Corroborated Assertions</h2><p class="muted">Sorted by trust score.</p></div></div>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>ID</th><th>Assertion</th><th>Evidence</th><th>Trust</th><th>Rating</th><th>Release</th><th>Integrity</th><th>Contradiction</th></tr></thead>
+      <tbody>
+      {% for item in payload.top_assertions %}
+      <tr>
+        <td>{{ item.assertion_id }}</td>
+        <td>{{ item.subject }} — {{ item.predicate }} = {{ item.value }}</td>
+        <td>{{ item.evidence_id or '-' }}</td>
+        <td>{{ item.trust_score }}</td>
+        <td><span class="status-pill {{ 'completed' if item.trust_rating in ['strong','supported'] else 'queued' if item.trust_rating == 'review' else 'warning' }}">{{ item.trust_rating }}</span></td>
+        <td>{{ item.release_state }}</td>
+        <td>{{ item.integrity_state }}</td>
+        <td>{{ item.contradiction_state }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8">No assertions available. Run forensic intake and narrative reconstruction first.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Assertion Review Queue</h2><p class="muted">Assertions requiring analyst review, hold, or low-confidence handling.</p></div></div>
+  <div class="card-grid">
+    {% for item in payload.review_queue %}
+    <article class="card warning-card">
+      <h3>{{ item.assertion_id }} · {{ item.release_state }}</h3>
+      <p>{{ item.subject }} — {{ item.predicate }} = {{ item.value }}</p>
+      <p>Trust: {{ item.trust_score }} · {{ item.trust_rating }}</p>
+      <p>Integrity: {{ item.integrity_state }} · Analyst: {{ item.analyst_state }} · Contradiction: {{ item.contradiction_state }}</p>
+      {% for reason in item.reasoning %}<p class="muted">{{ reason }}</p>{% endfor %}
+    </article>
+    {% else %}
+    <article class="card"><h3>No review queue</h3><p>No assertions are currently queued for review.</p></article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Source Breakdown</h2><p class="muted">Trace how each assertion score was built.</p></div></div>
+  <div class="card-grid">
+    {% for item in payload.top_assertions[:8] %}
+    <article class="card">
+      <h3>{{ item.assertion_id }}</h3>
+      {% for source in item.sources %}
+      <p><span class="status-pill queued">{{ source.source_type }}</span> {{ source.label }} · {{ source.status }} · {{ source.confidence }}</p>
+      {% endfor %}
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

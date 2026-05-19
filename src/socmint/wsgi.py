@@ -28,6 +28,7 @@ from .build_audit_routes import register_build_audit_routes
 from .narrative_intelligence_routes_v12_6 import register_narrative_intelligence_routes
 from .authenticity_integrity_routes_v12_7 import register_authenticity_integrity_routes
 from .integrity_gate_routes_v12_7_1 import register_integrity_gate_routes
+from .assertion_trust_routes_v12_8 import register_assertion_trust_routes
 
 app = create_app()
 register_full_report_aliases(app)
@@ -59,3 +60,4 @@ register_build_audit_routes(app)
 register_narrative_intelligence_routes(app)
 register_authenticity_integrity_routes(app)
 register_integrity_gate_routes(app)
+register_assertion_trust_routes(app)
