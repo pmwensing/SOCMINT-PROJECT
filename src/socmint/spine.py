@@ -164,3 +164,39 @@ def correlate_subject(subject_id: int) -> list[int]:
         payload = {"assertion_type": obs_type, "value": value, "confidence": score, "confidence_band": confidence_band(score), "source_count": source_count, "supporting_observation_ids": [item.id for item in group], "source_refs": [item.source_ref for item in group], "evidence_refs": [item.evidence_ref for item in group], "connector_quality_delta": quality_delta, "connectors": sorted(connectors)}
         assertion_ids.append(db.upsert_spine_assertion(subject_id=subject_id, assertion_type=obs_type, normalized_value=value, confidence=str(score), validation_state="unreviewed", payload=payload))
     return assertion_ids
+
+
+def build_dossier(subject_id: int) -> dict:
+    subject = db.get_spine_subject(subject_id)
+    if not subject:
+        raise ValueError("Subject not found.")
+    seeds = db.list_spine_seeds(subject_id)
+    runs = db.list_spine_connector_runs(subject_id=subject_id)
+    observations = db.list_spine_observations(subject_id)
+    assertions = db.list_spine_assertions(subject_id)
+    return {
+        "subject": {"id": subject.id, "label": subject.label, "created_at": subject.created_at.isoformat() if subject.created_at else None},
+        "seeds": [{"id": seed.id, "type": seed.seed_type, "value": seed.normalized_value, "hash": seed.pii_hash} for seed in seeds],
+        "summary": {
+            "connector_runs": len(runs),
+            "observations": len(observations),
+            "assertions": len(assertions),
+            "validated_assertions": len([a for a in assertions if a.validation_state == "confirmed"]),
+        },
+        "assertions": [
+            {
+                "id": item.id,
+                "type": item.assertion_type,
+                "value": item.normalized_value,
+                "confidence": float(item.confidence or 0),
+                "band": confidence_band(float(item.confidence or 0)),
+                "validation_state": item.validation_state,
+                "payload": json.loads(item.payload_json or "{}"),
+            }
+            for item in assertions
+        ],
+        "runs": [
+            {"id": run.id, "connector": run.connector_key, "status": run.status, "created_at": run.created_at.isoformat() if run.created_at else None}
+            for run in runs
+        ],
+    }
