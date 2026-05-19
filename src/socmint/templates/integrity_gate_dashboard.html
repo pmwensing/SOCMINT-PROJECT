@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Evidence Integrity Gate</p>
+    <h1>Dossier Gate + Integrity Risk Review</h1>
+    <p class="muted">Release checks for hash mismatch, missing preserved originals, flagged evidence review, and per-item usable/review/hold decisions.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/api/v1/evidence/integrity/gate">Gate JSON</a>
+    <a class="button-link secondary" href="/api/v1/evidence/integrity/report">Export Report</a>
+    <a class="button-link secondary" href="/evidence/integrity">Integrity Dashboard</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>Decision</span><strong>{{ payload.release_gate_decision }}</strong></article>
+  <article class="metric-card"><span>Items</span><strong>{{ payload.summary.item_count }}</strong></article>
+  <article class="metric-card"><span>Usable</span><strong>{{ payload.summary.usable_count }}</strong></article>
+  <article class="metric-card"><span>Review</span><strong>{{ payload.summary.review_count }}</strong></article>
+  <article class="metric-card"><span>Hold</span><strong>{{ payload.summary.hold_count }}</strong></article>
+  <article class="metric-card"><span>Avg score</span><strong>{{ payload.summary.avg_composite_score }}</strong></article>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Release Gate Checks</h2><p class="muted">Integrity must pass or be reviewed before dossier-grade use.</p></div></div>
+  <div class="card-grid">
+    {% for check in payload.checks %}
+    <article class="card status-card {{ 'ok' if check.status == 'pass' else 'warning' }}">
+      <span class="status-label">{{ check.name.replace('_', ' ') }}</span>
+      <strong>{{ check.status|upper }}</strong>
+      <p class="muted">Actual: {{ check.actual }}</p>
+      {% if check.required %}<p class="muted">Required: {{ check.required }}</p>{% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Evidence Usability Decisions</h2><p class="muted">Per-item decision: usable, review, or hold.</p></div></div>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>Evidence ID</th><th>Filename</th><th>Surface</th><th>State</th><th>Score</th><th>Flags</th></tr></thead>
+      <tbody>
+      {% for item in payload.summary.item_decisions %}
+      <tr>
+        <td>{{ item.evidence_id }}</td>
+        <td>{{ item.filename }}</td>
+        <td>{{ item.surface }}</td>
+        <td><span class="status-pill {{ 'completed' if item.usable_state == 'usable' else 'warning' if item.usable_state == 'hold' else 'queued' }}">{{ item.usable_state }}</span></td>
+        <td>{{ item.composite_score }}</td>
+        <td>{{ item.flag_count }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No evidence decisions available.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Integrity Report Export</h2><p class="muted">JSON and Markdown report export is available through the report endpoint.</p></div></div>
+  <div class="card-grid">
+    <article class="card">
+      <h3>Report endpoint</h3>
+      <p><code>/api/v1/evidence/integrity/report</code></p>
+      <p>Writes report artifacts to the configured SOCMINT data directory.</p>
+    </article>
+  </div>
+</section>
+{% endblock %}
