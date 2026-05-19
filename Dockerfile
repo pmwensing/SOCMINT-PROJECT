@@ -45,6 +45,7 @@ RUN if [ "$SOCMINT_INSTALL_CONNECTORS" = "true" ]; then \
         maigret \
         sherlock-project \
         socialscan \
+        social-analyzer \
         holehe \
         h8mail \
       && rm -rf /var/lib/apt/lists/*; \
