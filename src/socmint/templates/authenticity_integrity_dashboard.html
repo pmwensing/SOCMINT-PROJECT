@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Evidence Integrity Intelligence</p>
+    <h1>Authenticity + Anti-Tamper Dashboard</h1>
+    <p class="muted">Screenshot/PDF/media authenticity scoring, metadata mismatch detection, tamper flags, provenance confidence, and court-safe review guidance.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/api/v1/evidence/integrity">Integrity JSON</a>
+    <a class="button-link secondary" href="/forensic/intake">Forensic Intake</a>
+    <a class="button-link secondary" href="/narrative/storyboard">Narrative Storyboard</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>Evidence items</span><strong>{{ payload.item_count }}</strong></article>
+  <article class="metric-card"><span>Flagged</span><strong>{{ payload.flagged_count }}</strong></article>
+  <article class="metric-card"><span>Avg score</span><strong>{{ payload.summary.avg_composite_score }}</strong></article>
+  <article class="metric-card"><span>Court-ready review</span><strong>{{ payload.summary.decisions.get('court-ready-review', 0) }}</strong></article>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Integrity Rules</h2><p class="muted">Deterministic rules used for evidence review triage.</p></div></div>
+  <div class="card-grid">
+    {% for rule in payload.rules %}
+    <article class="card"><p>{{ rule }}</p></article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Evidence Authenticity Scores</h2><p class="muted">Composite score combines authenticity and provenance confidence.</p></div></div>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>Evidence ID</th><th>Surface</th><th>Filename</th><th>Auth</th><th>Provenance</th><th>Composite</th><th>Decision</th></tr></thead>
+      <tbody>
+      {% for item in payload.analyses %}
+      <tr>
+        <td>{{ item.evidence_id }}</td>
+        <td>{{ item.surface }}</td>
+        <td>{{ item.filename }}</td>
+        <td><span class="status-pill {{ 'completed' if item.authenticity.rating == 'strong' else 'queued' if item.authenticity.rating == 'moderate' else 'warning' }}">{{ item.authenticity.rating }} {{ item.authenticity.score }}</span></td>
+        <td><span class="status-pill {{ 'completed' if item.provenance_confidence.rating == 'strong' else 'queued' if item.provenance_confidence.rating == 'moderate' else 'warning' }}">{{ item.provenance_confidence.rating }} {{ item.provenance_confidence.score }}</span></td>
+        <td>{{ item.composite_score }}</td>
+        <td>{{ item.decision }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7">No preserved evidence found. Run forensic intake first.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Tamper / Metadata Flags</h2><p class="muted">Flags require analyst review; they do not automatically prove manipulation.</p></div></div>
+  <div class="card-grid">
+    {% for item in payload.flagged_items %}
+    <article class="card warning-card">
+      <h3>{{ item.evidence_id }} · {{ item.surface }}</h3>
+      <p>Composite: {{ item.composite_score }} · Decision: {{ item.decision }}</p>
+      {% for flag in item.authenticity.flags %}
+      <p><span class="status-pill warning">{{ flag.severity }}</span> {{ flag.type }} — {{ flag.reason or flag.expected or '' }}</p>
+      {% endfor %}
+    </article>
+    {% else %}
+    <article class="card"><h3>No flags detected</h3><p>No deterministic tamper or metadata mismatch flags were detected in the current evidence set.</p></article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
