@@ -28,13 +28,16 @@ assert len(imports["modules"]) >= 8
 routes = route_audit()
 print(json.dumps(routes, indent=2))
 assert routes["schema"] == "socmint.rc_regression_gate.v12_10"
-assert "/investigation/flow" in [row["route"] for row in routes["routes"]]
+assert routes["routes"], "route audit must return route rows even when app import is review-only"
+assert any(row["route"] == "/investigation/flow" for row in routes["routes"])
+assert routes["status"] in {"pass", "fail", "review"}
 
 payloads = payload_audit()
 print(json.dumps(payloads, indent=2))
 assert payloads["schema"] == "socmint.rc_regression_gate.v12_10"
 assert any(row["name"] == "command_center_payload" for row in payloads["checks"])
 assert any(row["name"] == "guided_investigation_payload" for row in payloads["checks"])
+assert payloads["status"] in {"pass", "fail"}
 
 rc = rc_regression_report()
 print(json.dumps(rc, indent=2))
