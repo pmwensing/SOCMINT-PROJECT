@@ -1,6 +1,6 @@
 include Makefile
 
-.PHONY: test-v12-0 test-all-socmint test-v12-3-1 test-v12-3-2 test-v12-5 test-v12-5-1 test-v12-6 test-v12-6-1
+.PHONY: test-v12-0 test-all-socmint test-v12-3-1 test-v12-3-2 test-v12-5 test-v12-5-1 test-v12-6 test-v12-6-1 test-v12-7
 
 test-v12-0:
 	bash ./scripts/test_v12_0.sh
@@ -25,3 +25,6 @@ test-v12-6:
 
 test-v12-6-1:
 	bash ./scripts/test_v12_6_1.sh
+
+test-v12-7:
+	bash ./scripts/test_v12_7.sh
