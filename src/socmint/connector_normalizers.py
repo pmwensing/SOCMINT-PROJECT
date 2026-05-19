@@ -4,7 +4,7 @@ import json
 import re
 from typing import Any
 
-NORMALIZER_SCHEMA = "socmint.connector_normalizers.v7_7_1"
+NORMALIZER_SCHEMA = "socmint.connector_normalizers.v12_10_2"
 
 PROFILE_URL_RE = re.compile(r"https?://[^\s\"'<>]+", re.I)
 EMAIL_RE = re.compile(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}")
@@ -44,23 +44,10 @@ def _add(findings: list[dict[str, Any]], seen: set[tuple[str, str]], kind: str, 
     if key in seen:
         return
     seen.add(key)
-    findings.append(
-        {
-            "type": kind,
-            "value": value,
-            "source": source,
-            "confidence": round(float(confidence), 3),
-            "context": context or {},
-        }
-    )
+    findings.append({"type": kind, "value": value, "source": source, "confidence": round(float(confidence), 3), "context": context or {}})
 
 
-def _add_structured_findings(
-    findings: list[dict[str, Any]],
-    seen: set[tuple[str, str]],
-    raw_result: dict[str, Any],
-    connector: str,
-) -> None:
+def _add_structured_findings(findings: list[dict[str, Any]], seen: set[tuple[str, str]], raw_result: dict[str, Any], connector: str) -> None:
     for finding in raw_result.get("findings") or []:
         if not isinstance(finding, dict):
             continue
@@ -77,6 +64,7 @@ def normalize_connector_output(connector: str, seed_value: str, seed_type: str, 
         "sherlock": normalize_sherlock,
         "maigret": normalize_maigret,
         "socialscan": normalize_socialscan,
+        "social-analyzer": normalize_social_analyzer,
         "holehe": normalize_holehe,
         "h8mail": normalize_h8mail,
         "phoneinfoga": normalize_phoneinfoga,
@@ -140,6 +128,20 @@ def normalize_socialscan(seed_value: str, seed_type: str, raw_result: dict[str, 
             _add(findings, seen, "account_presence", platform.strip(), connector, 0.68, {"target": seed_value, "state": state})
     data = _parse_json_maybe(raw_result.get("stdout"))
     _walk_presence_json(data, findings, seen, connector, seed_value)
+    return findings
+
+
+def normalize_social_analyzer(seed_value: str, seed_type: str, raw_result: dict[str, Any], connector: str = "social-analyzer") -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    _add_structured_findings(findings, seen, raw_result, connector)
+    data = _parse_json_maybe(raw_result.get("stdout"))
+    _walk_social_analyzer_json(data, findings, seen, connector, seed_value)
+    text = _text_from_result(raw_result)
+    for url in PROFILE_URL_RE.findall(text):
+        if "localhost" in url or "127.0.0.1" in url:
+            continue
+        _add(findings, seen, "profile_url", url, connector, 0.78, {"platform_hint": _platform_from_url(url), "deep_enrichment": True})
     return findings
 
 
@@ -207,6 +209,28 @@ def normalize_archivebox(seed_value: str, seed_type: str, raw_result: dict[str, 
 def _platform_from_url(url: str) -> str:
     match = re.search(r"https?://(?:www\.)?([^/]+)", url, re.I)
     return match.group(1).lower() if match else "unknown"
+
+
+def _walk_social_analyzer_json(data: Any, findings: list[dict[str, Any]], seen: set[tuple[str, str]], connector: str, target: str) -> None:
+    if isinstance(data, dict):
+        url = data.get("url") or data.get("link") or data.get("profile") or data.get("profile_url")
+        site = data.get("site") or data.get("platform") or data.get("name") or data.get("website")
+        status = str(data.get("status") or data.get("found") or data.get("exists") or data.get("valid") or "").lower()
+        score = data.get("score") or data.get("rating") or data.get("confidence") or 78
+        try:
+            confidence = max(0.5, min(0.95, float(score) / 100 if float(score) > 1 else float(score)))
+        except Exception:
+            confidence = 0.78
+        context = {"target": target, "platform": site, "status": status, "deep_enrichment": True}
+        if url and status not in {"false", "not found", "missing", "unknown", "none"}:
+            _add(findings, seen, "profile_url", str(url), connector, confidence, context)
+        elif site and status in {"true", "found", "exists", "registered", "used", "valid", "yes"}:
+            _add(findings, seen, "platform_presence", str(site), connector, confidence, context)
+        for value in data.values():
+            _walk_social_analyzer_json(value, findings, seen, connector, target)
+    elif isinstance(data, list):
+        for item in data:
+            _walk_social_analyzer_json(item, findings, seen, connector, target)
 
 
 def _walk_presence_json(data: Any, findings: list[dict[str, Any]], seen: set[tuple[str, str]], connector: str, target: str) -> None:
