@@ -6,6 +6,7 @@ from typing import Any
 
 from . import database as db
 from .full_report_history import full_report_export_history
+from .guided_investigation_v12_9 import guided_investigation_payload
 from .narrative_export_v12_6_1 import narrative_dashboard_polish_payload
 from .runtime_import_health import runtime_import_health_report
 from .test_data_controls import is_smoke_label, test_data_summary
@@ -100,6 +101,23 @@ def _narrative_card(subjects: list[Any]) -> dict[str, Any]:
         return {"status": "unavailable", "subject_id": subject_id, "rating": "unavailable", "score": 0, "timeline_events": 0, "contradiction_actions": 0, "href": "/narrative/storyboard", "error": str(exc)}
 
 
+def _guided_card(subjects: list[Any]) -> dict[str, Any]:
+    subject_id = subjects[0].id if subjects else None
+    try:
+        payload = guided_investigation_payload(subject_id=subject_id)
+        return {
+            "status": payload.get("readiness", "yellow"),
+            "score": payload.get("readiness_score", 0),
+            "subject_id": subject_id,
+            "action_count": len(payload.get("action_queue", [])),
+            "next_action": payload.get("next_action", {}),
+            "progress_rail": payload.get("progress_rail", []),
+            "href": f"/investigation/flow?subject_id={subject_id}" if subject_id else "/investigation/flow",
+        }
+    except Exception as exc:
+        return {"status": "unavailable", "score": 0, "subject_id": subject_id, "action_count": 0, "next_action": {"label": "Open guided investigation", "href": "/investigation/flow", "reason": str(exc)}, "progress_rail": [], "href": "/investigation/flow", "error": str(exc)}
+
+
 def command_center_payload() -> dict[str, Any]:
     db.ensure_configured()
     session = db.Session()
@@ -113,6 +131,7 @@ def command_center_payload() -> dict[str, Any]:
         runtime_import_health = runtime_import_health_report()
         readiness = v11_readiness_summary()
         narrative = _narrative_card(subjects)
+        guided = _guided_card(subjects)
         total_report_count = 0
         for subject in subjects:
             try:
@@ -132,7 +151,7 @@ def command_center_payload() -> dict[str, Any]:
         compatibility_warnings = [job for job in serialized_jobs if job["compatibility"]["warnings"]]
         latest_processed = completed_jobs[0] if completed_jobs else None
         return {
-            "schema": "socmint.command_center.v12_6_1",
+            "schema": "socmint.command_center.v12_9_1",
             "summary": {
                 "subject_count": len(subjects),
                 "target_count": len(targets),
@@ -155,6 +174,9 @@ def command_center_payload() -> dict[str, Any]:
                 "v11_readiness_percentage": readiness.get("percentage"),
                 "narrative_rating": narrative.get("rating"),
                 "narrative_score": narrative.get("score"),
+                "guided_readiness": guided.get("status"),
+                "guided_score": guided.get("score"),
+                "guided_action_count": guided.get("action_count"),
                 "worker_hint": "Jobs are queued. Run Process queued jobs now or start process-jobs." if queued_count else "No queued jobs waiting.",
             },
             "tor": tor_status,
@@ -162,12 +184,15 @@ def command_center_payload() -> dict[str, Any]:
             "runtime_import_health": runtime_import_health,
             "v11_readiness": readiness,
             "narrative_confidence": narrative,
+            "guided_investigation": guided,
             "subjects": [_serialize_subject(subject) for subject in subjects],
             "targets": [_serialize_target(target) for target in targets],
             "jobs": serialized_jobs,
             "compatibility_warnings": compatibility_warnings,
             "latest_processed_job": _serialize_job(latest_processed) if latest_processed else None,
             "next_actions": [
+                {"label": "Open guided investigation flow", "href": guided.get("href", "/investigation/flow"), "priority": "primary"},
+                {"label": "Do next guided action", "href": (guided.get("next_action") or {}).get("href", "/investigation/flow"), "priority": "primary"},
                 {"label": "Create / open subject", "href": "/spine", "priority": "primary"},
                 {"label": "Review narrative storyboard", "href": narrative.get("href", "/narrative/storyboard"), "priority": "primary"},
                 {"label": "Review queued jobs", "href": "/jobs", "priority": "secondary"},
