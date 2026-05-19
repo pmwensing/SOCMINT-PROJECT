@@ -18,7 +18,7 @@ CONNECTORS = {
     "sherlock": ConnectorSpec(name="sherlock", target_types=("username", "email"), command=("sherlock", "{username}"), timeout=75),
     "holehe": ConnectorSpec(name="holehe", target_types=("email",), command=("holehe", "{email}"), timeout=45),
     "maigret": ConnectorSpec(name="maigret", target_types=("username", "email"), command=("python", "-m", "maigret", "{username}", "-J", "simple", "--timeout", "15"), timeout=60),
-    "h8mail": ConnectorSpec(name="h8mail", target_types=("email",), command=("h8mail", "-t", "{email}", "-j"), timeout=60),
+    "h8mail": ConnectorSpec(name="h8mail", target_types=("email",), command=("h8mail", "-t", "{email}"), timeout=60),
     "socialscan": ConnectorSpec(name="socialscan", target_types=("username", "email"), command=("socialscan", "{target}"), timeout=45),
     "phoneinfoga": ConnectorSpec(name="phoneinfoga", target_types=("phone",), command=("phoneinfoga", "scan", "-n", "{phone}"), timeout=45),
 }
@@ -121,36 +121,85 @@ def _with_normalized_findings(name, payload):
 
 
 def dry_run_payload(name, target, target_type, command, reason=None, mode="dry-run"):
-    payload = {"connector": name, "target": target, "target_type": target_type, "command": command, "status": "dry_run", "badge": "diagnostic" if mode == "diagnostic" else "dry-run", "execution_mode": mode, "returncode": None, "stdout": "", "stderr": reason or f"{name} executable is not installed; dry-run recorded instead.", "started_at": datetime.now(UTC).isoformat(), "finished_at": datetime.now(UTC).isoformat()}
+    payload = {
+        "connector": name,
+        "target": target,
+        "target_type": target_type,
+        "command": command,
+        "status": "dry_run",
+        "badge": "diagnostic" if mode == "diagnostic" else "dry-run",
+        "execution_mode": mode,
+        "returncode": None,
+        "stdout": "",
+        "stderr": reason or f"{name} executable is not installed; dry-run recorded instead.",
+        "started_at": datetime.now(UTC).isoformat(),
+        "finished_at": datetime.now(UTC).isoformat(),
+    }
     return _with_normalized_findings(name, payload)
 
 
 def run_connector(name, target, target_type, allow_dry_run=True):
     if name not in CONNECTORS:
         raise ValueError(f"Unknown connector: {name}")
+
     spec = CONNECTORS[name]
     if target_type not in spec.target_types:
         return _with_normalized_findings(name, {"connector": name, "target": target, "target_type": target_type, "status": "skipped", "execution_mode": connector_mode_report()["effective_mode"], "returncode": None, "stdout": "", "stderr": f"{name} does not support target type {target_type}"})
+
     command = render_command(spec, target, target_type)
     mode = connector_mode_report()
     effective_mode = mode["effective_mode"]
+
     if connector_dry_run_forced():
         return dry_run_payload(name, target, target_type, command, reason="SOCMINT_CONNECTOR_DRY_RUN is enabled; dry-run recorded instead.", mode="dry-run")
+
     if effective_mode != "real":
         return dry_run_payload(name, target, target_type, command, reason=mode.get("reason"), mode=effective_mode)
+
     if not executable_available(command):
         if allow_dry_run:
             return dry_run_payload(name, target, target_type, command, reason=f"{name} executable is not installed; real mode requested but dry-run fallback recorded.", mode="dry-run")
         raise FileNotFoundError(command[0])
+
     started = datetime.now(UTC)
     try:
         result = subprocess.run(command, capture_output=True, text=True, timeout=spec.timeout, check=False)
         finished = datetime.now(UTC)
-        payload = {"connector": name, "target": target, "target_type": target_type, "command": command, "status": "completed" if result.returncode == 0 else "failed", "badge": "real", "execution_mode": "real", "timeout_seconds": spec.timeout, "returncode": result.returncode, "stdout": result.stdout, "stderr": result.stderr, "started_at": started.isoformat(), "finished_at": finished.isoformat()}
+        payload = {
+            "connector": name,
+            "target": target,
+            "target_type": target_type,
+            "command": command,
+            "status": "completed" if result.returncode == 0 else "failed",
+            "badge": "real",
+            "execution_mode": "real",
+            "timeout_seconds": spec.timeout,
+            "returncode": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "started_at": started.isoformat(),
+            "finished_at": finished.isoformat(),
+        }
         return _with_normalized_findings(name, payload)
     except subprocess.TimeoutExpired as exc:
         finished = datetime.now(UTC)
-        payload = {"connector": name, "target": target, "target_type": target_type, "command": command, "status": "timeout", "badge": "real", "execution_mode": "real", "timeout_seconds": spec.timeout, "returncode": None, "stdout": exc.stdout or "", "stderr": exc.stderr or f"{name} timed out after {spec.timeout}s", "started_at": started.isoformat(), "finished_at": finished.isoformat()}
+        stdout = exc.stdout.decode("utf-8", errors="replace") if isinstance(exc.stdout, bytes) else (exc.stdout or "")
+        stderr = exc.stderr.decode("utf-8", errors="replace") if isinstance(exc.stderr, bytes) else (exc.stderr or f"{name} timed out")
+        payload = {
+            "connector": name,
+            "target": target,
+            "target_type": target_type,
+            "command": command,
+            "status": "timeout",
+            "badge": "real",
+            "execution_mode": "real",
+            "timeout_seconds": spec.timeout,
+            "returncode": None,
+            "stdout": stdout,
+            "stderr": stderr,
+            "started_at": started.isoformat(),
+            "finished_at": finished.isoformat(),
+        }
         return _with_normalized_findings(name, payload)
 
 
