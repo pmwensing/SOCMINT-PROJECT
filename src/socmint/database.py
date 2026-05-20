@@ -2434,30 +2434,3 @@ def review_spine_assertion(assertion_id, validation_state, actor=None, note=None
     finally:
         session.close()
 
-# v12.10.3 compatibility helper for Spine Intelligence review path.
-def review_spine_assertion(assertion_id, validation_state, actor=None, note=None):
-    ensure_configured()
-    session = Session()
-    try:
-        item = session.query(SpineDossierAssertion).filter_by(id=assertion_id).first()
-        if not item:
-            return None
-
-        item.validation_state = validation_state
-        item.updated_at = utc_now()
-
-        session.add(
-            SpineValidationEvent(
-                assertion_id=assertion_id,
-                actor=actor,
-                action=validation_state,
-                note=note,
-            )
-        )
-
-        session.commit()
-        session.refresh(item)
-        session.expunge(item)
-        return item
-    finally:
-        session.close()
