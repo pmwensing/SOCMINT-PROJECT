@@ -38,4 +38,4 @@ dependencies = [
 socmint = "socmint.main:main"
 
 [tool.ruff.lint]
-ignore = ["E501"]
+ignore = ["E501", "F401"]
