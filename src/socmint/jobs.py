@@ -38,11 +38,21 @@ def _process_spine_job(job: dict, subject_id: int) -> dict:
         raise ValueError(f"No matching spine seed for subject {subject_id}: {job['target_type']} {job['target_value']}")
 
     run_ids = []
-    for key in job["tools"]:
+    skipped = []
+    for raw_key in job["tools"]:
+        key = str(raw_key).strip()
         spec = HIGH_VALUE_CONNECTORS.get(key)
-        if not spec or seed.seed_type not in spec["seed_types"]:
+        if not spec:
+            skipped.append({"connector": key, "reason": "not in HIGH_VALUE_CONNECTORS"})
+            continue
+        if seed.seed_type not in spec["seed_types"]:
+            skipped.append({"connector": key, "reason": f"seed type {seed.seed_type} not supported", "supported": spec["seed_types"]})
             continue
         run_ids.append(run_connector_for_seed(subject_id, seed, key, spec))
+
+    if not run_ids:
+        raise ValueError(f"Spine job created no connector runs; tools={job['tools']} seed_type={seed.seed_type} skipped={skipped}")
+
     correlate_subject(subject_id)
     db.finish_scan_job(job["id"], "completed", target_id=None)
     logger.info("Completed spine scan job %s for subject %s", job["id"], subject_id)
