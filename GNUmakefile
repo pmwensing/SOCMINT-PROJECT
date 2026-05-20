@@ -1,6 +1,6 @@
 include Makefile
 
-.PHONY: test-v12-0 test-all-socmint test-v12-3-1 test-v12-3-2 test-v12-5 test-v12-5-1 test-v12-6 test-v12-6-1 test-v12-7 test-v12-7-1 test-v12-8 test-v12-8-1 test-v12-9 test-v12-9-1 test-v12-10 test-v12-full test-connector-cli-enabled test-connector-cli-container test-connector-mode-switch test-worker-only-connector-mode test-social-analyzer-connector
+.PHONY: test-v12-0 test-all-socmint test-v12-3-1 test-v12-3-2 test-v12-5 test-v12-5-1 test-v12-6 test-v12-6-1 test-v12-7 test-v12-7-1 test-v12-8 test-v12-8-1 test-v12-9 test-v12-9-1 test-v12-10 test-v12-full test-connector-cli-enabled test-connector-cli-container test-connector-mode-switch test-worker-only-connector-mode test-social-analyzer-connector test-profile-fingerprint-collision-resolver
 
 test-v12-0:
 	bash ./scripts/test_v12_0.sh
@@ -64,3 +64,6 @@ test-worker-only-connector-mode:
 
 test-social-analyzer-connector:
 	bash ./scripts/test_social_analyzer_connector.sh
+
+test-profile-fingerprint-collision-resolver:
+	bash ./scripts/test_profile_fingerprint_collision_resolver.sh

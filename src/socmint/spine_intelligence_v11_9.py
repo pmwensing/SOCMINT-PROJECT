@@ -5,8 +5,9 @@ from typing import Any
 
 from . import spine_intelligence as legacy
 from .connector_normalizers import normalize_connector_output
+from .profile_fingerprint_v12_10_3 import build_profile_fingerprint_payload
 
-INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v11_9"
+INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v12_10_3"
 
 promote_observation_to_assertion = legacy.promote_observation_to_assertion
 review_spine_assertion = legacy.review_spine_assertion
@@ -53,12 +54,7 @@ def _normalize_for_run(run: dict[str, Any], seed_by_id: dict[int, dict[str, Any]
     if not seed or not isinstance(result, dict):
         return []
     try:
-        return normalize_connector_output(
-            run.get("connector"),
-            seed.get("value"),
-            seed.get("type"),
-            result,
-        )
+        return normalize_connector_output(run.get("connector"), seed.get("value"), seed.get("type"), result)
     except Exception as exc:
         return [{"type": "normalizer_error", "value": str(exc), "source": run.get("connector"), "confidence": 0.0}]
 
@@ -69,13 +65,7 @@ def _assertion_review_counts(assertions: list[dict[str, Any]]) -> dict[str, int]
     rejected = [item for item in assertions if item.get("validation_state") == "rejected"]
     suppressed = [item for item in assertions if item.get("validation_state") == "suppressed"]
     unreviewed = [item for item in assertions if item.get("validation_state") == "unreviewed"]
-    return {
-        "reviewed_assertions": len(reviewed),
-        "confirmed_assertions": len(confirmed),
-        "rejected_assertions": len(rejected),
-        "suppressed_assertions": len(suppressed),
-        "unreviewed_assertions": len(unreviewed),
-    }
+    return {"reviewed_assertions": len(reviewed), "confirmed_assertions": len(confirmed), "rejected_assertions": len(rejected), "suppressed_assertions": len(suppressed), "unreviewed_assertions": len(unreviewed)}
 
 
 def _dossier_readiness_gate(assertions: list[dict[str, Any]]) -> dict[str, Any]:
@@ -91,18 +81,7 @@ def _dossier_readiness_gate(assertions: list[dict[str, Any]]) -> dict[str, Any]:
         next_action = "At least one reviewed assertion must be confirmed before the dossier is marked ready."
     else:
         next_action = "Open Full Dossier v2."
-    return {
-        "status": status,
-        "requires": f"At least {minimum} reviewed assertion(s), including at least one confirmed assertion, are required before the dossier is marked ready.",
-        "minimum_reviewed_assertions": minimum,
-        "reviewed_assertions": reviewed,
-        "confirmed_assertions": confirmed,
-        "rejected_assertions": counts["rejected_assertions"],
-        "suppressed_assertions": counts["suppressed_assertions"],
-        "unreviewed_assertions": counts["unreviewed_assertions"],
-        "missing_reviewed_assertions": missing,
-        "next_action": next_action,
-    }
+    return {"status": status, "requires": f"At least {minimum} reviewed assertion(s), including at least one confirmed assertion, are required before the dossier is marked ready.", "minimum_reviewed_assertions": minimum, "reviewed_assertions": reviewed, "confirmed_assertions": confirmed, "rejected_assertions": counts["rejected_assertions"], "suppressed_assertions": counts["suppressed_assertions"], "unreviewed_assertions": counts["unreviewed_assertions"], "missing_reviewed_assertions": missing, "next_action": next_action}
 
 
 def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
@@ -129,32 +108,14 @@ def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
         if badge == "diagnostic":
             diagnostic_runs += 1
         seed = seed_by_id.get(run.get("seed_id"), {})
-        run.update({
-            "badge": badge,
-            "is_real": badge == "real",
-            "is_diagnostic": badge == "diagnostic",
-            "seed_type": seed.get("type"),
-            "seed_value": seed.get("value"),
-            "normalized_findings": normalized,
-            "finding_count": len(normalized),
-            "observations": real_obs,
-            "diagnostics": diag_obs,
-            "real_observation_count": len(real_obs),
-            "diagnostic_count": len(diag_obs),
-            "explanation": _explain_run(run.get("status"), len(normalized), len(real_obs), run.get("raw_result") or {}),
-        })
+        run.update({"badge": badge, "is_real": badge == "real", "is_diagnostic": badge == "diagnostic", "seed_type": seed.get("type"), "seed_value": seed.get("value"), "normalized_findings": normalized, "finding_count": len(normalized), "observations": real_obs, "diagnostics": diag_obs, "real_observation_count": len(real_obs), "diagnostic_count": len(diag_obs), "explanation": _explain_run(run.get("status"), len(normalized), len(real_obs), run.get("raw_result") or {})})
 
     summary = payload.setdefault("summary", {})
     assertions = payload.get("assertions", [])
     review_counts = _assertion_review_counts(assertions)
     gate = _dossier_readiness_gate(assertions)
+    profile_fingerprints = build_profile_fingerprint_payload(payload)
+    payload["profile_fingerprints"] = profile_fingerprints
     summary.update(review_counts)
-    summary.update({
-        "real_run_count": real_runs,
-        "diagnostic_run_count": diagnostic_runs,
-        "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"],
-        "dossier_ready": gate["status"] == "pass",
-        "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0,
-        "dossier_readiness_gate": gate,
-    })
+    summary.update({"real_run_count": real_runs, "diagnostic_run_count": diagnostic_runs, "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"], "dossier_ready": gate["status"] == "pass", "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0 or profile_fingerprints["needs_review_count"] > 0, "dossier_readiness_gate": gate, "profile_candidate_count": profile_fingerprints["candidate_count"], "profile_collision_review_count": profile_fingerprints["needs_review_count"], "profile_dossier_ready_count": profile_fingerprints["dossier_ready_count"]})
     return payload
