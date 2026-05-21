@@ -23,9 +23,10 @@ services:
     network_mode: service:tor
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/readyz', timeout=3).read()"]
-      interval: 30s
+      interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 12
+      start_period: 120s
 
   worker:
     build:
