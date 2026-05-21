@@ -13,7 +13,7 @@ from .artifacts import artifact_root
 
 SCHEMA = "socmint.profile_evidence_capture.v12_10_5_1"
 CAPTURE_VERSION = "12.10.5.1"
-ROUTE_PLACEHOLDER_USERNAMES = {"people", "perfil", "accounts", "account", "add", "user", "users", "profile", "profiles", "members", "member", "unknown", "unknown username", "images", "webapp", "favicons", "pop", "ytc", "ssr-avatars"}
+ROUTE_PLACEHOLDER_USERNAMES = {"people", "perfil", "accounts", "account", "add", "user", "users", "user.aspx", "profile", "profiles", "members", "member", "unknown", "unknown username", "images", "webapp", "favicons", "pop", "ytc", "ssr-avatars"}
 PROFILE_PATH_HINTS = {"user", "users", "profile", "profiles", "u", "people", "person", "perfil", "accounts", "account", "add", "members", "member", "@"}
 USERNAME_QUERY_KEYS = ("username", "user", "handle")
 ASSET_ONLY_DOMAINS = {
@@ -41,7 +41,7 @@ ASSET_ONLY_DOMAINS = {
     "mmcdn.com",
 }
 ASSET_DOMAIN_PATH_HINTS = {
-    "avatar", "avatars", "profile_images", "images", "image", "img", "favicon", "favicons", "logo", "logos", "static", "assets", "asset", "cdn", "webapp", "manifest", "mstile", "default_avatar", "ssr-avatars", "ytc", "30day", "cropcenter"
+    "avatar", "avatars", "profile_images", "images", "image", "img", "favicon", "favicons", "logo", "logos", "static", "assets", "asset", "cdn", "webapp", "manifest", "mstile", "default_avatar", "ssr", "ssr-avatars", "ytc", "30day", "cropcenter"
 }
 NON_PROFILE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".css", ".js", ".avif"}
 
@@ -106,10 +106,15 @@ def enhanced_username_from_url(url: str) -> str:
 
 
 def username_needs_rewrite(username: Any) -> bool:
-    return _lower(username) in ROUTE_PLACEHOLDER_USERNAMES or not _norm(username)
+    value = _lower(username)
+    return value in ROUTE_PLACEHOLDER_USERNAMES or value.endswith(".aspx") or not _norm(username)
 
 
 def canonical_profile_username(existing_username: Any, profile_url: str) -> str:
+    parsed = urlparse(_norm(profile_url))
+    query_username = _query_username(parsed)
+    if query_username:
+        return query_username
     parsed_username = enhanced_username_from_url(profile_url)
     if username_needs_rewrite(existing_username) and parsed_username:
         return parsed_username
@@ -126,7 +131,7 @@ def is_asset_only_url(url: str) -> bool:
     path_tokens = {token for token in re.split(r"[^a-z0-9]+", path) if token}
     has_asset_domain = any(domain == item or domain.endswith("." + item) for item in ASSET_ONLY_DOMAINS)
     has_asset_ext = any(path.endswith(ext) or f"{ext}?" in value for ext in NON_PROFILE_EXTENSIONS)
-    has_asset_hint = bool(path_tokens.intersection(ASSET_DOMAIN_PATH_HINTS)) or any(hint in path for hint in ("/avatar", "favicon", "logo", "profile_images", "default_avatar", "cropcenter"))
+    has_asset_hint = bool(path_tokens.intersection(ASSET_DOMAIN_PATH_HINTS)) or any(hint in path for hint in ("/avatar", "favicon", "logo", "profile_images", "default_avatar", "cropcenter", "ssr-avatar", "ssr_"))
     if has_asset_domain and (has_asset_ext or has_asset_hint):
         return True
     return has_asset_ext and has_asset_hint
