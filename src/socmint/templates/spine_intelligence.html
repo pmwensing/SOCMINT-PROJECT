@@ -28,6 +28,9 @@
   <article class="metric-card"><span>Real enrichment</span><strong>{{ payload.summary.observation_count }}</strong></article>
   <article class="metric-card"><span>Assertions</span><strong>{{ payload.summary.assertion_count }}</strong></article>
   <article class="metric-card"><span>Confirmed</span><strong>{{ payload.summary.confirmed_assertions }}</strong></article>
+  <article class="metric-card"><span>Candidate profiles</span><strong>{{ payload.summary.profile_candidate_count }}</strong></article>
+  <article class="metric-card"><span>Profile review</span><strong>{{ payload.summary.profile_collision_review_count }}</strong></article>
+  <article class="metric-card"><span>Profile accepted</span><strong>{{ payload.summary.profile_dossier_ready_count }}</strong></article>
 </section>
 
 <section class="panel {{ 'success-panel' if payload.summary.dossier_readiness_gate.status == 'pass' else 'warning-panel' }}">
@@ -36,6 +39,7 @@
     <span class="status-pill {{ 'completed' if payload.summary.dossier_readiness_gate.status == 'pass' else 'queued' }}">{{ payload.summary.dossier_readiness_gate.status|upper }}</span>
   </div>
   <p><strong>Confirmed assertions:</strong> {{ payload.summary.dossier_readiness_gate.confirmed_assertions }}</p>
+  <p><strong>Candidate profile review remaining:</strong> {{ payload.summary.dossier_readiness_gate.candidate_profile_review_remaining }}</p>
   <p class="muted">{{ payload.summary.dossier_readiness_gate.next_action }}</p>
 </section>
 
@@ -60,6 +64,38 @@
     </div>
     <button type="submit">Queue selected connectors for worker</button>
   </form>
+</section>
+
+<section class="panel command-panel">
+  <div class="section-header">
+    <div><h2>Candidate Profile Review</h2><p class="muted">Candidate profiles remain identity-link hypotheses until an analyst decision is recorded.</p></div>
+    <div class="hero-actions"><a class="button-link secondary" href="{{ url_for('spine_candidate_profile_report', subject_id=payload.subject.id, format='json') }}">Export JSON</a><a class="button-link secondary" href="{{ url_for('spine_candidate_profile_report', subject_id=payload.subject.id, format='md') }}">Export Markdown</a></div>
+  </div>
+  <p><strong>Pipeline:</strong> {{ payload.profile_fingerprints.pipeline | join(' → ') }}</p>
+  <p class="muted">Decision counts: accepted={{ payload.profile_fingerprints.review_decision_counts.accepted }}, rejected={{ payload.profile_fingerprints.review_decision_counts.rejected }}, uncertain={{ payload.profile_fingerprints.review_decision_counts.uncertain }}, more evidence={{ payload.profile_fingerprints.review_decision_counts.needs_more_evidence }}, unreviewed={{ payload.profile_fingerprints.review_decision_counts.unreviewed }}</p>
+  <div class="card-grid">
+    {% for candidate in payload.profile_fingerprints.candidates %}
+    {% set fp = candidate.profile_fingerprint %}
+    <article class="card wide-card {{ 'success-card' if candidate.dossier_ready else 'muted-card' if candidate.analyst_review.review_state == 'rejected' else '' }}">
+      <h3>{{ fp.platform or 'unknown platform' }} / {{ fp.username or 'unknown username' }}</h3>
+      <p><span class="status-pill {{ 'completed' if candidate.dossier_ready else 'failed' if candidate.analyst_review.review_state == 'rejected' else 'queued' }}">{{ candidate.analyst_review.review_state }}</span> <span class="status-pill queued">{{ candidate.collision_status }}</span></p>
+      <p><strong>Profile URL:</strong> {% if fp.profile_url %}<a href="{{ fp.profile_url }}" rel="noreferrer noopener" target="_blank">{{ fp.profile_url }}</a>{% else %}n/a{% endif %}</p>
+      <p><strong>Identity score:</strong> {{ candidate.identity_score }}</p>
+      <p><strong>Display name:</strong> {{ fp.display_name or 'n/a' }} · <strong>Location:</strong> {{ fp.location or 'n/a' }}</p>
+      <details><summary>Positive reasons</summary><ul>{% for reason in candidate.positive_reasons %}<li>{{ reason }}</li>{% else %}<li>None recorded.</li>{% endfor %}</ul></details>
+      <details><summary>Negative reasons</summary><ul>{% for reason in candidate.negative_reasons %}<li>{{ reason }}</li>{% else %}<li>None recorded.</li>{% endfor %}</ul></details>
+      <details><summary>Pipeline trace</summary><p>{{ candidate.pipeline_trace | join(' → ') }}</p><p class="muted">Candidate ID: {{ candidate.candidate_id }}</p></details>
+      <form method="post" action="{{ url_for('spine_candidate_profile_review', subject_id=payload.subject.id, candidate_id=candidate.candidate_id) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="note" placeholder="Analyst note">
+        <button name="action" value="accept_same_entity" type="submit">Accept same entity</button>
+        <button name="action" value="reject_collision" type="submit">Reject collision</button>
+        <button name="action" value="mark_uncertain" type="submit">Mark uncertain</button>
+        <button name="action" value="request_more_evidence" type="submit">Request more evidence</button>
+      </form>
+    </article>
+    {% else %}<p>No candidate profile hypotheses yet.</p>{% endfor %}
+  </div>
 </section>
 
 <section class="panel"><h2>Dossier Assertions</h2><div class="card-grid">{% for assertion in payload.assertions %}<article class="card"><h3>{{ assertion.type }}</h3><p><span class="status-pill {{ 'completed' if assertion.validation_state == 'confirmed' else 'failed' if assertion.validation_state == 'rejected' else 'queued' }}">{{ assertion.validation_state }}</span></p><p><strong>Value:</strong> {{ assertion.value }}</p><p><strong>Confidence:</strong> {{ assertion.confidence }}</p><form method="post" action="{{ url_for('spine_intelligence_assertion_review', assertion_id=assertion.id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="subject_id" value="{{ payload.subject.id }}"><input type="text" name="note" placeholder="Analyst note"><button name="action" value="confirmed" type="submit">Confirm</button><button name="action" value="rejected" type="submit">Reject</button><button name="action" value="suppressed" type="submit">Suppress</button><button name="action" value="unreviewed" type="submit">Reset</button></form></article>{% else %}<p>No dossier assertions yet. Promote a real observation to create one.</p>{% endfor %}</div></section>

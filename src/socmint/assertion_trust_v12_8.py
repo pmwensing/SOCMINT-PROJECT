@@ -4,7 +4,6 @@ import json
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 from .integrity_gate_v12_7_1 import evidence_integrity_summary, integrity_drilldown_for_claims
