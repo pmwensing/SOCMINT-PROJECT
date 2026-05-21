@@ -6,9 +6,10 @@ from typing import Any
 from . import spine_intelligence as legacy
 from .candidate_profile_review_v12_10_4 import apply_profile_review_decisions
 from .connector_normalizers import normalize_connector_output
+from .profile_evidence_capture_v12_10_5 import enrich_profile_payload_with_evidence
 from .profile_fingerprint_v12_10_3 import build_profile_fingerprint_payload
 
-INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v12_10_4"
+INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v12_10_5"
 
 promote_observation_to_assertion = legacy.promote_observation_to_assertion
 review_spine_assertion = legacy.review_spine_assertion
@@ -22,6 +23,10 @@ def minimum_reviewed_assertions() -> int:
         return max(1, int(os.environ.get("SOCMINT_MINIMUM_REVIEWED_ASSERTIONS", "1")))
     except ValueError:
         return 1
+
+
+def _profile_live_capture_enabled() -> bool:
+    return os.environ.get("SOCMINT_PROFILE_LIVE_CAPTURE", "false").lower() in {"1", "true", "yes", "on"}
 
 
 def _run_badge(status: str, normalized_count: int, real_count: int, diagnostic_count: int) -> str:
@@ -77,16 +82,17 @@ def _dossier_readiness_gate(assertions: list[dict[str, Any]], profile_fingerprin
     missing = max(0, minimum - reviewed)
     profile_counts = (profile_fingerprints or {}).get("review_decision_counts", {})
     unresolved_profiles = int((profile_fingerprints or {}).get("needs_review_count", 0) or 0)
+    evidence_capture = (profile_fingerprints or {}).get("evidence_capture", {})
     status = "pass" if reviewed >= minimum and confirmed > 0 else "hold"
     if reviewed < minimum:
         next_action = f"Review {missing} more assertion(s), then confirm at least one dossier-ready assertion."
     elif confirmed <= 0:
         next_action = "At least one reviewed assertion must be confirmed before the dossier is marked ready."
     elif unresolved_profiles:
-        next_action = f"Review {unresolved_profiles} candidate profile identity link(s), or leave them excluded from dossier-ready assertions."
+        next_action = f"Review {unresolved_profiles} candidate profile identity link(s), using captured HTML/metadata/visual-text fingerprints before acceptance."
     else:
         next_action = "Open Full Dossier v2."
-    return {"status": status, "requires": f"At least {minimum} reviewed assertion(s), including at least one confirmed assertion, are required before the dossier is marked ready. Candidate profiles require analyst decisions before identity-link assertions are dossier-ready.", "minimum_reviewed_assertions": minimum, "reviewed_assertions": reviewed, "confirmed_assertions": confirmed, "rejected_assertions": counts["rejected_assertions"], "suppressed_assertions": counts["suppressed_assertions"], "unreviewed_assertions": counts["unreviewed_assertions"], "missing_reviewed_assertions": missing, "candidate_profile_review": profile_counts, "candidate_profile_review_remaining": unresolved_profiles, "next_action": next_action}
+    return {"status": status, "requires": f"At least {minimum} reviewed assertion(s), including at least one confirmed assertion, are required before the dossier is marked ready. Candidate profiles require analyst decisions and captured profile evidence before identity-link assertions are dossier-ready.", "minimum_reviewed_assertions": minimum, "reviewed_assertions": reviewed, "confirmed_assertions": confirmed, "rejected_assertions": counts["rejected_assertions"], "suppressed_assertions": counts["suppressed_assertions"], "unreviewed_assertions": counts["unreviewed_assertions"], "missing_reviewed_assertions": missing, "candidate_profile_review": profile_counts, "candidate_profile_review_remaining": unresolved_profiles, "candidate_profile_evidence_capture": evidence_capture, "next_action": next_action}
 
 
 def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
@@ -118,9 +124,11 @@ def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
     summary = payload.setdefault("summary", {})
     assertions = payload.get("assertions", [])
     review_counts = _assertion_review_counts(assertions)
-    profile_fingerprints = apply_profile_review_decisions(build_profile_fingerprint_payload(payload), subject_id)
+    profile_fingerprints = build_profile_fingerprint_payload(payload)
+    profile_fingerprints = enrich_profile_payload_with_evidence(profile_fingerprints, subject_id, live_capture_enabled=_profile_live_capture_enabled())
+    profile_fingerprints = apply_profile_review_decisions(profile_fingerprints, subject_id)
     payload["profile_fingerprints"] = profile_fingerprints
     gate = _dossier_readiness_gate(assertions, profile_fingerprints)
     summary.update(review_counts)
-    summary.update({"real_run_count": real_runs, "diagnostic_run_count": diagnostic_runs, "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"], "dossier_ready": gate["status"] == "pass", "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0 or profile_fingerprints["needs_review_count"] > 0, "dossier_readiness_gate": gate, "profile_candidate_count": profile_fingerprints["candidate_count"], "profile_collision_review_count": profile_fingerprints["needs_review_count"], "profile_dossier_ready_count": profile_fingerprints["dossier_ready_count"], "profile_review_decision_counts": profile_fingerprints.get("review_decision_counts", {})})
+    summary.update({"real_run_count": real_runs, "diagnostic_run_count": diagnostic_runs, "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"], "dossier_ready": gate["status"] == "pass", "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0 or profile_fingerprints["needs_review_count"] > 0, "dossier_readiness_gate": gate, "profile_candidate_count": profile_fingerprints["candidate_count"], "profile_collision_review_count": profile_fingerprints["needs_review_count"], "profile_dossier_ready_count": profile_fingerprints["dossier_ready_count"], "profile_review_decision_counts": profile_fingerprints.get("review_decision_counts", {}), "profile_evidence_capture": profile_fingerprints.get("evidence_capture", {})})
     return payload
