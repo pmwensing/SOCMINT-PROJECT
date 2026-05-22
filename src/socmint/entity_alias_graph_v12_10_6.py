@@ -151,7 +151,7 @@ def _observation_aliases(payload: dict[str, Any], index: dict[tuple[str, str], E
             _add_alias(index, "domain", dom, AliasEvidence(source=connector, source_ref=obs.get("source_ref"), evidence_ref=obs.get("evidence_ref"), confidence=min(0.7, confidence), reason="domain derived from observed URL", details={"observation_id": obs.get("id")}), state="candidate")
 
 
-def _candidate_evidence(candidate: dict[str, Any], fp: dict[str, Any], confidence: float, reason: str, field: str) -> AliasEvidence:
+def _candidate_evidence(candidate: dict[str, Any], fp: dict[str, Any], confidence: float, reason: str, field_name: str) -> AliasEvidence:
     source_connectors = fp.get("source_connectors") if isinstance(fp.get("source_connectors"), list) else []
     source = source_connectors[0] if source_connectors else candidate.get("source_connector") or "candidate_profile"
     return AliasEvidence(
@@ -160,7 +160,7 @@ def _candidate_evidence(candidate: dict[str, Any], fp: dict[str, Any], confidenc
         candidate_id=candidate.get("candidate_id"),
         confidence=round(float(confidence or 0.0), 3),
         reason=reason,
-        details={"field": field, "collision_status": candidate.get("collision_status")},
+        details={"field": field_name, "collision_status": candidate.get("collision_status")},
     )
 
 
@@ -177,9 +177,9 @@ def _candidate_aliases(profile_payload: dict[str, Any], index: dict[tuple[str, s
         else:
             alias_state = "candidate"
         base_conf = float(candidate.get("identity_score") or 0.35)
-        for alias_type, field in (("username", "username"), ("url", "profile_url"), ("visual_hash", "avatar_phash"), ("visual_hash", "banner_phash"), ("visual_hash", "visual_fingerprint_hash"), ("text_hash", "text_fingerprint_hash")):
-            if fp.get(field):
-                _add_alias(index, alias_type, fp.get(field), _candidate_evidence(candidate, fp, base_conf, "candidate profile alias evidence", field), state=alias_state)
+        for alias_type, fp_field in (("username", "username"), ("url", "profile_url"), ("visual_hash", "avatar_phash"), ("visual_hash", "banner_phash"), ("visual_hash", "visual_fingerprint_hash"), ("text_hash", "text_fingerprint_hash")):
+            if fp.get(fp_field):
+                _add_alias(index, alias_type, fp.get(fp_field), _candidate_evidence(candidate, fp, base_conf, "candidate profile alias evidence", fp_field), state=alias_state)
         if fp.get("profile_url"):
             _add_alias(index, "domain", _domain(fp.get("profile_url")), _candidate_evidence(candidate, fp, base_conf, "domain derived from candidate profile URL", "profile_url_domain"), state=alias_state)
         for url in fp.get("linked_urls") or []:
