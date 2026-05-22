@@ -6,6 +6,7 @@ from .candidate_profile_review_v12_10_4 import export_profile_review_report, rev
 from .connectors import connector_mode_report
 from .dossier_assertion_handoff_bundle_v12_10_10 import export_dossier_assertion_handoff_bundle_report
 from .dossier_assertion_handoff_seal_v12_10_11 import export_dossier_assertion_handoff_seal_report
+from .dossier_assertion_handoff_verification_v12_10_12 import export_dossier_assertion_handoff_verification_report
 from .dossier_assertion_projection_v12_10_8 import export_dossier_assertion_projection_report
 from .dossier_assertion_review_packet_v12_10_9 import export_dossier_assertion_review_packet_report
 from .entity_alias_graph_v12_10_6 import export_entity_alias_graph_report
@@ -179,6 +180,16 @@ def register_spine_intelligence_routes(app) -> None:
             abort(404)
         return Response(body, mimetype=mime_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
 
+    @login_required
+    def spine_dossier_assertion_handoff_verification_report(subject_id: int):
+        fmt = request.args.get("format", "json")
+        try:
+            payload = spine_intelligence_payload(subject_id)
+            mime_type, filename, body = export_dossier_assertion_handoff_verification_report(payload.get("dossier_assertion_handoff_verification", {}), fmt=fmt)
+        except ValueError:
+            abort(404)
+        return Response(body, mimetype=mime_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+
     @run_required
     def spine_legacy_assertions_scrub(subject_id: int):
         try:
@@ -272,6 +283,14 @@ def register_spine_intelligence_routes(app) -> None:
             abort(404)
         return jsonify(payload.get("dossier_assertion_handoff_seal", {}))
 
+    @login_required
+    def api_spine_dossier_assertion_handoff_verification(subject_id: int):
+        try:
+            payload = spine_intelligence_payload(subject_id)
+        except ValueError:
+            abort(404)
+        return jsonify(payload.get("dossier_assertion_handoff_verification", {}))
+
     @run_required
     def api_spine_candidate_profile_review(subject_id: int, candidate_id: str):
         payload = request.get_json(silent=True) or {}
@@ -348,6 +367,7 @@ def register_spine_intelligence_routes(app) -> None:
     app.add_url_rule("/spine/subjects/<int:subject_id>/dossier-assertion-review-packet/report", endpoint="spine_dossier_assertion_review_packet_report", view_func=spine_dossier_assertion_review_packet_report, methods=["GET"])
     app.add_url_rule("/spine/subjects/<int:subject_id>/dossier-assertion-handoff-bundle/report", endpoint="spine_dossier_assertion_handoff_bundle_report", view_func=spine_dossier_assertion_handoff_bundle_report, methods=["GET"])
     app.add_url_rule("/spine/subjects/<int:subject_id>/dossier-assertion-handoff-seal/report", endpoint="spine_dossier_assertion_handoff_seal_report", view_func=spine_dossier_assertion_handoff_seal_report, methods=["GET"])
+    app.add_url_rule("/spine/subjects/<int:subject_id>/dossier-assertion-handoff-verification/report", endpoint="spine_dossier_assertion_handoff_verification_report", view_func=spine_dossier_assertion_handoff_verification_report, methods=["GET"])
     app.add_url_rule("/spine/subjects/<int:subject_id>/assertions/scrub", endpoint="spine_legacy_assertions_scrub", view_func=spine_legacy_assertions_scrub, methods=["POST"])
     app.add_url_rule("/spine/observations/<int:observation_id>/promote", endpoint="spine_observation_promote", view_func=spine_observation_promote, methods=["POST"])
     app.add_url_rule("/spine/intelligence/assertions/<int:assertion_id>/review", endpoint="spine_intelligence_assertion_review", view_func=spine_intelligence_assertion_review, methods=["POST"])
@@ -358,6 +378,7 @@ def register_spine_intelligence_routes(app) -> None:
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/dossier-assertion-review-packet", endpoint="api_spine_dossier_assertion_review_packet", view_func=api_spine_dossier_assertion_review_packet, methods=["GET"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/dossier-assertion-handoff-bundle", endpoint="api_spine_dossier_assertion_handoff_bundle", view_func=api_spine_dossier_assertion_handoff_bundle, methods=["GET"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/dossier-assertion-handoff-seal", endpoint="api_spine_dossier_assertion_handoff_seal", view_func=api_spine_dossier_assertion_handoff_seal, methods=["GET"])
+    app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/dossier-assertion-handoff-verification", endpoint="api_spine_dossier_assertion_handoff_verification", view_func=api_spine_dossier_assertion_handoff_verification, methods=["GET"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/aliases/<alias_id>/review", endpoint="api_spine_entity_alias_review", view_func=api_spine_entity_alias_review, methods=["POST"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/aliases/<alias_id>/promote", endpoint="api_spine_entity_alias_promote", view_func=api_spine_entity_alias_promote, methods=["POST"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/alias-clusters", endpoint="api_spine_entity_alias_cluster", view_func=api_spine_entity_alias_cluster, methods=["POST"])
