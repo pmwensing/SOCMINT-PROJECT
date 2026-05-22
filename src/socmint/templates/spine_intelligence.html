@@ -72,7 +72,8 @@
   <div class="card-grid">
     {% set blocked_observation_types = ["static_asset_url", "avatar_url", "asset_artifact_url", "metadata_artifact", "platform_artifact_id"] %}
     {% for observation in payload.observations %}
-    {% set observation_blocked = observation.promotion_blocked or observation.promotion_gate.blocked or observation.type in blocked_observation_types %}
+    {% set promotion_gate = observation.promotion_gate or {} %}
+    {% set observation_blocked = observation.promotion_blocked or promotion_gate.blocked or observation.type in blocked_observation_types %}
     <article class="card">
       <h3>{{ observation.type }}</h3>
       {% if observation.payload.deep_enrichment %}

@@ -103,7 +103,7 @@ def scrub_summary(assertions: list[dict[str, Any]], observations: list[dict[str,
         "blocked_alias_count": blocked_aliases,
         "blocked_total_count": blocked_assertions + blocked_observations + blocked_aliases,
         "reason_counts": reason_counts,
-        "rule": "Legacy asset/CDN profile assertions and bogus phone-like assertions are suppressed before dossier use.",
+        "rule": "Legacy asset/CDN profile/url assertions and bogus phone-like assertions are suppressed before dossier use.",
     }
 
 
