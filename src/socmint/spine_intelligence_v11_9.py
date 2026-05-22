@@ -8,6 +8,7 @@ from .alias_promotion_gates_v12_10_7_1 import apply_promotion_gates_to_alias_gra
 from .candidate_profile_review_v12_10_4 import apply_profile_review_decisions
 from .connector_normalizers import normalize_connector_output
 from .dossier_assertion_projection_v12_10_8 import build_dossier_assertion_projection
+from .dossier_assertion_review_packet_v12_10_9 import build_dossier_assertion_review_packet
 from .entity_alias_graph_v12_10_6 import build_entity_alias_graph
 from .entity_alias_review_v12_10_7 import apply_alias_review_decisions, promote_alias_to_assertion
 from .identity_link_hypothesis_v12_10_7 import build_identity_link_hypotheses
@@ -15,7 +16,7 @@ from .legacy_assertion_scrubber_v12_10_7_2 import apply_assertion_scrub_gates, s
 from .profile_evidence_capture_v12_10_5 import enrich_profile_payload_with_evidence
 from .profile_fingerprint_v12_10_3 import build_profile_fingerprint_payload
 
-INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v12_10_8"
+INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v12_10_9"
 
 promote_observation_to_assertion = legacy.promote_observation_to_assertion
 review_spine_assertion = legacy.review_spine_assertion
@@ -88,7 +89,7 @@ def _alias_review_decision_count(alias_graph: dict[str, Any] | None) -> int:
     return reviewed + len(clusters)
 
 
-def _dossier_readiness_gate(assertions: list[dict[str, Any]], profile_fingerprints: dict[str, Any] | None = None, alias_graph: dict[str, Any] | None = None, identity_links: dict[str, Any] | None = None, assertion_projection: dict[str, Any] | None = None) -> dict[str, Any]:
+def _dossier_readiness_gate(assertions: list[dict[str, Any]], profile_fingerprints: dict[str, Any] | None = None, alias_graph: dict[str, Any] | None = None, identity_links: dict[str, Any] | None = None, assertion_projection: dict[str, Any] | None = None, review_packet: dict[str, Any] | None = None) -> dict[str, Any]:
     minimum = minimum_reviewed_assertions()
     counts = _assertion_review_counts(assertions)
     reviewed = counts["reviewed_assertions"]
@@ -105,6 +106,8 @@ def _dossier_readiness_gate(assertions: list[dict[str, Any]], profile_fingerprin
     identity_go = int((identity_links or {}).get("go_count", 0) or 0)
     projection_ready = int((assertion_projection or {}).get("ready_count", 0) or 0)
     projection_blocked = int((assertion_projection or {}).get("blocked_count", 0) or 0)
+    ready_packets = int((review_packet or {}).get("ready_packet_count", 0) or 0)
+    blocked_packets = int((review_packet or {}).get("blocked_packet_count", 0) or 0)
 
     hard_holds: list[str] = []
     if unresolved_profiles > 0:
@@ -119,6 +122,10 @@ def _dossier_readiness_gate(assertions: list[dict[str, Any]], profile_fingerprin
         hard_holds.append("dossier_assertion_projection_blocked")
     if projection_ready <= 0 and (assertion_projection or {}).get("projection_count", 0):
         hard_holds.append("no_ready_dossier_assertion_projection")
+    if blocked_packets > 0:
+        hard_holds.append("dossier_assertion_review_packet_blocked")
+    if ready_packets <= 0 and (review_packet or {}).get("packet_count", 0):
+        hard_holds.append("no_ready_dossier_assertion_review_packet")
     if reviewed < minimum:
         hard_holds.append("minimum_assertions_not_reviewed")
     if confirmed <= 0:
@@ -139,6 +146,8 @@ def _dossier_readiness_gate(assertions: list[dict[str, Any]], profile_fingerprin
         next_action = "At least one identity-link hypothesis must be GO before same-entity support is dossier-ready."
     elif projection_ready <= 0 and (assertion_projection or {}).get("projection_count", 0):
         next_action = "Resolve dossier assertion projection blockers before treating identity links as assertion-ready."
+    elif blocked_packets:
+        next_action = f"Resolve {blocked_packets} assertion review packet blocker(s) before final confirmation."
     else:
         next_action = "Open Full Dossier v2."
     return {
@@ -179,6 +188,11 @@ def _dossier_readiness_gate(assertions: list[dict[str, Any]], profile_fingerprin
             "projection_count": (assertion_projection or {}).get("projection_count", 0),
             "ready_count": projection_ready,
             "blocked_count": projection_blocked,
+        },
+        "dossier_assertion_review_packet": {
+            "packet_count": (review_packet or {}).get("packet_count", 0),
+            "ready_packet_count": ready_packets,
+            "blocked_packet_count": blocked_packets,
         },
         "next_action": next_action,
     }
@@ -228,12 +242,14 @@ def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
     alias_graph = apply_promotion_gates_to_alias_graph(alias_graph)
     identity_links = build_identity_link_hypotheses(alias_graph, profile_fingerprints)
     assertion_projection = build_dossier_assertion_projection(identity_links, alias_graph)
+    review_packet = build_dossier_assertion_review_packet(assertion_projection)
     payload["profile_fingerprints"] = profile_fingerprints
     payload["entity_alias_graph"] = alias_graph
     payload["identity_link_hypotheses"] = identity_links
     payload["dossier_assertion_projection"] = assertion_projection
+    payload["dossier_assertion_review_packet"] = review_packet
     promotion_scrub = scrub_summary(assertions, payload.get("observations", []), alias_graph)
-    gate = _dossier_readiness_gate(assertions, profile_fingerprints, alias_graph, identity_links, assertion_projection)
+    gate = _dossier_readiness_gate(assertions, profile_fingerprints, alias_graph, identity_links, assertion_projection, review_packet)
     summary.update(review_counts)
-    summary.update({"real_run_count": real_runs, "diagnostic_run_count": diagnostic_runs, "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"], "dossier_ready": gate["status"] == "pass", "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0 or profile_fingerprints["needs_review_count"] > 0 or alias_graph["collision_count"] > 0 or identity_links["hold_count"] > 0 or assertion_projection["blocked_count"] > 0, "dossier_readiness_gate": gate, "profile_candidate_count": profile_fingerprints["candidate_count"], "profile_collision_review_count": profile_fingerprints["needs_review_count"], "profile_dossier_ready_count": profile_fingerprints["dossier_ready_count"], "profile_review_decision_counts": profile_fingerprints.get("review_decision_counts", {}), "profile_evidence_capture": profile_fingerprints.get("evidence_capture", {}), "alias_count": alias_graph.get("alias_count", 0), "alias_edge_count": alias_graph.get("edge_count", 0), "alias_collision_count": alias_graph.get("collision_count", 0), "alias_type_counts": alias_graph.get("type_counts", {}), "alias_state_counts": alias_graph.get("state_counts", {}), "alias_review": alias_graph.get("alias_review", {}), "alias_promotion_gates": alias_graph.get("promotion_gates", {}), "promotion_scrub": promotion_scrub, "identity_link_hypothesis_count": identity_links.get("hypothesis_count", 0), "identity_link_go_count": identity_links.get("go_count", 0), "identity_link_hold_count": identity_links.get("hold_count", 0), "identity_link_fail_count": identity_links.get("fail_count", 0), "dossier_projection_count": assertion_projection.get("projection_count", 0), "dossier_projection_ready_count": assertion_projection.get("ready_count", 0), "dossier_projection_blocked_count": assertion_projection.get("blocked_count", 0)})
+    summary.update({"real_run_count": real_runs, "diagnostic_run_count": diagnostic_runs, "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"], "dossier_ready": gate["status"] == "pass", "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0 or profile_fingerprints["needs_review_count"] > 0 or alias_graph["collision_count"] > 0 or identity_links["hold_count"] > 0 or assertion_projection["blocked_count"] > 0 or review_packet["blocked_packet_count"] > 0, "dossier_readiness_gate": gate, "profile_candidate_count": profile_fingerprints["candidate_count"], "profile_collision_review_count": profile_fingerprints["needs_review_count"], "profile_dossier_ready_count": profile_fingerprints["dossier_ready_count"], "profile_review_decision_counts": profile_fingerprints.get("review_decision_counts", {}), "profile_evidence_capture": profile_fingerprints.get("evidence_capture", {}), "alias_count": alias_graph.get("alias_count", 0), "alias_edge_count": alias_graph.get("edge_count", 0), "alias_collision_count": alias_graph.get("collision_count", 0), "alias_type_counts": alias_graph.get("type_counts", {}), "alias_state_counts": alias_graph.get("state_counts", {}), "alias_review": alias_graph.get("alias_review", {}), "alias_promotion_gates": alias_graph.get("promotion_gates", {}), "promotion_scrub": promotion_scrub, "identity_link_hypothesis_count": identity_links.get("hypothesis_count", 0), "identity_link_go_count": identity_links.get("go_count", 0), "identity_link_hold_count": identity_links.get("hold_count", 0), "identity_link_fail_count": identity_links.get("fail_count", 0), "dossier_projection_count": assertion_projection.get("projection_count", 0), "dossier_projection_ready_count": assertion_projection.get("ready_count", 0), "dossier_projection_blocked_count": assertion_projection.get("blocked_count", 0), "dossier_review_packet_count": review_packet.get("packet_count", 0), "dossier_review_ready_packet_count": review_packet.get("ready_packet_count", 0), "dossier_review_blocked_packet_count": review_packet.get("blocked_packet_count", 0)})
     return payload
