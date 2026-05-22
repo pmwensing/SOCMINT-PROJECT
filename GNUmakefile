@@ -1,6 +1,6 @@
 include Makefile
 
-.PHONY: test-v12-0 test-all-socmint test-v12-3-1 test-v12-3-2 test-v12-5 test-v12-5-1 test-v12-6 test-v12-6-1 test-v12-7 test-v12-7-1 test-v12-8 test-v12-8-1 test-v12-9 test-v12-9-1 test-v12-10 test-v12-full test-connector-cli-enabled test-connector-cli-container test-connector-mode-switch test-worker-only-connector-mode test-social-analyzer-connector test-profile-fingerprint-collision-resolver test-profile-review-decisions test-profile-evidence-capture test-profile-evidence-capture-quality test-entity-alias-graph test-entity-alias-review test-alias-promotion-gates
+.PHONY: test-v12-0 test-all-socmint test-v12-3-1 test-v12-3-2 test-v12-5 test-v12-5-1 test-v12-6 test-v12-6-1 test-v12-7 test-v12-7-1 test-v12-8 test-v12-8-1 test-v12-9 test-v12-9-1 test-v12-10 test-v12-full test-connector-cli-enabled test-connector-cli-container test-connector-mode-switch test-worker-only-connector-mode test-social-analyzer-connector test-profile-fingerprint-collision-resolver test-profile-review-decisions test-profile-evidence-capture test-profile-evidence-capture-quality test-entity-alias-graph test-entity-alias-review test-alias-promotion-gates test-legacy-assertion-scrubber
 
 test-v12-0:
 	bash ./scripts/test_v12_0.sh
@@ -86,3 +86,7 @@ test-entity-alias-review:
 
 test-alias-promotion-gates:
 	bash ./scripts/test_alias_promotion_gates.sh
+
+
+test-legacy-assertion-scrubber:
+	bash ./scripts/test_legacy_assertion_scrubber.sh

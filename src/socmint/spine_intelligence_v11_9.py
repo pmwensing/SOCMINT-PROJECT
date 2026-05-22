@@ -9,6 +9,7 @@ from .candidate_profile_review_v12_10_4 import apply_profile_review_decisions
 from .connector_normalizers import normalize_connector_output
 from .entity_alias_graph_v12_10_6 import build_entity_alias_graph
 from .entity_alias_review_v12_10_7 import apply_alias_review_decisions, promote_alias_to_assertion
+from .legacy_assertion_scrubber_v12_10_7_2 import apply_assertion_scrub_gates, scrub_summary
 from .profile_evidence_capture_v12_10_5 import enrich_profile_payload_with_evidence
 from .profile_fingerprint_v12_10_3 import build_profile_fingerprint_payload
 
@@ -185,7 +186,8 @@ def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
         run.update({"badge": badge, "is_real": badge == "real", "is_diagnostic": badge == "diagnostic", "seed_type": seed.get("type"), "seed_value": seed.get("value"), "normalized_findings": normalized, "finding_count": len(normalized), "observations": real_obs, "diagnostics": diag_obs, "real_observation_count": len(real_obs), "diagnostic_count": len(diag_obs), "explanation": _explain_run(run.get("status"), len(normalized), len(real_obs), run.get("raw_result") or {})})
 
     summary = payload.setdefault("summary", {})
-    assertions = payload.get("assertions", [])
+    assertions = apply_assertion_scrub_gates(payload.get("assertions", []))
+    payload["assertions"] = assertions
     review_counts = _assertion_review_counts(assertions)
     profile_fingerprints = build_profile_fingerprint_payload(payload)
     profile_fingerprints = enrich_profile_payload_with_evidence(profile_fingerprints, subject_id, live_capture_enabled=_profile_live_capture_enabled())
@@ -196,7 +198,8 @@ def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
     alias_graph = apply_promotion_gates_to_alias_graph(alias_graph)
     payload["profile_fingerprints"] = profile_fingerprints
     payload["entity_alias_graph"] = alias_graph
+    promotion_scrub = scrub_summary(assertions, payload.get("observations", []), alias_graph)
     gate = _dossier_readiness_gate(assertions, profile_fingerprints, alias_graph)
     summary.update(review_counts)
-    summary.update({"real_run_count": real_runs, "diagnostic_run_count": diagnostic_runs, "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"], "dossier_ready": gate["status"] == "pass", "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0 or profile_fingerprints["needs_review_count"] > 0 or alias_graph["collision_count"] > 0, "dossier_readiness_gate": gate, "profile_candidate_count": profile_fingerprints["candidate_count"], "profile_collision_review_count": profile_fingerprints["needs_review_count"], "profile_dossier_ready_count": profile_fingerprints["dossier_ready_count"], "profile_review_decision_counts": profile_fingerprints.get("review_decision_counts", {}), "profile_evidence_capture": profile_fingerprints.get("evidence_capture", {}), "alias_count": alias_graph.get("alias_count", 0), "alias_edge_count": alias_graph.get("edge_count", 0), "alias_collision_count": alias_graph.get("collision_count", 0), "alias_type_counts": alias_graph.get("type_counts", {}), "alias_state_counts": alias_graph.get("state_counts", {}), "alias_review": alias_graph.get("alias_review", {}), "alias_promotion_gates": alias_graph.get("promotion_gates", {})})
+    summary.update({"real_run_count": real_runs, "diagnostic_run_count": diagnostic_runs, "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"], "dossier_ready": gate["status"] == "pass", "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0 or profile_fingerprints["needs_review_count"] > 0 or alias_graph["collision_count"] > 0, "dossier_readiness_gate": gate, "profile_candidate_count": profile_fingerprints["candidate_count"], "profile_collision_review_count": profile_fingerprints["needs_review_count"], "profile_dossier_ready_count": profile_fingerprints["dossier_ready_count"], "profile_review_decision_counts": profile_fingerprints.get("review_decision_counts", {}), "profile_evidence_capture": profile_fingerprints.get("evidence_capture", {}), "alias_count": alias_graph.get("alias_count", 0), "alias_edge_count": alias_graph.get("edge_count", 0), "alias_collision_count": alias_graph.get("collision_count", 0), "alias_type_counts": alias_graph.get("type_counts", {}), "alias_state_counts": alias_graph.get("state_counts", {}), "alias_review": alias_graph.get("alias_review", {}), "alias_promotion_gates": alias_graph.get("promotion_gates", {}), "promotion_scrub": promotion_scrub})
     return payload

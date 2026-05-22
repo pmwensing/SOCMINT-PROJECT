@@ -6,6 +6,7 @@ from .candidate_profile_review_v12_10_4 import export_profile_review_report, rev
 from .connectors import connector_mode_report
 from .entity_alias_graph_v12_10_6 import export_entity_alias_graph_report
 from .entity_alias_review_v12_10_7 import merge_alias_cluster, promote_alias_to_assertion, review_entity_alias, split_alias_from_clusters
+from .legacy_assertion_scrubber_v12_10_7_2 import scrub_legacy_assertions
 from .spine import run_spine_for_subject
 from .spine_connector_queue_v12_10_1 import queue_subject_connector_jobs
 from .spine_intelligence_v11_9 import promote_observation_to_assertion
@@ -124,6 +125,16 @@ def register_spine_intelligence_routes(app) -> None:
         return Response(body, mimetype=mime_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
 
     @run_required
+    def spine_legacy_assertions_scrub(subject_id: int):
+        try:
+            result = scrub_legacy_assertions(subject_id, actor=session.get("user"), dry_run=False)
+            audit("spine_legacy_assertions_scrub", details=result)
+            flash(f"Suppressed {result['suppressed_count']} legacy assertion(s) that are not identity evidence.", "success")
+        except Exception as exc:
+            flash(str(exc), "error")
+        return redirect(url_for("spine_intelligence_view", subject_id=subject_id))
+
+    @run_required
     def spine_observation_promote(observation_id: int):
         subject_id = request.form.get("subject_id", type=int)
         note = request.form.get("note", "").strip() or None
@@ -237,6 +248,7 @@ def register_spine_intelligence_routes(app) -> None:
     app.add_url_rule("/spine/subjects/<int:subject_id>/alias-clusters", endpoint="spine_entity_alias_cluster", view_func=spine_entity_alias_cluster, methods=["POST"])
     app.add_url_rule("/spine/subjects/<int:subject_id>/candidate-profiles/report", endpoint="spine_candidate_profile_report", view_func=spine_candidate_profile_report, methods=["GET"])
     app.add_url_rule("/spine/subjects/<int:subject_id>/entity-alias-graph/report", endpoint="spine_entity_alias_graph_report", view_func=spine_entity_alias_graph_report, methods=["GET"])
+    app.add_url_rule("/spine/subjects/<int:subject_id>/assertions/scrub", endpoint="spine_legacy_assertions_scrub", view_func=spine_legacy_assertions_scrub, methods=["POST"])
     app.add_url_rule("/spine/observations/<int:observation_id>/promote", endpoint="spine_observation_promote", view_func=spine_observation_promote, methods=["POST"])
     app.add_url_rule("/spine/intelligence/assertions/<int:assertion_id>/review", endpoint="spine_intelligence_assertion_review", view_func=spine_intelligence_assertion_review, methods=["POST"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/intelligence", endpoint="api_spine_intelligence", view_func=api_spine_intelligence, methods=["GET"])
