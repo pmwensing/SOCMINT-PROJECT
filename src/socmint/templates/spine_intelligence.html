@@ -19,19 +19,25 @@
 <section class="metric-grid">
   <article class="metric-card"><span>Seeds</span><strong>{{ payload.summary.seed_count }}</strong></article>
   <article class="metric-card"><span>Spine runs</span><strong>{{ payload.summary.connector_run_count }}</strong></article>
+  <article class="metric-card"><span>Real runs</span><strong>{{ payload.summary.real_run_count }}</strong></article>
+  <article class="metric-card"><span>Diagnostic runs</span><strong>{{ payload.summary.diagnostic_run_count }}</strong></article>
   <article class="metric-card"><span>Real enrichment</span><strong>{{ payload.summary.observation_count }}</strong></article>
   <article class="metric-card"><span>Assertions</span><strong>{{ payload.summary.assertion_count }}</strong></article>
   <article class="metric-card"><span>Confirmed</span><strong>{{ payload.summary.confirmed_assertions }}</strong></article>
   <article class="metric-card"><span>Candidate profiles</span><strong>{{ payload.summary.profile_candidate_count }}</strong></article>
+  <article class="metric-card"><span>Profile review</span><strong>{{ payload.summary.profile_collision_review_count }}</strong></article>
+  <article class="metric-card"><span>Profile accepted</span><strong>{{ payload.summary.profile_dossier_ready_count }}</strong></article>
   <article class="metric-card"><span>Profile captures</span><strong>{{ payload.summary.profile_evidence_capture.captured_candidate_count }}</strong></article>
   <article class="metric-card"><span>Asset-only flags</span><strong>{{ payload.summary.profile_evidence_capture.asset_only_candidate_count }}</strong></article>
   <article class="metric-card"><span>Entity aliases</span><strong>{{ payload.summary.alias_count }}</strong></article>
   <article class="metric-card"><span>Alias edges</span><strong>{{ payload.summary.alias_edge_count }}</strong></article>
   <article class="metric-card"><span>Alias collisions</span><strong>{{ payload.summary.alias_collision_count }}</strong></article>
   <article class="metric-card"><span>Alias promotable</span><strong>{{ payload.summary.alias_review.promotable_alias_count }}</strong></article>
+  <article class="metric-card"><span>Identity GO</span><strong>{{ payload.summary.identity_link_go_count }}</strong></article>
+  <article class="metric-card"><span>Identity HOLD</span><strong>{{ payload.summary.identity_link_hold_count }}</strong></article>
 </section>
 
-<section class="panel {{ 'success-panel' if payload.summary.dossier_readiness_gate.status == 'pass' else 'warning-panel' }}"><div class="section-header"><div><h2>Dossier Readiness Gate</h2><p class="muted">{{ payload.summary.dossier_readiness_gate.requires }}</p></div><span class="status-pill {{ 'completed' if payload.summary.dossier_readiness_gate.status == 'pass' else 'queued' }}">{{ payload.summary.dossier_readiness_gate.status|upper }}</span></div><p><strong>Confirmed assertions:</strong> {{ payload.summary.dossier_readiness_gate.confirmed_assertions }}</p><p><strong>Candidate profile review remaining:</strong> {{ payload.summary.dossier_readiness_gate.candidate_profile_review_remaining }}</p><p><strong>Captured profile evidence:</strong> {{ payload.summary.profile_evidence_capture.captured_candidate_count }} candidates · text={{ payload.summary.profile_evidence_capture.text_fingerprint_ready_count }} · visual={{ payload.summary.profile_evidence_capture.visual_fingerprint_ready_count }}</p><p><strong>Entity Alias Graph:</strong> {{ payload.summary.alias_count }} aliases · {{ payload.summary.alias_edge_count }} edges · {{ payload.summary.alias_collision_count }} reverse-collision review set(s) · {{ payload.summary.alias_review.cluster_count }} cluster(s)</p><p><strong>Promotion gates:</strong> {{ payload.summary.promotion_scrub.blocked_total_count or 0 }} blocked total · {{ payload.summary.promotion_scrub.blocked_observation_count or 0 }} observations · {{ payload.summary.promotion_scrub.blocked_assertion_count or 0 }} assertions · {{ payload.summary.alias_promotion_gates.blocked_alias_count or 0 }} aliases</p><p class="muted">{{ payload.summary.dossier_readiness_gate.next_action }}</p></section>
+<section class="panel {{ 'success-panel' if payload.summary.dossier_readiness_gate.status == 'pass' else 'warning-panel' }}"><div class="section-header"><div><h2>Dossier Readiness Gate</h2><p class="muted">{{ payload.summary.dossier_readiness_gate.requires }}</p></div><span class="status-pill {{ 'completed' if payload.summary.dossier_readiness_gate.status == 'pass' else 'queued' }}">{{ payload.summary.dossier_readiness_gate.status|upper }}</span></div><p><strong>Confirmed assertions:</strong> {{ payload.summary.dossier_readiness_gate.confirmed_assertions }}</p><p><strong>Candidate profile review remaining:</strong> {{ payload.summary.dossier_readiness_gate.candidate_profile_review_remaining }}</p><p><strong>Captured profile evidence:</strong> {{ payload.summary.profile_evidence_capture.captured_candidate_count }} candidates · text={{ payload.summary.profile_evidence_capture.text_fingerprint_ready_count }} · visual={{ payload.summary.profile_evidence_capture.visual_fingerprint_ready_count }}</p><p><strong>Entity Alias Graph:</strong> {{ payload.summary.alias_count }} aliases · {{ payload.summary.alias_edge_count }} edges · {{ payload.summary.alias_collision_count }} reverse-collision review set(s) · {{ payload.summary.alias_review.cluster_count }} cluster(s)</p><p><strong>Promotion gates:</strong> {{ payload.summary.promotion_scrub.blocked_total_count or 0 }} blocked total · {{ payload.summary.promotion_scrub.blocked_observation_count or 0 }} observations · {{ payload.summary.promotion_scrub.blocked_assertion_count or 0 }} assertions · {{ payload.summary.alias_promotion_gates.blocked_alias_count or 0 }} aliases</p><p><strong>Identity links:</strong> GO={{ payload.summary.identity_link_go_count }} · HOLD={{ payload.summary.identity_link_hold_count }} · FAIL={{ payload.summary.identity_link_fail_count }}</p><p class="muted">{{ payload.summary.dossier_readiness_gate.next_action }}</p></section>
 
 <section class="panel command-panel"><div class="section-header"><div><h2>Queue subject intelligence</h2><p class="muted">socialscan remains fast triage; social-analyzer is deep enrichment and should be run by the worker.</p></div><span class="status-pill {{ 'queued' if payload.summary.needs_review else 'completed' }}">{{ 'Review needed' if payload.summary.needs_review else 'No review queue' }}</span></div><form method="post" action="{{ url_for('spine_intelligence_run', subject_id=payload.subject.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="card-grid">{% for connector in payload.connector_options %}<label class="card checkbox-card {{ '' if connector.enabled else 'muted-card' }}"><input type="checkbox" name="connectors" value="{{ connector.key }}" {% if connector.enabled %}checked{% else %}disabled{% endif %}><strong>{{ connector.key }}</strong>{% if connector.key == 'social-analyzer' %}<span class="status-pill queued">deep enrichment</span>{% endif %}{% if connector.key == 'socialscan' %}<span class="status-pill completed">fast triage</span>{% endif %}<span>Supports: {{ connector.seed_types | join(', ') }}</span><span>Compatible now: {{ connector.compatible | join(', ') if connector.compatible else 'none' }}</span></label>{% endfor %}</div><button type="submit">Queue selected connectors for worker</button></form></section>
 
@@ -59,6 +65,24 @@
       <details><summary>Alias evidence</summary><ul>{% for ev in alias.evidence %}<li>{{ ev.source }} · {{ ev.reason }} · confidence={{ ev.confidence }} · candidate={{ ev.candidate_id or 'n/a' }}</li>{% endfor %}</ul></details>
     </article>
     {% else %}<p>No entity aliases yet.</p>{% endfor %}
+  </div>
+</section>
+
+<section class="panel command-panel">
+  <div class="section-header"><div><h2>Identity Link Hypotheses</h2><p class="muted">Reviewed profile candidates and alias support become explicit GO/HOLD/FAIL identity-link hypotheses.</p></div><div class="hero-actions"><a class="button-link secondary" href="{{ url_for('spine_identity_link_hypothesis_report', subject_id=payload.subject.id, format='json') }}">Export Identity JSON</a><a class="button-link secondary" href="{{ url_for('spine_identity_link_hypothesis_report', subject_id=payload.subject.id, format='md') }}">Export Identity Markdown</a></div></div>
+  <p><strong>Pipeline insert:</strong> {{ payload.identity_link_hypotheses.pipeline_insert }}</p>
+  <p class="muted">Rule: {{ payload.identity_link_hypotheses.dossier_rule }}</p>
+  <p class="muted">GO={{ payload.identity_link_hypotheses.go_count }}, HOLD={{ payload.identity_link_hypotheses.hold_count }}, FAIL={{ payload.identity_link_hypotheses.fail_count }}</p>
+  <div class="card-grid">
+    {% for item in payload.identity_link_hypotheses.hypotheses %}
+    <article class="card wide-card {{ 'success-card' if item.decision == 'GO' else 'muted-card' if item.decision == 'FAIL' else '' }}">
+      <h3>{{ item.platform or 'unknown platform' }} / {{ item.username or item.candidate_id }}</h3>
+      <p><span class="status-pill {{ 'completed' if item.decision == 'GO' else 'failed' if item.decision == 'FAIL' else 'queued' }}">{{ item.decision }}</span> <strong>analyst:</strong> {{ item.analyst_state }} · <strong>score:</strong> {{ item.identity_score }}</p>
+      <p><strong>Alias support:</strong> strong={{ item.strong_alias_count }} · supporting={{ item.supporting_alias_count }} · collisions={{ item.collision_alias_count }}</p>
+      <p><strong>Evidence ready:</strong> {{ 'yes' if item.evidence_ready else 'no' }}</p>
+      <details open><summary>Decision reasons</summary><ul>{% for reason in item.reasons %}<li>{{ reason }}</li>{% endfor %}</ul></details>
+    </article>
+    {% else %}<p>No identity-link hypotheses yet.</p>{% endfor %}
   </div>
 </section>
 
