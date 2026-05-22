@@ -5,6 +5,7 @@ from flask import Response, abort, flash, jsonify, redirect, render_template, re
 from .candidate_profile_review_v12_10_4 import export_profile_review_report, review_candidate_profile
 from .connectors import connector_mode_report
 from .entity_alias_graph_v12_10_6 import export_entity_alias_graph_report
+from .entity_alias_review_v12_10_7 import merge_alias_cluster, promote_alias_to_assertion, review_entity_alias, split_alias_from_clusters
 from .spine import run_spine_for_subject
 from .spine_connector_queue_v12_10_1 import queue_subject_connector_jobs
 from .spine_intelligence_v11_9 import promote_observation_to_assertion
@@ -52,6 +53,52 @@ def register_spine_intelligence_routes(app) -> None:
             result = review_candidate_profile(subject_id, candidate_id, action, payload.get("profile_fingerprints", {}), actor=session.get("user"), note=note)
             audit("spine_candidate_profile_review", details=result)
             flash(f"Candidate profile {candidate_id} marked {result['review_state']}.", "success")
+        except Exception as exc:
+            flash(str(exc), "error")
+        return redirect(url_for("spine_intelligence_view", subject_id=subject_id))
+
+    @run_required
+    def spine_entity_alias_review(subject_id: int, alias_id: str):
+        action = request.form.get("action", "").strip()
+        note = request.form.get("note", "").strip() or None
+        try:
+            payload = spine_intelligence_payload(subject_id)
+            result = review_entity_alias(subject_id, alias_id, action, payload.get("entity_alias_graph", {}), actor=session.get("user"), note=note)
+            audit("spine_entity_alias_review", details=result)
+            flash(f"Alias {alias_id} marked {result['review_state']}.", "success")
+        except Exception as exc:
+            flash(str(exc), "error")
+        return redirect(url_for("spine_intelligence_view", subject_id=subject_id))
+
+    @run_required
+    def spine_entity_alias_cluster(subject_id: int):
+        action = request.form.get("action", "").strip()
+        note = request.form.get("note", "").strip() or None
+        alias_ids = request.form.getlist("alias_ids") or [item.strip() for item in request.form.get("alias_ids_text", "").split(",") if item.strip()]
+        alias_id = request.form.get("alias_id", "").strip()
+        try:
+            payload = spine_intelligence_payload(subject_id)
+            if action == "merge_aliases":
+                result = merge_alias_cluster(subject_id, alias_ids, payload.get("entity_alias_graph", {}), actor=session.get("user"), note=note)
+                flash(f"Merged {len(result['alias_ids'])} alias(es) into {result['cluster_id']}.", "success")
+            elif action == "split_alias":
+                result = split_alias_from_clusters(subject_id, alias_id, actor=session.get("user"), note=note)
+                flash(f"Split alias {alias_id} from {len(result['split_from_clusters'])} cluster(s).", "success")
+            else:
+                raise ValueError(f"Unsupported alias cluster action: {action}")
+            audit("spine_entity_alias_cluster", details=result)
+        except Exception as exc:
+            flash(str(exc), "error")
+        return redirect(url_for("spine_intelligence_view", subject_id=subject_id))
+
+    @run_required
+    def spine_entity_alias_promote(subject_id: int, alias_id: str):
+        note = request.form.get("note", "").strip() or None
+        try:
+            payload = spine_intelligence_payload(subject_id)
+            result = promote_alias_to_assertion(subject_id, alias_id, payload.get("entity_alias_graph", {}), actor=session.get("user"), note=note)
+            audit("spine_entity_alias_promote", details=result)
+            flash(f"Alias promoted to confirmed assertion {result['assertion_id']}.", "success")
         except Exception as exc:
             flash(str(exc), "error")
         return redirect(url_for("spine_intelligence_view", subject_id=subject_id))
@@ -128,6 +175,36 @@ def register_spine_intelligence_routes(app) -> None:
         return jsonify(result), 202
 
     @run_required
+    def api_spine_entity_alias_review(subject_id: int, alias_id: str):
+        payload = request.get_json(silent=True) or {}
+        current = spine_intelligence_payload(subject_id)
+        result = review_entity_alias(subject_id, alias_id, payload.get("action", ""), current.get("entity_alias_graph", {}), actor=session.get("user"), note=payload.get("note"))
+        audit("spine_entity_alias_review", details=result)
+        return jsonify(result), 202
+
+    @run_required
+    def api_spine_entity_alias_promote(subject_id: int, alias_id: str):
+        payload = request.get_json(silent=True) or {}
+        current = spine_intelligence_payload(subject_id)
+        result = promote_alias_to_assertion(subject_id, alias_id, current.get("entity_alias_graph", {}), actor=session.get("user"), note=payload.get("note"))
+        audit("spine_entity_alias_promote", details=result)
+        return jsonify(result), 202
+
+    @run_required
+    def api_spine_entity_alias_cluster(subject_id: int):
+        payload = request.get_json(silent=True) or {}
+        current = spine_intelligence_payload(subject_id)
+        action = payload.get("action", "")
+        if action == "merge_aliases":
+            result = merge_alias_cluster(subject_id, payload.get("alias_ids") or [], current.get("entity_alias_graph", {}), actor=session.get("user"), note=payload.get("note"))
+        elif action == "split_alias":
+            result = split_alias_from_clusters(subject_id, payload.get("alias_id", ""), actor=session.get("user"), note=payload.get("note"))
+        else:
+            raise ValueError(f"Unsupported alias cluster action: {action}")
+        audit("spine_entity_alias_cluster", details=result)
+        return jsonify(result), 202
+
+    @run_required
     def api_spine_intelligence_run(subject_id: int):
         payload = request.get_json(silent=True) or {}
         if payload.get("run_inline"):
@@ -155,12 +232,18 @@ def register_spine_intelligence_routes(app) -> None:
     app.add_url_rule("/spine/subjects/<int:subject_id>/intelligence", endpoint="spine_intelligence_view", view_func=spine_intelligence_view, methods=["GET"])
     app.add_url_rule("/spine/subjects/<int:subject_id>/intelligence/run", endpoint="spine_intelligence_run", view_func=spine_intelligence_run, methods=["POST"])
     app.add_url_rule("/spine/subjects/<int:subject_id>/candidate-profiles/<candidate_id>/review", endpoint="spine_candidate_profile_review", view_func=spine_candidate_profile_review, methods=["POST"])
+    app.add_url_rule("/spine/subjects/<int:subject_id>/aliases/<alias_id>/review", endpoint="spine_entity_alias_review", view_func=spine_entity_alias_review, methods=["POST"])
+    app.add_url_rule("/spine/subjects/<int:subject_id>/aliases/<alias_id>/promote", endpoint="spine_entity_alias_promote", view_func=spine_entity_alias_promote, methods=["POST"])
+    app.add_url_rule("/spine/subjects/<int:subject_id>/alias-clusters", endpoint="spine_entity_alias_cluster", view_func=spine_entity_alias_cluster, methods=["POST"])
     app.add_url_rule("/spine/subjects/<int:subject_id>/candidate-profiles/report", endpoint="spine_candidate_profile_report", view_func=spine_candidate_profile_report, methods=["GET"])
     app.add_url_rule("/spine/subjects/<int:subject_id>/entity-alias-graph/report", endpoint="spine_entity_alias_graph_report", view_func=spine_entity_alias_graph_report, methods=["GET"])
     app.add_url_rule("/spine/observations/<int:observation_id>/promote", endpoint="spine_observation_promote", view_func=spine_observation_promote, methods=["POST"])
     app.add_url_rule("/spine/intelligence/assertions/<int:assertion_id>/review", endpoint="spine_intelligence_assertion_review", view_func=spine_intelligence_assertion_review, methods=["POST"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/intelligence", endpoint="api_spine_intelligence", view_func=api_spine_intelligence, methods=["GET"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/entity-alias-graph", endpoint="api_spine_entity_alias_graph", view_func=api_spine_entity_alias_graph, methods=["GET"])
+    app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/aliases/<alias_id>/review", endpoint="api_spine_entity_alias_review", view_func=api_spine_entity_alias_review, methods=["POST"])
+    app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/aliases/<alias_id>/promote", endpoint="api_spine_entity_alias_promote", view_func=api_spine_entity_alias_promote, methods=["POST"])
+    app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/alias-clusters", endpoint="api_spine_entity_alias_cluster", view_func=api_spine_entity_alias_cluster, methods=["POST"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/intelligence/run", endpoint="api_spine_intelligence_run", view_func=api_spine_intelligence_run, methods=["POST"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/candidate-profiles/<candidate_id>/review", endpoint="api_spine_candidate_profile_review", view_func=api_spine_candidate_profile_review, methods=["POST"])
     app.add_url_rule("/api/v1/spine/observations/<int:observation_id>/promote", endpoint="api_spine_observation_promote", view_func=api_spine_observation_promote, methods=["POST"])
