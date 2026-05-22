@@ -5,6 +5,7 @@ from flask import Response, abort, flash, jsonify, redirect, render_template, re
 from .candidate_profile_review_v12_10_4 import export_profile_review_report, review_candidate_profile
 from .connectors import connector_mode_report
 from .entity_alias_graph_v12_10_6 import export_entity_alias_graph_report
+from .identity_link_hypothesis_v12_10_7 import export_identity_link_hypothesis_report
 from .spine import run_spine_for_subject
 from .spine_connector_queue_v12_10_1 import queue_subject_connector_jobs
 from .spine_intelligence_v11_9 import promote_observation_to_assertion
@@ -76,6 +77,16 @@ def register_spine_intelligence_routes(app) -> None:
             abort(404)
         return Response(body, mimetype=mime_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
 
+    @login_required
+    def spine_identity_link_hypothesis_report(subject_id: int):
+        fmt = request.args.get("format", "json")
+        try:
+            payload = spine_intelligence_payload(subject_id)
+            mime_type, filename, body = export_identity_link_hypothesis_report(payload.get("identity_link_hypotheses", {}), fmt=fmt)
+        except ValueError:
+            abort(404)
+        return Response(body, mimetype=mime_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+
     @run_required
     def spine_observation_promote(observation_id: int):
         subject_id = request.form.get("subject_id", type=int)
@@ -119,6 +130,14 @@ def register_spine_intelligence_routes(app) -> None:
             abort(404)
         return jsonify(payload.get("entity_alias_graph", {}))
 
+    @login_required
+    def api_spine_identity_link_hypotheses(subject_id: int):
+        try:
+            payload = spine_intelligence_payload(subject_id)
+        except ValueError:
+            abort(404)
+        return jsonify(payload.get("identity_link_hypotheses", {}))
+
     @run_required
     def api_spine_candidate_profile_review(subject_id: int, candidate_id: str):
         payload = request.get_json(silent=True) or {}
@@ -157,10 +176,12 @@ def register_spine_intelligence_routes(app) -> None:
     app.add_url_rule("/spine/subjects/<int:subject_id>/candidate-profiles/<candidate_id>/review", endpoint="spine_candidate_profile_review", view_func=spine_candidate_profile_review, methods=["POST"])
     app.add_url_rule("/spine/subjects/<int:subject_id>/candidate-profiles/report", endpoint="spine_candidate_profile_report", view_func=spine_candidate_profile_report, methods=["GET"])
     app.add_url_rule("/spine/subjects/<int:subject_id>/entity-alias-graph/report", endpoint="spine_entity_alias_graph_report", view_func=spine_entity_alias_graph_report, methods=["GET"])
+    app.add_url_rule("/spine/subjects/<int:subject_id>/identity-link-hypotheses/report", endpoint="spine_identity_link_hypothesis_report", view_func=spine_identity_link_hypothesis_report, methods=["GET"])
     app.add_url_rule("/spine/observations/<int:observation_id>/promote", endpoint="spine_observation_promote", view_func=spine_observation_promote, methods=["POST"])
     app.add_url_rule("/spine/intelligence/assertions/<int:assertion_id>/review", endpoint="spine_intelligence_assertion_review", view_func=spine_intelligence_assertion_review, methods=["POST"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/intelligence", endpoint="api_spine_intelligence", view_func=api_spine_intelligence, methods=["GET"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/entity-alias-graph", endpoint="api_spine_entity_alias_graph", view_func=api_spine_entity_alias_graph, methods=["GET"])
+    app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/identity-link-hypotheses", endpoint="api_spine_identity_link_hypotheses", view_func=api_spine_identity_link_hypotheses, methods=["GET"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/intelligence/run", endpoint="api_spine_intelligence_run", view_func=api_spine_intelligence_run, methods=["POST"])
     app.add_url_rule("/api/v1/spine/subjects/<int:subject_id>/candidate-profiles/<candidate_id>/review", endpoint="api_spine_candidate_profile_review", view_func=api_spine_candidate_profile_review, methods=["POST"])
     app.add_url_rule("/api/v1/spine/observations/<int:observation_id>/promote", endpoint="api_spine_observation_promote", view_func=api_spine_observation_promote, methods=["POST"])

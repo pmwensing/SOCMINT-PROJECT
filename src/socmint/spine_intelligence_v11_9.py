@@ -7,10 +7,11 @@ from . import spine_intelligence as legacy
 from .candidate_profile_review_v12_10_4 import apply_profile_review_decisions
 from .connector_normalizers import normalize_connector_output
 from .entity_alias_graph_v12_10_6 import build_entity_alias_graph
+from .identity_link_hypothesis_v12_10_7 import build_identity_link_hypotheses
 from .profile_evidence_capture_v12_10_5 import enrich_profile_payload_with_evidence
 from .profile_fingerprint_v12_10_3 import build_profile_fingerprint_payload
 
-INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v12_10_6"
+INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v12_10_7"
 
 promote_observation_to_assertion = legacy.promote_observation_to_assertion
 review_spine_assertion = legacy.review_spine_assertion
@@ -75,7 +76,7 @@ def _assertion_review_counts(assertions: list[dict[str, Any]]) -> dict[str, int]
     return {"reviewed_assertions": len(reviewed), "confirmed_assertions": len(confirmed), "rejected_assertions": len(rejected), "suppressed_assertions": len(suppressed), "unreviewed_assertions": len(unreviewed)}
 
 
-def _dossier_readiness_gate(assertions: list[dict[str, Any]], profile_fingerprints: dict[str, Any] | None = None, alias_graph: dict[str, Any] | None = None) -> dict[str, Any]:
+def _dossier_readiness_gate(assertions: list[dict[str, Any]], profile_fingerprints: dict[str, Any] | None = None, alias_graph: dict[str, Any] | None = None, identity_links: dict[str, Any] | None = None) -> dict[str, Any]:
     minimum = minimum_reviewed_assertions()
     counts = _assertion_review_counts(assertions)
     reviewed = counts["reviewed_assertions"]
@@ -85,6 +86,8 @@ def _dossier_readiness_gate(assertions: list[dict[str, Any]], profile_fingerprin
     unresolved_profiles = int((profile_fingerprints or {}).get("needs_review_count", 0) or 0)
     evidence_capture = (profile_fingerprints or {}).get("evidence_capture", {})
     alias_collisions = int((alias_graph or {}).get("collision_count", 0) or 0)
+    identity_hold = int((identity_links or {}).get("hold_count", 0) or 0)
+    identity_go = int((identity_links or {}).get("go_count", 0) or 0)
     status = "pass" if reviewed >= minimum and confirmed > 0 else "hold"
     if reviewed < minimum:
         next_action = f"Review {missing} more assertion(s), then confirm at least one dossier-ready assertion."
@@ -94,9 +97,13 @@ def _dossier_readiness_gate(assertions: list[dict[str, Any]], profile_fingerprin
         next_action = f"Review {unresolved_profiles} candidate profile identity link(s), using captured HTML/metadata/visual-text fingerprints before acceptance."
     elif alias_collisions:
         next_action = f"Review {alias_collisions} reverse alias collision set(s) before treating identifiers as same-entity facts."
+    elif identity_hold:
+        next_action = f"Resolve {identity_hold} identity-link hypothesis hold(s) before promoting same-entity facts."
+    elif identity_go <= 0 and (identity_links or {}).get("hypothesis_count", 0):
+        next_action = "At least one identity-link hypothesis must be GO before same-entity support is dossier-ready."
     else:
         next_action = "Open Full Dossier v2."
-    return {"status": status, "requires": f"At least {minimum} reviewed assertion(s), including at least one confirmed assertion, are required before the dossier is marked ready. Candidate profiles require analyst decisions and captured profile evidence before identity-link assertions are dossier-ready. Entity aliases remain multi-identifier claims until reviewed.", "minimum_reviewed_assertions": minimum, "reviewed_assertions": reviewed, "confirmed_assertions": confirmed, "rejected_assertions": counts["rejected_assertions"], "suppressed_assertions": counts["suppressed_assertions"], "unreviewed_assertions": counts["unreviewed_assertions"], "missing_reviewed_assertions": missing, "candidate_profile_review": profile_counts, "candidate_profile_review_remaining": unresolved_profiles, "candidate_profile_evidence_capture": evidence_capture, "entity_alias_graph": {"alias_count": (alias_graph or {}).get("alias_count", 0), "edge_count": (alias_graph or {}).get("edge_count", 0), "collision_count": (alias_graph or {}).get("collision_count", 0), "state_counts": (alias_graph or {}).get("state_counts", {})}, "next_action": next_action}
+    return {"status": status, "requires": f"At least {minimum} reviewed assertion(s), including at least one confirmed assertion, are required before the dossier is marked ready. Candidate profiles require analyst decisions and captured profile evidence before identity-link assertions are dossier-ready. Entity aliases remain multi-identifier claims until reviewed.", "minimum_reviewed_assertions": minimum, "reviewed_assertions": reviewed, "confirmed_assertions": confirmed, "rejected_assertions": counts["rejected_assertions"], "suppressed_assertions": counts["suppressed_assertions"], "unreviewed_assertions": counts["unreviewed_assertions"], "missing_reviewed_assertions": missing, "candidate_profile_review": profile_counts, "candidate_profile_review_remaining": unresolved_profiles, "candidate_profile_evidence_capture": evidence_capture, "entity_alias_graph": {"alias_count": (alias_graph or {}).get("alias_count", 0), "edge_count": (alias_graph or {}).get("edge_count", 0), "collision_count": (alias_graph or {}).get("collision_count", 0), "state_counts": (alias_graph or {}).get("state_counts", {})}, "identity_link_hypotheses": {"hypothesis_count": (identity_links or {}).get("hypothesis_count", 0), "go_count": (identity_links or {}).get("go_count", 0), "hold_count": (identity_links or {}).get("hold_count", 0), "fail_count": (identity_links or {}).get("fail_count", 0)}, "next_action": next_action}
 
 
 def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
@@ -132,9 +139,11 @@ def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
     profile_fingerprints = enrich_profile_payload_with_evidence(profile_fingerprints, subject_id, live_capture_enabled=_profile_live_capture_enabled())
     profile_fingerprints = apply_profile_review_decisions(profile_fingerprints, subject_id)
     alias_graph = build_entity_alias_graph(payload, profile_fingerprints)
+    identity_links = build_identity_link_hypotheses(alias_graph, profile_fingerprints)
     payload["profile_fingerprints"] = profile_fingerprints
     payload["entity_alias_graph"] = alias_graph
-    gate = _dossier_readiness_gate(assertions, profile_fingerprints, alias_graph)
+    payload["identity_link_hypotheses"] = identity_links
+    gate = _dossier_readiness_gate(assertions, profile_fingerprints, alias_graph, identity_links)
     summary.update(review_counts)
-    summary.update({"real_run_count": real_runs, "diagnostic_run_count": diagnostic_runs, "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"], "dossier_ready": gate["status"] == "pass", "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0 or profile_fingerprints["needs_review_count"] > 0 or alias_graph["collision_count"] > 0, "dossier_readiness_gate": gate, "profile_candidate_count": profile_fingerprints["candidate_count"], "profile_collision_review_count": profile_fingerprints["needs_review_count"], "profile_dossier_ready_count": profile_fingerprints["dossier_ready_count"], "profile_review_decision_counts": profile_fingerprints.get("review_decision_counts", {}), "profile_evidence_capture": profile_fingerprints.get("evidence_capture", {}), "alias_count": alias_graph.get("alias_count", 0), "alias_edge_count": alias_graph.get("edge_count", 0), "alias_collision_count": alias_graph.get("collision_count", 0), "alias_type_counts": alias_graph.get("type_counts", {}), "alias_state_counts": alias_graph.get("state_counts", {})})
+    summary.update({"real_run_count": real_runs, "diagnostic_run_count": diagnostic_runs, "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"], "dossier_ready": gate["status"] == "pass", "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0 or profile_fingerprints["needs_review_count"] > 0 or alias_graph["collision_count"] > 0 or identity_links["hold_count"] > 0, "dossier_readiness_gate": gate, "profile_candidate_count": profile_fingerprints["candidate_count"], "profile_collision_review_count": profile_fingerprints["needs_review_count"], "profile_dossier_ready_count": profile_fingerprints["dossier_ready_count"], "profile_review_decision_counts": profile_fingerprints.get("review_decision_counts", {}), "profile_evidence_capture": profile_fingerprints.get("evidence_capture", {}), "alias_count": alias_graph.get("alias_count", 0), "alias_edge_count": alias_graph.get("edge_count", 0), "alias_collision_count": alias_graph.get("collision_count", 0), "alias_type_counts": alias_graph.get("type_counts", {}), "alias_state_counts": alias_graph.get("state_counts", {}), "identity_link_hypothesis_count": identity_links.get("hypothesis_count", 0), "identity_link_go_count": identity_links.get("go_count", 0), "identity_link_hold_count": identity_links.get("hold_count", 0), "identity_link_fail_count": identity_links.get("fail_count", 0)})
     return payload
