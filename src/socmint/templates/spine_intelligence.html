@@ -66,7 +66,38 @@
 
 <section class="panel"><div class="section-header"><div><h2>Dossier Assertions</h2><p class="muted">Legacy polluted assertions can be suppressed before dossier use.</p></div><form method="post" action="{{ url_for('spine_legacy_assertions_scrub', subject_id=payload.subject.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Scrub legacy assertions</button></form></div><div class="card-grid">{% for assertion in payload.assertions %}<article class="card"><h3>{{ assertion.type }}</h3><p><span class="status-pill {{ 'completed' if assertion.validation_state == 'confirmed' else 'failed' if assertion.validation_state in ['rejected','suppressed'] else 'queued' }}">{{ assertion.validation_state }}</span>{% if assertion.legacy_assertion_scrub.blocked %} <span class="status-pill failed">Legacy assertion suppressed: not identity evidence</span>{% endif %}</p><p><strong>Value:</strong> {{ assertion.value }}</p><p><strong>Confidence:</strong> {{ assertion.confidence }}</p><form method="post" action="{{ url_for('spine_intelligence_assertion_review', assertion_id=assertion.id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="subject_id" value="{{ payload.subject.id }}"><input type="text" name="note" placeholder="Analyst note"><button name="action" value="confirmed" type="submit" {% if assertion.legacy_assertion_scrub.blocked %}disabled{% endif %}>Confirm</button><button name="action" value="rejected" type="submit">Reject</button><button name="action" value="suppressed" type="submit">Suppress</button><button name="action" value="unreviewed" type="submit">Reset</button></form></article>{% else %}<p>No dossier assertions yet.</p>{% endfor %}</div></section>
 
-<section class="panel"><h2>Real Enrichment Observations</h2><div class="card-grid">{% for observation in payload.observations %}<article class="card"><h3>{{ observation.type }}</h3>{% if observation.payload.deep_enrichment %}<p><span class="status-pill queued">deep enrichment</span></p>{% endif %}<p><strong>Value:</strong> {{ observation.value }}</p><p><strong>Confidence:</strong> {{ observation.confidence }}</p><p class="muted">{{ observation.source_ref }} · {{ observation.evidence_ref }}</p><form method="post" action="{{ url_for('spine_observation_promote', observation_id=observation.id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="subject_id" value="{{ payload.subject.id }}"><input type="text" name="note" placeholder="Promotion note">{% set blocked_observation_types = ["static_asset_url", "avatar_url", "asset_artifact_url", "metadata_artifact", "platform_artifact_id"] %}{% if observation.promotion_blocked or observation.type in blocked_observation_types or observation.promotion_gate.blocked %}<span class="status-pill failed">Promotion blocked: not identity evidence</span>{% endif %}<button type="submit" {% if observation.promotion_blocked or observation.type in blocked_observation_types or observation.promotion_gate.blocked %}disabled{% endif %}>Promote to confirmed assertion</button></form></article>{% else %}<p>No real enrichment observations yet.</p>{% endfor %}</div></section>
+
+<section class="panel">
+  <h2>Real Enrichment Observations</h2>
+  <div class="card-grid">
+    {% set blocked_observation_types = ["static_asset_url", "avatar_url", "asset_artifact_url", "metadata_artifact", "platform_artifact_id"] %}
+    {% for observation in payload.observations %}
+    {% set observation_blocked = observation.promotion_blocked or observation.promotion_gate.blocked or observation.type in blocked_observation_types %}
+    <article class="card">
+      <h3>{{ observation.type }}</h3>
+      {% if observation.payload.deep_enrichment %}
+      <p><span class="status-pill queued">deep enrichment</span></p>
+      {% endif %}
+      <p><strong>Value:</strong> {{ observation.value }}</p>
+      <p><strong>Confidence:</strong> {{ observation.confidence }}</p>
+      <p class="muted">{{ observation.source_ref }} · {{ observation.evidence_ref }}</p>
+
+      {% if observation_blocked %}
+      <p><span class="status-pill failed">Promotion blocked: not identity evidence</span></p>
+      {% else %}
+      <form method="post" action="{{ url_for('spine_observation_promote', observation_id=observation.id) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="subject_id" value="{{ payload.subject.id }}">
+        <input type="text" name="note" placeholder="Promotion note">
+        <button type="submit">Promote to confirmed assertion</button>
+      </form>
+      {% endif %}
+    </article>
+    {% else %}
+    <p>No real enrichment observations yet.</p>
+    {% endfor %}
+  </div>
+</section>
 
 <section class="panel"><h2>Connector Run Result Inspector</h2><div class="card-grid">{% for run in payload.runs %}<article class="card wide-card {{ 'success-card' if run.is_real else 'muted-card' if run.is_diagnostic else '' }}"><h3>{{ run.connector }} · Run {{ run.id }}</h3><p><span class="status-pill {{ 'completed' if run.status == 'completed' else 'failed' if run.status in ['failed','timeout'] else 'queued' }}">{{ run.status }}</span> <span class="status-pill {{ 'completed' if run.badge == 'real' else 'queued' if run.badge == 'review' else 'failed' }}">{{ run.badge }}</span> Seed {{ run.seed_id }} · {{ run.seed_type }} · {{ run.seed_value }}</p><p class="muted">{{ run.explanation }}</p><p><strong>Normalized findings:</strong> {{ run.finding_count }} · <strong>Real observations:</strong> {{ run.real_observation_count }} · <strong>Diagnostics:</strong> {{ run.diagnostic_count }}</p></article>{% else %}<p>No Spine connector runs yet.</p>{% endfor %}</div></section>
 {% endblock %}
