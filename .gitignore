@@ -51,3 +51,4 @@ var/
 *.log
 
 .env.deployment.local
+.connector-tools/
