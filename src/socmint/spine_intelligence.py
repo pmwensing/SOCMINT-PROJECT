@@ -5,6 +5,7 @@ from typing import Any
 
 from . import database as db
 from .alias_promotion_gates_v12_10_7_1 import apply_promotion_gates_to_observation, promotion_gate_for_observation
+from .legacy_assertion_scrubber_v12_10_7_2 import apply_assertion_scrub_gate
 from .spine import DIAGNOSTIC_OBSERVATION_TYPES
 from .spine import HIGH_VALUE_CONNECTORS
 
@@ -104,7 +105,7 @@ def _serialize_observation(observation) -> dict[str, Any]:
 
 def _serialize_assertion(assertion) -> dict[str, Any]:
     payload = _safe_json(assertion.payload_json, {})
-    return {
+    item = {
         "id": assertion.id,
         "subject_id": assertion.subject_id,
         "type": assertion.assertion_type,
@@ -115,6 +116,7 @@ def _serialize_assertion(assertion) -> dict[str, Any]:
         "created_at": assertion.created_at.isoformat() if assertion.created_at else None,
         "updated_at": assertion.updated_at.isoformat() if assertion.updated_at else None,
     }
+    return apply_assertion_scrub_gate(item)
 
 
 def _artifacts_by_run(subject_run_ids: set[int]) -> dict[int, list[dict[str, Any]]]:
