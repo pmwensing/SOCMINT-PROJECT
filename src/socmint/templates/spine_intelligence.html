@@ -120,6 +120,13 @@
 </section>
 
 <section class="panel command-panel">
+  <div class="section-header"><div><h2>Dossier Assertion Handoff Verification</h2><p class="muted">v12.10.12 verifies the sealed handoff queue before manual assertion review.</p></div><div class="hero-actions"><a class="button-link secondary" href="{{ url_for('spine_dossier_assertion_handoff_verification_report', subject_id=payload.subject.id, format='json') }}">Export Verification JSON</a><a class="button-link secondary" href="{{ url_for('spine_dossier_assertion_handoff_verification_report', subject_id=payload.subject.id, format='md') }}">Export Verification Markdown</a></div></div>
+  <p><span class="status-pill {{ 'completed' if payload.dossier_assertion_handoff_verification.status == 'pass' else 'failed' }}">{{ payload.dossier_assertion_handoff_verification.status }}</span> <strong>failures:</strong> {{ payload.dossier_assertion_handoff_verification.failure_count }}</p>
+  <p><strong>Bundle SHA-256:</strong> {{ payload.dossier_assertion_handoff_verification.bundle_hash_sha256 }}</p>
+  <details open><summary>Verification checks</summary><ul>{% for check in payload.dossier_assertion_handoff_verification.checks %}<li>{{ check.name }} · {{ check.status }}</li>{% endfor %}</ul></details>
+</section>
+
+<section class="panel command-panel">
   <div class="section-header"><div><h2>Candidate Profile Review</h2><p class="muted">v12.10.5 adds captured HTML/metadata/screenshot artifacts plus visual/text/link fingerprints before analyst acceptance.</p></div><div class="hero-actions"><a class="button-link secondary" href="{{ url_for('spine_candidate_profile_report', subject_id=payload.subject.id, format='json') }}">Export JSON</a><a class="button-link secondary" href="{{ url_for('spine_candidate_profile_report', subject_id=payload.subject.id, format='md') }}">Export Markdown</a></div></div>
   <p><strong>Pipeline:</strong> {{ payload.profile_fingerprints.pipeline | join(' → ') }}</p>
   <p class="muted">Evidence capture: captured={{ payload.profile_fingerprints.evidence_capture.captured_candidate_count }}, asset-only={{ payload.profile_fingerprints.evidence_capture.asset_only_candidate_count }}, text-ready={{ payload.profile_fingerprints.evidence_capture.text_fingerprint_ready_count }}, visual-ready={{ payload.profile_fingerprints.evidence_capture.visual_fingerprint_ready_count }}</p>
