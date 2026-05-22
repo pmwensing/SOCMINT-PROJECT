@@ -23,32 +23,18 @@ ASSET_ONLY_HOSTS = {
     "avatars.githubusercontent.com",
     "github.githubassets.com",
 }
-ASSET_EXTENSIONS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".avif", ".css", ".js")
-ASSET_PATH_HINTS = (
-    "avatar",
-    "avatars",
-    "profile_images",
-    "images",
-    "image",
-    "img",
-    "favicon",
-    "favicons",
-    "logo",
-    "logos",
-    "static",
-    "assets",
-    "asset",
-    "cdn",
-    "webapp",
-    "manifest",
-    "mstile",
-    "default_avatar",
-    "cropcenter",
-    "ssr-avatar",
-    "ssr_",
-    "ytc/",
-    "30day-avatar",
+
+ASSET_EXTENSIONS = (
+    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".avif", ".css", ".js"
 )
+
+ASSET_PATH_HINTS = (
+    "avatar", "avatars", "profile_images", "images", "image", "img",
+    "favicon", "favicons", "logo", "logos", "static", "assets", "asset",
+    "cdn", "webapp", "manifest", "mstile", "default_avatar", "cropcenter",
+    "ssr-avatar", "ssr_", "ytc/", "30day-avatar",
+)
+
 PHONE_MIN_DIGITS = 10
 PHONE_MAX_DIGITS = 15
 
@@ -135,7 +121,8 @@ def classify_observation_type(observation_type: str, value: Any) -> tuple[str, l
         reason = phone_rejection_reason(value)
         if reason:
             reasons.append(reason)
-            return "platform_artifact_id" if reason == "rejected_platform_artifact_id" else "metadata_artifact", reasons, True
+            safe_type = "platform_artifact_id" if reason == "rejected_platform_artifact_id" else "metadata_artifact"
+            return safe_type, reasons, True
     return otype, reasons, False
 
 
@@ -146,7 +133,6 @@ def promotion_gate_for_observation(observation: dict[str, Any]) -> dict[str, Any
     return {
         "schema": SCHEMA,
         "blocked": blocked,
-        "identity_evidence": not blocked,
         "original_type": otype,
         "safe_type": converted_type,
         "reason_labels": reasons,
@@ -167,15 +153,32 @@ def apply_promotion_gates_to_observation(observation: dict[str, Any]) -> dict[st
 
 
 def apply_promotion_gates_to_alias(alias: dict[str, Any]) -> dict[str, Any]:
-    gate = {"schema": SCHEMA, "blocked": False, "reason_labels": [], "ui_badge": "Promotion allowed"}
+    gate = {
+        "schema": SCHEMA,
+        "blocked": False,
+        "reason_labels": [],
+        "ui_badge": "Promotion allowed",
+    }
     alias_type = norm(alias.get("alias_type"))
     value = alias.get("normalized_value") or alias.get("alias_value")
+
     if alias_type == "url" and is_asset_only_url(value):
-        gate.update({"blocked": True, "reason_labels": ["rejected_asset_only_url"], "ui_badge": "Promotion blocked: not identity evidence", "safe_type": classify_asset_url(value)})
+        gate.update({
+            "blocked": True,
+            "reason_labels": ["rejected_asset_only_url"],
+            "ui_badge": "Promotion blocked: not identity evidence",
+            "safe_type": classify_asset_url(value),
+        })
     elif alias_type == "phone":
         reason = phone_rejection_reason(value)
         if reason:
-            gate.update({"blocked": True, "reason_labels": [reason], "ui_badge": "Promotion blocked: not identity evidence", "safe_type": "metadata_artifact"})
+            gate.update({
+                "blocked": True,
+                "reason_labels": [reason],
+                "ui_badge": "Promotion blocked: not identity evidence",
+                "safe_type": "metadata_artifact",
+            })
+
     alias["promotion_gate"] = gate
     if gate["blocked"]:
         alias["analyst_state"] = "rejected"
@@ -197,6 +200,7 @@ def apply_promotion_gates_to_alias_graph(alias_graph: dict[str, Any]) -> dict[st
             blocked += 1
             for reason in gate.get("reason_labels") or []:
                 reasons[reason] = reasons.get(reason, 0) + 1
+
     alias_graph["promotion_gates"] = {
         "schema": SCHEMA,
         "blocked_alias_count": blocked,
