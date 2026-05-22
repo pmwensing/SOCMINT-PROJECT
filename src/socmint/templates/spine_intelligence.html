@@ -111,6 +111,15 @@
 </section>
 
 <section class="panel command-panel">
+  <div class="section-header"><div><h2>Dossier Assertion Handoff Seal</h2><p class="muted">v12.10.11 seals the handoff queue with deterministic SHA-256 hashes.</p></div><div class="hero-actions"><a class="button-link secondary" href="{{ url_for('spine_dossier_assertion_handoff_seal_report', subject_id=payload.subject.id, format='json') }}">Export Seal JSON</a><a class="button-link secondary" href="{{ url_for('spine_dossier_assertion_handoff_seal_report', subject_id=payload.subject.id, format='md') }}">Export Seal Markdown</a></div></div>
+  <p><strong>Pipeline insert:</strong> {{ payload.dossier_assertion_handoff_seal.pipeline_insert }}</p>
+  <p class="muted">Rule: {{ payload.dossier_assertion_handoff_seal.dossier_rule }}</p>
+  <p><strong>Bundle SHA-256:</strong> {{ payload.dossier_assertion_handoff_seal.bundle_hash_sha256 }}</p>
+  <p><strong>Ready SHA-256:</strong> {{ payload.dossier_assertion_handoff_seal.ready_hash_sha256 }}</p>
+  <p><strong>Blocked SHA-256:</strong> {{ payload.dossier_assertion_handoff_seal.blocked_hash_sha256 }}</p>
+</section>
+
+<section class="panel command-panel">
   <div class="section-header"><div><h2>Candidate Profile Review</h2><p class="muted">v12.10.5 adds captured HTML/metadata/screenshot artifacts plus visual/text/link fingerprints before analyst acceptance.</p></div><div class="hero-actions"><a class="button-link secondary" href="{{ url_for('spine_candidate_profile_report', subject_id=payload.subject.id, format='json') }}">Export JSON</a><a class="button-link secondary" href="{{ url_for('spine_candidate_profile_report', subject_id=payload.subject.id, format='md') }}">Export Markdown</a></div></div>
   <p><strong>Pipeline:</strong> {{ payload.profile_fingerprints.pipeline | join(' → ') }}</p>
   <p class="muted">Evidence capture: captured={{ payload.profile_fingerprints.evidence_capture.captured_candidate_count }}, asset-only={{ payload.profile_fingerprints.evidence_capture.asset_only_candidate_count }}, text-ready={{ payload.profile_fingerprints.evidence_capture.text_fingerprint_ready_count }}, visual-ready={{ payload.profile_fingerprints.evidence_capture.visual_fingerprint_ready_count }}</p>

@@ -7,6 +7,7 @@ from . import spine_intelligence as legacy
 from .candidate_profile_review_v12_10_4 import apply_profile_review_decisions
 from .connector_normalizers import normalize_connector_output
 from .dossier_assertion_handoff_bundle_v12_10_10 import build_dossier_assertion_handoff_bundle
+from .dossier_assertion_handoff_seal_v12_10_11 import build_dossier_assertion_handoff_seal
 from .dossier_assertion_projection_v12_10_8 import build_dossier_assertion_projection
 from .dossier_assertion_review_packet_v12_10_9 import build_dossier_assertion_review_packet
 from .entity_alias_graph_v12_10_6 import build_entity_alias_graph
@@ -14,7 +15,7 @@ from .identity_link_hypothesis_v12_10_7 import build_identity_link_hypotheses
 from .profile_evidence_capture_v12_10_5 import enrich_profile_payload_with_evidence
 from .profile_fingerprint_v12_10_3 import build_profile_fingerprint_payload
 
-INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v12_10_10"
+INTELLIGENCE_SCHEMA = "socmint.spine_intelligence.v12_10_11"
 
 promote_observation_to_assertion = legacy.promote_observation_to_assertion
 review_spine_assertion = legacy.review_spine_assertion
@@ -155,13 +156,15 @@ def spine_intelligence_payload(subject_id: int) -> dict[str, Any]:
     assertion_projection = build_dossier_assertion_projection(identity_links, alias_graph)
     review_packet = build_dossier_assertion_review_packet(assertion_projection)
     handoff_bundle = build_dossier_assertion_handoff_bundle(review_packet)
+    handoff_seal = build_dossier_assertion_handoff_seal(handoff_bundle)
     payload["profile_fingerprints"] = profile_fingerprints
     payload["entity_alias_graph"] = alias_graph
     payload["identity_link_hypotheses"] = identity_links
     payload["dossier_assertion_projection"] = assertion_projection
     payload["dossier_assertion_review_packet"] = review_packet
     payload["dossier_assertion_handoff_bundle"] = handoff_bundle
+    payload["dossier_assertion_handoff_seal"] = handoff_seal
     gate = _dossier_readiness_gate(assertions, profile_fingerprints, alias_graph, identity_links, assertion_projection, review_packet, handoff_bundle)
     summary.update(review_counts)
-    summary.update({"real_run_count": real_runs, "diagnostic_run_count": diagnostic_runs, "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"], "dossier_ready": gate["status"] == "pass", "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0 or profile_fingerprints["needs_review_count"] > 0 or alias_graph["collision_count"] > 0 or identity_links["hold_count"] > 0 or assertion_projection["blocked_count"] > 0 or review_packet["blocked_packet_count"] > 0, "dossier_readiness_gate": gate, "profile_candidate_count": profile_fingerprints["candidate_count"], "profile_collision_review_count": profile_fingerprints["needs_review_count"], "profile_dossier_ready_count": profile_fingerprints["dossier_ready_count"], "profile_review_decision_counts": profile_fingerprints.get("review_decision_counts", {}), "profile_evidence_capture": profile_fingerprints.get("evidence_capture", {}), "alias_count": alias_graph.get("alias_count", 0), "alias_edge_count": alias_graph.get("edge_count", 0), "alias_collision_count": alias_graph.get("collision_count", 0), "alias_type_counts": alias_graph.get("type_counts", {}), "alias_state_counts": alias_graph.get("state_counts", {}), "identity_link_hypothesis_count": identity_links.get("hypothesis_count", 0), "identity_link_go_count": identity_links.get("go_count", 0), "identity_link_hold_count": identity_links.get("hold_count", 0), "identity_link_fail_count": identity_links.get("fail_count", 0), "dossier_projection_count": assertion_projection.get("projection_count", 0), "dossier_projection_ready_count": assertion_projection.get("ready_count", 0), "dossier_projection_blocked_count": assertion_projection.get("blocked_count", 0), "dossier_review_packet_count": review_packet.get("packet_count", 0), "dossier_review_ready_packet_count": review_packet.get("ready_packet_count", 0), "dossier_review_blocked_packet_count": review_packet.get("blocked_packet_count", 0), "dossier_handoff_ready_count": handoff_bundle.get("ready_count", 0), "dossier_handoff_blocked_count": handoff_bundle.get("blocked_count", 0)})
+    summary.update({"real_run_count": real_runs, "diagnostic_run_count": diagnostic_runs, "minimum_reviewed_assertions": gate["minimum_reviewed_assertions"], "dossier_ready": gate["status"] == "pass", "needs_review": gate["status"] != "pass" or review_counts["unreviewed_assertions"] > 0 or profile_fingerprints["needs_review_count"] > 0 or alias_graph["collision_count"] > 0 or identity_links["hold_count"] > 0 or assertion_projection["blocked_count"] > 0 or review_packet["blocked_packet_count"] > 0, "dossier_readiness_gate": gate, "profile_candidate_count": profile_fingerprints["candidate_count"], "profile_collision_review_count": profile_fingerprints["needs_review_count"], "profile_dossier_ready_count": profile_fingerprints["dossier_ready_count"], "profile_review_decision_counts": profile_fingerprints.get("review_decision_counts", {}), "profile_evidence_capture": profile_fingerprints.get("evidence_capture", {}), "alias_count": alias_graph.get("alias_count", 0), "alias_edge_count": alias_graph.get("edge_count", 0), "alias_collision_count": alias_graph.get("collision_count", 0), "alias_type_counts": alias_graph.get("type_counts", {}), "alias_state_counts": alias_graph.get("state_counts", {}), "identity_link_hypothesis_count": identity_links.get("hypothesis_count", 0), "identity_link_go_count": identity_links.get("go_count", 0), "identity_link_hold_count": identity_links.get("hold_count", 0), "identity_link_fail_count": identity_links.get("fail_count", 0), "dossier_projection_count": assertion_projection.get("projection_count", 0), "dossier_projection_ready_count": assertion_projection.get("ready_count", 0), "dossier_projection_blocked_count": assertion_projection.get("blocked_count", 0), "dossier_review_packet_count": review_packet.get("packet_count", 0), "dossier_review_ready_packet_count": review_packet.get("ready_packet_count", 0), "dossier_review_blocked_packet_count": review_packet.get("blocked_packet_count", 0), "dossier_handoff_ready_count": handoff_bundle.get("ready_count", 0), "dossier_handoff_blocked_count": handoff_bundle.get("blocked_count", 0), "dossier_handoff_seal_hash": handoff_seal.get("bundle_hash_sha256", "")})
     return payload
