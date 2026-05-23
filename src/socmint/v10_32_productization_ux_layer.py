@@ -42,3 +42,4 @@ class ProductizationUX:
             'highlighted_actions': self._navigation_hints(),
             'summary_card_color': 'green' if self.registry.get('latest_readiness') == 'ready' else 'yellow',
         }
+
