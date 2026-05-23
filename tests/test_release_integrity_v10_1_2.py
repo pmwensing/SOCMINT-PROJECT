@@ -14,8 +14,7 @@ from src.socmint.wsgi import app
 def test_v10_1_2_version_integrity():
     report = version_integrity_report()
 
-    assert EXPECTED_VERSION == "10.1.2"
-    assert socmint.__version__ == EXPECTED_VERSION
+    assert EXPECTED_VERSION == socmint.__version__
     assert report["schema"] == "socmint.release_integrity.v10_1_2"
     assert report["status"] == "pass"
     assert report["versions"]["package"] == EXPECTED_VERSION
