@@ -114,7 +114,7 @@ def phone_rejection_reason(value: Any) -> str | None:
 def classify_observation_type(observation_type: str, value: Any) -> tuple[str, list[str], bool]:
     reasons: list[str] = []
     otype = norm(observation_type)
-    if otype == "profile_url" and is_asset_only_url(value):
+    if otype in {"profile_url", "url"} and is_asset_only_url(value):
         reasons.append("rejected_asset_only_url")
         return classify_asset_url(value), reasons, True
     if otype == "phone":
