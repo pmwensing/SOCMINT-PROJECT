@@ -10,16 +10,14 @@ VENV_DIR="$WORK_ROOT/.venv"
 DB_PATH="$WORK_ROOT/socmint_v12_10_14.db"
 DATA_DIR="$WORK_ROOT/data"
 LOG_FILE="$WORK_ROOT/socmint.log"
-mkdir -p "$REPORT_ROOT" "$WORK_ROOT" "$DATA_DIR"
-
 STATUS_JSON="$REPORT_ROOT/socmint_v12_10_14_fresh_db_gate_status.json"
 STATUS_MD="$REPORT_ROOT/socmint_v12_10_14_fresh_db_gate_status.md"
-: > "$STATUS_MD"
 
 record_json() {
   local status="$1"
   local decision="$2"
   local message="$3"
+  mkdir -p "$REPORT_ROOT"
   python3 - <<PY
 import json
 from datetime import UTC, datetime
@@ -44,6 +42,7 @@ PY
 section() {
   echo
   echo "[+] $*"
+  mkdir -p "$REPORT_ROOT"
   echo "## $*" >> "$STATUS_MD"
   echo >> "$STATUS_MD"
 }
@@ -55,6 +54,7 @@ pass_line() {
 
 fail() {
   echo "FAIL $*" >&2
+  mkdir -p "$REPORT_ROOT"
   echo "- FAIL $*" >> "$STATUS_MD"
   record_json "fail" "FAIL" "$*"
   exit 1
@@ -62,18 +62,22 @@ fail() {
 
 trap 'fail "fresh DB release gate aborted at line $LINENO"' ERR
 
-section "SOCMINT v12.10.14 Fresh DB Release Gate"
-
-section "1. git clean checkout"
+# The clean-check must happen before this script creates var/ artifacts.
+echo "[+] SOCMINT v12.10.14 Fresh DB Release Gate"
+echo "[+] 1. git clean checkout"
 git status --short
 if [ -n "$(git status --short)" ]; then
   fail "working tree is not clean"
 fi
+
+rm -rf "$WORK_ROOT"
+mkdir -p "$REPORT_ROOT" "$WORK_ROOT" "$DATA_DIR"
+: > "$STATUS_MD"
+section "SOCMINT v12.10.14 Fresh DB Release Gate"
+section "1. git clean checkout"
 pass_line "working tree clean"
 
 section "2. python venv install succeeds"
-rm -rf "$WORK_ROOT"
-mkdir -p "$REPORT_ROOT" "$WORK_ROOT" "$DATA_DIR"
 python3 -m venv "$VENV_DIR"
 # shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
