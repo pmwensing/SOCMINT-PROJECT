@@ -3,6 +3,8 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import socket
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +13,7 @@ from sqlalchemy import text
 from . import database as db
 
 TOR_SCHEMA = "socmint.tor_production.v8_4_0"
+TOR_DIAGNOSTICS_SCHEMA = "socmint.tor_hidden_service_diagnostics.v12_10_16"
 DEFAULT_SERVICE_DIR = "var/tor/hidden_service"
 DEFAULT_TOR_PORT = 80
 DEFAULT_APP_HOST = "127.0.0.1"
@@ -66,6 +69,145 @@ def torrc_snippet(
             "",
         ]
     )
+
+
+def parse_torrc_text(text_value: str) -> dict[str, Any]:
+    parsed: dict[str, Any] = {"raw_present": bool(text_value), "hidden_service_ports": []}
+    for raw_line in text_value.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split()
+        key = parts[0]
+        if key == "SocksPort" and len(parts) >= 2:
+            parsed["socks_port"] = parts[1]
+        elif key == "DataDirectory" and len(parts) >= 2:
+            parsed["data_directory"] = parts[1]
+        elif key == "HiddenServiceDir" and len(parts) >= 2:
+            parsed["hidden_service_dir"] = parts[1]
+        elif key == "HiddenServiceVersion" and len(parts) >= 2:
+            parsed["hidden_service_version"] = parts[1]
+        elif key == "HiddenServicePort" and len(parts) >= 3:
+            target = parts[2]
+            target_host, _, target_port = target.rpartition(":")
+            parsed["hidden_service_ports"].append(
+                {
+                    "public_port": parts[1],
+                    "target": target,
+                    "target_host": target_host or target,
+                    "target_port": target_port if target_port else None,
+                    "shared_namespace_localhost_mapping": target.startswith("127.0.0.1:"),
+                }
+            )
+    return parsed
+
+
+def read_torrc(path: str = "/etc/tor/torrc") -> dict[str, Any]:
+    torrc = Path(path)
+    if not torrc.exists():
+        return {"path": path, "exists": False, "parsed": parse_torrc_text("")}
+    text_value = torrc.read_text(errors="replace")
+    return {"path": path, "exists": True, "text": text_value, "parsed": parse_torrc_text(text_value)}
+
+
+def _socket_check(host: str, port: int, timeout: float = 2.0) -> dict[str, Any]:
+    sock = socket.socket()
+    sock.settimeout(timeout)
+    try:
+        sock.connect((host, int(port)))
+        return {"host": host, "port": int(port), "listening": True, "error": None}
+    except Exception as exc:
+        return {"host": host, "port": int(port), "listening": False, "error": str(exc)}
+    finally:
+        sock.close()
+
+
+def _http_check(url: str, timeout: float = 5.0) -> dict[str, Any]:
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:
+            body = response.read(200)
+            return {
+                "url": url,
+                "ok": 200 <= int(response.status) < 500,
+                "status": int(response.status),
+                "sample": body.decode("utf-8", errors="replace"),
+                "error": None,
+            }
+    except Exception as exc:
+        return {"url": url, "ok": False, "status": None, "sample": "", "error": str(exc)}
+
+
+def tor_hidden_service_diagnostics(
+    torrc_path: str | None = None,
+    service_dir: str | None = None,
+    app_host: str | None = None,
+    app_port: int | None = None,
+) -> dict[str, Any]:
+    """Return an operator-safe diagnostic for SOCMINT's Docker Tor topology.
+
+    In the production Docker topology the app uses `network_mode: service:tor` and
+    gunicorn binds to 127.0.0.1:5000. In that specific topology a Tor hidden
+    service line of `HiddenServicePort 80 127.0.0.1:5000` is correct because the
+    app and tor containers share one network namespace.
+    """
+
+    app_host = app_host or os.getenv("SOCMINT_TOR_TARGET_HOST") or DEFAULT_APP_HOST
+    app_port = int(app_port or os.getenv("SOCMINT_TOR_TARGET_PORT") or DEFAULT_APP_PORT)
+    torrc_path = torrc_path or os.getenv("SOCMINT_TORRC_PATH") or "/etc/tor/torrc"
+    service_dir = service_dir or os.getenv("SOCMINT_TOR_SERVICE_DIR") or "/var/lib/tor/socmint"
+    torrc = read_torrc(torrc_path)
+    service = deployment_check(service_dir=service_dir)
+    socket_result = _socket_check(app_host, app_port)
+    readyz = _http_check(f"http://{app_host}:{app_port}/readyz")
+    dashboard = _http_check(f"http://{app_host}:{app_port}/")
+    hidden_ports = torrc.get("parsed", {}).get("hidden_service_ports", [])
+    mapping_ok = any(
+        str(row.get("public_port")) == "80"
+        and row.get("target_host") == app_host
+        and str(row.get("target_port")) == str(app_port)
+        for row in hidden_ports
+    )
+    localhost_mapping = any(row.get("shared_namespace_localhost_mapping") for row in hidden_ports)
+    docker_tor = os.getenv("SOCMINT_DOCKER_TOR", "").strip().lower() in {"1", "true", "yes", "on"}
+    shared_namespace_expected = docker_tor or (app_host == "127.0.0.1" and localhost_mapping)
+    checks = {
+        "torrc_available_to_process": bool(torrc.get("exists")),
+        "hidden_service_dir_present": bool(service.get("checks", {}).get("service_dir_present")),
+        "hostname_present": bool(service.get("checks", {}).get("hostname_present")),
+        "hostname_format_valid": bool(service.get("checks", {}).get("hostname_format_valid")),
+        "hidden_service_port_maps_to_app": bool(mapping_ok),
+        "localhost_mapping_valid_for_shared_namespace": bool(shared_namespace_expected and localhost_mapping),
+        "app_socket_listening": bool(socket_result.get("listening")),
+        "readyz_http_ok": bool(readyz.get("ok") and readyz.get("status") == 200),
+        "dashboard_http_ok": bool(dashboard.get("ok")),
+    }
+    passed = all(checks.values())
+    recommendation = "pass"
+    if not mapping_ok and localhost_mapping and shared_namespace_expected:
+        recommendation = "do_not_change_127_0_0_1_mapping_shared_network_namespace_detected"
+    elif not mapping_ok:
+        recommendation = f"verify HiddenServicePort 80 {app_host}:{app_port} or the Docker network namespace model"
+    elif not checks["readyz_http_ok"]:
+        recommendation = "app target is mapped but /readyz is not healthy"
+    return {
+        "schema": TOR_DIAGNOSTICS_SCHEMA,
+        "generated_at": _now().isoformat(),
+        "status": "pass" if passed else "fail",
+        "decision": "GO" if passed else "HOLD",
+        "checks": checks,
+        "recommendation": recommendation,
+        "docker_topology": {
+            "socmint_docker_tor": docker_tor,
+            "expected_shared_network_namespace": shared_namespace_expected,
+            "why_127_0_0_1_can_be_correct": "When app uses network_mode: service:tor, 127.0.0.1 inside Tor's hidden-service target is the shared app/Tor namespace, not the host.",
+        },
+        "target": {"host": app_host, "port": app_port, "readyz_url": f"http://{app_host}:{app_port}/readyz"},
+        "torrc": torrc,
+        "hidden_service": service,
+        "socket": socket_result,
+        "readyz": readyz,
+        "dashboard": dashboard,
+    }
 
 
 def deployment_check(
