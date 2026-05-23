@@ -1,0 +1,38 @@
+{
+  "schema": "socmint.release.current_status.v12_10_14",
+  "version": "12.10.14",
+  "release_tag": "v12.10.14-rc1",
+  "release_name": "Release Candidate Stabilization + Fresh Deploy Gate",
+  "release_channel": "rc",
+  "baseline_commit": "72aeb96d84b0598dac21ebf03fa27ee171974ede",
+  "baseline_summary": "v12.10.13 integrate dossier assertion handoff stack",
+  "branch": "feat/v12.10.14-rc-stabilization-gate",
+  "status": "release-candidate-gated",
+  "required_pass_criteria": [
+    "git clean checkout",
+    "python venv install succeeds",
+    "pyproject version matches release manifest",
+    "alembic upgrade head succeeds on empty DB",
+    "app imports hard-pass",
+    "route list hard-pass",
+    "command_center_payload returns schema",
+    "create subject succeeds",
+    "add seed succeeds",
+    "create connector run succeeds",
+    "create observation succeeds",
+    "create assertion succeeds",
+    "approve/reject assertion succeeds",
+    "dossier export generates JSON + HTML",
+    "RC report writes JSON + Markdown"
+  ],
+  "gate_scripts": [
+    "scripts/fresh_db_release_gate_v12_10_14.sh",
+    "scripts/runtime_route_release_gate_v12_10_14.py",
+    "scripts/subject_to_dossier_e2e_v12_10_14.py"
+  ],
+  "release_artifacts": [
+    "src/socmint/version.py",
+    "release/CURRENT_STATUS.json",
+    "release/V12_10_14_RC_STABILIZATION_REPORT.md"
+  ]
+}
