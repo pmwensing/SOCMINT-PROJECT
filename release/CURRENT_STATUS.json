@@ -1,38 +1,30 @@
 {
-  "schema": "socmint.release.current_status.v12_10_14",
-  "version": "12.10.14",
-  "release_tag": "v12.10.14-rc1",
-  "release_name": "Release Candidate Stabilization + Fresh Deploy Gate",
+  "schema": "socmint.release.current_status.v12_10_16",
+  "version": "12.10.16",
+  "release_tag": "v12.10.16-rc1",
+  "release_name": "Tor Hidden Service Self-Test + Operator Diagnostics",
   "release_channel": "rc",
-  "baseline_commit": "72aeb96d84b0598dac21ebf03fa27ee171974ede",
-  "baseline_summary": "v12.10.13 integrate dossier assertion handoff stack",
-  "branch": "feat/v12.10.14-rc-stabilization-gate",
-  "status": "release-candidate-gated",
-  "required_pass_criteria": [
-    "git clean checkout",
-    "python venv install succeeds",
-    "pyproject version matches release manifest",
-    "alembic upgrade head succeeds on empty DB",
-    "app imports hard-pass",
-    "route list hard-pass",
-    "command_center_payload returns schema",
-    "create subject succeeds",
-    "add seed succeeds",
-    "create connector run succeeds",
-    "create observation succeeds",
-    "create assertion succeeds",
-    "approve/reject assertion succeeds",
-    "dossier export generates JSON + HTML",
-    "RC report writes JSON + Markdown"
+  "baseline_commit": "9cc93052b8f3090787e46eaf25e16adcd0113b6b",
+  "branch": "feat/v12.10.16-tor-selftest-diagnostics",
+  "status": "operator-diagnostics-added",
+  "diagnostic_routes": [
+    "/api/v1/tor/diagnostics"
   ],
-  "gate_scripts": [
-    "scripts/fresh_db_release_gate_v12_10_14.sh",
-    "scripts/runtime_route_release_gate_v12_10_14.py",
-    "scripts/subject_to_dossier_e2e_v12_10_14.py"
+  "diagnostic_scripts": [
+    "scripts/tor_hidden_service_selftest_v12_10_16.py"
   ],
   "release_artifacts": [
-    "src/socmint/version.py",
-    "release/CURRENT_STATUS.json",
-    "release/V12_10_14_RC_STABILIZATION_REPORT.md"
+    "src/socmint/tor_production.py",
+    "src/socmint/hidden_service_diagnostics_routes_v12_10_16.py",
+    "src/socmint/wsgi.py",
+    "scripts/tor_hidden_service_selftest_v12_10_16.py",
+    "release/V12_10_16_TOR_SELFTEST_OPERATOR_DIAGNOSTICS.md"
+  ],
+  "required_pass_criteria": [
+    "diagnostics API route is registered",
+    "diagnostics payload schema matches v12.10.16",
+    "compose topology check passes",
+    "application readiness check passes",
+    "self-test writes JSON and Markdown reports"
   ]
 }

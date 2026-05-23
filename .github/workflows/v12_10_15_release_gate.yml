@@ -1,0 +1,17 @@
+name: SOCMINT v12.10.15 Release Gate Superseded
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  superseded:
+    name: Superseded by v12.10.16 release gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain supersession
+        run: |
+          echo "SOCMINT v12.10.15 release gate is superseded on v12.10.16 diagnostics branches."
+          echo "Use .github/workflows/v12_10_16_release_gate.yml instead."

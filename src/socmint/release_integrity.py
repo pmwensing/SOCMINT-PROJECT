@@ -7,7 +7,7 @@ from typing import Any
 from . import __version__ as SOCMINT_VERSION
 
 RELEASE_INTEGRITY_SCHEMA = "socmint.release_integrity.v10_1_2"
-EXPECTED_VERSION = "10.1.2"
+EXPECTED_VERSION = SOCMINT_VERSION
 REQUIRED_ROUTES = {
     "/api/v1/production-release/summary",
     "/api/v1/admin/certification/summary",
