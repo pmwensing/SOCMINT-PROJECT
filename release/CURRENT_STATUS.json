@@ -1,15 +1,15 @@
 {
-  "schema": "socmint.release.current_status.v12_10_14",
-  "version": "12.10.14",
-  "release_tag": "v12.10.14-rc1",
-  "release_name": "Release Candidate Stabilization + Fresh Deploy Gate",
+  "schema": "socmint.release.current_status.v12_10_15",
+  "version": "12.10.15",
+  "release_tag": "v12.10.15-rc1",
+  "release_name": "CI Wiring + Auto Release Gate Artifact Upload",
   "release_channel": "rc",
-  "baseline_commit": "72aeb96d84b0598dac21ebf03fa27ee171974ede",
-  "baseline_summary": "v12.10.13 integrate dossier assertion handoff stack",
-  "branch": "feat/v12.10.14-rc-stabilization-gate",
-  "status": "release-candidate-gated",
+  "baseline_commit": "1025970721489e5f700bedb433361e975c1fb471",
+  "baseline_summary": "v12.10.14 RC Stabilization + Fresh Deploy Gate passed locally and merged",
+  "branch": "feat/v12.10.15-ci-release-gate-artifacts",
+  "status": "ci-release-gated",
   "required_pass_criteria": [
-    "git clean checkout",
+    "git clean checkout or CI checkout accepted",
     "python venv install succeeds",
     "pyproject version matches release manifest",
     "alembic upgrade head succeeds on empty DB",
@@ -23,16 +23,30 @@
     "create assertion succeeds",
     "approve/reject assertion succeeds",
     "dossier export generates JSON + HTML",
-    "RC report writes JSON + Markdown"
+    "RC report writes JSON + Markdown",
+    "GitHub Actions uploads release gate JSON/Markdown artifacts"
   ],
   "gate_scripts": [
-    "scripts/fresh_db_release_gate_v12_10_14.sh",
-    "scripts/runtime_route_release_gate_v12_10_14.py",
-    "scripts/subject_to_dossier_e2e_v12_10_14.py"
+    "scripts/fresh_db_release_gate_v12_10_15.sh",
+    "scripts/runtime_route_release_gate_v12_10_15.py",
+    "scripts/subject_to_dossier_e2e_v12_10_15.py"
+  ],
+  "ci_workflows": [
+    ".github/workflows/v12_10_15_release_gate.yml"
   ],
   "release_artifacts": [
     "src/socmint/version.py",
     "release/CURRENT_STATUS.json",
-    "release/V12_10_14_RC_STABILIZATION_REPORT.md"
-  ]
+    "release/V12_10_15_CI_RELEASE_GATE_ARTIFACTS.md"
+  ],
+  "artifact_upload": {
+    "provider": "GitHub Actions upload-artifact",
+    "artifact_name_pattern": "socmint-v12-10-15-release-gate-${{ github.run_id }}",
+    "paths": [
+      "var/socmint/rc_reports/*.json",
+      "var/socmint/rc_reports/*.md"
+    ],
+    "retention_days": 30,
+    "upload_on_failure": true
+  }
 }
