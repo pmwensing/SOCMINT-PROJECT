@@ -6,10 +6,21 @@ cd "$ROOT"
 
 REPORT_ROOT="var/socmint/rc_reports"
 WORK_ROOT="var/test_v12_10_17_post_merge"
+DB_PATH="$WORK_ROOT/socmint_v12_10_17_post_merge.db"
+DATA_DIR="$WORK_ROOT/data"
 STATUS_JSON="$REPORT_ROOT/socmint_v12_10_17_post_merge_master_verify_status.json"
 STATUS_MD="$REPORT_ROOT/socmint_v12_10_17_post_merge_master_verify_status.md"
 CI_MODE="${SOCMINT_CI_MODE:-false}"
-mkdir -p "$REPORT_ROOT"
+mkdir -p "$REPORT_ROOT" "$WORK_ROOT" "$DATA_DIR"
+
+export PYTHONPATH="$ROOT/src:$ROOT"
+export DATABASE_URL="sqlite:///$DB_PATH"
+export SOCMINT_DATA_DIR="$DATA_DIR"
+export SOCMINT_LOG_FILE="$WORK_ROOT/socmint.log"
+export SOCMINT_SECRET_KEY="test-v12-10-17-secret-key-000000000000000000000000"
+export SOCMINT_AUTO_CREATE_DB=true
+export SOCMINT_ALLOW_SIGNUP=false
+export SOCMINT_DOCKER_TOR=true
 
 record_json() {
   local status="$1"
@@ -27,6 +38,7 @@ payload = {
   "message": "$message",
   "ci_mode": "$CI_MODE".lower() == "true",
   "work_root": "$WORK_ROOT",
+  "database_url": "$DATABASE_URL",
   "reports": {"status_json": "$STATUS_JSON", "status_markdown": "$STATUS_MD"}
 }
 open("$STATUS_JSON", "w").write(json.dumps(payload, indent=2, sort_keys=True))
@@ -90,11 +102,27 @@ print({"version": VERSION, "release_tag": RELEASE_TAG})
 PY
 pass_line "version metadata aligned"
 
-section "3. runtime route release gate"
+section "3. empty database migration smoke"
+rm -f "$DB_PATH"
+SOCMINT_AUTO_CREATE_DB=false alembic upgrade head
+python3 - <<'PY'
+from sqlalchemy import create_engine, inspect
+import os
+engine = create_engine(os.environ["DATABASE_URL"])
+tables = set(inspect(engine).get_table_names())
+required = {"spine_subjects", "spine_seeds", "spine_connector_runs", "spine_observations", "spine_dossier_assertions", "spine_validation_events"}
+missing = sorted(required - tables)
+assert not missing, f"missing tables after alembic: {missing}"
+print({"table_count": len(tables), "required_present": sorted(required)})
+PY
+export SOCMINT_AUTO_CREATE_DB=true
+pass_line "empty DB migration passed"
+
+section "4. runtime route release gate"
 python3 scripts/runtime_route_release_gate_v12_10_17.py
 pass_line "runtime route gate passed"
 
-section "4. release status payload smoke"
+section "5. release status payload smoke"
 python3 - <<'PY'
 from src.socmint.release_status_v12_10_17 import latest_gate_reports, release_status
 status = release_status()
@@ -105,14 +133,6 @@ assert status["release"]["version"] == "12.10.17", status["release"]
 print({"release_status": status["status"], "latest_gate_status": latest["status"]})
 PY
 pass_line "release status payloads generated"
-
-section "5. inherited fresh DB release gate"
-if [ -f scripts/fresh_db_release_gate_v12_10_16.sh ]; then
-  SOCMINT_CI_MODE=true bash scripts/fresh_db_release_gate_v12_10_16.sh || fail "inherited v12.10.16 fresh DB gate failed"
-  pass_line "inherited fresh DB gate passed"
-else
-  fail "missing scripts/fresh_db_release_gate_v12_10_16.sh"
-fi
 
 section "6. latest gate report after verification"
 python3 - <<'PY'
