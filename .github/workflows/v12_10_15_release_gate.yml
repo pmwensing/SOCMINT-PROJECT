@@ -1,0 +1,63 @@
+name: SOCMINT v12.10.15 Release Gate
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+      - 'feat/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: socmint-v12-10-15-release-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fresh-db-release-gate:
+    name: Fresh DB Release Gate + Artifact Upload
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Run v12.10.15 fresh DB release gate
+        env:
+          SOCMINT_CI_MODE: 'true'
+        run: |
+          bash scripts/fresh_db_release_gate_v12_10_15.sh
+
+      - name: Upload release gate reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: socmint-v12-10-15-release-gate-${{ github.run_id }}
+          path: |
+            var/socmint/rc_reports/*.json
+            var/socmint/rc_reports/*.md
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Summarize release gate
+        if: always()
+        run: |
+          echo "# SOCMINT v12.10.15 Release Gate" >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          if [ -f var/socmint/rc_reports/socmint_v12_10_15_fresh_db_gate_status.md ]; then
+            cat var/socmint/rc_reports/socmint_v12_10_15_fresh_db_gate_status.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No fresh DB gate status markdown was produced." >> "$GITHUB_STEP_SUMMARY"
+          fi
