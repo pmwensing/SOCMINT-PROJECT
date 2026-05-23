@@ -4,6 +4,11 @@ set -euo pipefail
 echo "[+] v12.10 RC hardening regression gate smoke"
 rm -rf var/test_v12_10 || true
 mkdir -p var/test_v12_10
+export SOCMINT_DATA_DIR="$PWD/var/test_v12_10/data"
+export DATABASE_URL="sqlite:///$PWD/var/test_v12_10/socmint.db"
+export SOCMINT_LOG_FILE="$PWD/var/test_v12_10/socmint.log"
+export SOCMINT_SECRET_KEY="${SOCMINT_SECRET_KEY:-test-v12-10-secret-key-000000000000000000000000}"
+export SOCMINT_AUTO_CREATE_DB=true
 
 PYTHONPATH=src python3 - <<'PY'
 import json
