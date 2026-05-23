@@ -10,6 +10,7 @@ from .ultimate_dossier_routes import register_ultimate_dossier_routes
 from .membership_routes import register_membership_routes
 from .billing_routes import register_billing_routes
 from .tor_routes import register_tor_routes
+from .hidden_service_diagnostics_routes_v12_10_16 import register_hidden_service_diagnostics_routes
 from .analyst_ux_routes import register_analyst_ux_routes
 from .export_quality_routes import register_export_quality_routes
 from .connector_sdk_routes import register_connector_sdk_routes
@@ -46,6 +47,7 @@ register_ultimate_dossier_routes(app)
 register_membership_routes(app)
 register_billing_routes(app)
 register_tor_routes(app)
+register_hidden_service_diagnostics_routes(app)
 register_analyst_ux_routes(app)
 register_export_quality_routes(app)
 register_connector_sdk_routes(app)
