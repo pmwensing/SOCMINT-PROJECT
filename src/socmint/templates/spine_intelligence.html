@@ -127,6 +127,14 @@
 </section>
 
 <section class="panel command-panel">
+  <div class="section-header"><div><h2>Dossier Assertion Handoff Certification</h2><p class="muted">v12.10.13 certifies the handoff package for manual assertion review.</p></div><div class="hero-actions"><a class="button-link secondary" href="{{ url_for('spine_dossier_assertion_handoff_certification_report', subject_id=payload.subject.id, format='json') }}">Export Certification JSON</a><a class="button-link secondary" href="{{ url_for('spine_dossier_assertion_handoff_certification_report', subject_id=payload.subject.id, format='md') }}">Export Certification Markdown</a></div></div>
+  <p><span class="status-pill {{ 'completed' if payload.dossier_assertion_handoff_certification.decision == 'GO_FOR_MANUAL_REVIEW' else 'queued' }}">{{ payload.dossier_assertion_handoff_certification.decision }}</span> <strong>ready:</strong> {{ payload.dossier_assertion_handoff_certification.ready_count }} · <strong>blocked:</strong> {{ payload.dossier_assertion_handoff_certification.blocked_count }}</p>
+  <p><strong>Bundle SHA-256:</strong> {{ payload.dossier_assertion_handoff_certification.bundle_hash_sha256 }}</p>
+  <p class="muted">{{ payload.dossier_assertion_handoff_certification.next_action }}</p>
+  <details open><summary>Certification checks</summary><ul>{% for check in payload.dossier_assertion_handoff_certification.certification_checks %}<li>{{ check.name }} · {{ check.status }}</li>{% endfor %}</ul></details>
+</section>
+
+<section class="panel command-panel">
   <div class="section-header"><div><h2>Candidate Profile Review</h2><p class="muted">v12.10.5 adds captured HTML/metadata/screenshot artifacts plus visual/text/link fingerprints before analyst acceptance.</p></div><div class="hero-actions"><a class="button-link secondary" href="{{ url_for('spine_candidate_profile_report', subject_id=payload.subject.id, format='json') }}">Export JSON</a><a class="button-link secondary" href="{{ url_for('spine_candidate_profile_report', subject_id=payload.subject.id, format='md') }}">Export Markdown</a></div></div>
   <p><strong>Pipeline:</strong> {{ payload.profile_fingerprints.pipeline | join(' → ') }}</p>
   <p class="muted">Evidence capture: captured={{ payload.profile_fingerprints.evidence_capture.captured_candidate_count }}, asset-only={{ payload.profile_fingerprints.evidence_capture.asset_only_candidate_count }}, text-ready={{ payload.profile_fingerprints.evidence_capture.text_fingerprint_ready_count }}, visual-ready={{ payload.profile_fingerprints.evidence_capture.visual_fingerprint_ready_count }}</p>
