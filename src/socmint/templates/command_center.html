@@ -3,151 +3,92 @@
 <section class="hero command-hero">
   <div>
     <p class="eyebrow">SOCMINT Command Center</p>
-    <h1>Next action, evidence status, enrichment health, and full-report control in one place.</h1>
-    <p class="muted">Start with a Spine subject for the v7.5.x Full Entity Profile Dossier workflow. The older target-job flow is still available, but it is now clearly marked as legacy/local scan processing.</p>
+    <h1>Guided investigation, evidence status, narrative confidence, and release readiness in one place.</h1>
+    <p class="muted">Guided readiness: {{ payload.summary.guided_readiness|upper }} · Next: {{ payload.guided_investigation.next_action.label }}</p>
   </div>
   <div class="hero-actions">
-    <a class="button-link" href="{{ url_for('dashboard.spine_subjects') }}">Create / Open Subject</a>
-    <a class="button-link secondary" href="{{ url_for('dashboard.jobs') }}">Review Jobs</a>
-    <a class="button-link secondary" href="{{ url_for('dashboard.spine_enrichment_review') }}">Enrichment Review</a>
-    <a class="button-link secondary" href="{{ url_for('connector_runtime_health_view') }}">Connector Runtime</a>
+    <a class="button-link" href="/spine">Create / Open Subject</a>
+    <a class="button-link secondary" href="{{ payload.guided_investigation.href }}">Guided Investigation</a>
+    <a class="button-link secondary" href="/narrative/storyboard">Narrative</a>
+    <a class="button-link secondary" href="/assertions/trust/gate">Assertion Gate</a>
   </div>
 </section>
 
 <section class="metric-grid">
   <article class="metric-card"><span>Subjects</span><strong>{{ payload.summary.subject_count }}</strong></article>
   <article class="metric-card"><span>Queued jobs</span><strong>{{ payload.summary.queued_jobs }}</strong></article>
-  <article class="metric-card"><span>Running jobs</span><strong>{{ payload.summary.running_jobs }}</strong></article>
-  <article class="metric-card"><span>Failed jobs</span><strong>{{ payload.summary.failed_jobs }}</strong></article>
-  <article class="metric-card"><span>Findings</span><strong>{{ payload.summary.findings_count }}</strong></article>
+  <article class="metric-card"><span>Reports</span><strong>{{ payload.summary.report_count }}</strong></article>
+  <article class="metric-card"><span>Narrative</span><strong>{{ payload.summary.narrative_rating|upper }}</strong></article>
+  <article class="metric-card"><span>Guided flow</span><strong>{{ payload.summary.guided_readiness|upper }}</strong></article>
+  <article class="metric-card"><span>Guided score</span><strong>{{ payload.summary.guided_score }}</strong></article>
 </section>
 
-<section class="panel command-panel">
+<section class="panel guided-investigation-panel">
   <div class="section-header">
     <div>
-      <h2>Analyst next steps</h2>
-      <p class="muted">Follow the guided v7.5.x flow: subject → enrichment/connectors → review → full report → retention.</p>
+      <h2>Guided Investigation</h2>
+      <p class="muted">Evidence → integrity → narrative → assertion trust → release readiness.</p>
     </div>
-    {% if session.get('is_admin') or session.get('role') == 'analyst' %}
-    <form method="post" action="{{ url_for('command_center_process_jobs') }}">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit">Process queued jobs now</button>
-    </form>
-    {% endif %}
+    <a class="button-link secondary" href="{{ payload.guided_investigation.href }}">Open Guided Flow</a>
   </div>
-  <div class="workflow-steps">
-    <a href="{{ url_for('dashboard.spine_subjects') }}"><strong>1</strong><span>Create/select subject</span></a>
-    <a href="{{ url_for('dashboard.spine_subjects') }}"><strong>2</strong><span>Add seeds + run connectors</span></a>
-    <a href="{{ url_for('dashboard.spine_enrichment_review') }}"><strong>3</strong><span>Review enrichment</span></a>
-    <a href="/spine/subjects/1/dossier"><strong>4</strong><span>Generate Full Report</span></a>
-    <a href="{{ url_for('dashboard.report_export_center_view') }}"><strong>5</strong><span>Export / evidence readiness</span></a>
-    <a href="{{ url_for('connector_runtime_health_view') }}"><strong>6</strong><span>Verify connector runtime</span></a>
-  </div>
-  <p class="status-banner {{ 'warning' if payload.summary.queued_jobs else 'ok' }}">{{ payload.summary.worker_hint }}</p>
-</section>
-
-{% if payload.compatibility_warnings %}
-<section class="panel warning-panel">
-  <h2>Enrichment compatibility warnings</h2>
-  <p class="muted">These jobs may complete but produce weak results because the selected tool does not match the target type.</p>
   <div class="card-grid">
-    {% for job in payload.compatibility_warnings %}
-    <article class="card danger-card">
-      <h3>Job {{ job.id }} — {{ job.target }}</h3>
-      <p><strong>Target type:</strong> {{ job.target_type }}</p>
-      <p><strong>Tools:</strong> {{ job.tools | join(', ') }}</p>
-      {% for warning in job.compatibility.warnings %}<p class="warning-text">{{ warning }}</p>{% endfor %}
-      {% for suggestion in job.compatibility.suggestions %}<p class="muted">Suggestion: {{ suggestion }}</p>{% endfor %}
-      <a class="card-link" href="{{ url_for('dashboard.jobs') }}">Open jobs</a>
+    <article class="card status-card {{ 'ok' if payload.guided_investigation.status == 'green' else 'warning' }}">
+      <span class="status-label">Readiness</span>
+      <strong>{{ payload.guided_investigation.status|upper }}</strong>
+      <p class="muted">Score: {{ payload.guided_investigation.score }} · Actions: {{ payload.guided_investigation.action_count }}</p>
+      <p class="muted">Next: {{ payload.guided_investigation.next_action.label }}</p>
+      <a class="card-link" href="{{ payload.guided_investigation.next_action.href }}">Do next action</a>
+    </article>
+    {% for step in payload.guided_investigation.progress_rail %}
+    <article class="card status-card {{ 'ok' if step.status == 'green' else 'warning' }}">
+      <span class="status-label">{{ step.key }}</span>
+      <strong>{{ step.label }}</strong>
+      <p class="muted">{{ step.status|upper }} · {{ step.detail }}</p>
+      <a class="card-link" href="{{ step.href }}">Open drilldown</a>
     </article>
     {% endfor %}
   </div>
 </section>
-{% endif %}
 
 <section class="panel">
-  <div class="section-header">
-    <div>
-      <h2>Active Spine subjects</h2>
-      <p class="muted">Primary workflow for Full Entity Profile Dossier v2.</p>
-    </div>
-    <a class="button-link" href="{{ url_for('dashboard.spine_subjects') }}">New subject</a>
+  <div class="section-header"><div><h2>One-click investigation drilldowns</h2><p class="muted">Fast path into evidence, integrity, story, and assertion trust.</p></div></div>
+  <div class="workflow-steps">
+    <a href="/forensic/intake"><strong>1</strong><span>Evidence intake</span></a>
+    <a href="/evidence/integrity/gate"><strong>2</strong><span>Integrity gate</span></a>
+    <a href="/narrative/storyboard"><strong>3</strong><span>Narrative</span></a>
+    <a href="/assertions/trust/gate"><strong>4</strong><span>Assertion trust</span></a>
+    <a href="/investigation/flow"><strong>5</strong><span>Guided flow</span></a>
   </div>
+</section>
+
+<section class="panel narrative-confidence-panel">
+  <div class="section-header"><div><h2>Narrative Confidence</h2><p class="muted">Story reconstruction readiness from evidence timeline, claim validation, and contradiction review.</p></div><a class="button-link secondary" href="{{ payload.narrative_confidence.href }}">Open Narrative</a></div>
+  <div class="card-grid">
+    <article class="card status-card {{ 'ok' if payload.narrative_confidence.status == 'ready' else 'warning' }}">
+      <span class="status-label">Narrative rating</span>
+      <strong>{{ payload.narrative_confidence.rating|upper }}</strong>
+      <p class="muted">Score: {{ payload.narrative_confidence.score }} · Timeline events: {{ payload.narrative_confidence.timeline_events }} · Contradiction actions: {{ payload.narrative_confidence.contradiction_actions }}</p>
+    </article>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Active Subjects</h2><p class="muted">Select a subject to open guided flow with subject context.</p></div><a class="button-link" href="/spine">New subject</a></div>
   <div class="card-grid">
     {% for subject in payload.subjects %}
-    <article class="card subject-card">
+    <article class="card subject-card {{ 'warning-card' if subject.is_test_data else '' }}">
       <h3>{{ subject.label }}</h3>
-      <p>Subject ID: {{ subject.id }}</p>
-      <p>Reports: {{ subject.report_count }}</p>
-      {% if subject.latest_report_available %}<span class="status-pill completed">Latest report ready</span>{% else %}<span class="status-pill queued">No full report yet</span>{% endif %}
+      <p>Subject ID: {{ subject.id }} · Reports: {{ subject.report_count }}</p>
       <div class="mini-actions">
-        <a href="{{ url_for('dashboard.spine_dossier', subject_id=subject.id) }}">Subject dossier</a>
+        <a href="/investigation/flow?subject_id={{ subject.id }}">Guided Flow</a>
+        <a href="/narrative/storyboard?subject_id={{ subject.id }}">Narrative</a>
+        <a href="/assertions/trust/gate?subject_id={{ subject.id }}">Assertion Gate</a>
         <a href="/spine/subjects/{{ subject.id }}/dossier">Full Dossier v2</a>
-        <a href="/spine/subjects/{{ subject.id }}/full-report/history">Export history</a>
-        <a href="/spine/subjects/{{ subject.id }}/full-report/retention">Retention / Pins</a>
       </div>
     </article>
     {% else %}
-    <p>No Spine subjects yet. Create a disposable/test subject to start the v7.5.x workflow.</p>
+    <div class="empty-state"><h3>No subjects yet</h3><p>Create a subject to start the workflow.</p><a class="button-link" href="/spine">Create / Open Subject</a></div>
     {% endfor %}
   </div>
 </section>
-
-<section class="panel">
-  <div class="section-header">
-    <div>
-      <h2>Job queue and worker status</h2>
-      <p class="muted">Queued jobs require a worker. Use the button above in local/dev mode or run <code>python -m src.socmint.main process-jobs --max-jobs=5</code>.</p>
-    </div>
-    <a class="button-link secondary" href="{{ url_for('dashboard.jobs') }}">Open all jobs</a>
-  </div>
-  <div class="metadata-table">
-    <table>
-      <thead><tr><th>ID</th><th>Target</th><th>Type</th><th>Tools</th><th>Status</th><th>Result</th></tr></thead>
-      <tbody>
-      {% for job in payload.jobs[:8] %}
-        <tr>
-          <td>{{ job.id }}</td>
-          <td>{{ job.target }}</td>
-          <td>{{ job.target_type }}</td>
-          <td>{{ job.tools | join(', ') }}</td>
-          <td><span class="status-pill {{ job.status }}">{{ job.status }}</span></td>
-          <td>{% if job.target_id %}<a href="{{ url_for('dashboard.target_detail', target_id=job.target_id) }}">View result</a>{% elif job.error %}{{ job.error }}{% else %}Waiting{% endif %}</td>
-        </tr>
-      {% else %}
-        <tr><td colspan="6">No jobs yet.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<section class="panel">
-  <h2>Tool compatibility guide</h2>
-  <div class="card-grid">
-    {% for item in payload.tool_guidance %}
-    <article class="card">
-      <h3>{{ item.target_type }}</h3>
-      <p>{{ item.recommended }}</p>
-    </article>
-    {% endfor %}
-  </div>
-</section>
-
-{% if session.get('is_admin') or session.get('role') == 'analyst' %}
-<section class="panel legacy-panel">
-  <h2>Legacy local target scan</h2>
-  <p class="muted">Use this for quick local tool tests. For case-grade workflow, create a Spine subject above.</p>
-  <form method="post" action="{{ url_for('dashboard.run_target') }}" class="inline-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label for="target">Target</label>
-    <input type="text" id="target" name="target" placeholder="username, email, or phone" required>
-    <label for="tools">Tools</label>
-    <input type="text" id="tools" name="tools" placeholder="sherlock,maigret">
-    <label class="checkbox-label"><input type="checkbox" name="enrich" value="1"> Enrich discovered profiles</label>
-    <button type="submit">Queue legacy scan</button>
-  </form>
-  <p class="warning-text">Hint: email + Sherlock/Maigret is usually a mismatch. Use a username target for those tools.</p>
-</section>
-{% endif %}
 {% endblock %}

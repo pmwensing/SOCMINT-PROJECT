@@ -7,57 +7,105 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    {% set current_path = request.path %}
+    {% macro nav_link(href, label) -%}
+        <a href="{{ href }}" class="{{ 'active' if current_path == href or (href != '/' and current_path.startswith(href ~ '/')) else '' }}">{{ label }}</a>
+    {%- endmacro %}
+
     <header class="app-header">
         <div class="header-inner">
-            <a href="{{ url_for('dashboard.index') }}" class="brand">SOCMINT</a>
-            <nav>
-                <a href="{{ url_for('dashboard.index') }}">Dashboard</a>
+            <a href="{{ url_for('dashboard.index') }}" class="brand">SOCMINT v12</a>
+
+            <nav class="operator-nav" aria-label="Primary navigation">
+                {{ nav_link('/', 'Home') }}
+                {{ nav_link('/about', 'About') }}
+
                 {% if session.get('user') %}
-                <a href="{{ url_for('dashboard.product_build_control_center') }}">Product Control</a>
-                <a href="{{ url_for('dashboard.product_artifacts_view') }}">Product Artifacts</a>
-                <a href="{{ url_for('dashboard.product_operator_runbook') }}">Operator Runbook</a>
-                <a href="/dossier/certification-dashboard">Certification Dashboard</a>
-                {% endif %}
-                <a href="{{ url_for('dashboard.about') }}">About</a>
-                {% if session.get('user') %}
-                <a href="{{ url_for('dashboard.jobs') }}">Jobs</a>
-                <a href="{{ url_for('dashboard.analyst_console') }}">Analyst Console</a>
-                <a href="{{ url_for('dashboard.cases_view') }}">Cases</a>
-                <a href="{{ url_for('dashboard.spine_subjects') }}">Subjects</a>
-                <a href="/spine">Spine Intelligence</a>
-                <a href="/connectors/runtime">Connector Runtime</a>
-                <a href="/account/usage">Account</a>
-                <a href="{{ url_for('dashboard.connector_marketplace_view') }}">Marketplace</a>
+                <details class="nav-group" {% if current_path.startswith('/command-center') or current_path.startswith('/investigation') or current_path in ['/jobs', '/workbench/jobs', '/analyst/console', '/responsible-use'] or current_path.startswith('/workbench') %}open{% endif %}>
+                    <summary class="{{ 'active' if current_path.startswith('/command-center') or current_path.startswith('/investigation') or current_path in ['/jobs', '/workbench/jobs', '/analyst/console', '/responsible-use'] or current_path.startswith('/workbench') else '' }}">Operate</summary>
+                    {{ nav_link('/command-center', 'Command Center') }}
+                    {{ nav_link('/investigation/flow', 'Guided Investigation') }}
+                    {{ nav_link('/jobs', 'Jobs') }}
+                    {{ nav_link('/workbench/jobs', 'Workbench') }}
+                    {{ nav_link('/analyst/console', 'Analyst Console') }}
+                    {{ nav_link('/responsible-use', 'Responsible Use') }}
+                </details>
+
+                <details class="nav-group" {% if current_path.startswith('/cases') or current_path.startswith('/spine') or current_path.startswith('/connectors') %}open{% endif %}>
+                    <summary class="{{ 'active' if current_path.startswith('/cases') or current_path.startswith('/spine') or current_path.startswith('/connectors') else '' }}">Cases & Subjects</summary>
+                    {{ nav_link('/cases', 'Cases') }}
+                    {{ nav_link('/spine', 'Subjects / Spine') }}
+                    {{ nav_link('/spine/enrichment-review', 'Enrichment Review') }}
+                    {{ nav_link('/spine/connectors/quality', 'Connector Quality') }}
+                    {{ nav_link('/connectors/runtime', 'Connector Runtime') }}
+                    {{ nav_link('/connectors/marketplace', 'Marketplace') }}
+                </details>
+
+                <details class="nav-group" {% if current_path.startswith('/dossier') or current_path.startswith('/reports') or current_path.startswith('/exports') %}open{% endif %}>
+                    <summary class="{{ 'active' if current_path.startswith('/dossier') or current_path.startswith('/reports') or current_path.startswith('/exports') else '' }}">Dossiers & Reports</summary>
+                    {{ nav_link('/dossier/certification-dashboard', 'Certification Dashboard') }}
+                    {{ nav_link('/dossier/entity-profile-intelligence', 'Entity Profile Intelligence') }}
+                    {{ nav_link('/dossier/release-ledger-dashboard', 'Release Ledger') }}
+                    {{ nav_link('/reports/review', 'Report Review') }}
+                    {{ nav_link('/reports/export-center', 'Export Center') }}
+                    {{ nav_link('/exports/builder', 'Export Builder') }}
+                </details>
+
+                <details class="nav-group" {% if current_path.startswith('/evidence') %}open{% endif %}>
+                    <summary class="{{ 'active' if current_path.startswith('/evidence') else '' }}">Evidence</summary>
+                    {{ nav_link('/evidence/intake', 'Evidence Intake') }}
+                    {{ nav_link('/evidence/capture', 'Evidence Capture') }}
+                    {{ nav_link('/evidence/links', 'Evidence Linker') }}
+                    {{ nav_link('/evidence/custody', 'Custody Ledger') }}
+                    {{ nav_link('/evidence/integrity', 'Integrity Dashboard') }}
+                    {{ nav_link('/evidence/integrity/gate', 'Integrity Gate') }}
+                </details>
+
+                <details class="nav-group" {% if current_path.startswith('/narrative') or current_path.startswith('/assertions') %}open{% endif %}>
+                    <summary class="{{ 'active' if current_path.startswith('/narrative') or current_path.startswith('/assertions') else '' }}">Intelligence</summary>
+                    {{ nav_link('/narrative/storyboard', 'Narrative Storyboard') }}
+                    {{ nav_link('/assertions/trust', 'Assertion Trust') }}
+                    {{ nav_link('/assertions/trust/gate', 'Assertion Gate') }}
+                </details>
+
+                <details class="nav-group" {% if current_path.startswith('/product') %}open{% endif %}>
+                    <summary class="{{ 'active' if current_path.startswith('/product') else '' }}">Product</summary>
+                    {{ nav_link('/product/build-control', 'Product Control') }}
+                    {{ nav_link('/product/artifacts', 'Product Artifacts') }}
+                    {{ nav_link('/product/operator-runbook', 'Operator Runbook') }}
+                    {{ nav_link('/product/release-package', 'Release Package') }}
+                    {{ nav_link('/product/final-release', 'Final Release') }}
+                </details>
+
                 {% if session.get('is_admin') %}
-                <a href="{{ url_for('dashboard.admin_users') }}">Users</a>
-                <a href="/admin/memberships">Memberships</a>
-                <a href="{{ url_for('dashboard.audit_log') }}">Audit</a>
+                <details class="nav-group" {% if current_path.startswith('/admin') or current_path.startswith('/api/v1/admin') or current_path == '/api/v1/tor/status' %}open{% endif %}>
+                    <summary class="{{ 'active' if current_path.startswith('/admin') or current_path.startswith('/api/v1/admin') or current_path == '/api/v1/tor/status' else '' }}">Admin</summary>
+                    {{ nav_link('/admin/users', 'Users') }}
+                    {{ nav_link('/admin/memberships', 'Memberships') }}
+                    {{ nav_link('/admin/audit', 'Audit') }}
+                    {{ nav_link('/api/v1/admin/security/checklist', 'Security Checklist') }}
+                    {{ nav_link('/api/v1/admin/certification/summary', 'Certification Summary') }}
+                    {{ nav_link('/api/v1/admin/release-integrity/summary', 'Release Integrity') }}
+                    {{ nav_link('/api/v1/tor/status', 'Tor Status') }}
+                </details>
                 {% endif %}
-                <a href="{{ url_for('dashboard.change_password') }}">Password</a>
-                {% if session.get('is_admin') or session.get('role') == 'analyst' %}
-                <a href="{{ url_for('dashboard.spine_enrichment_review') }}">Legacy Review</a>
-                {% endif %}
-                <a href="{{ url_for('dashboard.logout') }}">Logout</a>
+
+                <details class="nav-group" {% if current_path.startswith('/account') %}open{% endif %}>
+                    <summary class="{{ 'active' if current_path.startswith('/account') else '' }}">Account</summary>
+                    {{ nav_link('/account/usage', 'Usage') }}
+                    {{ nav_link('/account/password', 'Password') }}
+                    <a href="{{ url_for('dashboard.logout') }}">Logout</a>
+                </details>
                 {% else %}
-                <a href="{{ url_for('dashboard.login') }}">Login</a>
+                {{ nav_link('/login', 'Login') }}
                 {% if config.get('SOCMINT_ALLOW_SIGNUP') %}
-                <a href="{{ url_for('dashboard.signup') }}">Sign up</a>
+                {{ nav_link('/signup', 'Sign up') }}
                 {% endif %}
                 {% endif %}
-                <a href="{{ url_for('dashboard.workbench_jobs_view') }}">Workbench</a>
-                <a href="{{ url_for('dashboard.report_review_console') }}">Report Review</a>
-                <a href="{{ url_for('dashboard.report_export_center_view') }}">Export Center</a>
-                <a href="{{ url_for('dashboard.export_builder_view') }}">Export Builder</a>
-                <a href="{{ url_for('dashboard.evidence_intake_view') }}">Evidence Intake</a>
-                <a href="{{ url_for('dashboard.high_end_capture_view') }}">Evidence Capture</a>
-                <a href="{{ url_for('dashboard.evidence_links_view') }}">Evidence Linker</a>
-                <a href="{{ url_for('dashboard.evidence_custody_view') }}">Custody Ledger</a>
-                <a href="{{ url_for('dashboard.evidence_integrity_view') }}">Integrity Dashboard</a>
-                <a href="{{ url_for('dashboard.responsible_use_view') }}">Responsible Use</a>
-                <a href="/spine/subjects/1/dossier">Full Dossier v2</a>
             </nav>
         </div>
     </header>
+
     <main class="app-main">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -70,8 +118,9 @@
         {% endwith %}
         {% block content %}{% endblock %}
     </main>
+
     <footer class="app-footer">
-        <p>SOCMINT profile enrichment dashboard</p>
+        <p>SOCMINT v12 Command Center test instance</p>
     </footer>
 </body>
 </html>

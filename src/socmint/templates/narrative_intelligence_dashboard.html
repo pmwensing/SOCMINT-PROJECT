@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Narrative Intelligence</p>
+    <h1>Story Reconstruction + Contradiction Engine</h1>
+    <p class="muted">Evidence-to-timeline reconstruction, claim validation, communication graph, confidence scoring, and court/lawyer-ready narrative drafting.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/api/v1/narrative/story-reconstruction">Narrative JSON</a>
+    <a class="button-link secondary" href="/api/v1/narrative/story-polish">Polish JSON</a>
+    <a class="button-link secondary" href="/api/v1/narrative/story-export">Export Story</a>
+    <a class="button-link secondary" href="/forensic/intake">Forensic Intake</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>Timeline events</span><strong>{{ payload.timeline.event_count }}</strong></article>
+  <article class="metric-card"><span>Claims</span><strong>{{ payload.claims|length }}</strong></article>
+  <article class="metric-card"><span>Contradictions</span><strong>{{ payload.contradictions.contradiction_count }}</strong></article>
+  <article class="metric-card"><span>Narrative confidence</span><strong>{{ payload.narrative_confidence.rating|upper }}</strong></article>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Timeline Controls</h2><p class="muted">Filter and sort narrative events before export or dossier review.</p></div></div>
+  <form method="get" class="search-form-grid">
+    <select name="sort">
+      <option value="timestamp" {% if polish.sort == 'timestamp' %}selected{% endif %}>Sort by timestamp</option>
+      <option value="confidence" {% if polish.sort == 'confidence' %}selected{% endif %}>Sort by confidence</option>
+    </select>
+    <select name="event_type">
+      <option value="">All event types</option>
+      <option value="evidence_preserved" {% if polish.event_type_filter == 'evidence_preserved' %}selected{% endif %}>Evidence preserved</option>
+      <option value="connector_run" {% if polish.event_type_filter == 'connector_run' %}selected{% endif %}>Connector run</option>
+    </select>
+    <button type="submit">Apply</button>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Narrative Confidence Card</h2><p class="muted">Confidence drivers and story readiness.</p></div></div>
+  <div class="card-grid">
+    <article class="card">
+      <h3>{{ polish.narrative_confidence_card.rating|upper }}</h3>
+      <p>Score: {{ polish.narrative_confidence_card.score }}</p>
+      {% for factor in polish.narrative_confidence_card.factors %}<p class="muted">{{ factor }}</p>{% endfor %}
+    </article>
+    <article class="card warning-card">
+      <h3>Dossier Story Layer</h3>
+      {% if polish.dossier_story_layer %}
+      <p>Status: {{ polish.dossier_story_layer.status }}</p>
+      <p>Human review: {{ polish.dossier_story_layer.requires_human_review }}</p>
+      {% else %}
+      <p>Add a subject_id query parameter to preview subject dossier story attachment.</p>
+      {% endif %}
+    </article>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Evidence-to-Timeline Reconstruction</h2><p class="muted">Court-safe chronology from preserved evidence and connector events.</p></div></div>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>Time</th><th>Type</th><th>Title</th><th>Evidence</th><th>Confidence</th></tr></thead>
+      <tbody>
+      {% for event in polish.events %}
+      <tr><td>{{ event.timestamp }}</td><td>{{ event.event_type }}</td><td>{{ event.title }}</td><td>{{ event.evidence_id or '-' }}</td><td>{{ event.confidence }}</td></tr>
+      {% else %}
+      <tr><td colspan="5">No narrative events yet. Run forensic intake or connector workflows first.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Evidence-to-Claim Drilldown</h2><p class="muted">Trace each story assertion back to preserved evidence or case context.</p></div></div>
+  <div class="card-grid">
+    {% for evidence_id, claims in polish.claims_by_evidence.items() %}
+    <article class="card">
+      <h3>{{ evidence_id }}</h3>
+      {% for claim in claims[:8] %}
+      <p><span class="status-pill {{ 'completed' if claim.validated else 'queued' }}">{{ claim.maturity }}</span> {{ claim.predicate }} = {{ claim.value }} · {{ claim.confidence }}</p>
+      {% endfor %}
+    </article>
+    {% else %}
+    <article class="card"><h3>No claim drilldowns yet</h3><p>Run forensic intake and narrative reconstruction first.</p></article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Contradiction Review Actions</h2><p class="muted">Review, resolve, or escalate story conflicts before legal use.</p></div></div>
+  <div class="card-grid">
+    {% for action in polish.contradiction_review_actions %}
+    <article class="card warning-card"><h3>{{ action.id }} · {{ action.state }}</h3><p>{{ action.action }}</p><p>{{ action.notes }}</p></article>
+    {% else %}
+    <article class="card"><h3>No contradiction actions</h3><p>No deterministic contradiction review actions are pending.</p></article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Communication Graph</h2><p class="muted">People/contact mentions extracted from event evidence.</p></div></div>
+  <p>{{ payload.communication_graph.node_count }} nodes · {{ payload.communication_graph.edge_count }} edges</p>
+  <div class="metadata-table">
+    <table><thead><tr><th>Node</th><th>Type</th><th>Label</th></tr></thead><tbody>
+      {% for node in payload.communication_graph.nodes[:50] %}<tr><td>{{ node.id }}</td><td>{{ node.type }}</td><td>{{ node.label }}</td></tr>{% else %}<tr><td colspan="3">No communication entities found.</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Court/Lawyer-Ready Narrative Draft</h2><p class="muted">Human-review required before legal use.</p></div></div>
+  <pre>{{ payload.court_lawyer_ready_narrative.markdown }}</pre>
+</section>
+{% endblock %}

@@ -4,6 +4,8 @@ import json
 from typing import Any
 
 from . import database as db
+from .alias_promotion_gates_v12_10_7_1 import apply_promotion_gates_to_observation, promotion_gate_for_observation
+from .legacy_assertion_scrubber_v12_10_7_2 import apply_assertion_scrub_gate
 from .spine import DIAGNOSTIC_OBSERVATION_TYPES
 from .spine import HIGH_VALUE_CONNECTORS
 
@@ -85,7 +87,7 @@ def _serialize_artifact(artifact) -> dict[str, Any]:
 def _serialize_observation(observation) -> dict[str, Any]:
     payload = _safe_json(observation.payload_json, {})
     diagnostic = observation.observation_type in DIAGNOSTIC_OBSERVATION_TYPES or bool(payload.get("diagnostic"))
-    return {
+    item = {
         "id": observation.id,
         "subject_id": observation.subject_id,
         "run_id": observation.run_id,
@@ -98,11 +100,12 @@ def _serialize_observation(observation) -> dict[str, Any]:
         "diagnostic": diagnostic,
         "created_at": observation.created_at.isoformat() if observation.created_at else None,
     }
+    return apply_promotion_gates_to_observation(item)
 
 
 def _serialize_assertion(assertion) -> dict[str, Any]:
     payload = _safe_json(assertion.payload_json, {})
-    return {
+    item = {
         "id": assertion.id,
         "subject_id": assertion.subject_id,
         "type": assertion.assertion_type,
@@ -113,6 +116,7 @@ def _serialize_assertion(assertion) -> dict[str, Any]:
         "created_at": assertion.created_at.isoformat() if assertion.created_at else None,
         "updated_at": assertion.updated_at.isoformat() if assertion.updated_at else None,
     }
+    return apply_assertion_scrub_gate(item)
 
 
 def _artifacts_by_run(subject_run_ids: set[int]) -> dict[int, list[dict[str, Any]]]:
@@ -198,15 +202,22 @@ def promote_observation_to_assertion(observation_id: int, actor: str | None = No
     payload = _serialize_observation(observation)
     if payload["diagnostic"]:
         raise ValueError("Diagnostic observations cannot be promoted to dossier assertions.")
+
+    gate = promotion_gate_for_observation(payload)
+    if gate["blocked"]:
+        reasons = ", ".join(gate.get("reason_labels") or [])
+        raise ValueError(f"{gate['ui_badge']}: {reasons}")
+
     assertion_id = db.upsert_spine_assertion(
         subject_id=observation.subject_id,
-        assertion_type=observation.observation_type,
+        assertion_type=gate.get("safe_type") or observation.observation_type,
         normalized_value=observation.normalized_value,
         confidence=str(observation.confidence or 0.5),
         validation_state="confirmed",
         payload={
             "source": "spine_observation_promotion",
             "observation": payload,
+            "promotion_gate": gate,
             "actor": actor,
             "note": note,
         },

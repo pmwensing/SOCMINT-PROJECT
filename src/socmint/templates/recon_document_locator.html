@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Recon Command Center</p>
+    <h1>Document Locator + Public Recon Discovery</h1>
+    <p class="muted">Lawful public document discovery, dorking, archive lookup, source trust scoring, and v12.5 forensic intake handoff.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/command-center">Command Center</a>
+    <a class="button-link secondary" href="/api/v1/recon/document-locator/queue">Queue JSON</a>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Search Console</h2>
+      <p class="muted">Public/open-source only. Located URLs are leads only until acquired and preserved.</p>
+    </div>
+  </div>
+  <form method="get" class="search-form-grid">
+    <input type="text" name="q" value="{{ payload.query }}" placeholder="Target, domain, person, org, email, phrase...">
+    <div class="checkbox-grid">
+      {% for connector in payload.connector_options %}
+      <label><input type="checkbox" name="connectors" value="{{ connector.key }}" {% if connector.key in payload.connectors %}checked{% endif %}> {{ connector.label }}</label>
+      {% endfor %}
+    </div>
+    <button type="submit">Run Recon Search</button>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Dork Template Selector</h2>
+      <p class="muted">High-value query templates for files, cloud links, public records, disclosures, and leaks.</p>
+    </div>
+  </div>
+  <div class="card-grid">
+    {% for dork in payload.dork_templates %}
+    <article class="card">
+      <h3>{{ dork.label }}</h3>
+      <code>{{ dork.query }}</code>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+{% if payload.search %}
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Recon Results</h2>
+      <p class="muted">{{ payload.search.result_count }} results across {{ payload.search.connectors | join(', ') }}</p>
+    </div>
+    <a class="button-link secondary" href="/api/v1/recon/document-locator/search?q={{ payload.query }}">Search JSON</a>
+  </div>
+  <div class="card-grid">
+    {% for result in payload.search.results[:30] %}
+    <article class="card subject-card">
+      <h3>{{ result.title }}</h3>
+      <p><strong>Connector:</strong> {{ result.connector }}</p>
+      <p><strong>Trust:</strong> <span class="status-pill queued">{{ result.source_trust }}</span></p>
+      <p><strong>URL:</strong> <a href="{{ result.url }}" target="_blank">{{ result.url }}</a></p>
+      {% if result.mime_type %}<p><strong>MIME:</strong> {{ result.mime_type }}</p>{% endif %}
+      {% if result.snippet %}<p>{{ result.snippet }}</p>{% endif %}
+      <div class="mini-actions">
+        {% for label in result.legal_safety %}
+        <span class="status-pill {{ 'warning' if 'not-evidence' in label or 'manual' in label else 'completed' }}">{{ label }}</span>
+        {% endfor %}
+      </div>
+      <form method="post" action="/recon/document-locator/queue">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="query" value="{{ payload.query }}">
+        <textarea name="result_json" hidden>{{ result | tojson }}</textarea>
+        <button type="submit">Send to v12.5 Intake Queue</button>
+      </form>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Manual Acquisition Queue</h2>
+      <p class="muted">Reviewed leads waiting for forensic acquisition, hashing, and preservation.</p>
+    </div>
+  </div>
+  <div class="metadata-table">
+    <table>
+      <thead><tr><th>ID</th><th>Title</th><th>Connector</th><th>State</th><th>Next Step</th></tr></thead>
+      <tbody>
+      {% for item in payload.queue.items %}
+      <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.result.title }}</td>
+        <td>{{ item.result.connector }}</td>
+        <td><span class="status-pill queued">{{ item.state }}</span></td>
+        <td>{{ item.next_step }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">No queued acquisition leads yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Source Trust + Legal Safety Matrix</h2>
+      <p class="muted">Analyst guidance for recon evidence handling.</p>
+    </div>
+  </div>
+  <div class="card-grid">
+    {% for item in payload.source_trust_matrix %}
+    <article class="card"><h3>{{ item.label }}</h3><p>{{ item.meaning }}</p></article>
+    {% endfor %}
+    {% for item in payload.legal_safety_matrix %}
+    <article class="card warning-card"><h3>{{ item.label }}</h3><p>{{ item.meaning }}</p></article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

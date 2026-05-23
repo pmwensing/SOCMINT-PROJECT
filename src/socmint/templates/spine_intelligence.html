@@ -4,7 +4,7 @@
   <div>
     <p class="eyebrow">Spine-Native Subject Intelligence</p>
     <h1>{{ payload.subject.label }}</h1>
-    <p class="muted">Dossier-first pipeline: seeds → connector runs → raw artifacts → real enrichment observations → assertions → Full Entity Profile Dossier.</p>
+    <p class="muted">v12.10.7 adds analyst-controlled entity alias review, clustering, split, and confirmed-alias dossier promotion.</p>
   </div>
   <div class="hero-actions">
     <a class="button-link" href="{{ payload.dossier_url }}">Open Full Dossier v2</a>
@@ -14,111 +14,85 @@
   </div>
 </section>
 
+<section class="panel warning-panel"><h2>Worker-only connector execution</h2><p class="warning-text">The Run button queues selected connector work. Long-running connector tools are handled by the worker, not the web request.</p><p class="muted">Requested mode: {{ payload.connector_mode.requested_mode if payload.connector_mode else 'unknown' }} · Effective web mode: {{ payload.connector_mode.effective_mode if payload.connector_mode else 'unknown' }} · {{ payload.connector_mode.reason if payload.connector_mode else '' }}</p></section>
+
 <section class="metric-grid">
   <article class="metric-card"><span>Seeds</span><strong>{{ payload.summary.seed_count }}</strong></article>
   <article class="metric-card"><span>Spine runs</span><strong>{{ payload.summary.connector_run_count }}</strong></article>
-  <article class="metric-card"><span>Artifacts</span><strong>{{ payload.summary.artifact_count }}</strong></article>
   <article class="metric-card"><span>Real enrichment</span><strong>{{ payload.summary.observation_count }}</strong></article>
-  <article class="metric-card"><span>Diagnostics</span><strong>{{ payload.summary.diagnostic_count }}</strong></article>
   <article class="metric-card"><span>Assertions</span><strong>{{ payload.summary.assertion_count }}</strong></article>
-  <article class="metric-card"><span>Needs review</span><strong>{{ payload.summary.unreviewed_assertions }}</strong></article>
+  <article class="metric-card"><span>Confirmed</span><strong>{{ payload.summary.confirmed_assertions }}</strong></article>
+  <article class="metric-card"><span>Candidate profiles</span><strong>{{ payload.summary.profile_candidate_count }}</strong></article>
+  <article class="metric-card"><span>Profile captures</span><strong>{{ payload.summary.profile_evidence_capture.captured_candidate_count }}</strong></article>
+  <article class="metric-card"><span>Asset-only flags</span><strong>{{ payload.summary.profile_evidence_capture.asset_only_candidate_count }}</strong></article>
+  <article class="metric-card"><span>Entity aliases</span><strong>{{ payload.summary.alias_count }}</strong></article>
+  <article class="metric-card"><span>Alias edges</span><strong>{{ payload.summary.alias_edge_count }}</strong></article>
+  <article class="metric-card"><span>Alias collisions</span><strong>{{ payload.summary.alias_collision_count }}</strong></article>
+  <article class="metric-card"><span>Alias promotable</span><strong>{{ payload.summary.alias_review.promotable_alias_count }}</strong></article>
 </section>
 
-{% if not payload.summary.has_real_enrichment and payload.summary.connector_run_count > 0 %}
-<section class="panel warning-panel">
-  <h2>No real enrichment findings yet</h2>
-  <p class="warning-text">The connectors ran, but the normalizers did not extract profile URLs, account presence, exposure data, phone intelligence, archive captures, or other dossier-grade enrichment. Seed echoes are now treated as diagnostics instead of evidence.</p>
-  <p class="muted">Open the raw run output below to verify whether the tool returned no useful result, returned output the normalizer does not yet understand, or hit a connector/runtime issue.</p>
-</section>
-{% endif %}
+<section class="panel {{ 'success-panel' if payload.summary.dossier_readiness_gate.status == 'pass' else 'warning-panel' }}"><div class="section-header"><div><h2>Dossier Readiness Gate</h2><p class="muted">{{ payload.summary.dossier_readiness_gate.requires }}</p></div><span class="status-pill {{ 'completed' if payload.summary.dossier_readiness_gate.status == 'pass' else 'queued' }}">{{ payload.summary.dossier_readiness_gate.status|upper }}</span></div><p><strong>Confirmed assertions:</strong> {{ payload.summary.dossier_readiness_gate.confirmed_assertions }}</p><p><strong>Candidate profile review remaining:</strong> {{ payload.summary.dossier_readiness_gate.candidate_profile_review_remaining }}</p><p><strong>Captured profile evidence:</strong> {{ payload.summary.profile_evidence_capture.captured_candidate_count }} candidates · text={{ payload.summary.profile_evidence_capture.text_fingerprint_ready_count }} · visual={{ payload.summary.profile_evidence_capture.visual_fingerprint_ready_count }}</p><p><strong>Entity Alias Graph:</strong> {{ payload.summary.alias_count }} aliases · {{ payload.summary.alias_edge_count }} edges · {{ payload.summary.alias_collision_count }} reverse-collision review set(s) · {{ payload.summary.alias_review.cluster_count }} cluster(s)</p><p><strong>Promotion gates:</strong> {{ payload.summary.promotion_scrub.blocked_total_count or 0 }} blocked total · {{ payload.summary.promotion_scrub.blocked_observation_count or 0 }} observations · {{ payload.summary.promotion_scrub.blocked_assertion_count or 0 }} assertions · {{ payload.summary.alias_promotion_gates.blocked_alias_count or 0 }} aliases</p><p class="muted">{{ payload.summary.dossier_readiness_gate.next_action }}</p></section>
+
+<section class="panel command-panel"><div class="section-header"><div><h2>Queue subject intelligence</h2><p class="muted">socialscan remains fast triage; social-analyzer is deep enrichment and should be run by the worker.</p></div><span class="status-pill {{ 'queued' if payload.summary.needs_review else 'completed' }}">{{ 'Review needed' if payload.summary.needs_review else 'No review queue' }}</span></div><form method="post" action="{{ url_for('spine_intelligence_run', subject_id=payload.subject.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="card-grid">{% for connector in payload.connector_options %}<label class="card checkbox-card {{ '' if connector.enabled else 'muted-card' }}"><input type="checkbox" name="connectors" value="{{ connector.key }}" {% if connector.enabled %}checked{% else %}disabled{% endif %}><strong>{{ connector.key }}</strong>{% if connector.key == 'social-analyzer' %}<span class="status-pill queued">deep enrichment</span>{% endif %}{% if connector.key == 'socialscan' %}<span class="status-pill completed">fast triage</span>{% endif %}<span>Supports: {{ connector.seed_types | join(', ') }}</span><span>Compatible now: {{ connector.compatible | join(', ') if connector.compatible else 'none' }}</span></label>{% endfor %}</div><button type="submit">Queue selected connectors for worker</button></form></section>
 
 <section class="panel command-panel">
-  <div class="section-header">
-    <div>
-      <h2>Run subject intelligence</h2>
-      <p class="muted">Only compatible connectors are enabled for this subject's seed types.</p>
-    </div>
-    <span class="status-pill {{ 'queued' if payload.summary.needs_review else 'completed' }}">{{ 'Review needed' if payload.summary.needs_review else 'Dossier ready' }}</span>
-  </div>
-  <form method="post" action="{{ url_for('spine_intelligence_run', subject_id=payload.subject.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="card-grid">
-      {% for connector in payload.connector_options %}
-      <label class="card checkbox-card {{ '' if connector.enabled else 'muted-card' }}">
-        <input type="checkbox" name="connectors" value="{{ connector.key }}" {% if connector.enabled %}checked{% else %}disabled{% endif %}>
-        <strong>{{ connector.key }}</strong>
-        <span>Supports: {{ connector.seed_types | join(', ') }}</span>
-        <span>Compatible now: {{ connector.compatible | join(', ') if connector.compatible else 'none' }}</span>
-      </label>
-      {% endfor %}
-    </div>
-    <button type="submit">Run selected connectors into Spine</button>
-  </form>
-</section>
-
-<section class="panel">
-  <h2>Seeds</h2>
-  <div class="metadata-table">
-    <table>
-      <thead><tr><th>ID</th><th>Type</th><th>Value</th><th>Hash</th></tr></thead>
-      <tbody>
-      {% for seed in payload.seeds %}
-        <tr><td>{{ seed.id }}</td><td>{{ seed.type }}</td><td>{{ seed.value }}</td><td><code>{{ seed.hash }}</code></td></tr>
-      {% else %}
-        <tr><td colspan="4">No seeds yet. Add seeds from the classic subject view.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<section class="panel">
-  <div class="section-header">
-    <div>
-      <h2>Dossier Assertions</h2>
-      <p class="muted">These are what the Full Entity Profile Dossier reads. Confirm strong items, reject noise, or suppress weak items.</p>
-    </div>
-  </div>
+  <div class="section-header"><div><h2>Entity Alias Graph + Review Controls</h2><p class="muted">One entity can have many identifiers. One identifier can appear across unrelated entities. Only confirmed aliases can become dossier assertions.</p></div><div class="hero-actions"><a class="button-link secondary" href="{{ url_for('spine_entity_alias_graph_report', subject_id=payload.subject.id, format='json') }}">Export Alias JSON</a><a class="button-link secondary" href="{{ url_for('spine_entity_alias_graph_report', subject_id=payload.subject.id, format='md') }}">Export Alias Markdown</a></div></div>
+  <p><strong>Pipeline insert:</strong> {{ payload.entity_alias_graph.pipeline_insert }}</p>
+  <p class="muted">Rule: {{ payload.entity_alias_graph.alias_review.rule }}</p>
+  <p class="muted">States: confirmed={{ payload.entity_alias_graph.state_counts.confirmed }}, candidate={{ payload.entity_alias_graph.state_counts.candidate }}, rejected={{ payload.entity_alias_graph.state_counts.rejected }}, uncertain={{ payload.entity_alias_graph.state_counts.uncertain }}, more evidence={{ payload.entity_alias_graph.state_counts.needs_more_evidence }}</p>
+  <form method="post" action="{{ url_for('spine_entity_alias_cluster', subject_id=payload.subject.id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="merge_aliases"><input type="text" name="alias_ids_text" placeholder="alias-id-1, alias-id-2"><input type="text" name="note" placeholder="Cluster note"><button type="submit">Merge aliases into identity cluster</button></form>
+  {% if payload.entity_alias_graph.alias_review.clusters %}<details open><summary>Identity clusters</summary><ul>{% for cluster_id, cluster in payload.entity_alias_graph.alias_review.clusters.items() %}<li><strong>{{ cluster_id }}</strong> · {{ cluster.alias_ids | join(', ') }}</li>{% endfor %}</ul></details>{% endif %}
+  {% if payload.entity_alias_graph.collision_sets %}<details open><summary>Reverse collision review sets</summary><ul>{% for collision in payload.entity_alias_graph.collision_sets %}<li><strong>{{ collision.alias_type }}</strong> {{ collision.normalized_value }} — {{ collision.status }} · candidates={{ collision.candidate_count }} · {{ collision.reason }}</li>{% endfor %}</ul></details>{% endif %}
   <div class="card-grid">
-    {% for assertion in payload.assertions %}
-    <article class="card">
-      <h3>{{ assertion.type }}</h3>
-      <p><span class="status-pill {{ 'completed' if assertion.validation_state == 'confirmed' else 'failed' if assertion.validation_state == 'rejected' else 'queued' }}">{{ assertion.validation_state }}</span></p>
-      <p><strong>Value:</strong> {{ assertion.value }}</p>
-      <p><strong>Confidence:</strong> {{ assertion.confidence }}</p>
-      <p class="muted">Sources: {{ assertion.payload.source_count or assertion.payload.source_refs|length or 'n/a' }}</p>
-      <form method="post" action="{{ url_for('spine_intelligence_assertion_review', assertion_id=assertion.id) }}" class="inline-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="subject_id" value="{{ payload.subject.id }}">
-        <input type="text" name="note" placeholder="Analyst note">
-        <button name="action" value="confirmed" type="submit">Confirm</button>
-        <button name="action" value="rejected" type="submit">Reject</button>
-        <button name="action" value="suppressed" type="submit">Suppress</button>
-        <button name="action" value="unreviewed" type="submit">Reset</button>
-      </form>
+    {% for alias in payload.entity_alias_graph.aliases[:40] %}
+    <article class="card wide-card">
+      <h3>{{ alias.alias_type }} · {{ alias.normalized_value }}</h3>
+      <p><span class="status-pill {{ 'completed' if alias.analyst_state == 'confirmed' else 'failed' if alias.analyst_state == 'rejected' else 'queued' }}">{{ alias.analyst_state }}</span> <strong>confidence:</strong> {{ alias.confidence }}{% if alias.can_promote_to_dossier_assertion %} <span class="status-pill completed">promotable</span>{% endif %}{% if alias.promotion_gate.blocked %} <span class="status-pill failed">Promotion blocked: not identity evidence</span>{% endif %}</p>
+      <p><strong>Alias ID:</strong> {{ alias.alias_id }}</p>
+      <p><strong>Clusters:</strong> {{ alias.identity_cluster_ids | join(', ') if alias.identity_cluster_ids else 'n/a' }}</p>
+      <p><strong>Sources:</strong> {{ alias.source_connectors | join(', ') if alias.source_connectors else 'n/a' }}</p>
+      <p><strong>Candidate profiles:</strong> {{ alias.candidate_ids | join(', ') if alias.candidate_ids else 'n/a' }}</p>
+      <p><strong>Evidence refs:</strong> {{ alias.evidence_refs | join(', ') if alias.evidence_refs else 'n/a' }}</p>
+      <form method="post" action="{{ url_for('spine_entity_alias_review', subject_id=payload.subject.id, alias_id=alias.alias_id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="text" name="note" placeholder="Analyst note"><button name="action" value="confirm_alias" type="submit">Confirm alias</button><button name="action" value="reject_alias" type="submit">Reject alias</button><button name="action" value="mark_alias_uncertain" type="submit">Mark uncertain</button><button name="action" value="request_alias_evidence" type="submit">Request evidence</button></form>
+      <form method="post" action="{{ url_for('spine_entity_alias_promote', subject_id=payload.subject.id, alias_id=alias.alias_id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="text" name="note" placeholder="Promotion note"><button type="submit" {% if not alias.can_promote_to_dossier_assertion %}disabled{% endif %}>Promote confirmed alias</button></form>
+      <form method="post" action="{{ url_for('spine_entity_alias_cluster', subject_id=payload.subject.id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="split_alias"><input type="hidden" name="alias_id" value="{{ alias.alias_id }}"><input type="text" name="note" placeholder="Split note"><button type="submit">Split from cluster</button></form>
+      <details><summary>Alias evidence</summary><ul>{% for ev in alias.evidence %}<li>{{ ev.source }} · {{ ev.reason }} · confidence={{ ev.confidence }} · candidate={{ ev.candidate_id or 'n/a' }}</li>{% endfor %}</ul></details>
     </article>
-    {% else %}
-    <p>No dossier assertions yet. Real enrichment observations are required before assertion candidates are created.</p>
-    {% endfor %}
+    {% else %}<p>No entity aliases yet.</p>{% endfor %}
   </div>
 </section>
+
+<section class="panel command-panel"><div class="section-header"><div><h2>Candidate Profile Review</h2><p class="muted">Captured profile evidence, fingerprints, and analyst decisions before identity-link assertions.</p></div><div class="hero-actions"><a class="button-link secondary" href="{{ url_for('spine_candidate_profile_report', subject_id=payload.subject.id, format='json') }}">Export JSON</a><a class="button-link secondary" href="{{ url_for('spine_candidate_profile_report', subject_id=payload.subject.id, format='md') }}">Export Markdown</a></div></div><p class="muted">Decision counts: accepted={{ payload.profile_fingerprints.review_decision_counts.accepted }}, rejected={{ payload.profile_fingerprints.review_decision_counts.rejected }}, uncertain={{ payload.profile_fingerprints.review_decision_counts.uncertain }}, more evidence={{ payload.profile_fingerprints.review_decision_counts.needs_more_evidence }}, unreviewed={{ payload.profile_fingerprints.review_decision_counts.unreviewed }}</p><div class="card-grid">{% for candidate in payload.profile_fingerprints.candidates %}{% set fp = candidate.profile_fingerprint %}<article class="card wide-card {{ 'success-card' if candidate.dossier_ready else 'muted-card' if candidate.analyst_review.review_state == 'rejected' else '' }}"><h3>{{ fp.platform or 'unknown platform' }} / {{ fp.username or 'unknown username' }}</h3><p><span class="status-pill {{ 'completed' if candidate.dossier_ready else 'failed' if candidate.analyst_review.review_state == 'rejected' else 'queued' }}">{{ candidate.analyst_review.review_state }}</span> <span class="status-pill queued">{{ candidate.collision_status }}</span>{% if fp.asset_only_url %} <span class="status-pill failed">asset-only / not profile</span>{% endif %}</p><p><strong>Profile URL:</strong> {% if fp.profile_url %}<a href="{{ fp.profile_url }}" rel="noreferrer noopener" target="_blank">{{ fp.profile_url }}</a>{% else %}n/a{% endif %}</p><p><strong>Identity score:</strong> {{ candidate.identity_score }}</p><details><summary>Evidence capture</summary><p><strong>HTML SHA-256:</strong> {{ fp.html_sha256 or 'n/a' }}</p><p><strong>Screenshot SHA-256:</strong> {{ fp.screenshot_sha256 or 'n/a' }}</p><p><strong>Text fingerprint:</strong> {{ fp.text_fingerprint_hash or 'n/a' }}</p><p><strong>Visual fingerprint:</strong> {{ fp.visual_fingerprint_hash or 'n/a' }}</p></details><form method="post" action="{{ url_for('spine_candidate_profile_review', subject_id=payload.subject.id, candidate_id=candidate.candidate_id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="text" name="note" placeholder="Analyst note"><button name="action" value="accept_same_entity" type="submit">Accept same entity</button><button name="action" value="reject_collision" type="submit">Reject collision</button><button name="action" value="mark_uncertain" type="submit">Mark uncertain</button><button name="action" value="request_more_evidence" type="submit">Request more evidence</button></form></article>{% else %}<p>No candidate profile hypotheses yet.</p>{% endfor %}</div></section>
+
+<section class="panel"><div class="section-header"><div><h2>Dossier Assertions</h2><p class="muted">Legacy polluted assertions can be suppressed before dossier use.</p></div><form method="post" action="{{ url_for('spine_legacy_assertions_scrub', subject_id=payload.subject.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Scrub legacy assertions</button></form></div><div class="card-grid">{% for assertion in payload.assertions %}<article class="card"><h3>{{ assertion.type }}</h3><p><span class="status-pill {{ 'completed' if assertion.validation_state == 'confirmed' else 'failed' if assertion.validation_state in ['rejected','suppressed'] else 'queued' }}">{{ assertion.validation_state }}</span>{% if assertion.legacy_assertion_scrub.blocked %} <span class="status-pill failed">Legacy assertion suppressed: not identity evidence</span>{% endif %}</p><p><strong>Value:</strong> {{ assertion.value }}</p><p><strong>Confidence:</strong> {{ assertion.confidence }}</p><form method="post" action="{{ url_for('spine_intelligence_assertion_review', assertion_id=assertion.id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="subject_id" value="{{ payload.subject.id }}"><input type="text" name="note" placeholder="Analyst note"><button name="action" value="confirmed" type="submit" {% if assertion.legacy_assertion_scrub.blocked %}disabled{% endif %}>Confirm</button><button name="action" value="rejected" type="submit">Reject</button><button name="action" value="suppressed" type="submit">Suppress</button><button name="action" value="unreviewed" type="submit">Reset</button></form></article>{% else %}<p>No dossier assertions yet.</p>{% endfor %}</div></section>
+
 
 <section class="panel">
   <h2>Real Enrichment Observations</h2>
-  <p class="muted">Only dossier-grade observations appear here. Seed echoes and empty connector results are excluded.</p>
   <div class="card-grid">
+    {% set blocked_observation_types = ["static_asset_url", "avatar_url", "asset_artifact_url", "metadata_artifact", "platform_artifact_id"] %}
     {% for observation in payload.observations %}
+    {% set promotion_gate = observation.promotion_gate or {} %}
+    {% set observation_blocked = observation.promotion_blocked or promotion_gate.blocked or observation.type in blocked_observation_types %}
     <article class="card">
       <h3>{{ observation.type }}</h3>
+      {% if observation.payload.deep_enrichment %}
+      <p><span class="status-pill queued">deep enrichment</span></p>
+      {% endif %}
       <p><strong>Value:</strong> {{ observation.value }}</p>
       <p><strong>Confidence:</strong> {{ observation.confidence }}</p>
       <p class="muted">{{ observation.source_ref }} · {{ observation.evidence_ref }}</p>
+
+      {% if observation_blocked %}
+      <p><span class="status-pill failed">Promotion blocked: not identity evidence</span></p>
+      {% else %}
       <form method="post" action="{{ url_for('spine_observation_promote', observation_id=observation.id) }}" class="inline-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="subject_id" value="{{ payload.subject.id }}">
         <input type="text" name="note" placeholder="Promotion note">
         <button type="submit">Promote to confirmed assertion</button>
       </form>
+      {% endif %}
     </article>
     {% else %}
     <p>No real enrichment observations yet.</p>
@@ -126,55 +100,5 @@
   </div>
 </section>
 
-<section class="panel">
-  <h2>Connector Diagnostics / No-Result Runs</h2>
-  <p class="muted">These are useful for troubleshooting but do not become dossier assertions.</p>
-  <div class="card-grid">
-    {% for diagnostic in payload.diagnostics %}
-    <article class="card muted-card">
-      <h3>{{ diagnostic.type }}</h3>
-      <p><strong>Value:</strong> {{ diagnostic.value }}</p>
-      <p><strong>Confidence:</strong> {{ diagnostic.confidence }}</p>
-      <p class="muted">{{ diagnostic.payload.note or 'Connector did not produce normalized enrichment findings.' }}</p>
-      <p class="muted">{{ diagnostic.source_ref }} · {{ diagnostic.evidence_ref }}</p>
-    </article>
-    {% else %}
-    <p>No connector diagnostics.</p>
-    {% endfor %}
-  </div>
-</section>
-
-<section class="panel">
-  <h2>Spine Connector Runs + Raw Output</h2>
-  <div class="card-grid">
-    {% for run in payload.runs %}
-    <article class="card wide-card">
-      <h3>{{ run.connector }} · Run {{ run.id }}</h3>
-      <p><span class="status-pill {{ 'completed' if run.status == 'completed' else 'failed' if run.status in ['failed','timeout'] else 'queued' }}">{{ run.status }}</span> Seed ID: {{ run.seed_id }}</p>
-      <p><strong>Normalized findings:</strong> {{ run.finding_count }} · <strong>Artifacts:</strong> {{ run.artifacts|length }}</p>
-      {% if run.artifacts %}
-      <ul>
-        {% for artifact in run.artifacts %}
-        <li><code>{{ artifact.sha256 }}</code> — {{ artifact.kind }} — {{ artifact.size_bytes }} bytes</li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-      <details>
-        <summary>Raw stdout</summary>
-        <pre>{{ run.stdout or '' }}</pre>
-      </details>
-      <details>
-        <summary>Raw stderr</summary>
-        <pre>{{ run.stderr or '' }}</pre>
-      </details>
-      <details>
-        <summary>Raw JSON</summary>
-        <pre>{{ run.raw_result | tojson(indent=2) }}</pre>
-      </details>
-    </article>
-    {% else %}
-    <p>No Spine connector runs yet.</p>
-    {% endfor %}
-  </div>
-</section>
+<section class="panel"><h2>Connector Run Result Inspector</h2><div class="card-grid">{% for run in payload.runs %}<article class="card wide-card {{ 'success-card' if run.is_real else 'muted-card' if run.is_diagnostic else '' }}"><h3>{{ run.connector }} · Run {{ run.id }}</h3><p><span class="status-pill {{ 'completed' if run.status == 'completed' else 'failed' if run.status in ['failed','timeout'] else 'queued' }}">{{ run.status }}</span> <span class="status-pill {{ 'completed' if run.badge == 'real' else 'queued' if run.badge == 'review' else 'failed' }}">{{ run.badge }}</span> Seed {{ run.seed_id }} · {{ run.seed_type }} · {{ run.seed_value }}</p><p class="muted">{{ run.explanation }}</p><p><strong>Normalized findings:</strong> {{ run.finding_count }} · <strong>Real observations:</strong> {{ run.real_observation_count }} · <strong>Diagnostics:</strong> {{ run.diagnostic_count }}</p></article>{% else %}<p>No Spine connector runs yet.</p>{% endfor %}</div></section>
 {% endblock %}

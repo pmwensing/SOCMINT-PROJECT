@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-import socmint
+from . import __version__ as SOCMINT_VERSION
 
 RELEASE_INTEGRITY_SCHEMA = "socmint.release_integrity.v10_1_2"
 EXPECTED_VERSION = "10.1.2"
@@ -57,7 +57,7 @@ def release_note_report(root: str | Path = ".") -> dict[str, Any]:
 
 def version_integrity_report(root: str | Path = ".") -> dict[str, Any]:
     pyproject = pyproject_version(root)
-    package = getattr(socmint, "__version__", None)
+    package = SOCMINT_VERSION
     versions = {"pyproject": pyproject, "package": package, "expected": EXPECTED_VERSION}
     ok = pyproject == package == EXPECTED_VERSION
     return {
