@@ -15,8 +15,8 @@ from typing import Any, Dict, List, Set, Tuple
 
 ROOT = Path.cwd()
 RELEASE_DIR = ROOT / "release" / "drift_lock"
-REPORT_JSON = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31D.json"
-REPORT_MD = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31D.md"
+REPORT_JSON = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31E.json"
+REPORT_MD = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31E.md"
 
 EXPECTED_V12_ROUTES = {
     "/api/v12.10/command-center/cases/<case_id>/run-all",
@@ -29,7 +29,7 @@ EXPECTED_V12_ROUTES = {
     "/api/v12.10/ui/command-center",
 }
 
-EXPECTED_VERSION = "12.10.31D"
+EXPECTED_VERSION = "12.10.31E"
 
 
 class Check:
@@ -427,6 +427,30 @@ def runtime_flask_routes() -> Dict[str, Any]:
         result["error"] = repr(exc)
         return result
 
+def runtime_v12_route_smoke() -> Dict[str, Any]:
+    """Single source of truth for v12 runtime route audit.
+
+    This wrapper normalizes the route audit result so main(), tests, and
+    report generation all consume the same route-lock result.
+    """
+    result = runtime_flask_routes()
+
+    routes = set(result.get("routes_after_lock") or result.get("routes") or [])
+    missing = sorted(EXPECTED_V12_ROUTES - routes)
+
+    result["routes"] = sorted(routes)
+    result["missing_v12_routes"] = missing
+    result["missing_v12_route_count"] = len(missing)
+    result["ok"] = len(missing) == 0
+
+    if missing:
+        result["route_lock_errors"] = result.get("route_lock", {}).get("errors", [])
+        result["route_lock_registered"] = result.get("route_lock", {}).get("registered", [])
+        result["route_lock_skipped"] = result.get("route_lock", {}).get("skipped", [])
+
+    return result
+
+
 def version_metadata() -> Dict[str, Any]:
     items: Dict[str, Any] = {}
 
@@ -471,7 +495,7 @@ def write_reports(checks: List[Check], summary: Dict[str, Any]) -> None:
     RELEASE_DIR.mkdir(parents=True, exist_ok=True)
 
     payload = {
-        "audit": "v12.10.31D Drift Lock Audit",
+        "audit": "v12.10.31E Drift Lock Audit",
         "summary": summary,
         "checks": [c.as_dict() for c in checks],
     }
@@ -479,7 +503,7 @@ def write_reports(checks: List[Check], summary: Dict[str, Any]) -> None:
     REPORT_JSON.write_text(json.dumps(payload, indent=2, sort_keys=True))
 
     lines = []
-    lines.append("# v12.10.31D Drift Lock Audit Report")
+    lines.append("# v12.10.31E Drift Lock Audit Report")
     lines.append("")
     lines.append(f"Overall: **{summary['overall_status']}**")
     lines.append("")
@@ -525,9 +549,9 @@ def main() -> int:
     checks.append(Check("models_vs_migrations", "PASS" if model_ok else "WARN", model_migration))
 
     static_routes = route_static_scan()
-    runtime_routes = runtime_flask_routes()
+    runtime_routes = runtime_v12_route_smoke()
 
-    route_ok = not runtime_routes["missing_v12_routes"] if runtime_routes["ok"] else False
+    route_ok = runtime_routes.get("missing_v12_route_count", len(runtime_routes.get("missing_v12_routes", []))) == 0
     checks.append(Check("static_route_scan", "PASS", static_routes))
     checks.append(Check("runtime_v12_route_registration", "PASS" if route_ok else "FAIL", runtime_routes))
 
@@ -549,7 +573,11 @@ def main() -> int:
         "framework": framework["framework"],
         "primary_entrypoint": entrypoints["primary_guess"]["path"] if entrypoints["primary_guess"] else None,
         "alembic_heads": ",".join(alembic["heads"]),
-        "missing_v12_routes": len(runtime_routes["missing_v12_routes"]),
+        "missing_v12_routes": runtime_routes.get("missing_v12_route_count", len(runtime_routes.get("missing_v12_routes", []))),
+        "dashboard_module_file": runtime_routes.get("dashboard_module_file"),
+        "route_lock_errors": len(runtime_routes.get("route_lock", {}).get("errors", [])),
+        "route_lock_registered": ",".join(runtime_routes.get("route_lock", {}).get("registered", [])),
+        "route_lock_skipped": ",".join(runtime_routes.get("route_lock", {}).get("skipped", [])),
         "model_tables_missing_migrations": len(model_migration["tables_in_models_not_migrations"]),
         "version_unique_count": len(versions["unique_versions"]),
         "report_json": str(REPORT_JSON),
