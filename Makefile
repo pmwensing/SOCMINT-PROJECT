@@ -750,3 +750,10 @@ test121031F:
 report121031F:
 	python scripts/drift_lock_audit_v12_10_31A.py || true
 	@echo 'Report: release/drift_lock/DRIFT_LOCK_AUDIT_V12_10_31F.md'
+
+test121031G:
+	bash scripts/test_v12_10_31G.sh
+
+report121031G:
+	python scripts/drift_lock_audit_v12_10_31A.py || true
+	@echo 'Report: release/drift_lock/DRIFT_LOCK_AUDIT_V12_10_31G.md'
