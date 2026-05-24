@@ -757,3 +757,11 @@ test121031G:
 report121031G:
 	python scripts/drift_lock_audit_v12_10_31A.py || true
 	@echo 'Report: release/drift_lock/DRIFT_LOCK_AUDIT_V12_10_31G.md'
+
+test121031H:
+	bash scripts/test_v12_10_31H.sh
+
+report121031H:
+	python scripts/drift_lock_audit_v12_10_31A.py || true
+	@echo 'Latest report:'
+	@ls -1 release/drift_lock/DRIFT_LOCK_AUDIT_V12_10_31*.md | tail -n 1
