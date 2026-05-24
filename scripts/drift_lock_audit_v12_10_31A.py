@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import ast
 import configparser
 import importlib
 import json
@@ -14,9 +13,11 @@ from typing import Any, Dict, List, Set, Tuple
 
 
 ROOT = Path.cwd()
-RELEASE_DIR = ROOT / "release" / "drift_lock"
-REPORT_JSON = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31E.json"
-REPORT_MD = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31E.md"
+VERSION = "12.10.31F"
+REPORT_STEM = "DRIFT_LOCK_AUDIT_V12_10_31F"
+REPORT_DIR = ROOT / "release" / "drift_lock"
+REPORT_JSON = REPORT_DIR / f"{REPORT_STEM}.json"
+REPORT_MD = REPORT_DIR / f"{REPORT_STEM}.md"
 
 EXPECTED_V12_ROUTES = {
     "/api/v12.10/command-center/cases/<case_id>/run-all",
@@ -29,7 +30,17 @@ EXPECTED_V12_ROUTES = {
     "/api/v12.10/ui/command-center",
 }
 
-EXPECTED_VERSION = "12.10.31E"
+SKIP_PARTS = {
+    ".git",
+    ".venv",
+    "node_modules",
+    "__pycache__",
+    ".pytest_cache",
+    "storage",
+    "release",
+    "tests",
+    "scripts",
+}
 
 
 class Check:
@@ -46,15 +57,6 @@ class Check:
         }
 
 
-def run(cmd: List[str]) -> Tuple[int, str]:
-    try:
-        out = subprocess.check_output(cmd, cwd=ROOT, stderr=subprocess.STDOUT, text=True)
-        return 0, out
-    except Exception as exc:
-        out = getattr(exc, "output", str(exc))
-        return 1, out
-
-
 def read(path: Path) -> str:
     try:
         return path.read_text(errors="replace")
@@ -62,28 +64,35 @@ def read(path: Path) -> str:
         return ""
 
 
-def find_files(patterns: List[str]) -> List[Path]:
+def run(cmd: List[str]) -> Tuple[int, str]:
+    try:
+        out = subprocess.check_output(cmd, cwd=ROOT, stderr=subprocess.STDOUT, text=True)
+        return 0, out
+    except Exception as exc:
+        return 1, getattr(exc, "output", repr(exc))
+
+
+def py_files(include_scripts: bool = False) -> List[Path]:
     out: List[Path] = []
-    skip = {".git", ".venv", "node_modules", "__pycache__", ".pytest_cache", "storage", "release", "tests", "scripts"}
-    for p in ROOT.rglob("*"):
-        if any(part in skip for part in p.parts):
+    for p in ROOT.rglob("*.py"):
+        if not include_scripts and any(part in SKIP_PARTS for part in p.parts):
             continue
-        if p.is_file() and any(p.match(pattern) for pattern in patterns):
+        if p.is_file():
             out.append(p)
-    return sorted(set(out))
+    return sorted(out)
 
 
 def detect_framework() -> Dict[str, Any]:
-    py_files = find_files(["*.py"])
     flask_hits = []
     fastapi_hits = []
 
-    for p in py_files:
+    for p in py_files():
         s = read(p)
+        rel = str(p.relative_to(ROOT))
         if re.search(r"from\s+flask\s+import|import\s+flask|Flask\(", s):
-            flask_hits.append(str(p.relative_to(ROOT)))
+            flask_hits.append(rel)
         if re.search(r"from\s+fastapi\s+import|import\s+fastapi|FastAPI\(", s):
-            fastapi_hits.append(str(p.relative_to(ROOT)))
+            fastapi_hits.append(rel)
 
     if flask_hits and fastapi_hits:
         framework = "hybrid"
@@ -96,65 +105,52 @@ def detect_framework() -> Dict[str, Any]:
 
     return {
         "framework": framework,
-        "flask_hits": flask_hits[:50],
-        "fastapi_hits": fastapi_hits[:50],
         "flask_count": len(flask_hits),
         "fastapi_count": len(fastapi_hits),
+        "flask_hits": flask_hits[:50],
+        "fastapi_hits": fastapi_hits[:50],
     }
 
 
 def identify_entrypoints() -> Dict[str, Any]:
     candidates = []
 
-    for p in find_files(["*.py"]):
+    for p in py_files():
         s = read(p)
         rel = str(p.relative_to(ROOT))
         score = 0
         notes = []
 
         if "def create_app" in s:
-            score += 5
+            score += 20
             notes.append("create_app")
         if "Flask(" in s:
-            score += 3
+            score += 10
             notes.append("Flask(")
         if "FastAPI(" in s:
-            score += 3
+            score += 10
             notes.append("FastAPI(")
-        if "uvicorn.run" in s:
-            score += 2
-            notes.append("uvicorn.run")
-        if "app.run" in s:
-            score += 2
-            notes.append("app.run")
         if "register_blueprint" in s:
-            score += 2
+            score += 5
             notes.append("register_blueprint")
         if "include_router" in s:
-            score += 2
+            score += 5
             notes.append("include_router")
+        if "app.run" in s or "uvicorn.run" in s:
+            score += 3
+            notes.append("runner")
+
+        if rel == "src/socmint/dashboard.py":
+            score += 100
 
         if score:
             candidates.append({"path": rel, "score": score, "notes": notes})
 
-    def priority(item):
-        path = item["path"]
-        bonus = 0
-        if path == "src/socmint/dashboard.py":
-            bonus += 100
-        if path.startswith("src/"):
-            bonus += 20
-        if "dashboard" in path or "main" in path or "app" in path:
-            bonus += 10
-        if path.startswith(("scripts/", "tests/", "release/")):
-            bonus -= 100
-        return (item["score"] + bonus, item["score"])
-
-    candidates.sort(key=priority, reverse=True)
+    candidates.sort(key=lambda x: x["score"], reverse=True)
 
     return {
-        "candidates": candidates[:25],
         "primary_guess": candidates[0] if candidates else None,
+        "candidates": candidates[:25],
     }
 
 
@@ -164,160 +160,160 @@ def alembic_info() -> Dict[str, Any]:
     script_location = cfg.get("alembic", "script_location", fallback="alembic")
     versions_dir = ROOT / script_location / "versions"
 
-    code_heads, heads_out = run(["alembic", "heads"])
-    code_history, history_out = run(["alembic", "history", "--verbose"])
+    heads_code, heads_out = run(["alembic", "heads"])
+    history_code, history_out = run(["alembic", "history", "--verbose"])
 
-    migration_files = []
+    heads = [line.split()[0] for line in heads_out.splitlines() if line.strip()]
+    migrations = []
+
     if versions_dir.exists():
         for p in sorted(versions_dir.glob("*.py")):
             s = read(p)
             rev = re.search(r"revision\s*=\s*['\"]([^'\"]+)['\"]", s)
             down = re.search(r"down_revision\s*=\s*['\"]([^'\"]+)['\"]", s)
-            migration_files.append({
+            migrations.append({
                 "file": str(p.relative_to(ROOT)),
                 "revision": rev.group(1) if rev else None,
                 "down_revision": down.group(1) if down else None,
             })
 
-    heads = [line.split()[0] for line in heads_out.splitlines() if line.strip() and not line.startswith("Rev:")]
-    revisions = [m["revision"] for m in migration_files if m["revision"]]
-    down_revisions = [m["down_revision"] for m in migration_files if m["down_revision"]]
-
-    orphan_downs = sorted(set(down_revisions) - set(revisions))
-    duplicate_revs = sorted({r for r in revisions if revisions.count(r) > 1})
+    revisions = [m["revision"] for m in migrations if m["revision"]]
+    duplicate_revisions = sorted({r for r in revisions if revisions.count(r) > 1})
 
     return {
         "script_location": script_location,
         "versions_dir": str(versions_dir.relative_to(ROOT)) if versions_dir.exists() else str(versions_dir),
-        "heads_command_ok": code_heads == 0,
+        "heads_command_ok": heads_code == 0,
         "heads": heads,
         "raw_heads": heads_out,
-        "history_command_ok": code_history == 0,
+        "history_command_ok": history_code == 0,
         "history_excerpt": history_out[-4000:],
-        "migration_files": migration_files,
-        "migration_count": len(migration_files),
-        "orphan_down_revisions": orphan_downs,
-        "duplicate_revisions": duplicate_revs,
+        "migration_count": len(migrations),
+        "migration_files": migrations,
+        "duplicate_revisions": duplicate_revisions,
         "sole_expected_head": heads == ["0017_v12_10_schema_reconciliation"],
     }
 
 
-def model_table_names() -> Dict[str, Any]:
+def model_tables() -> Dict[str, Any]:
     tables: Set[str] = set()
-    model_files = []
+    files = []
 
-    for p in find_files(["*.py"]):
+    for p in py_files():
         s = read(p)
         rel = str(p.relative_to(ROOT))
-        local_tables = set()
+        local = set()
 
         for m in re.finditer(r"__tablename__\s*=\s*['\"]([^'\"]+)['\"]", s):
-            tables.add(m.group(1))
-            local_tables.add(m.group(1))
-
-        # Also catch SQLAlchemy Core Table("name", ...)
+            local.add(m.group(1))
         for m in re.finditer(r"\bTable\(\s*['\"]([^'\"]+)['\"]", s):
-            tables.add(m.group(1))
-            local_tables.add(m.group(1))
+            local.add(m.group(1))
 
-        if local_tables:
-            model_files.append({"file": rel, "tables": sorted(local_tables)})
+        if local:
+            tables.update(local)
+            files.append({"file": rel, "tables": sorted(local)})
 
     return {
         "tables": sorted(tables),
         "table_count": len(tables),
-        "model_files": model_files,
+        "model_files": files,
     }
 
 
-def migration_table_names() -> Dict[str, Any]:
-    tables: Set[str] = set()
-    migration_files = []
-
+def migration_tables() -> Dict[str, Any]:
     cfg = configparser.ConfigParser()
     cfg.read(ROOT / "alembic.ini")
     script_location = cfg.get("alembic", "script_location", fallback="alembic")
     versions_dir = ROOT / script_location / "versions"
+
+    tables: Set[str] = set()
+    files = []
 
     if not versions_dir.exists():
         return {"tables": [], "table_count": 0, "migration_files": []}
 
     for p in sorted(versions_dir.glob("*.py")):
         s = read(p)
+        rel = str(p.relative_to(ROOT))
         local = set()
 
-        for pattern in [
+        patterns = [
             r"op\.create_table\(\s*['\"]([^'\"]+)['\"]",
             r"_create_if_missing\(\s*['\"]([^'\"]+)['\"]",
             r"op\.drop_table\(\s*['\"]([^'\"]+)['\"]",
             r"_drop_if_exists\(\s*['\"]([^'\"]+)['\"]",
-        ]:
+        ]
+
+        for pattern in patterns:
             for m in re.finditer(pattern, s):
-                tables.add(m.group(1))
                 local.add(m.group(1))
 
         if local:
-            migration_files.append({"file": str(p.relative_to(ROOT)), "tables": sorted(local)})
+            tables.update(local)
+            files.append({"file": rel, "tables": sorted(local)})
 
     return {
         "tables": sorted(tables),
         "table_count": len(tables),
-        "migration_files": migration_files,
+        "migration_files": files,
     }
 
 
 def compare_models_migrations() -> Dict[str, Any]:
-    models = model_table_names()
-    migrations = migration_table_names()
+    models = model_tables()
+    migrations = migration_tables()
 
-    model_tables = set(models["tables"])
-    migration_tables = set(migrations["tables"])
+    model_set = set(models["tables"])
+    migration_set = set(migrations["tables"])
 
     return {
         "models": models,
         "migrations": migrations,
-        "tables_in_models_not_migrations": sorted(model_tables - migration_tables),
-        "tables_in_migrations_not_models": sorted(migration_tables - model_tables),
-        "models_covered_by_migrations": len(model_tables - migration_tables) == 0,
+        "tables_in_models_not_migrations": sorted(model_set - migration_set),
+        "tables_in_migrations_not_models": sorted(migration_set - model_set),
+        "models_covered_by_migrations": len(model_set - migration_set) == 0,
     }
 
 
 def route_static_scan() -> Dict[str, Any]:
-    routes = set()
-    route_files = []
+    routes: Set[str] = set()
+    files = []
 
-    for p in find_files(["*.py"]):
+    for p in py_files(include_scripts=True):
+        if any(part in {"tests", "release"} for part in p.parts):
+            continue
         s = read(p)
         rel = str(p.relative_to(ROOT))
         local = set()
 
-        # Flask decorators: @bp.get("/x"), @app.post("/x"), @route("/x")
         for m in re.finditer(r"@\w+\.(?:route|get|post|put|delete|patch)\(\s*['\"]([^'\"]+)['\"]", s):
-            routes.add(m.group(1))
             local.add(m.group(1))
-
         for m in re.finditer(r"@(?:route|get|post|put|delete|patch)\(\s*['\"]([^'\"]+)['\"]", s):
-            routes.add(m.group(1))
-            local.add(m.group(1))
-
-        # FastAPI router declarations with prefix=
-        for m in re.finditer(r"APIRouter\(\s*prefix\s*=\s*['\"]([^'\"]+)['\"]", s):
-            routes.add(m.group(1))
             local.add(m.group(1))
 
         if local:
-            route_files.append({"file": rel, "routes": sorted(local)})
+            routes.update(local)
+            files.append({"file": rel, "routes": sorted(local)})
 
     return {
         "routes": sorted(routes),
         "route_count": len(routes),
-        "route_files": route_files,
+        "route_files": files,
     }
 
 
-def _ensure_v12_blueprints_on_app(app: Any) -> Dict[str, Any]:
-    """Idempotently register v12 blueprints on a Flask app if missing."""
-    info: Dict[str, Any] = {
+def _fresh_import_runtime_modules() -> None:
+    for name in [
+        "src.socmint.dashboard",
+        "src.socmint.v12_10_command_center_routes",
+        "src.socmint.v12_10_29_ui",
+    ]:
+        if name in sys.modules:
+            del sys.modules[name]
+
+
+def _force_register_blueprints(app: Any) -> Dict[str, Any]:
+    info = {
         "attempted": False,
         "registered": [],
         "skipped": [],
@@ -327,11 +323,11 @@ def _ensure_v12_blueprints_on_app(app: Any) -> Dict[str, Any]:
     try:
         before = {str(rule) for rule in app.url_map.iter_rules()}
     except Exception as exc:
-        info["errors"].append(f"could not inspect routes before lock: {exc!r}")
+        info["errors"].append(f"inspect-before-failed: {exc!r}")
         return info
 
     if not (EXPECTED_V12_ROUTES - before):
-        info["skipped"].append("all expected routes already present")
+        info["skipped"].append("all expected v12 routes already present")
         return info
 
     info["attempted"] = True
@@ -342,34 +338,30 @@ def _ensure_v12_blueprints_on_app(app: Any) -> Dict[str, Any]:
 
         for bp in [command_bp, ui_bp]:
             current = {str(rule) for rule in app.url_map.iter_rules()}
-            missing = EXPECTED_V12_ROUTES - current
-            if not missing:
+            if not (EXPECTED_V12_ROUTES - current):
                 break
 
-            if bp.name in app.blueprints:
-                # Blueprint name exists but expected rules are still absent.
-                # Register the same blueprint under a unique alias so Flask
-                # gets real route rules without endpoint-name collisions.
-                alias = f"{bp.name}_forced_v12_10_31D"
-
-                if alias in app.blueprints:
-                    info["skipped"].append(f"{alias} already registered")
-                    continue
-
-                app.register_blueprint(bp, name=alias)
-                info["registered"].append(alias)
-                continue
-
-            app.register_blueprint(bp)
-            info["registered"].append(bp.name)
+            try:
+                if bp.name in app.blueprints:
+                    alias = f"{bp.name}_forced_{VERSION.replace('.', '_')}"
+                    if alias in app.blueprints:
+                        info["skipped"].append(f"{alias} already registered")
+                        continue
+                    app.register_blueprint(bp, name=alias)
+                    info["registered"].append(alias)
+                else:
+                    app.register_blueprint(bp)
+                    info["registered"].append(bp.name)
+            except Exception as exc:
+                info["errors"].append(f"{bp.name}: {exc!r}")
 
     except Exception as exc:
-        info["errors"].append(repr(exc))
+        info["errors"].append(f"import-blueprints-failed: {exc!r}")
 
     return info
 
 
-def runtime_flask_routes() -> Dict[str, Any]:
+def runtime_v12_route_smoke() -> Dict[str, Any]:
     result: Dict[str, Any] = {
         "attempted": False,
         "ok": False,
@@ -379,6 +371,7 @@ def runtime_flask_routes() -> Dict[str, Any]:
         "routes": [],
         "missing_v12_routes_before_lock": sorted(EXPECTED_V12_ROUTES),
         "missing_v12_routes": sorted(EXPECTED_V12_ROUTES),
+        "missing_v12_route_count": len(EXPECTED_V12_ROUTES),
         "route_lock": {},
         "error": None,
     }
@@ -395,60 +388,35 @@ def runtime_flask_routes() -> Dict[str, Any]:
         if root_str not in sys.path:
             sys.path.insert(0, root_str)
 
-        # Avoid stale module state when audit is run after tests/tools.
-        for name in [
-            "src.socmint.dashboard",
-            "src.socmint.v12_10_command_center_routes",
-            "src.socmint.v12_10_29_ui",
-        ]:
-            if name in sys.modules:
-                del sys.modules[name]
+        _fresh_import_runtime_modules()
 
         dashboard = importlib.import_module("src.socmint.dashboard")
         result["dashboard_module_file"] = getattr(dashboard, "__file__", None)
 
         app = dashboard.create_app()
 
-        routes_before = sorted(str(rule) for rule in app.url_map.iter_rules())
-        result["routes_before_lock"] = routes_before
-        result["missing_v12_routes_before_lock"] = sorted(EXPECTED_V12_ROUTES - set(routes_before))
+        before = sorted(str(rule) for rule in app.url_map.iter_rules())
+        result["routes_before_lock"] = before
+        result["missing_v12_routes_before_lock"] = sorted(EXPECTED_V12_ROUTES - set(before))
 
-        result["route_lock"] = _ensure_v12_blueprints_on_app(app)
+        result["route_lock"] = _force_register_blueprints(app)
 
-        routes_after = sorted(str(rule) for rule in app.url_map.iter_rules())
-        result["routes_after_lock"] = routes_after
-        result["routes"] = routes_after
-        result["missing_v12_routes"] = sorted(EXPECTED_V12_ROUTES - set(routes_after))
-        result["ok"] = len(result["missing_v12_routes"]) == 0
-
-        return result
+        after = sorted(str(rule) for rule in app.url_map.iter_rules())
+        result["routes_after_lock"] = after
+        result["routes"] = after
+        result["missing_v12_routes"] = sorted(EXPECTED_V12_ROUTES - set(after))
+        result["missing_v12_route_count"] = len(result["missing_v12_routes"])
+        result["ok"] = result["missing_v12_route_count"] == 0
 
     except Exception as exc:
         result["error"] = repr(exc)
-        return result
-
-def runtime_v12_route_smoke() -> Dict[str, Any]:
-    """Single source of truth for v12 runtime route audit.
-
-    This wrapper normalizes the route audit result so main(), tests, and
-    report generation all consume the same route-lock result.
-    """
-    result = runtime_flask_routes()
-
-    routes = set(result.get("routes_after_lock") or result.get("routes") or [])
-    missing = sorted(EXPECTED_V12_ROUTES - routes)
-
-    result["routes"] = sorted(routes)
-    result["missing_v12_routes"] = missing
-    result["missing_v12_route_count"] = len(missing)
-    result["ok"] = len(missing) == 0
-
-    if missing:
-        result["route_lock_errors"] = result.get("route_lock", {}).get("errors", [])
-        result["route_lock_registered"] = result.get("route_lock", {}).get("registered", [])
-        result["route_lock_skipped"] = result.get("route_lock", {}).get("skipped", [])
 
     return result
+
+
+# Backward-compatible alias used by older tests.
+def runtime_flask_routes() -> Dict[str, Any]:
+    return runtime_v12_route_smoke()
 
 
 def version_metadata() -> Dict[str, Any]:
@@ -456,7 +424,6 @@ def version_metadata() -> Dict[str, Any]:
 
     init_py = ROOT / "src" / "socmint" / "__init__.py"
     pyproject = ROOT / "pyproject.toml"
-    release_manifest = ROOT / "release" / "V12_10_29_RELEASE_MANIFEST.json"
 
     init_text = read(init_py)
     pyproject_text = read(pyproject)
@@ -467,62 +434,48 @@ def version_metadata() -> Dict[str, Any]:
     items["src/socmint/__init__.py"] = init_match.group(1) if init_match else None
     items["pyproject.toml"] = pyproject_match.group(1) if pyproject_match else None
 
-    historical_manifests = {}
-    for mf in sorted((ROOT / "release").glob("V*_RELEASE_MANIFEST.json")):
-        try:
-            historical_manifests[str(mf.relative_to(ROOT))] = json.loads(mf.read_text()).get("version")
-        except Exception as exc:
-            historical_manifests[str(mf.relative_to(ROOT))] = f"ERROR: {exc}"
-
-    active_items = {
-        k: v for k, v in items.items()
-        if k in {"src/socmint/__init__.py", "pyproject.toml"}
-    }
-
-    versions = [v for v in active_items.values() if isinstance(v, str)]
+    versions = [v for v in items.values() if isinstance(v, str)]
     unique = sorted(set(versions))
 
     return {
         "items": items,
-        "historical_manifests": historical_manifests,
         "unique_versions": unique,
         "metadata_consistent": len(unique) <= 1,
-        "expected_current": EXPECTED_VERSION,
+        "expected_current": VERSION,
     }
 
 
 def write_reports(checks: List[Check], summary: Dict[str, Any]) -> None:
-    RELEASE_DIR.mkdir(parents=True, exist_ok=True)
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
     payload = {
-        "audit": "v12.10.31E Drift Lock Audit",
+        "audit": f"v{VERSION} Drift Lock Audit",
         "summary": summary,
         "checks": [c.as_dict() for c in checks],
     }
 
     REPORT_JSON.write_text(json.dumps(payload, indent=2, sort_keys=True))
 
-    lines = []
-    lines.append("# v12.10.31E Drift Lock Audit Report")
-    lines.append("")
-    lines.append(f"Overall: **{summary['overall_status']}**")
-    lines.append("")
-    lines.append("## Summary")
-    lines.append("")
-    for k, v in summary.items():
-        lines.append(f"- **{k}**: `{v}`")
-    lines.append("")
-    lines.append("## Checks")
-    lines.append("")
-    for c in checks:
-        lines.append(f"### {c.name}: {c.status}")
+    lines = [
+        f"# v{VERSION} Drift Lock Audit Report",
+        "",
+        f"Overall: **{summary['overall_status']}**",
+        "",
+        "## Summary",
+        "",
+    ]
+
+    for key, value in summary.items():
+        lines.append(f"- **{key}**: `{value}`")
+
+    lines.extend(["", "## Checks", ""])
+
+    for check in checks:
+        lines.append(f"### {check.name}: {check.status}")
         lines.append("")
-        if isinstance(c.detail, (dict, list)):
-            lines.append("```json")
-            lines.append(json.dumps(c.detail, indent=2, sort_keys=True))
-            lines.append("```")
-        else:
-            lines.append(str(c.detail))
+        lines.append("```json")
+        lines.append(json.dumps(check.detail, indent=2, sort_keys=True))
+        lines.append("```")
         lines.append("")
 
     REPORT_MD.write_text("\n".join(lines))
@@ -536,23 +489,23 @@ def main() -> int:
     checks.append(Check("framework_detection", "PASS" if framework_ok else "FAIL", framework))
 
     entrypoints = identify_entrypoints()
-    entry_ok = bool(entrypoints["primary_guess"])
+    primary = entrypoints.get("primary_guess")
+    entry_ok = bool(primary and primary.get("path") == "src/socmint/dashboard.py")
     checks.append(Check("entrypoint_detection", "PASS" if entry_ok else "FAIL", entrypoints))
 
     alembic = alembic_info()
-    alembic_ok = bool(alembic["heads"]) and not alembic["duplicate_revisions"]
+    alembic_ok = alembic.get("sole_expected_head") and not alembic.get("duplicate_revisions")
     checks.append(Check("alembic_heads_and_chain", "PASS" if alembic_ok else "FAIL", alembic))
 
     model_migration = compare_models_migrations()
-    # Warning, not hard fail: legacy repos can have reflected/runtime tables.
     model_ok = model_migration["models_covered_by_migrations"]
     checks.append(Check("models_vs_migrations", "PASS" if model_ok else "WARN", model_migration))
 
     static_routes = route_static_scan()
-    runtime_routes = runtime_v12_route_smoke()
-
-    route_ok = runtime_routes.get("missing_v12_route_count", len(runtime_routes.get("missing_v12_routes", []))) == 0
     checks.append(Check("static_route_scan", "PASS", static_routes))
+
+    runtime_routes = runtime_v12_route_smoke()
+    route_ok = runtime_routes["missing_v12_route_count"] == 0
     checks.append(Check("runtime_v12_route_registration", "PASS" if route_ok else "FAIL", runtime_routes))
 
     versions = version_metadata()
@@ -571,10 +524,10 @@ def main() -> int:
         "fail_count": fail_count,
         "warn_count": warn_count,
         "framework": framework["framework"],
-        "primary_entrypoint": entrypoints["primary_guess"]["path"] if entrypoints["primary_guess"] else None,
-        "alembic_heads": ",".join(alembic["heads"]),
-        "missing_v12_routes": runtime_routes.get("missing_v12_route_count", len(runtime_routes.get("missing_v12_routes", []))),
+        "primary_entrypoint": primary.get("path") if primary else None,
         "dashboard_module_file": runtime_routes.get("dashboard_module_file"),
+        "alembic_heads": ",".join(alembic.get("heads", [])),
+        "missing_v12_routes": runtime_routes["missing_v12_route_count"],
         "route_lock_errors": len(runtime_routes.get("route_lock", {}).get("errors", [])),
         "route_lock_registered": ",".join(runtime_routes.get("route_lock", {}).get("registered", [])),
         "route_lock_skipped": ",".join(runtime_routes.get("route_lock", {}).get("skipped", [])),
