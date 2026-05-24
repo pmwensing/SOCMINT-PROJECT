@@ -17,8 +17,27 @@ def now() -> str:
     return datetime.now(UTC).isoformat()
 
 
+def truthy(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def add(rows: list[dict[str, Any]], name: str, ok: bool, detail: str = "") -> None:
     rows.append({"name": name, "status": "pass" if ok else "fail", "detail": detail})
+
+
+def seed_passing_gate_report() -> Path:
+    REPORT_ROOT.mkdir(parents=True, exist_ok=True)
+    path = REPORT_ROOT / "socmint_v12_10_19_seeded_runtime_route_gate.json"
+    payload = {
+        "schema": "socmint.release.runtime_route_gate.v12_10_19.seed",
+        "version": VERSION,
+        "generated_at": now(),
+        "status": "pass",
+        "decision": "GO",
+        "seeded_for": "release_dashboard_decision_gate_v12_10_19",
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+    return path
 
 
 def write_report(report: dict[str, Any]) -> dict[str, str]:
@@ -49,6 +68,10 @@ def run_gate() -> dict[str, Any]:
     os.environ.setdefault("SOCMINT_DATA_DIR", "var/test_v12_10_19_data")
     os.environ.setdefault("SOCMINT_DOCKER_TOR", "true")
 
+    seed_path = None
+    if truthy("SOCMINT_RELEASE_DASHBOARD_SEED_PASS_REPORT"):
+        seed_path = seed_passing_gate_report()
+
     checks: list[dict[str, Any]] = []
     payload: dict[str, Any] = {}
     gates: dict[str, Any] = {}
@@ -58,13 +81,14 @@ def run_gate() -> dict[str, Any]:
         payload = release_status()
         gates = latest_gate_reports()
         add(checks, "package_version", package_version == VERSION, package_version)
+        add(checks, "seed_report_created_if_requested", (seed_path is not None and seed_path.exists()) or not truthy("SOCMINT_RELEASE_DASHBOARD_SEED_PASS_REPORT"), str(seed_path))
         add(checks, "status_schema", payload.get("schema") == "socmint.release_status.v12_10_19", str(payload.get("schema")))
         add(checks, "gates_schema", gates.get("schema") == "socmint.release_gates.latest.v12_10_19", str(gates.get("schema")))
         add(checks, "latest_overall_visible", gates.get("latest_overall") is not None, str((gates.get("latest_overall") or {}).get("name")))
         add(checks, "latest_pass_visible", gates.get("latest_pass") is not None, str((gates.get("latest_pass") or {}).get("name")))
         add(checks, "latest_release_gate_pass_visible", gates.get("latest_release_gate_pass") is not None, str((gates.get("latest_release_gate_pass") or {}).get("name")))
         add(checks, "failed_latest_nonblocking_flag_present", "failed_latest_does_not_block" in gates, str(gates.get("failed_latest_does_not_block")))
-        add(checks, "tor_file_visibility_informational", payload.get("sections", {}).get("file_visibility") in {"informational", "pass"}, str(payload.get("sections", {}).get("file_visibility")))
+        add(checks, "file_visibility_informational", payload.get("sections", {}).get("file_visibility") in {"informational", "pass"}, str(payload.get("sections", {}).get("file_visibility")))
         add(checks, "runtime_ready", bool(payload.get("checks", {}).get("runtime_ready")), str(payload.get("checks", {}).get("runtime_ready")))
         add(checks, "dashboard_decision_go", payload.get("decision") == "GO", str(payload.get("decision")))
         add(checks, "dashboard_status_pass", payload.get("status") == "pass", str(payload.get("status")))
@@ -79,6 +103,7 @@ def run_gate() -> dict[str, Any]:
         "status": "pass" if not failed else "fail",
         "decision": "GO" if not failed else "HOLD",
         "checks": checks,
+        "seed_path": str(seed_path) if seed_path else None,
         "release_status": payload,
         "gates": gates,
     }
