@@ -1,41 +1,17 @@
-name: SOCMINT v12.10.17 Verify
+name: SOCMINT v12.10.17 Verify Superseded
 
 on:
-  pull_request:
-    branches: [master]
-  push:
-    branches: [master, 'feat/**']
   workflow_dispatch:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
-  verify:
+  superseded:
+    name: Superseded by v12.10.18 UI verification
     runs-on: ubuntu-latest
-    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: pip
-      - name: Install
+      - name: Explain supersession
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -e .
-      - name: Run verifier
-        env:
-          SOCMINT_CI_MODE: 'true'
-        run: bash scripts/post_merge_master_verify_v12_10_17.sh
-      - name: Upload reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: socmint-v12-10-17-verify-${{ github.run_id }}
-          path: |
-            var/socmint/rc_reports/*.json
-            var/socmint/rc_reports/*.md
-          if-no-files-found: warn
-          retention-days: 30
+          echo "SOCMINT v12.10.17 verifier is superseded on v12.10.18 release UI branches."
+          echo "Use .github/workflows/v12_10_18_verify.yml instead."
