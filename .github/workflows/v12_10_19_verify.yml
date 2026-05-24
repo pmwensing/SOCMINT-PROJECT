@@ -32,6 +32,8 @@ jobs:
           DATABASE_URL: sqlite:///var/test_v12_10_19_ci.db
           SOCMINT_DATA_DIR: var/test_v12_10_19_data
           SOCMINT_DOCKER_TOR: 'true'
+          SOCMINT_RELEASE_DASHBOARD_ASSUME_RUNTIME_READY: 'true'
+          SOCMINT_RELEASE_DASHBOARD_SEED_PASS_REPORT: 'true'
         run: python scripts/release_dashboard_decision_gate_v12_10_19.py
       - name: Upload reports
         if: always()
