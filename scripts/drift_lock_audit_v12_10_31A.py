@@ -15,8 +15,8 @@ from typing import Any, Dict, List, Set, Tuple
 
 ROOT = Path.cwd()
 RELEASE_DIR = ROOT / "release" / "drift_lock"
-REPORT_JSON = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31C.json"
-REPORT_MD = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31C.md"
+REPORT_JSON = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31D.json"
+REPORT_MD = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31D.md"
 
 EXPECTED_V12_ROUTES = {
     "/api/v12.10/command-center/cases/<case_id>/run-all",
@@ -29,7 +29,7 @@ EXPECTED_V12_ROUTES = {
     "/api/v12.10/ui/command-center",
 }
 
-EXPECTED_VERSION = "12.10.31C"
+EXPECTED_VERSION = "12.10.31D"
 
 
 class Check:
@@ -342,11 +342,22 @@ def _ensure_v12_blueprints_on_app(app: Any) -> Dict[str, Any]:
 
         for bp in [command_bp, ui_bp]:
             current = {str(rule) for rule in app.url_map.iter_rules()}
-            if not (EXPECTED_V12_ROUTES - current):
+            missing = EXPECTED_V12_ROUTES - current
+            if not missing:
                 break
 
             if bp.name in app.blueprints:
-                info["skipped"].append(f"{bp.name} already in app.blueprints")
+                # Blueprint name exists but expected rules are still absent.
+                # Register the same blueprint under a unique alias so Flask
+                # gets real route rules without endpoint-name collisions.
+                alias = f"{bp.name}_forced_v12_10_31D"
+
+                if alias in app.blueprints:
+                    info["skipped"].append(f"{alias} already registered")
+                    continue
+
+                app.register_blueprint(bp, name=alias)
+                info["registered"].append(alias)
                 continue
 
             app.register_blueprint(bp)
@@ -460,7 +471,7 @@ def write_reports(checks: List[Check], summary: Dict[str, Any]) -> None:
     RELEASE_DIR.mkdir(parents=True, exist_ok=True)
 
     payload = {
-        "audit": "v12.10.31C Drift Lock Audit",
+        "audit": "v12.10.31D Drift Lock Audit",
         "summary": summary,
         "checks": [c.as_dict() for c in checks],
     }
@@ -468,7 +479,7 @@ def write_reports(checks: List[Check], summary: Dict[str, Any]) -> None:
     REPORT_JSON.write_text(json.dumps(payload, indent=2, sort_keys=True))
 
     lines = []
-    lines.append("# v12.10.31C Drift Lock Audit Report")
+    lines.append("# v12.10.31D Drift Lock Audit Report")
     lines.append("")
     lines.append(f"Overall: **{summary['overall_status']}**")
     lines.append("")
