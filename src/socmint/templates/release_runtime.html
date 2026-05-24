@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="page-header">
+    <div>
+      <h1>Release Runtime Readiness</h1>
+      <p>Local app readiness is separated from Tor hidden-service visibility.</p>
+    </div>
+    <div class="status-pill {{ 'ok' if payload.decision == 'GO' else 'warn' }}">
+      {{ payload.decision }} / {{ payload.status }}
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Local Runtime Checks</h2>
+  <table class="data-table">
+    <thead><tr><th>Check</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for key, val in payload.checks.items() %}
+      <tr>
+        <td>{{ key }}</td>
+        <td><span class="badge {{ 'ok' if val else 'warn' }}">{{ 'pass' if val else 'needs review' }}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>HTTP Probes</h2>
+  <table class="data-table">
+    <thead><tr><th>Probe</th><th>URL</th><th>Status</th><th>Error</th></tr></thead>
+    <tbody>
+    {% for name, probe in payload.local.items() %}
+      <tr>
+        <td>{{ name }}</td>
+        <td><code>{{ probe.url if probe.url is defined else probe.host ~ ':' ~ probe.port }}</code></td>
+        <td><span class="badge {{ 'ok' if probe.ok else 'warn' }}">{{ probe.status_code if probe.status_code is defined else ('pass' if probe.ok else 'fail') }}</span></td>
+        <td>{{ probe.error }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Tor Hidden Service</h2>
+  <p>These checks are informational for dashboard GO unless onion publishing is explicitly required.</p>
+  <table class="data-table">
+    <tbody>
+      <tr><td>torrc available</td><td>{{ payload.tor_hidden_service.torrc_available }}</td></tr>
+      <tr><td>hidden service dir</td><td>{{ payload.tor_hidden_service.hidden_service_dir_present }}</td></tr>
+      <tr><td>hostname present</td><td>{{ payload.tor_hidden_service.hostname_present }}</td></tr>
+      <tr><td>hostname</td><td><code>{{ payload.tor_hidden_service.hostname }}</code></td></tr>
+      <tr><td>hostname format valid</td><td>{{ payload.tor_hidden_service.hostname_format_valid }}</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Raw API</h2>
+  <p><a href="/api/v1/release/runtime">/api/v1/release/runtime</a></p>
+  <p><a href="/release/status">Back to Release Status</a></p>
+</section>
+{% endblock %}

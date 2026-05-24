@@ -7,10 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from .tor_production import tor_hidden_service_diagnostics
+from .release_runtime_readiness_v12_10_21 import release_runtime_readiness
 from .version import RELEASE_CHANNEL, RELEASE_NAME, RELEASE_TAG, VERSION, version_payload
 
-SCHEMA = "socmint.release_status.v12_10_19"
-GATES_SCHEMA = "socmint.release_gates.latest.v12_10_19"
+SCHEMA = "socmint.release_status.v12_10_21"
+GATES_SCHEMA = "socmint.release_gates.latest.v12_10_21"
 DEFAULT_REPORT_ROOT = Path("var/socmint/rc_reports")
 PASS_DECISIONS = {"GO", "PASS", None, ""}
 
@@ -147,7 +148,9 @@ def runtime_health() -> dict[str, Any]:
 def release_status(root: str | Path = ".", report_root: str | Path = DEFAULT_REPORT_ROOT) -> dict[str, Any]:
     manifest = _manifest(root)
     gates = latest_gate_reports(report_root)
-    runtime = runtime_health()
+    legacy_runtime = runtime_health()
+    split_runtime = release_runtime_readiness()
+    runtime = {**legacy_runtime, **split_runtime, "legacy_tor_diagnostics": legacy_runtime}
     required = [
         "release/CURRENT_STATUS.json",
         "release/V12_10_18_RELEASE_STATUS_DASHBOARD_UI.md",
@@ -162,7 +165,7 @@ def release_status(root: str | Path = ".", report_root: str | Path = DEFAULT_REP
         "required_files_present": all(files.values()),
         "report_available": gates.get("report_count", 0) > 0,
         "latest_pass_gate_available": gates.get("latest_release_gate_pass") is not None,
-        "runtime_ready": bool(runtime.get("runtime_ready")),
+        "runtime_ready": bool(split_runtime.get("local_runtime_ready")),
     }
     blocking = {
         "version_manifest_match": checks["version_manifest_match"],

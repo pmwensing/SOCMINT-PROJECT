@@ -14,6 +14,7 @@ from .hidden_service_diagnostics_routes_v12_10_16 import register_hidden_service
 from .release_status_routes_v12_10_17 import register_release_status_routes
 from .release_status_ui_routes_v12_10_18 import register_release_status_ui_routes
 from .release_mount_routes_v12_10_20 import register_release_mount_routes
+from .release_runtime_routes_v12_10_21 import register_release_runtime_routes
 from .analyst_ux_routes import register_analyst_ux_routes
 from .export_quality_routes import register_export_quality_routes
 from .connector_sdk_routes import register_connector_sdk_routes
@@ -54,6 +55,7 @@ register_hidden_service_diagnostics_routes(app)
 register_release_status_routes(app)
 register_release_status_ui_routes(app)
 register_release_mount_routes(app)
+register_release_runtime_routes(app)
 register_analyst_ux_routes(app)
 register_export_quality_routes(app)
 register_connector_sdk_routes(app)

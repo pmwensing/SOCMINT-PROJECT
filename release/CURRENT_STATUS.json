@@ -1,19 +1,29 @@
 {
-  "schema": "socmint.release.current_status.v12_10_20",
-  "version": "12.10.20",
-  "release_tag": "v12.10.20-rc1",
-  "release_name": "Release Dashboard Container Mount Contract + Self-Healing Operator Fix",
+  "schema": "socmint.release.current_status.v12_10_21",
+  "version": "12.10.21",
+  "release_tag": "v12.10.21-rc1",
+  "release_name": "Runtime Readiness Diagnostic Split + Tor Nonblocking Dashboard Policy",
   "release_channel": "rc",
-  "baseline_commit": "0ef0c835dcaa5983fde04a8056b7c882e9e50adf",
-  "status": "release-mount-contract-added",
+  "baseline_commit": "local-v12.10.20",
+  "status": "runtime-readiness-split-added",
   "ui_routes": [
     "/release/status",
     "/release/gates",
-    "/release/mounts"
+    "/release/mounts",
+    "/release/runtime"
   ],
   "api_routes": [
     "/api/v1/release/status",
     "/api/v1/release/gates/latest",
-    "/api/v1/release/mounts"
+    "/api/v1/release/mounts",
+    "/api/v1/release/runtime"
+  ],
+  "required_pass_criteria": [
+    "local app socket passes",
+    "local app readyz passes",
+    "release status can reach GO without Tor file visibility",
+    "Tor hidden service fields are informational",
+    "runtime readiness page shows local and Tor sections",
+    "runtime gate writes JSON and Markdown"
   ]
 }
