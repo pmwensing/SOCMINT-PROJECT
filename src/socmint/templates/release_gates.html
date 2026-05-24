@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+    <div class="page-header">
+        <div>
+            <h1>Release Gate Viewer</h1>
+            <p>Latest JSON gate reports discovered under <code>{{ latest.report_root }}</code>.</p>
+        </div>
+        <div class="status-pill {{ 'ok' if latest.decision == 'GO' else 'warn' }}">
+            {{ latest.decision }} / {{ latest.status }}
+        </div>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>Latest Gate</h2>
+    {% if latest.latest %}
+    <div class="grid cards-3">
+        <article class="card">
+            <h3>Decision</h3>
+            <p class="metric">{{ latest.latest.decision }}</p>
+            <p><strong>Status:</strong> {{ latest.latest.status }}</p>
+        </article>
+        <article class="card">
+            <h3>Version</h3>
+            <p class="metric">{{ latest.latest.version }}</p>
+            <p><strong>Schema:</strong> {{ latest.latest.schema }}</p>
+        </article>
+        <article class="card">
+            <h3>Report Path</h3>
+            <p><code>{{ latest.latest.path }}</code></p>
+            <p><strong>Generated:</strong> {{ latest.latest.generated_at }}</p>
+        </article>
+    </div>
+    {% else %}
+    <p>No latest gate report found.</p>
+    {% endif %}
+</section>
+
+<section class="panel">
+    <h2>Recent Gate Reports</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Version</th>
+                <th>Status</th>
+                <th>Decision</th>
+                <th>Schema</th>
+                <th>Path</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for report in reports %}
+            <tr>
+                <td>{{ report.name }}</td>
+                <td>{{ report.version | default('') }}</td>
+                <td><span class="badge {{ 'ok' if report.status == 'pass' else 'warn' }}">{{ report.status | default('unknown') }}</span></td>
+                <td>{{ report.decision | default('') }}</td>
+                <td>{{ report.schema | default('') }}</td>
+                <td><code>{{ report.path }}</code></td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6">No reports found.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<section class="panel">
+    <h2>Raw Gate API</h2>
+    <p><a href="/api/v1/release/gates/latest">/api/v1/release/gates/latest</a></p>
+    <p><a href="/release/status">Back to release status dashboard</a></p>
+</section>
+{% endblock %}
