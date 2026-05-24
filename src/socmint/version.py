@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-VERSION = "12.10.18"
-RELEASE_NAME = "Dashboard UI"
+VERSION = "12.10.19"
+RELEASE_NAME = "Decision Engine"
 RELEASE_CHANNEL = "rc"
-RELEASE_TAG = "v12.10.18-rc1"
+RELEASE_TAG = "v12.10.19-rc1"
 SCHEMA = "socmint.version"
 
 
