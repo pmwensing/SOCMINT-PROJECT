@@ -688,3 +688,20 @@ release121028:
 	cp release/V12_10_29_RELEASE_MANIFEST.json release/dist/
 	git rev-parse HEAD > release/dist/V12_10_29_COMMIT.txt
 	cd .. && zip -r SOCMINT-PROJECT-v12.10.29-release.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/node_modules/*'
+
+fixalembic121030:
+	bash scripts/fix_v12_10_30_alembic_head.sh
+
+test121030:
+	bash scripts/test_v12_10_30.sh
+
+bootstrap121030:
+	bash scripts/test_v12_10_30_true_bootstrap.sh
+
+release121030:
+	bash scripts/test_v12_10_30.sh
+	mkdir -p release/dist
+	cp release/V12_10_30_ALEMBIC_HEAD_MERGE.md release/dist/
+	cp release/V12_10_29_RELEASE_MANIFEST.json release/dist/
+	git rev-parse HEAD > release/dist/V12_10_30_COMMIT.txt
+	cd .. && zip -r SOCMINT-PROJECT-v12.10.30-release.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/node_modules/*'

@@ -1,7 +1,7 @@
-"""v12.10.22 schema reconciliation + command center tables
+"""v12.10.30 schema reconciliation command-center tables
 
 Revision ID: 0017_v12_10_schema_reconciliation
-Revises: 0004_roles_and_scan_jobs
+Revises: 0014_case_access
 Create Date: 2026-05-24
 """
 
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "0017_v12_10_schema_reconciliation"
-down_revision = "0004_roles_and_scan_jobs"
+down_revision = "0014_case_access"
 branch_labels = None
 depends_on = None
 
@@ -19,6 +19,13 @@ def _create_if_missing(name, *cols):
     inspector = sa.inspect(bind)
     if name not in inspector.get_table_names():
         op.create_table(name, *cols)
+
+
+def _drop_if_exists(name):
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if name in inspector.get_table_names():
+        op.drop_table(name)
 
 
 def upgrade():
@@ -97,4 +104,4 @@ def downgrade():
         "evidence_hash_events",
         "dossier_exports",
     ]:
-        op.drop_table(table)
+        _drop_if_exists(table)
