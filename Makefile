@@ -705,3 +705,13 @@ release121030:
 	cp release/V12_10_29_RELEASE_MANIFEST.json release/dist/
 	git rev-parse HEAD > release/dist/V12_10_30_COMMIT.txt
 	cd .. && zip -r SOCMINT-PROJECT-v12.10.30-release.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/node_modules/*'
+
+driftlock121031A:
+	bash scripts/test_v12_10_31A_drift_lock.sh
+
+test121031A:
+	bash scripts/test_v12_10_31A.sh
+
+report121031A:
+	python scripts/drift_lock_audit_v12_10_31A.py || true
+	@echo 'Report: release/drift_lock/DRIFT_LOCK_AUDIT_V12_10_31A.md'
