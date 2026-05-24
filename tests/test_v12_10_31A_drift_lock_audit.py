@@ -4,10 +4,17 @@ import json
 
 
 def load_module():
+    import sys
+
     p = Path("scripts/drift_lock_audit_v12_10_31A.py")
     assert p.exists()
     spec = importlib.util.spec_from_file_location("drift_lock", p)
     mod = importlib.util.module_from_spec(spec)
+
+    # Required for Python 3.13 dataclass annotation resolution when
+    # loading a module manually via importlib.
+    sys.modules[spec.name] = mod
+
     spec.loader.exec_module(mod)
     return mod
 

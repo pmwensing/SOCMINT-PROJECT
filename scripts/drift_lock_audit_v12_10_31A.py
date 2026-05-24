@@ -9,7 +9,6 @@ import os
 import re
 import subprocess
 import sys
-from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any, Dict, List, Set, Tuple
 
@@ -33,11 +32,18 @@ EXPECTED_V12_ROUTES = {
 EXPECTED_VERSION = "12.10.31A"
 
 
-@dataclass
 class Check:
-    name: str
-    status: str
-    detail: Any
+    def __init__(self, name: str, status: str, detail: Any):
+        self.name = name
+        self.status = status
+        self.detail = detail
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "status": self.status,
+            "detail": self.detail,
+        }
 
 
 def run(cmd: List[str]) -> Tuple[int, str]:
@@ -365,7 +371,7 @@ def write_reports(checks: List[Check], summary: Dict[str, Any]) -> None:
     payload = {
         "audit": "v12.10.31A Drift Lock Audit",
         "summary": summary,
-        "checks": [asdict(c) for c in checks],
+        "checks": [c.as_dict() for c in checks],
     }
 
     REPORT_JSON.write_text(json.dumps(payload, indent=2, sort_keys=True))
