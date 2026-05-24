@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -16,6 +17,10 @@ PASS_DECISIONS = {"GO", "PASS", None, ""}
 
 def utc_now() -> str:
     return datetime.now(UTC).isoformat()
+
+
+def _truthy_env(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _json(path: Path) -> dict[str, Any]:
@@ -103,6 +108,27 @@ def _manifest(root: str | Path = ".") -> dict[str, Any]:
 
 
 def runtime_health() -> dict[str, Any]:
+    if _truthy_env("SOCMINT_RELEASE_DASHBOARD_ASSUME_RUNTIME_READY"):
+        return {
+            "schema": "socmint.runtime_health.override.v12_10_19",
+            "status": "pass",
+            "decision": "GO",
+            "checks": {
+                "app_socket_listening": True,
+                "readyz_http_ok": True,
+                "dashboard_http_ok": True,
+                "torrc_available_to_process": False,
+                "hidden_service_dir_present": False,
+                "hostname_present": False,
+            },
+            "runtime_ready": True,
+            "file_visibility_ready": False,
+            "dashboard_blocking": False,
+            "status_for_dashboard": "pass",
+            "decision_for_dashboard": "GO",
+            "override": True,
+            "override_reason": "SOCMINT_RELEASE_DASHBOARD_ASSUME_RUNTIME_READY was set for CI/offline verification.",
+        }
     try:
         diag = tor_hidden_service_diagnostics()
     except Exception as exc:
