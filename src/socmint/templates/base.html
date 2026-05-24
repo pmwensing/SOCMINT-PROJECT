@@ -68,13 +68,15 @@
                     {{ nav_link('/assertions/trust/gate', 'Assertion Gate') }}
                 </details>
 
-                <details class="nav-group" {% if current_path.startswith('/product') %}open{% endif %}>
-                    <summary class="{{ 'active' if current_path.startswith('/product') else '' }}">Product</summary>
+                <details class="nav-group" {% if current_path.startswith('/product') or current_path.startswith('/release') %}open{% endif %}>
+                    <summary class="{{ 'active' if current_path.startswith('/product') or current_path.startswith('/release') else '' }}">Product</summary>
                     {{ nav_link('/product/build-control', 'Product Control') }}
                     {{ nav_link('/product/artifacts', 'Product Artifacts') }}
                     {{ nav_link('/product/operator-runbook', 'Operator Runbook') }}
                     {{ nav_link('/product/release-package', 'Release Package') }}
                     {{ nav_link('/product/final-release', 'Final Release') }}
+                    {{ nav_link('/release/status', 'Release Status') }}
+                    {{ nav_link('/release/gates', 'Gate Viewer') }}
                 </details>
 
                 {% if session.get('is_admin') %}
