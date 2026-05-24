@@ -12,6 +12,7 @@ from .billing_routes import register_billing_routes
 from .tor_routes import register_tor_routes
 from .hidden_service_diagnostics_routes_v12_10_16 import register_hidden_service_diagnostics_routes
 from .release_status_routes_v12_10_17 import register_release_status_routes
+from .release_status_ui_routes_v12_10_18 import register_release_status_ui_routes
 from .analyst_ux_routes import register_analyst_ux_routes
 from .export_quality_routes import register_export_quality_routes
 from .connector_sdk_routes import register_connector_sdk_routes
@@ -50,6 +51,7 @@ register_billing_routes(app)
 register_tor_routes(app)
 register_hidden_service_diagnostics_routes(app)
 register_release_status_routes(app)
+register_release_status_ui_routes(app)
 register_analyst_ux_routes(app)
 register_export_quality_routes(app)
 register_connector_sdk_routes(app)

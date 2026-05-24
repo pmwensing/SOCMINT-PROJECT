@@ -1,32 +1,41 @@
 {
-  "schema": "socmint.release.current_status.v12_10_17",
-  "version": "12.10.17",
-  "release_tag": "v12.10.17-rc1",
-  "release_name": "Master Post-Merge Release Verification + Operator Status Dashboard",
+  "schema": "socmint.release.current_status.v12_10_18",
+  "version": "12.10.18",
+  "release_tag": "v12.10.18-rc1",
+  "release_name": "Release Status Dashboard UI + Live Gate Viewer",
   "release_channel": "rc",
-  "baseline_commit": "dbfac399e74edda05f9d6f8fd8a2d3c8acde0dad",
-  "branch": "feat/v12.10.17-master-post-merge-status",
-  "status": "post-merge-verification-added",
+  "baseline_commit": "0178b3bcf7989f74f57766e2bf494f65053e6a6a",
+  "branch": "feat/v12.10.18-release-status-dashboard-ui",
+  "status": "release-status-ui-added",
+  "ui_routes": [
+    "/release/status",
+    "/release/gates"
+  ],
   "api_routes": [
     "/api/v1/release/status",
-    "/api/v1/release/gates/latest"
+    "/api/v1/release/gates/latest",
+    "/api/v1/tor/diagnostics"
   ],
   "verification_scripts": [
+    "scripts/live_release_status_smoke_v12_10_18.py",
     "scripts/post_merge_master_verify_v12_10_17.sh"
   ],
   "release_artifacts": [
-    "src/socmint/release_status_v12_10_17.py",
-    "src/socmint/release_status_routes_v12_10_17.py",
+    "src/socmint/release_status_ui_routes_v12_10_18.py",
+    "src/socmint/templates/release_status.html",
+    "src/socmint/templates/release_gates.html",
     "src/socmint/wsgi.py",
-    "scripts/post_merge_master_verify_v12_10_17.sh",
-    "release/V12_10_17_MASTER_POST_MERGE_VERIFICATION.md"
+    "scripts/live_release_status_smoke_v12_10_18.py",
+    "release/V12_10_18_RELEASE_STATUS_DASHBOARD_UI.md"
   ],
   "required_pass_criteria": [
-    "release status API route is registered",
-    "latest gates API route is registered",
+    "release status UI route is registered",
+    "release gates UI route is registered",
+    "release status template exists",
+    "release gates template exists",
+    "unauthenticated UI access redirects or denies safely",
+    "release JSON APIs remain authentication-protected",
     "version metadata matches manifest",
-    "fresh database release gate passes",
-    "latest release gate report is readable",
-    "post-merge verification writes JSON and Markdown reports"
+    "smoke script writes JSON and Markdown reports"
   ]
 }

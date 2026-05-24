@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-VERSION = "12.10.17"
-RELEASE_NAME = "Master Post-Merge Release Verification + Operator Status Dashboard"
+VERSION = "12.10.18"
+RELEASE_NAME = "Dashboard UI"
 RELEASE_CHANNEL = "rc"
-RELEASE_TAG = "v12.10.17-rc1"
-SCHEMA = "socmint.release.version.v12_10_17"
+RELEASE_TAG = "v12.10.18-rc1"
+SCHEMA = "socmint.version"
 
 
 def version_payload() -> dict[str, str]:
