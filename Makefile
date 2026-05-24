@@ -674,3 +674,17 @@ test121028:
 
 zip121028:
 	cd .. && zip -r SOCMINT-PROJECT-v12.10.28.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.venv/*'
+
+test121029:
+	bash scripts/test_v12_10_29.sh
+
+bootstrap121029:
+	bash scripts/test_v12_10_29_clean_bootstrap.sh
+
+release121028:
+	bash scripts/test_v12_10_29.sh
+	mkdir -p release/dist
+	cp release/V12_10_22_TO_V12_10_28_BUILD_PLAN.md release/dist/
+	cp release/V12_10_29_RELEASE_MANIFEST.json release/dist/
+	git rev-parse HEAD > release/dist/V12_10_29_COMMIT.txt
+	cd .. && zip -r SOCMINT-PROJECT-v12.10.29-release.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.venv/*' -x 'SOCMINT-PROJECT/node_modules/*'

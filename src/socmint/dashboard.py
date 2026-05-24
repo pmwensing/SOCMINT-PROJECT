@@ -1,3 +1,4 @@
+from .v12_10_29_ui import bp as v12_10_29_ui_bp
 from .v12_10_command_center_routes import bp as v12_10_command_center_bp
 import functools
 import json
@@ -2363,6 +2364,7 @@ def create_app(database_url=None):
 
 
         app.register_blueprint(v12_10_command_center_bp)
+        app.register_blueprint(v12_10_29_ui_bp)
     return app
 
 
@@ -6973,3 +6975,32 @@ def product_v10_bootstrap_decision():
         flash("v10 bootstrap decision recorded.", "success")
     return redirect(url_for("dashboard.product_v10_bootstrap_view"))
 # ---- end v9.9.9 final v9 line closure v10 bootstrap gate ----
+
+# --- v12.10.29 runtime route registration wrapper ---
+# Keeps existing app factory intact, then guarantees Command Center routes
+# are registered on the actual runtime Flask app returned by create_app().
+try:
+    _socmint_original_create_app_v12_10_29 = create_app
+
+    def create_app(*args, **kwargs):
+        app = _socmint_original_create_app_v12_10_29(*args, **kwargs)
+
+        try:
+            from .v12_10_command_center_routes import bp as v12_10_command_center_bp
+            from .v12_10_29_ui import bp as v12_10_29_ui_bp
+
+            if v12_10_command_center_bp.name not in app.blueprints:
+                app.register_blueprint(v12_10_command_center_bp)
+
+            if v12_10_29_ui_bp.name not in app.blueprints:
+                app.register_blueprint(v12_10_29_ui_bp)
+
+        except Exception as exc:
+            app.logger.error("v12.10.29 blueprint registration failed: %s", exc)
+            raise
+
+        return app
+
+except NameError:
+    pass
+# --- end v12.10.29 wrapper ---
