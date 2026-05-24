@@ -35,7 +35,7 @@ REQUIRED_PATHS = [
         "path": "var/socmint/rc_reports",
         "kind": "directory",
         "mount": "./var/socmint/rc_reports:/app/var/socmint/rc_reports",
-        "reason": "Release status and gate viewer need runtime JSON/Markdown gate reports.",
+        "reason": "Release status and gate viewer need runtime reports.",
     },
 ]
 
@@ -50,6 +50,7 @@ def _check_item(item: dict[str, str], root: str | Path = ".") -> dict[str, Any]:
     kind = item["kind"]
     exists = False
     detail: dict[str, Any] = {}
+
     if kind == "file":
         exists = path.is_file()
         detail["size_bytes"] = path.stat().st_size if exists else None
@@ -57,16 +58,17 @@ def _check_item(item: dict[str, str], root: str | Path = ".") -> dict[str, Any]:
         exists = path.is_dir()
         detail["entry_count"] = len(list(path.iterdir())) if exists else 0
     elif kind == "glob":
-        exists = path.is_dir() and any(path.glob(item.get("pattern", "*")))
-        detail["matches"] = sorted(str(p) for p in path.glob(item.get("pattern", "*")))[:20] if path.is_dir() else []
+        pattern = item.get("pattern", "*")
+        exists = path.is_dir() and any(path.glob(pattern))
+        detail["matches"] = sorted(str(p) for p in path.glob(pattern))[:20] if path.is_dir() else []
     else:
         detail["error"] = f"unknown kind {kind}"
-    status = "pass" if exists else "fail"
+
     return {
         **item,
         "absolute_path": str(path.resolve()) if path.exists() else str(path),
         "exists": exists,
-        "status": status,
+        "status": "pass" if exists else "fail",
         "detail": detail,
         "fix": {
             "compose_service": "app",
@@ -77,13 +79,15 @@ def _check_item(item: dict[str, str], root: str | Path = ".") -> dict[str, Any]:
 
 
 def docker_compose_patch_snippet(missing: list[dict[str, Any]]) -> str:
-    mounts = []
+    mounts: list[str] = []
     for row in missing:
         mount = row.get("mount")
         if mount and mount not in mounts:
             mounts.append(mount)
+
     if not mounts:
         return "# No missing release-dashboard mounts detected."
+
     lines = [
         "# Add these under services.app.volumes in docker-compose.yml:",
         "services:",
@@ -99,6 +103,7 @@ def release_mount_contract(root: str | Path = ".") -> dict[str, Any]:
     rows = [_check_item(item, root) for item in REQUIRED_PATHS]
     missing = [row for row in rows if row["status"] != "pass"]
     status = "pass" if not missing else "fail"
+
     return {
         "schema": SCHEMA,
         "version": VERSION,

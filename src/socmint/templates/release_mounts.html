@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="page-header">
+    <div>
+      <h1>Release Mount Contract</h1>
+      <p>Container visibility checks for release dashboard files, scripts, and report directories.</p>
+    </div>
+    <div class="status-pill {{ 'ok' if payload.decision == 'GO' else 'warn' }}">
+      {{ payload.decision }} / {{ payload.status }}
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Required Paths</h2>
+  <table class="data-table">
+    <thead><tr><th>Status</th><th>Key</th><th>Path</th><th>Required Mount</th></tr></thead>
+    <tbody>
+    {% for row in rows %}
+      <tr>
+        <td><span class="badge {{ 'ok' if row.status == 'pass' else 'warn' }}">{{ row.status }}</span></td>
+        <td>{{ row.key }}</td>
+        <td><code>{{ row.path }}</code></td>
+        <td><code>{{ row.mount }}</code></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if missing %}
+<section class="panel">
+  <h2>Missing Mounts</h2>
+  <ul>
+  {% for row in missing %}
+    <li><code>{{ row.path }}</code> needs <code>{{ row.mount }}</code></li>
+  {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="panel">
+  <h2>Raw API</h2>
+  <p><a href="/api/v1/release/mounts">/api/v1/release/mounts</a></p>
+  <p><a href="/release/status">Back to Release Status</a></p>
+</section>
+{% endblock %}

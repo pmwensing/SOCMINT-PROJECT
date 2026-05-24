@@ -16,10 +16,13 @@ services:
       SOCMINT_ALLOW_WEB_REAL_CONNECTORS: ${SOCMINT_ALLOW_WEB_REAL_CONNECTORS:-false}
       GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-180}
     volumes:
+      - ./scripts:/app/scripts:ro
+      - ./release:/app/release:ro
+      - ./var/socmint/rc_reports:/app/var/socmint/rc_reports
       - socmint-data:/var/lib/socmint
     depends_on:
       - tor
-    command: sh -c "alembic upgrade head && exec gunicorn --timeout $${GUNICORN_TIMEOUT:-180} --bind 127.0.0.1:5000 src.socmint.wsgi:app"
+    command: sh -c "alembic upgrade head && exec gunicorn --timeout $${GUNICORN_TIMEOUT:-180} --bind 0.0.0.0:5000 src.socmint.wsgi:app"
     network_mode: service:tor
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/readyz', timeout=3).read()"]
@@ -65,6 +68,8 @@ services:
       - ./deploy/tor/torrc:/etc/tor/torrc:ro
       - tor-hidden-service:/var/lib/tor/socmint
 
+    ports:
+      - "127.0.0.1:5000:5000"
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped

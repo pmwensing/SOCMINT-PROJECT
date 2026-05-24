@@ -1,49 +1,19 @@
 {
-  "schema": "socmint.release.current_status.v12_10_19",
-  "version": "12.10.19",
-  "release_tag": "v12.10.19-rc1",
-  "release_name": "Release Dashboard Decision Engine Hardening",
+  "schema": "socmint.release.current_status.v12_10_20",
+  "version": "12.10.20",
+  "release_tag": "v12.10.20-rc1",
+  "release_name": "Release Dashboard Container Mount Contract + Self-Healing Operator Fix",
   "release_channel": "rc",
-  "baseline_commit": "175d3f8e01ddc1c997c413b82d376726f6f1de39",
-  "branch": "feat/v12.10.19-release-dashboard-decision-engine",
-  "status": "release-dashboard-decision-engine-hardened",
+  "baseline_commit": "0ef0c835dcaa5983fde04a8056b7c882e9e50adf",
+  "status": "release-mount-contract-added",
   "ui_routes": [
     "/release/status",
-    "/release/gates"
+    "/release/gates",
+    "/release/mounts"
   ],
   "api_routes": [
     "/api/v1/release/status",
     "/api/v1/release/gates/latest",
-    "/api/v1/tor/diagnostics"
-  ],
-  "decision_engine": {
-    "latest_overall_report": "shown for audit context",
-    "latest_pass_report": "used for GO/HOLD gate decision",
-    "latest_release_gate_pass": "preferred over latest failed smoke report",
-    "tor_file_visibility": "informational, not dashboard-blocking",
-    "runtime_reachability": "blocking check uses app socket + readyz + dashboard HTTP"
-  },
-  "verification_scripts": [
-    "scripts/release_dashboard_decision_gate_v12_10_19.py",
-    "scripts/runtime_route_release_gate_v12_10_18.py",
-    "scripts/live_release_status_smoke_v12_10_18.py"
-  ],
-  "release_artifacts": [
-    "src/socmint/release_status_v12_10_19.py",
-    "src/socmint/release_status_routes_v12_10_17.py",
-    "src/socmint/release_status_ui_routes_v12_10_18.py",
-    "src/socmint/templates/release_status.html",
-    "src/socmint/templates/release_gates.html",
-    "scripts/release_dashboard_decision_gate_v12_10_19.py",
-    "release/V12_10_19_RELEASE_DASHBOARD_DECISION_ENGINE.md"
-  ],
-  "required_pass_criteria": [
-    "release dashboard uses v12.10.19 status service",
-    "latest gate viewer prefers latest PASS/GO report",
-    "latest overall failed report remains visible but does not block GO",
-    "required files list reflects v12.10.18/v12.10.19 artifacts",
-    "Tor file visibility is informational",
-    "Tor runtime reachability is blocking and passes when app socket, readyz, and dashboard checks pass",
-    "release dashboard decision gate returns GO"
+    "/api/v1/release/mounts"
   ]
 }
