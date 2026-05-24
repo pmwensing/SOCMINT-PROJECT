@@ -1,3 +1,4 @@
+from .v12_10_command_center_routes import bp as v12_10_command_center_bp
 import functools
 import json
 import logging
@@ -2361,6 +2362,7 @@ def create_app(database_url=None):
         app.logger.warning("failed to register product_v10 blueprint: %s", exc)
 
 
+        app.register_blueprint(v12_10_command_center_bp)
     return app
 
 

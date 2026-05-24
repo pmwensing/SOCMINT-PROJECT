@@ -668,3 +668,9 @@ test-v11-8: test-v11-7
 
 test-v11-9: test-v11-8
 	bash ./scripts/test_v11_9.sh
+
+test121028:
+	bash scripts/test_v12_10_22_to_28.sh
+
+zip121028:
+	cd .. && zip -r SOCMINT-PROJECT-v12.10.28.zip SOCMINT-PROJECT -x 'SOCMINT-PROJECT/.git/*' -x 'SOCMINT-PROJECT/storage/*' -x 'SOCMINT-PROJECT/.venv/*'
