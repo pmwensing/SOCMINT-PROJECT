@@ -7004,3 +7004,34 @@ try:
 except NameError:
     pass
 # --- end v12.10.29 wrapper ---
+
+# --- v12.10.31B runtime route lock ---
+# This wrapper is intentionally idempotent. It guarantees that the
+# v12.10 Command Center blueprints are registered on the actual Flask app
+# returned by create_app(), even if earlier registration patches were
+# bypassed by app-factory ordering.
+try:
+    _socmint_create_app_before_v12_10_31B = create_app
+
+    def create_app(*args, **kwargs):
+        app = _socmint_create_app_before_v12_10_31B(*args, **kwargs)
+
+        from .v12_10_command_center_routes import bp as _v12_command_bp
+        from .v12_10_29_ui import bp as _v12_ui_bp
+
+        existing_rules = {str(rule) for rule in app.url_map.iter_rules()}
+
+        needs_command = "/api/v12.10/dossier/run/<case_id>" not in existing_rules
+        needs_ui = "/api/v12.10/ui/command-center" not in existing_rules
+
+        if needs_command and _v12_command_bp.name not in app.blueprints:
+            app.register_blueprint(_v12_command_bp)
+
+        if needs_ui and _v12_ui_bp.name not in app.blueprints:
+            app.register_blueprint(_v12_ui_bp)
+
+        return app
+
+except NameError:
+    pass
+# --- end v12.10.31B runtime route lock ---

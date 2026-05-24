@@ -15,8 +15,8 @@ from typing import Any, Dict, List, Set, Tuple
 
 ROOT = Path.cwd()
 RELEASE_DIR = ROOT / "release" / "drift_lock"
-REPORT_JSON = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31A.json"
-REPORT_MD = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31A.md"
+REPORT_JSON = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31B.json"
+REPORT_MD = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31B.md"
 
 EXPECTED_V12_ROUTES = {
     "/api/v12.10/command-center/cases/<case_id>/run-all",
@@ -29,7 +29,7 @@ EXPECTED_V12_ROUTES = {
     "/api/v12.10/ui/command-center",
 }
 
-EXPECTED_VERSION = "12.10.31A"
+EXPECTED_VERSION = "12.10.31B"
 
 
 class Check:
@@ -64,7 +64,7 @@ def read(path: Path) -> str:
 
 def find_files(patterns: List[str]) -> List[Path]:
     out: List[Path] = []
-    skip = {".git", ".venv", "node_modules", "__pycache__", ".pytest_cache", "storage"}
+    skip = {".git", ".venv", "node_modules", "__pycache__", ".pytest_cache", "storage", "release", "tests", "scripts"}
     for p in ROOT.rglob("*"):
         if any(part in skip for part in p.parts):
             continue
@@ -137,7 +137,20 @@ def identify_entrypoints() -> Dict[str, Any]:
         if score:
             candidates.append({"path": rel, "score": score, "notes": notes})
 
-    candidates.sort(key=lambda x: x["score"], reverse=True)
+    def priority(item):
+        path = item["path"]
+        bonus = 0
+        if path == "src/socmint/dashboard.py":
+            bonus += 100
+        if path.startswith("src/"):
+            bonus += 20
+        if "dashboard" in path or "main" in path or "app" in path:
+            bonus += 10
+        if path.startswith(("scripts/", "tests/", "release/")):
+            bonus -= 100
+        return (item["score"] + bonus, item["score"])
+
+    candidates.sort(key=priority, reverse=True)
 
     return {
         "candidates": candidates[:25],
@@ -348,17 +361,24 @@ def version_metadata() -> Dict[str, Any]:
     items["src/socmint/__init__.py"] = init_match.group(1) if init_match else None
     items["pyproject.toml"] = pyproject_match.group(1) if pyproject_match else None
 
-    if release_manifest.exists():
+    historical_manifests = {}
+    for mf in sorted((ROOT / "release").glob("V*_RELEASE_MANIFEST.json")):
         try:
-            items["release/V12_10_29_RELEASE_MANIFEST.json"] = json.loads(release_manifest.read_text()).get("version")
+            historical_manifests[str(mf.relative_to(ROOT))] = json.loads(mf.read_text()).get("version")
         except Exception as exc:
-            items["release/V12_10_29_RELEASE_MANIFEST.json"] = f"ERROR: {exc}"
+            historical_manifests[str(mf.relative_to(ROOT))] = f"ERROR: {exc}"
 
-    versions = [v for v in items.values() if isinstance(v, str)]
+    active_items = {
+        k: v for k, v in items.items()
+        if k in {"src/socmint/__init__.py", "pyproject.toml"}
+    }
+
+    versions = [v for v in active_items.values() if isinstance(v, str)]
     unique = sorted(set(versions))
 
     return {
         "items": items,
+        "historical_manifests": historical_manifests,
         "unique_versions": unique,
         "metadata_consistent": len(unique) <= 1,
         "expected_current": EXPECTED_VERSION,
@@ -369,7 +389,7 @@ def write_reports(checks: List[Check], summary: Dict[str, Any]) -> None:
     RELEASE_DIR.mkdir(parents=True, exist_ok=True)
 
     payload = {
-        "audit": "v12.10.31A Drift Lock Audit",
+        "audit": "v12.10.31B Drift Lock Audit",
         "summary": summary,
         "checks": [c.as_dict() for c in checks],
     }
@@ -377,7 +397,7 @@ def write_reports(checks: List[Check], summary: Dict[str, Any]) -> None:
     REPORT_JSON.write_text(json.dumps(payload, indent=2, sort_keys=True))
 
     lines = []
-    lines.append("# v12.10.31A Drift Lock Audit Report")
+    lines.append("# v12.10.31B Drift Lock Audit Report")
     lines.append("")
     lines.append(f"Overall: **{summary['overall_status']}**")
     lines.append("")
