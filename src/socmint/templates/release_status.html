@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+    <div class="page-header">
+        <div>
+            <h1>Release Status Dashboard</h1>
+            <p>Operator view of current release health, gate state, and post-merge verification.</p>
+        </div>
+        <div class="status-pill {{ 'ok' if status.decision == 'GO' else 'warn' }}">
+            {{ status.decision }} / {{ status.status }}
+        </div>
+    </div>
+
+    <div class="grid cards-4">
+        <article class="card">
+            <h2>Current Version</h2>
+            <p class="metric">{{ status.release.version }}</p>
+            <p>{{ status.release.release_name }}</p>
+            <p><strong>Tag:</strong> {{ status.release.release_tag }}</p>
+        </article>
+        <article class="card">
+            <h2>Manifest</h2>
+            <p class="metric">{{ status.manifest.status | default('unknown') }}</p>
+            <p><strong>Schema:</strong> {{ status.manifest.schema | default('missing') }}</p>
+            <p><strong>Path:</strong> {{ status.manifest.path | default('release/CURRENT_STATUS.json') }}</p>
+        </article>
+        <article class="card">
+            <h2>Latest Gate</h2>
+            <p class="metric">{{ latest.decision }}</p>
+            <p><strong>Status:</strong> {{ latest.status }}</p>
+            <p><strong>Reports:</strong> {{ latest.report_count }}</p>
+        </article>
+        <article class="card">
+            <h2>Tor Diagnostics</h2>
+            <p class="metric">{{ tor.decision | default('HOLD') }}</p>
+            <p><strong>Status:</strong> {{ tor.status | default('needs_review') }}</p>
+            <p><strong>Schema:</strong> {{ tor.schema }}</p>
+        </article>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>Release Checks</h2>
+    <table class="data-table">
+        <thead>
+            <tr><th>Check</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+        {% for name, passed in status.checks.items() %}
+            <tr>
+                <td>{{ name }}</td>
+                <td><span class="badge {{ 'ok' if passed else 'warn' }}">{{ 'pass' if passed else 'needs review' }}</span></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<section class="panel">
+    <h2>Latest Gate Report</h2>
+    {% if latest.latest %}
+    <div class="grid cards-2">
+        <article class="card">
+            <h3>JSON Report</h3>
+            <p><code>{{ latest.latest.path }}</code></p>
+            <p><strong>Schema:</strong> {{ latest.latest.schema }}</p>
+            <p><strong>Status:</strong> {{ latest.latest.status }}</p>
+            <p><strong>Decision:</strong> {{ latest.latest.decision }}</p>
+            <p><strong>Generated:</strong> {{ latest.latest.generated_at }}</p>
+        </article>
+        <article class="card">
+            <h3>Gate Summary</h3>
+            <p><strong>Name:</strong> {{ latest.latest.name }}</p>
+            <p><strong>Version:</strong> {{ latest.latest.version }}</p>
+            <p><strong>Size:</strong> {{ latest.latest.size_bytes }} bytes</p>
+            <p><a href="/release/gates">View all latest gate reports</a></p>
+        </article>
+    </div>
+    {% else %}
+    <p>No gate reports found under <code>{{ latest.report_root }}</code>.</p>
+    {% endif %}
+</section>
+
+<section class="panel">
+    <h2>Tor Diagnostic Checks</h2>
+    {% if tor.checks %}
+    <table class="data-table">
+        <thead><tr><th>Check</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for name, passed in tor.checks.items() %}
+            <tr>
+                <td>{{ name }}</td>
+                <td><span class="badge {{ 'ok' if passed else 'warn' }}">{{ 'pass' if passed else 'needs review' }}</span></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Tor diagnostics unavailable: {{ tor.error | default('no checks returned') }}</p>
+    {% endif %}
+</section>
+
+<section class="panel">
+    <h2>Raw Payload Links</h2>
+    <p><a href="/api/v1/release/status">/api/v1/release/status</a></p>
+    <p><a href="/api/v1/release/gates/latest">/api/v1/release/gates/latest</a></p>
+    <p><a href="/api/v1/tor/diagnostics">/api/v1/tor/diagnostics</a></p>
+</section>
+{% endblock %}
