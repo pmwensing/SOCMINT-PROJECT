@@ -722,3 +722,10 @@ test121031B:
 report121031B:
 	python scripts/drift_lock_audit_v12_10_31A.py || true
 	@echo 'Report: release/drift_lock/DRIFT_LOCK_AUDIT_V12_10_31B.md'
+
+test121031C:
+	bash scripts/test_v12_10_31C.sh
+
+report121031C:
+	python scripts/drift_lock_audit_v12_10_31A.py || true
+	@echo 'Report: release/drift_lock/DRIFT_LOCK_AUDIT_V12_10_31C.md'
