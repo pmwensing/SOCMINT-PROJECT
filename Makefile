@@ -914,3 +914,29 @@ report121044:
 	@echo 'Loop:   release/db_smoke_repair_loop/ITERATIVE_DB_SMOKE_REPAIR_LOOP_V12_10_44.md'
 	@echo 'Gate:   release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
 	@echo 'Target: release/db_smoke_exact_failure/DB_SMOKE_FAILED_TABLE_REPAIR_TARGET_V12_10_42.md'
+
+repairidentity121045:
+	python scripts/repair_identity_columns_v12_10_45.py
+
+test121045:
+	bash scripts/test_v12_10_45.sh
+
+report121045:
+	python scripts/repair_identity_columns_v12_10_45.py
+	python scripts/db_migration_smoke_v12_10_38.py || true
+	python scripts/db_smoke_result_gate_v12_10_39.py || true
+	python scripts/db_smoke_exact_failure_locator_v12_10_42.py || true
+	@echo 'Repair: release/db_smoke_identity_columns_repair/IDENTITY_COLUMNS_REPAIR_V12_10_45.md'
+	@echo 'Gate:   release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
+	@echo 'Target: release/db_smoke_exact_failure/DB_SMOKE_FAILED_TABLE_REPAIR_TARGET_V12_10_42.md'
+
+detectmissing121045A:
+	python scripts/missing_table_block_detector_v12_10_45A.py
+
+test121045A:
+	bash scripts/test_v12_10_45A.sh
+
+report121045A:
+	python scripts/missing_table_block_detector_v12_10_45A.py
+	@echo 'Report: release/missing_table_block_detector/MISSING_TABLE_BLOCK_DETECTOR_V12_10_45A.md'
+	@echo 'Plan:   release/missing_table_block_detector/MISSING_TABLE_BLOCK_REPAIR_PLAN_V12_10_45A.md'
