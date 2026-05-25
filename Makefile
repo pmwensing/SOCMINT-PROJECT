@@ -1069,3 +1069,17 @@ report121052A:
 	python scripts/final_readiness_optional_demote_v12_10_52A.py || true
 	@echo 'Manifest: release/final_readiness/FINAL_RELEASE_READINESS_MANIFEST_V12_10_52A.json'
 	@echo 'Report:   release/final_readiness/FINAL_RELEASE_READINESS_REPORT_V12_10_52A.md'
+
+package121053:
+	python scripts/release_package_tag_manifest_v12_10_53.py
+
+test121053:
+	bash scripts/test_v12_10_53.sh
+
+report121053:
+	python scripts/release_package_tag_manifest_v12_10_53.py || true
+	@echo 'Report:       release/v12_10_53/RELEASE_PACKAGE_REPORT_V12_10_53.md'
+	@echo 'Manifest:     release/v12_10_53/RELEASE_ARTIFACT_MANIFEST_V12_10_53.json'
+	@echo 'Tag manifest: release/v12_10_53/TAG_MANIFEST_V12_10_53.json'
+	@echo 'Tarball:      dist/SOCMINT-PROJECT-v12.10.53-release.tar.gz'
+	@echo 'Zip:          dist/SOCMINT-PROJECT-v12.10.53-release.zip'
