@@ -1036,3 +1036,14 @@ report121050:
 	@echo 'Repair: release/downgrade_symmetry_repair/DOWNGRADE_SYMMETRY_REPAIR_V12_10_50.md'
 	@echo 'Gate:   release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
 	@echo 'Smoke:  release/db_migration_smoke/DB_MIGRATION_SMOKE_V12_10_38.md'
+
+baseaware121051:
+	python scripts/baseline_aware_db_smoke_gate_v12_10_51.py
+
+test121051:
+	bash scripts/test_v12_10_51.sh
+
+report121051:
+	python scripts/baseline_aware_db_smoke_gate_v12_10_51.py
+	@echo 'Report: release/baseline_aware_db_smoke/BASELINE_AWARE_DB_SMOKE_GATE_V12_10_51.md'
+	@echo 'Ready:  release/baseline_aware_db_smoke/BASELINE_AWARE_PROMOTION_READY_V12_10_51.json'
