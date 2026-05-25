@@ -788,3 +788,22 @@ report121033:
 	@echo 'Worksheet: release/p0_p1_migration_review/P0_P1_MIGRATION_WORKSHEET_V12_10_33.md'
 	@echo 'Draft:     release/p0_p1_migration_review/NON_EXECUTABLE_ALEMBIC_DRAFT_V12_10_33.py'
 	@echo 'Review:    release/p0_p1_migration_review/PASS_REVIEW_CLASSIFICATION_V12_10_33.md'
+
+gate121034:
+	python scripts/human_review_gate_v12_10_34.py generate
+
+approve121034:
+	python scripts/human_review_gate_v12_10_34.py approve
+
+refusemigration121034:
+	python scripts/human_review_gate_v12_10_34.py refuse-migration
+
+test121034:
+	bash scripts/test_v12_10_34.sh
+
+report121034:
+	python scripts/human_review_gate_v12_10_34.py generate
+	@echo 'Checklist: release/human_review_gate/HUMAN_REVIEW_CHECKLIST_V12_10_34.md'
+	@echo 'Queues:    release/human_review_gate/REVIEW_QUEUES_V12_10_34.json'
+	@echo 'Approval:  release/human_review_gate/approval_list.json'
+	@echo 'Summary:   release/human_review_gate/HUMAN_REVIEW_GATE_SUMMARY_V12_10_34.md'
