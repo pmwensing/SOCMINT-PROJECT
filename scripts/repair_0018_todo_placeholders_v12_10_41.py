@@ -46,11 +46,11 @@ def replacement_for_todo_context(line: str) -> str:
     fixed = line
 
     replacements = {
-        "length=TODO": "length=255",
-        "sa.String(TODO)": "sa.String(255)",
-        "String(TODO)": "String(255)",
-        "sa.String(length=TODO)": "sa.String(length=255)",
-        "String(length=TODO)": "String(length=255)",
+        "length=255": "length=255",
+        "sa.String(255)": "sa.String(255)",
+        "String(255)": "String(255)",
+        "sa.String(length=255)": "sa.String(length=255)",
+        "String(length=255)": "String(length=255)",
         "nullable=TODO": "nullable=True",
         "default=TODO": "default=None",
         "server_default=TODO": "server_default=None",
@@ -119,9 +119,9 @@ def patch_generator() -> List[Dict[str, Any]]:
         text = path.read_text()
         fixed = text
 
-        fixed = fixed.replace("sa.String(length=TODO)", "sa.String(length=255)")
-        fixed = fixed.replace('return "sa.String(length=TODO)"', 'return "sa.String(length=255)"')
-        fixed = fixed.replace("length=TODO", "length=255")
+        fixed = fixed.replace("sa.String(length=255)", "sa.String(length=255)")
+        fixed = fixed.replace('return "sa.String(length=255)"', 'return "sa.String(length=255)"')
+        fixed = fixed.replace("length=255", "length=255")
 
         if fixed != text:
             path.write_text(fixed)

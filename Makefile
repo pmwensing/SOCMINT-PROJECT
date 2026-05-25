@@ -940,3 +940,30 @@ report121045A:
 	python scripts/missing_table_block_detector_v12_10_45A.py
 	@echo 'Report: release/missing_table_block_detector/MISSING_TABLE_BLOCK_DETECTOR_V12_10_45A.md'
 	@echo 'Plan:   release/missing_table_block_detector/MISSING_TABLE_BLOCK_REPAIR_PLAN_V12_10_45A.md'
+
+repairidentity121045B:
+	python scripts/repair_blocked_identity_tables_v12_10_45B.py
+
+test121045B:
+	bash scripts/test_v12_10_45B.sh
+
+report121045B:
+	python scripts/repair_blocked_identity_tables_v12_10_45B.py
+	python scripts/db_migration_smoke_v12_10_38.py || true
+	python scripts/db_smoke_result_gate_v12_10_39.py || true
+	python scripts/db_smoke_exact_failure_locator_v12_10_42.py || true
+	@echo 'Repair: release/blocked_identity_table_repair/BLOCKED_IDENTITY_TABLE_REPAIR_V12_10_45B.md'
+	@echo 'Gate:   release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
+	@echo 'Target: release/db_smoke_exact_failure/DB_SMOKE_FAILED_TABLE_REPAIR_TARGET_V12_10_42.md'
+
+test121045C:
+	bash scripts/test_v12_10_45C.sh
+
+report121045C:
+	python scripts/repair_blocked_identity_tables_v12_10_45B.py
+	python scripts/db_migration_smoke_v12_10_38.py || true
+	python scripts/db_smoke_result_gate_v12_10_39.py || true
+	python scripts/db_smoke_exact_failure_locator_v12_10_42.py || true
+	@echo 'Repair: release/blocked_identity_table_repair/BLOCKED_IDENTITY_TABLE_REPAIR_V12_10_45B.md'
+	@echo 'Gate:   release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
+	@echo 'Target: release/db_smoke_exact_failure/DB_SMOKE_FAILED_TABLE_REPAIR_TARGET_V12_10_42.md'
