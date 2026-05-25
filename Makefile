@@ -1047,3 +1047,25 @@ report121051:
 	python scripts/baseline_aware_db_smoke_gate_v12_10_51.py
 	@echo 'Report: release/baseline_aware_db_smoke/BASELINE_AWARE_DB_SMOKE_GATE_V12_10_51.md'
 	@echo 'Ready:  release/baseline_aware_db_smoke/BASELINE_AWARE_PROMOTION_READY_V12_10_51.json'
+
+ready121052:
+	python scripts/final_release_readiness_manifest_v12_10_52.py
+
+test121052:
+	bash scripts/test_v12_10_52.sh
+
+report121052:
+	python scripts/final_release_readiness_manifest_v12_10_52.py || true
+	@echo 'Manifest: release/final_readiness/FINAL_RELEASE_READINESS_MANIFEST_V12_10_52.json'
+	@echo 'Report:   release/final_readiness/FINAL_RELEASE_READINESS_REPORT_V12_10_52.md'
+
+ready121052A:
+	python scripts/final_readiness_optional_demote_v12_10_52A.py
+
+test121052A:
+	bash scripts/test_v12_10_52A.sh
+
+report121052A:
+	python scripts/final_readiness_optional_demote_v12_10_52A.py || true
+	@echo 'Manifest: release/final_readiness/FINAL_RELEASE_READINESS_MANIFEST_V12_10_52A.json'
+	@echo 'Report:   release/final_readiness/FINAL_RELEASE_READINESS_REPORT_V12_10_52A.md'
