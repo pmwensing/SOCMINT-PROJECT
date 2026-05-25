@@ -10,7 +10,7 @@
 - **lingering_after_downgrade**: `16`
 - **version_after_upgrade**: `0017_v12_10_schema_reconciliation`
 - **version_after_downgrade**: `0017_v12_10_schema_reconciliation`
-- **temp_db_path**: `/tmp/socmint_v12_10_38_8zv6531k/dry_run.sqlite`
+- **temp_db_path**: `/tmp/socmint_v12_10_38_6lp6svdz/dry_run.sqlite`
 
 ## Errors
 
@@ -32,24 +32,22 @@
 ### upgrade_head_temp_sqlite returncode=1
 
 ```text
-INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
-INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
-INFO  [alembic.runtime.migration] Running upgrade  -> 0001_initial_schema, initial schema
-INFO  [alembic.runtime.migration] Running upgrade 0001_initial_schema -> 0002_audit_logs_and_indexes, audit logs and rate-limit indexes
-INFO  [alembic.runtime.migration] Running upgrade 0002_audit_logs_and_indexes -> 0003_user_status_and_constraints, user status and stricter constraints
-INFO  [alembic.runtime.migration] Running upgrade 0003_user_status_and_constraints -> 0004_roles_and_scan_jobs, roles and scan jobs
-INFO  [alembic.runtime.migration] Running upgrade 0004_roles_and_scan_jobs -> 0005_v7_1_model_sync, v7.1 model sync
-INFO  [alembic.runtime.migration] Running upgrade 0005_v7_1_model_sync -> 0006_v7_2_1_review_decisions, v7.2.1 review decision persistence
-INFO  [alembic.runtime.migration] Running upgrade 0006_v7_2_1_review_decisions -> 0007_v7_2_2_review_decision_audit, v7.2.2 review decision audit trail and bulk actions
-INFO  [alembic.runtime.migration] Running upgrade 0007_v7_2_2_review_decision_audit -> 0008_high_end_socmint_workflows, high-end SOCMINT workflow tables
-INFO  [alembic.runtime.migration] Running upgrade 0008_high_end_socmint_workflows -> 0009_account_discovery_ingest, account discovery ingest table
-INFO  [alembic.runtime.migration] Running upgrade 0009_account_discovery_ingest -> 0010_membership_quotas, membership and quota tables
-INFO  [alembic.runtime.migration] Running upgrade 0010_membership_quotas -> 0011_billing, billing tables
-INFO  [alembic.runtime.migration] Running upgrade 0011_billing -> 0012_tor_status, tor status table
-INFO  [alembic.runtime.migration] Running upgrade 0012_tor_status -> 0013_billing_customer_links, billing customer links
-INFO  [alembic.runtime.migration] Running upgrade 0013_billing_customer_links -> 0014_case_access, case access tables
-INFO  [alembic.runtime.migration] Running upgrade 0014_case_access -> 0017_v12_10_schema_reconciliation, v12.10.30 schema reconciliation command-center tables
-INFO  [alembic.runtime.migration] Running upgrade 0017_v12_10_schema_reconciliation -> 0018_approved_model_migration, v12.10.37 APPROVED MODEL MIGRATION
+PROVED MODEL MIGRATION
+Traceback (most recent call last):
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: table spine_connector_runs already exists
+
+The above exception was the direct cause of the following exception:
+
 Traceback (most recent call last):
   File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/bin/alembic", line 6, in <module>
     sys.exit(main())
@@ -97,9 +95,91 @@ Traceback (most recent call last):
   File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/alembic/runtime/migration.py", line 626, in run_migrations
     step.migration_fn(**kw)
     ~~~~~~~~~~~~~~~~~^^^^^^
-  File "/home/pmwens/Projects/SOCMINT-PROJECT/migrations/versions/0018_approved_model_migration.py", line 32, in upgrade
-    sa.Column("connector_key", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-                                                ^^^^
-NameError: name 'TODO' is not defined
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/migrations/versions/0018_approved_model_migration.py", line 28, in upgrade
+    op.create_table(
+    ~~~~~~~~~~~~~~~^
+        "spine_connector_runs",
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "<string>", line 8, in create_table
+  File "<string>", line 3, in create_table
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/alembic/operations/ops.py", line 1331, in create_table
+    return operations.invoke(op)
+           ~~~~~~~~~~~~~~~~~^^^^
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/alembic/operations/base.py", line 452, in invoke
+    return fn(self, operation)
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/alembic/operations/toimpl.py", line 140, in create_table
+    operations.impl.create_table(table, **kw)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/alembic/ddl/impl.py", line 442, in create_table
+    self._exec(schema.CreateTable(table, **kw))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/alembic/ddl/impl.py", line 256, in _exec
+    return conn.execute(construct, params)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/sql/ddl.py", line 187, in _execute_on_connection
+    return connection._execute_ddl(
+           ~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1530, in _execute_ddl
+    ret = self._execute_context(
+        dialect,
+    ...<4 lines>...
+        compiled,
+    )
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table spine_connector_runs already exists
+[SQL: 
+CREATE TABLE spine_connector_runs (
+	id INTEGER NOT NULL, 
+	subject_id INTEGER, 
+	connector_key VARCHAR(255) NOT NULL, 
+	seed_id INTEGER, 
+	status VARCHAR(255) NOT NULL, 
+	raw_result_json TEXT NOT NULL, 
+	created_at DATETIME, 
+	PRIMARY KEY (id)
+)
+
+]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
 
 ```

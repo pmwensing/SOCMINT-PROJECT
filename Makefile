@@ -876,3 +876,17 @@ report121040:
 	python scripts/db_smoke_failure_extractor_v12_10_40.py
 	@echo 'Report: release/db_smoke_failure/DB_SMOKE_FAILURE_EXTRACTOR_V12_10_40.md'
 	@echo 'Plan:   release/db_smoke_failure/DB_SMOKE_REPAIR_TARGETS_V12_10_40.md'
+
+repair121041:
+	python scripts/repair_0018_todo_placeholders_v12_10_41.py
+
+test121041:
+	bash scripts/test_v12_10_41.sh
+
+report121041:
+	python scripts/repair_0018_todo_placeholders_v12_10_41.py
+	python scripts/db_migration_smoke_v12_10_38.py || true
+	python scripts/db_smoke_result_gate_v12_10_39.py || true
+	@echo 'Repair: release/db_smoke_repair/TODO_PLACEHOLDER_REPAIR_V12_10_41.md'
+	@echo 'Smoke:  release/db_migration_smoke/DB_MIGRATION_SMOKE_V12_10_38.md'
+	@echo 'Gate:   release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'

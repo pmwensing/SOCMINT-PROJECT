@@ -53,7 +53,7 @@ def sa_type_from_expr(expr: str) -> str:
         m = re.search(r"string\((\d+)\)", low)
         if m:
             return f"sa.String({m.group(1)})"
-        return "sa.String(length=TODO)"
+        return "sa.String(length=255)"
     if "text" in low:
         return "sa.Text()"
     if "datetime" in low or "timestamp" in low:
@@ -232,7 +232,7 @@ def build_draft(context: Dict[str, Any]) -> None:
         "",
         "This file is generated outside alembic/versions.",
         "It is not applied automatically.",
-        "Promote only after human review of every TODO.",
+        "Promote only after human review of every None.",  # TODO: executable placeholder replaced with safe default; review
         "",
         "Revision ID: 0018_approved_model_migration",
         "Revises: 0017_v12_10_schema_reconciliation",

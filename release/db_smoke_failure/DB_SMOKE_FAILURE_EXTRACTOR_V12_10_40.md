@@ -9,7 +9,7 @@
 
 ## Findings
 
-- **unresolved_todo_symbol** / `blocker` — Generated migration contains executable TODO placeholder. Repair: Convert TODO placeholders into comments and use executable safe defaults.
+- **duplicate_table_or_constraint** / `blocker` — Migration attempted to create an object that already exists. Repair: Add create-if-missing guards or fix duplicate table list.
 
 ## Smoke errors
 
@@ -17,74 +17,74 @@
 
 ## Affected migration lines
 
-- line `5`: `TODO comments preserved for final schema review.`
+- line `5`: `None comments preserved for final schema review.  # TODO: executable placeholder replaced with safe default; review`
 - line `30`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
 - line `31`: `        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `32`: `        sa.Column("connector_key", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `32`: `        sa.Column("connector_key", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `33`: `        sa.Column("seed_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `34`: `        sa.Column("status", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `34`: `        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `35`: `        sa.Column("raw_result_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `36`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `45`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
 - line `46`: `        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `47`: `        sa.Column("assertion_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `47`: `        sa.Column("assertion_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `48`: `        sa.Column("normalized_value", sa.Text()),  # TODO: confirm type/nullability/default`
-- line `49`: `        sa.Column("confidence", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
-- line `50`: `        sa.Column("validation_state", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `49`: `        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
+- line `50`: `        sa.Column("validation_state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `51`: `        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `52`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `53`: `        sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `62`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
 - line `63`: `        sa.Column("run_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `64`: `        sa.Column("kind", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `64`: `        sa.Column("kind", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `65`: `        sa.Column("path", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
-- line `66`: `        sa.Column("sha256", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
-- line `67`: `        sa.Column("mime_type", sa.String(length=TODO)),  # TODO: confirm type/nullability/default`
+- line `66`: `        sa.Column("sha256", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
+- line `67`: `        sa.Column("mime_type", sa.String(length=255)),  # TODO: confirm type/nullability/default`
 - line `68`: `        sa.Column("size_bytes", sa.Integer()),  # TODO: confirm type/nullability/default`
 - line `69`: `        sa.Column("meta_json", sa.Text()),  # TODO: confirm type/nullability/default`
 - line `70`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `79`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
 - line `80`: `        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order`
 - line `81`: `        sa.Column("run_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `82`: `        sa.Column("observation_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `82`: `        sa.Column("observation_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `83`: `        sa.Column("normalized_value", sa.Text()),  # TODO: confirm type/nullability/default`
-- line `84`: `        sa.Column("confidence", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `84`: `        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `85`: `        sa.Column("source_ref", sa.Text()),  # TODO: confirm type/nullability/default`
 - line `86`: `        sa.Column("evidence_ref", sa.Text()),  # TODO: confirm type/nullability/default`
 - line `87`: `        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `88`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `97`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
 - line `98`: `        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `99`: `        sa.Column("seed_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `99`: `        sa.Column("seed_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `100`: `        sa.Column("raw_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `101`: `        sa.Column("normalized_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
-- line `102`: `        sa.Column("pii_hash", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `102`: `        sa.Column("pii_hash", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `103`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `112`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
-- line `113`: `        sa.Column("label", sa.String(length=TODO)),  # TODO: confirm type/nullability/default`
+- line `113`: `        sa.Column("label", sa.String(length=255)),  # TODO: confirm type/nullability/default`
 - line `114`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `123`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
 - line `124`: `        sa.Column("assertion_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `125`: `        sa.Column("actor", sa.String(length=TODO)),  # TODO: confirm type/nullability/default`
-- line `126`: `        sa.Column("action", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `125`: `        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default`
+- line `126`: `        sa.Column("action", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `127`: `        sa.Column("note", sa.Text()),  # TODO: confirm type/nullability/default`
 - line `128`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `137`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
-- line `138`: `        sa.Column("mode", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
-- line `139`: `        sa.Column("status", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `138`: `        sa.Column("mode", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
+- line `139`: `        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `140`: `        sa.Column("result_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
-- line `141`: `        sa.Column("actor", sa.String(length=TODO)),  # TODO: confirm type/nullability/default`
+- line `141`: `        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default`
 - line `142`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `151`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
 - line `152`: `        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `153`: `        sa.Column("job_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
-- line `154`: `        sa.Column("status", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `153`: `        sa.Column("job_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
+- line `154`: `        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `155`: `        sa.Column("priority", sa.Integer(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `156`: `        sa.Column("attempts", sa.Integer(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `157`: `        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `158`: `        sa.Column("result_json", sa.Text()),  # TODO: confirm type/nullability/default`
 - line `159`: `        sa.Column("error", sa.Text()),  # TODO: confirm type/nullability/default`
-- line `160`: `        sa.Column("actor", sa.String(length=TODO)),  # TODO: confirm type/nullability/default`
+- line `160`: `        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default`
 - line `161`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `162`: `        sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `163`: `        sa.Column("started_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
@@ -101,62 +101,62 @@
 - line `190`: `        sa.Column("graph_id", sa.Integer()),  # TODO: confirm FK target and migration order`
 - line `191`: `        sa.Column("from_node_id", sa.Integer()),  # TODO: confirm FK target and migration order`
 - line `192`: `        sa.Column("to_node_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `193`: `        sa.Column("edge_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
-- line `194`: `        sa.Column("confidence", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `193`: `        sa.Column("edge_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
+- line `194`: `        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `195`: `        sa.Column("evidence_ref", sa.Text()),  # TODO: confirm type/nullability/default`
-- line `196`: `        sa.Column("validation_state", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `196`: `        sa.Column("validation_state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `197`: `        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `198`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `207`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
 - line `208`: `        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `209`: `        sa.Column("label", sa.String(length=TODO)),  # TODO: confirm type/nullability/default`
+- line `209`: `        sa.Column("label", sa.String(length=255)),  # TODO: confirm type/nullability/default`
 - line `210`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `219`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
 - line `220`: `        sa.Column("graph_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `221`: `        sa.Column("entity_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `221`: `        sa.Column("entity_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `222`: `        sa.Column("normalized_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `223`: `        sa.Column("node_ids_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
-- line `224`: `        sa.Column("confidence", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
-- line `225`: `        sa.Column("state", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `224`: `        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
+- line `225`: `        sa.Column("state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `226`: `        sa.Column("reason", sa.Text()),  # TODO: confirm type/nullability/default`
-- line `227`: `        sa.Column("actor", sa.String(length=TODO)),  # TODO: confirm type/nullability/default`
+- line `227`: `        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default`
 - line `228`: `        sa.Column("note", sa.Text()),  # TODO: confirm type/nullability/default`
 - line `229`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `230`: `        sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `239`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
 - line `240`: `        sa.Column("graph_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `241`: `        sa.Column("entity_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `241`: `        sa.Column("entity_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `242`: `        sa.Column("normalized_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `243`: `        sa.Column("display_value", sa.Text()),  # TODO: confirm type/nullability/default`
-- line `244`: `        sa.Column("confidence", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
-- line `245`: `        sa.Column("validation_state", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `244`: `        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
+- line `245`: `        sa.Column("validation_state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `246`: `        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `247`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `256`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
 - line `257`: `        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `258`: `        sa.Column("conflict_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
-- line `259`: `        sa.Column("severity", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
-- line `260`: `        sa.Column("status", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `258`: `        sa.Column("conflict_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
+- line `259`: `        sa.Column("severity", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
+- line `260`: `        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `261`: `        sa.Column("assertion_ids_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `262`: `        sa.Column("summary", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `263`: `        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
-- line `264`: `        sa.Column("actor", sa.String(length=TODO)),  # TODO: confirm type/nullability/default`
+- line `264`: `        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default`
 - line `265`: `        sa.Column("note", sa.Text()),  # TODO: confirm type/nullability/default`
 - line `266`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `267`: `        sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `276`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
-- line `277`: `        sa.Column("action", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `277`: `        sa.Column("action", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `278`: `        sa.Column("allowed", sa.Integer(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `279`: `        sa.Column("reasons_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `280`: `        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
-- line `281`: `        sa.Column("actor", sa.String(length=TODO)),  # TODO: confirm type/nullability/default`
+- line `281`: `        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default`
 - line `282`: `        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default`
 - line `291`: `        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key`
 - line `292`: `        sa.Column("target_id", sa.Integer()),  # TODO: confirm FK target and migration order`
-- line `293`: `        sa.Column("target_value", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
-- line `294`: `        sa.Column("target_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
-- line `295`: `        sa.Column("connector", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
-- line `296`: `        sa.Column("status", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default`
+- line `293`: `        sa.Column("target_value", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
+- line `294`: `        sa.Column("target_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
+- line `295`: `        sa.Column("connector", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
+- line `296`: `        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default`
 - line `297`: `        sa.Column("command", sa.Text()),  # TODO: confirm type/nullability/default`
 - line `298`: `        sa.Column("raw_result", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default`
 - line `299`: `        sa.Column("error", sa.Text()),  # TODO: confirm type/nullability/default`
@@ -224,6 +224,12 @@
 - no classified error lines
 
 ### upgrade_head_temp_sqlite returncode=1
-- `INFO  [alembic.runtime.migration] Context impl SQLiteImpl.`
 - `Traceback (most recent call last):`
-- `NameError: name 'TODO' is not defined`
+- `sqlite3.OperationalError: table spine_connector_runs already exists`
+- `The above exception was the direct cause of the following exception:`
+- `Traceback (most recent call last):`
+- `    self._handle_dbapi_exception(`
+- `  File "/home/pmwens/Projects/SOCMINT-PROJECT/var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception`
+- `    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e`
+- `sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table spine_connector_runs already exists`
+- `(Background on this error at: https://sqlalche.me/e/20/e3q8)`

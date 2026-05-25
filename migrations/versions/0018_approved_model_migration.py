@@ -2,7 +2,7 @@
 
 Promoted into alembic/versions by v12.10.37 promotion gate.
 This migration is not applied automatically by this promotion gate.
-TODO comments preserved for final schema review.
+None comments preserved for final schema review.  # TODO: executable placeholder replaced with safe default; review
 
 Revision ID: 0018_approved_model_migration
 Revises: 0017_v12_10_schema_reconciliation
@@ -29,9 +29,9 @@ def upgrade():
         "spine_connector_runs",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
         sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("connector_key", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("connector_key", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("seed_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("status", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("raw_result_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
     )
@@ -44,10 +44,10 @@ def upgrade():
         "spine_dossier_assertions",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
         sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("assertion_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("assertion_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("normalized_value", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("confidence", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("validation_state", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("validation_state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
         sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
@@ -61,10 +61,10 @@ def upgrade():
         "spine_raw_artifacts",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
         sa.Column("run_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("kind", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("kind", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("path", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("sha256", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("mime_type", sa.String(length=TODO)),  # TODO: confirm type/nullability/default
+        sa.Column("sha256", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("mime_type", sa.String(length=255)),  # TODO: confirm type/nullability/default
         sa.Column("size_bytes", sa.Integer()),  # TODO: confirm type/nullability/default
         sa.Column("meta_json", sa.Text()),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
@@ -79,9 +79,9 @@ def upgrade():
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
         sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
         sa.Column("run_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("observation_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("observation_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("normalized_value", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("confidence", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("source_ref", sa.Text()),  # TODO: confirm type/nullability/default
         sa.Column("evidence_ref", sa.Text()),  # TODO: confirm type/nullability/default
         sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
@@ -96,10 +96,10 @@ def upgrade():
         "spine_seeds",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
         sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("seed_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("seed_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("raw_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("normalized_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("pii_hash", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("pii_hash", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
     )
 
@@ -110,7 +110,7 @@ def upgrade():
     op.create_table(
         "spine_subjects",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("label", sa.String(length=TODO)),  # TODO: confirm type/nullability/default
+        sa.Column("label", sa.String(length=255)),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
     )
 
@@ -122,8 +122,8 @@ def upgrade():
         "spine_validation_events",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
         sa.Column("assertion_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("actor", sa.String(length=TODO)),  # TODO: confirm type/nullability/default
-        sa.Column("action", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default
+        sa.Column("action", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("note", sa.Text()),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
     )
@@ -135,10 +135,10 @@ def upgrade():
     op.create_table(
         "retention_runs",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("mode", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("status", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("mode", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("result_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("actor", sa.String(length=TODO)),  # TODO: confirm type/nullability/default
+        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
     )
 
@@ -150,14 +150,14 @@ def upgrade():
         "workbench_jobs",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
         sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("job_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("status", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("job_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("priority", sa.Integer(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("attempts", sa.Integer(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("result_json", sa.Text()),  # TODO: confirm type/nullability/default
         sa.Column("error", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("actor", sa.String(length=TODO)),  # TODO: confirm type/nullability/default
+        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
         sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
         sa.Column("started_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
@@ -190,10 +190,10 @@ def upgrade():
         sa.Column("graph_id", sa.Integer()),  # TODO: confirm FK target and migration order
         sa.Column("from_node_id", sa.Integer()),  # TODO: confirm FK target and migration order
         sa.Column("to_node_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("edge_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("confidence", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("edge_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("evidence_ref", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("validation_state", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("validation_state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
     )
@@ -206,7 +206,7 @@ def upgrade():
         "identity_graphs",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
         sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("label", sa.String(length=TODO)),  # TODO: confirm type/nullability/default
+        sa.Column("label", sa.String(length=255)),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
     )
 
@@ -218,13 +218,13 @@ def upgrade():
         "identity_merge_candidates",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
         sa.Column("graph_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("entity_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("entity_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("normalized_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("node_ids_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("confidence", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("state", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("reason", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("actor", sa.String(length=TODO)),  # TODO: confirm type/nullability/default
+        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default
         sa.Column("note", sa.Text()),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
         sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
@@ -238,11 +238,11 @@ def upgrade():
         "identity_nodes",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
         sa.Column("graph_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("entity_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("entity_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("normalized_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("display_value", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("confidence", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("validation_state", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("validation_state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
     )
@@ -255,13 +255,13 @@ def upgrade():
         "spine_contradictions",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
         sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("conflict_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("severity", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("status", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("conflict_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("severity", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("assertion_ids_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("summary", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("actor", sa.String(length=TODO)),  # TODO: confirm type/nullability/default
+        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default
         sa.Column("note", sa.Text()),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
         sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
@@ -274,11 +274,11 @@ def upgrade():
     op.create_table(
         "policy_gate_events",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("action", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("action", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("allowed", sa.Integer(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("reasons_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("actor", sa.String(length=TODO)),  # TODO: confirm type/nullability/default
+        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default
         sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
     )
 
@@ -290,10 +290,10 @@ def upgrade():
         "connector_runs",
         sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
         sa.Column("target_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("target_value", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("target_type", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("connector", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("status", sa.String(length=TODO), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("target_value", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("target_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("connector", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
+        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("command", sa.Text()),  # TODO: confirm type/nullability/default
         sa.Column("raw_result", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
         sa.Column("error", sa.Text()),  # TODO: confirm type/nullability/default

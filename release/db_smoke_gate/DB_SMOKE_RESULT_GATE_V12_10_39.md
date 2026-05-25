@@ -15,7 +15,7 @@
 
 ## Findings
 
-- **sqlite_dialect_incompatibility** / review: Adjust migration for SQLite-safe smoke or use batch_alter_table/portable SQLAlchemy types.
+- **unclassified_db_smoke_failure** / review: Inspect DB_MIGRATION_SMOKE_V12_10_38.md step outputs manually.
 
 ## v12.10.38 errors
 

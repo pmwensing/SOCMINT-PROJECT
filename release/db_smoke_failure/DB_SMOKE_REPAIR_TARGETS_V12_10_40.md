@@ -4,11 +4,11 @@ Use this to build v12.10.41. Do not patch blindly.
 
 ## Targeted repairs
 
-### unresolved_todo_symbol
+### duplicate_table_or_constraint
 
 - severity: `blocker`
-- reason: Generated migration contains executable TODO placeholder.
-- repair: Convert TODO placeholders into comments and use executable safe defaults.
+- reason: Migration attempted to create an object that already exists.
+- repair: Add create-if-missing guards or fix duplicate table list.
 
 
 ## Safety constraints for v12.10.41
