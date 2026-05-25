@@ -807,3 +807,16 @@ report121034:
 	@echo 'Queues:    release/human_review_gate/REVIEW_QUEUES_V12_10_34.json'
 	@echo 'Approval:  release/human_review_gate/approval_list.json'
 	@echo 'Summary:   release/human_review_gate/HUMAN_REVIEW_GATE_SUMMARY_V12_10_34.md'
+
+draft121035:
+	python scripts/build_approved_migration_draft_v12_10_35.py
+
+test121035:
+	bash scripts/test_v12_10_35.sh
+
+report121035:
+	python scripts/build_approved_migration_draft_v12_10_35.py || true
+	@echo 'Draft:    release/approved_migration_draft/0018_APPROVED_MODEL_MIGRATION_DRAFT_V12_10_35.py'
+	@echo 'Manifest: release/approved_migration_draft/APPROVED_MIGRATION_DRAFT_MANIFEST_V12_10_35.json'
+	@echo 'Report:   release/approved_migration_draft/APPROVED_MIGRATION_DRAFT_REPORT_V12_10_35.md'
+	@echo 'Refusal:  release/approved_migration_draft/APPROVED_MIGRATION_DRAFT_REFUSAL_V12_10_35.md'
