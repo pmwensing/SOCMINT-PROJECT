@@ -1,81 +1,61 @@
-from .dashboard import create_app
-from .full_report_alias import register_full_report_aliases
-from .full_report_browser import register_full_report_browser_flow
-from .full_report_history import register_full_report_history_routes
-from .full_report_retention import register_full_report_retention_routes
-from .command_center_routes import register_command_center_routes
-from .connector_runtime_routes import register_connector_runtime_routes
-from .spine_intelligence_routes import register_spine_intelligence_routes
-from .ultimate_dossier_routes import register_ultimate_dossier_routes
-from .membership_routes import register_membership_routes
-from .billing_routes import register_billing_routes
-from .tor_routes import register_tor_routes
-from .hidden_service_diagnostics_routes_v12_10_16 import register_hidden_service_diagnostics_routes
-from .release_status_routes_v12_10_17 import register_release_status_routes
-from .release_status_ui_routes_v12_10_18 import register_release_status_ui_routes
-from .release_mount_routes_v12_10_20 import register_release_mount_routes
-from .release_runtime_routes_v12_10_21 import register_release_runtime_routes
-from .analyst_ux_routes import register_analyst_ux_routes
-from .export_quality_routes import register_export_quality_routes
-from .connector_sdk_routes import register_connector_sdk_routes
-from .production_release_routes import register_production_release_routes
-from .certification_dashboard_routes import register_certification_dashboard_routes
-from .distribution_action_routes import register_distribution_action_routes
-from .distribution_packet_export_routes import register_distribution_packet_export_routes
-from .distribution_export_verification_routes import register_distribution_export_verification_routes
-from .distribution_release_ledger_routes import register_distribution_release_ledger_routes
-from .release_ledger_dashboard_routes import register_release_ledger_dashboard_routes
-from .distribution_handoff_packet_routes import register_distribution_handoff_packet_routes
-from .entity_profile_intelligence_routes import register_entity_profile_intelligence_routes
-from .entity_profile_intelligence_ui_routes import register_entity_profile_intelligence_ui_routes
-from .scope_lock_routes import register_scope_lock_routes
-from .build_audit_routes import register_build_audit_routes
-from .forensic_intake_routes_v12_5_1 import register_forensic_intake_routes
-from .recon_document_locator_routes import register_recon_document_locator_routes
-from .narrative_intelligence_routes_v12_6 import register_narrative_intelligence_routes
-from .authenticity_integrity_routes_v12_7 import register_authenticity_integrity_routes
-from .integrity_gate_routes_v12_7_1 import register_integrity_gate_routes
-from .assertion_trust_routes_v12_8 import register_assertion_trust_routes
-from .assertion_trust_gate_routes_v12_8_1 import register_assertion_trust_gate_routes
-from .guided_investigation_routes_v12_9 import register_guided_investigation_routes
+from __future__ import annotations
+
+from flask import Flask
+
+
+def _looks_like_flask_app(obj):
+    return hasattr(obj, "test_client") and hasattr(obj, "url_map") and hasattr(obj, "register_blueprint")
+
+
+def _load_dashboard_app():
+    """Best-effort discovery of the existing dashboard runtime app."""
+    try:
+        from . import dashboard
+    except Exception:
+        return None, "dashboard_import_failed"
+
+    for name in ("app", "application"):
+        obj = getattr(dashboard, name, None)
+        if _looks_like_flask_app(obj):
+            return obj, f"dashboard.{name}"
+
+    for name in ("create_app", "make_app", "get_app", "build_app"):
+        factory = getattr(dashboard, name, None)
+        if not callable(factory):
+            continue
+        try:
+            obj = factory()
+        except TypeError:
+            continue
+        except Exception:
+            continue
+        if _looks_like_flask_app(obj):
+            return obj, f"dashboard.{name}()"
+
+    return None, "dashboard_app_not_found"
+
+
+def create_app():
+    """Production WSGI app entrypoint.
+
+    This function intentionally does not run Alembic or any DB upgrade. It only
+    mounts runtime guard/status routes needed after v12.10.53.
+    """
+    app, source = _load_dashboard_app()
+
+    if app is None:
+        app = Flask("socmint_wsgi_guard_runtime")
+        app.config["SOCMINT_WSGI_MODE"] = "wsgi_guard_minimal"
+        app.config["SOCMINT_WSGI_SOURCE"] = source
+    else:
+        app.config["SOCMINT_WSGI_MODE"] = "dashboard_runtime"
+        app.config["SOCMINT_WSGI_SOURCE"] = source
+
+    from .v12_10_54_runtime_guard_routes import register_v12_10_54_routes
+
+    register_v12_10_54_routes(app)
+    return app
+
 
 app = create_app()
-register_full_report_aliases(app)
-register_full_report_browser_flow(app)
-register_full_report_history_routes(app)
-register_full_report_retention_routes(app)
-register_command_center_routes(app)
-register_connector_runtime_routes(app)
-register_spine_intelligence_routes(app)
-register_ultimate_dossier_routes(app)
-register_membership_routes(app)
-register_billing_routes(app)
-register_tor_routes(app)
-register_hidden_service_diagnostics_routes(app)
-register_release_status_routes(app)
-register_release_status_ui_routes(app)
-register_release_mount_routes(app)
-register_release_runtime_routes(app)
-register_analyst_ux_routes(app)
-register_export_quality_routes(app)
-register_connector_sdk_routes(app)
-register_production_release_routes(app)
-register_certification_dashboard_routes(app)
-register_distribution_action_routes(app)
-register_distribution_packet_export_routes(app)
-register_distribution_export_verification_routes(app)
-register_distribution_release_ledger_routes(app)
-register_release_ledger_dashboard_routes(app)
-register_distribution_handoff_packet_routes(app)
-register_entity_profile_intelligence_routes(app)
-register_entity_profile_intelligence_ui_routes(app)
-register_scope_lock_routes(app)
-register_build_audit_routes(app)
-register_recon_document_locator_routes(app)
-register_forensic_intake_routes(app)
-register_narrative_intelligence_routes(app)
-register_authenticity_integrity_routes(app)
-register_integrity_gate_routes(app)
-register_assertion_trust_routes(app)
-register_assertion_trust_gate_routes(app)
-register_guided_investigation_routes(app)
+application = app

@@ -1210,3 +1210,24 @@ report121055:
 	@echo 'Runtime mount: release/v12_10_55/REAL_RUNTIME_ROUTE_MOUNT_REPORT_V12_10_55.md'
 	@echo 'Route map:      release/v12_10_55/REAL_RUNTIME_ROUTE_MAP_V12_10_55.txt'
 	@echo '54G fallback:   release/v12_10_54D/RUNTIME_APP_DISCOVERY_REPORT_V12_10_54D.md'
+
+prodentry121056:
+	python scripts/production_entrypoint_route_lock_report_v12_10_56.py
+
+test121056:
+	bash scripts/test_v12_10_56.sh
+
+report121056:
+	python scripts/production_entrypoint_route_lock_report_v12_10_56.py
+	python scripts/post_release_runtime_hardening_report_v12_10_54.py
+	@echo 'Production entrypoint: release/v12_10_56/PRODUCTION_ENTRYPOINT_ROUTE_LOCK_V12_10_56.md'
+	@echo 'Route map:             release/v12_10_56/PRODUCTION_ENTRYPOINT_ROUTE_MAP_V12_10_56.txt'
+
+test121056A:
+	bash scripts/test_v12_10_56A.sh
+
+report121056A:
+	python scripts/production_entrypoint_route_lock_report_v12_10_56.py
+	python scripts/post_release_runtime_hardening_report_v12_10_54.py
+	@echo 'Production entrypoint: release/v12_10_56/PRODUCTION_ENTRYPOINT_ROUTE_LOCK_V12_10_56.md'
+	@echo 'Route map:             release/v12_10_56/PRODUCTION_ENTRYPOINT_ROUTE_MAP_V12_10_56.txt'

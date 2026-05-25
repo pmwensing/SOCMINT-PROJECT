@@ -1,0 +1,6 @@
+/api/release/archive-integrity
+/api/schema/rollback/0018
+/api/schema/status
+/api/schema/upgrade-guard
+/api/version
+/static/<path:filename>
