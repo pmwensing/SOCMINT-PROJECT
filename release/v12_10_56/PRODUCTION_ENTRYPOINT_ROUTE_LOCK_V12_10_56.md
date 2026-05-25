@@ -58,6 +58,7 @@
 - `./venv/bin/gunicorn --bind 127.0.0.1:5000 src.socmint.wsgi:app`
 - `@echo 'Production entrypoint: release/v12_10_56/PRODUCTION_ENTRYPOINT_ROUTE_LOCK_V12_10_56.md'`
 - `@echo 'Production entrypoint: release/v12_10_56/PRODUCTION_ENTRYPOINT_ROUTE_LOCK_V12_10_56.md'`
+- `@echo 'Production entrypoint: release/v12_10_56/PRODUCTION_ENTRYPOINT_ROUTE_LOCK_V12_10_56.md'`
 ### `pyproject.toml`
 - `"flask",`
 - `"flask-cors",`

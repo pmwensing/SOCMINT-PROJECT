@@ -1231,3 +1231,12 @@ report121056A:
 	python scripts/post_release_runtime_hardening_report_v12_10_54.py
 	@echo 'Production entrypoint: release/v12_10_56/PRODUCTION_ENTRYPOINT_ROUTE_LOCK_V12_10_56.md'
 	@echo 'Route map:             release/v12_10_56/PRODUCTION_ENTRYPOINT_ROUTE_MAP_V12_10_56.txt'
+
+test121056B:
+	bash scripts/test_v12_10_56B.sh
+
+report121056B:
+	python scripts/production_entrypoint_route_lock_report_v12_10_56.py
+	python scripts/post_release_runtime_hardening_report_v12_10_54.py
+	@echo 'Production entrypoint: release/v12_10_56/PRODUCTION_ENTRYPOINT_ROUTE_LOCK_V12_10_56.md'
+	@echo 'Route map:             release/v12_10_56/PRODUCTION_ENTRYPOINT_ROUTE_MAP_V12_10_56.txt'
