@@ -25,144 +25,144 @@ def upgrade():
     # classification: PASS
     # priority: P0
     # domain: connectors
-    op.create_table(
-        "spine_connector_runs",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("connector_key", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("seed_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("raw_result_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `spine_connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "spine_connector_runs",  # TODO: create_table neutralized: `spine_connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `spine_connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `spine_connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("connector_key", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("seed_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `spine_connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("raw_result_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `spine_connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `spine_connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: spine_dossier_assertions ---
     # classification: PASS
     # priority: P0
     # domain: dossier
-    op.create_table(
-        "spine_dossier_assertions",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("assertion_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("normalized_value", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("validation_state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-        sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `spine_dossier_assertions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "spine_dossier_assertions",  # TODO: create_table neutralized: `spine_dossier_assertions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `spine_dossier_assertions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `spine_dossier_assertions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("assertion_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_dossier_assertions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("normalized_value", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_dossier_assertions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_dossier_assertions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("validation_state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_dossier_assertions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_dossier_assertions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `spine_dossier_assertions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `spine_dossier_assertions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `spine_dossier_assertions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: spine_raw_artifacts ---
     # classification: PASS
     # priority: P0
     # domain: evidence
-    op.create_table(
-        "spine_raw_artifacts",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("run_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("kind", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("path", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("sha256", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("mime_type", sa.String(length=255)),  # TODO: confirm type/nullability/default
-        sa.Column("size_bytes", sa.Integer()),  # TODO: confirm type/nullability/default
-        sa.Column("meta_json", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `spine_raw_artifacts` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "spine_raw_artifacts",  # TODO: create_table neutralized: `spine_raw_artifacts` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `spine_raw_artifacts` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("run_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `spine_raw_artifacts` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("kind", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_raw_artifacts` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("path", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_raw_artifacts` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("sha256", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_raw_artifacts` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("mime_type", sa.String(length=255)),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_raw_artifacts` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("size_bytes", sa.Integer()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_raw_artifacts` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("meta_json", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_raw_artifacts` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `spine_raw_artifacts` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `spine_raw_artifacts` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: spine_observations ---
     # classification: PASS
     # priority: P0
     # domain: identity
-    op.create_table(
-        "spine_observations",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("run_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("observation_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("normalized_value", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("source_ref", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("evidence_ref", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "spine_observations",  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("run_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("observation_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("normalized_value", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("source_ref", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("evidence_ref", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `spine_observations` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: spine_seeds ---
     # classification: PASS
     # priority: P0
     # domain: identity
-    op.create_table(
-        "spine_seeds",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("seed_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("raw_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("normalized_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("pii_hash", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `spine_seeds` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "spine_seeds",  # TODO: create_table neutralized: `spine_seeds` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `spine_seeds` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `spine_seeds` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("seed_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_seeds` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("raw_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_seeds` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("normalized_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_seeds` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("pii_hash", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_seeds` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `spine_seeds` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `spine_seeds` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: spine_subjects ---
     # classification: PASS
     # priority: P0
     # domain: identity
-    op.create_table(
-        "spine_subjects",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("label", sa.String(length=255)),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `spine_subjects` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "spine_subjects",  # TODO: create_table neutralized: `spine_subjects` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `spine_subjects` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("label", sa.String(length=255)),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_subjects` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `spine_subjects` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `spine_subjects` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: spine_validation_events ---
     # classification: PASS
     # priority: P0
     # domain: identity
-    op.create_table(
-        "spine_validation_events",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("assertion_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default
-        sa.Column("action", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("note", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `spine_validation_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "spine_validation_events",  # TODO: create_table neutralized: `spine_validation_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `spine_validation_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("assertion_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `spine_validation_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_validation_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("action", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_validation_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("note", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_validation_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `spine_validation_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `spine_validation_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: retention_runs ---
     # classification: PASS
     # priority: P0
     # domain: connectors
-    op.create_table(
-        "retention_runs",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("mode", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("result_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `retention_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "retention_runs",  # TODO: create_table neutralized: `retention_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `retention_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("mode", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `retention_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `retention_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("result_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `retention_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `retention_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `retention_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `retention_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: workbench_jobs ---
     # classification: PASS
     # priority: P0
     # domain: connectors
-    op.create_table(
-        "workbench_jobs",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("job_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("priority", sa.Integer(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("attempts", sa.Integer(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("result_json", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("error", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-        sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-        sa.Column("started_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-        sa.Column("finished_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "workbench_jobs",  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("job_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("priority", sa.Integer(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("attempts", sa.Integer(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("result_json", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("error", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("started_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("finished_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `workbench_jobs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: identity_columns ---
     # classification: PASS
@@ -184,121 +184,121 @@ def upgrade():
     # classification: PASS
     # priority: P0
     # domain: identity
-    op.create_table(
-        "identity_edges",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("graph_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("from_node_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("to_node_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("edge_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("evidence_ref", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("validation_state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "identity_edges",  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("graph_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("from_node_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("to_node_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("edge_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("evidence_ref", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("validation_state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `identity_edges` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: identity_graphs ---
     # classification: PASS
     # priority: P0
     # domain: identity
-    op.create_table(
-        "identity_graphs",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("label", sa.String(length=255)),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `identity_graphs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "identity_graphs",  # TODO: create_table neutralized: `identity_graphs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `identity_graphs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `identity_graphs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("label", sa.String(length=255)),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_graphs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `identity_graphs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `identity_graphs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: identity_merge_candidates ---
     # classification: PASS
     # priority: P0
     # domain: identity
-    op.create_table(
-        "identity_merge_candidates",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("graph_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("entity_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("normalized_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("node_ids_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("reason", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default
-        sa.Column("note", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-        sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "identity_merge_candidates",  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("graph_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("entity_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("normalized_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("node_ids_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("reason", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("note", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `identity_merge_candidates` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: identity_nodes ---
     # classification: PASS
     # priority: P0
     # domain: identity
-    op.create_table(
-        "identity_nodes",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("graph_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("entity_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("normalized_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("display_value", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("validation_state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `identity_nodes` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "identity_nodes",  # TODO: create_table neutralized: `identity_nodes` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `identity_nodes` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("graph_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `identity_nodes` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("entity_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_nodes` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("normalized_value", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_nodes` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("display_value", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_nodes` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("confidence", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_nodes` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("validation_state", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_nodes` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `identity_nodes` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `identity_nodes` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `identity_nodes` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: spine_contradictions ---
     # classification: PASS
     # priority: P0
     # domain: identity
-    op.create_table(
-        "spine_contradictions",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("conflict_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("severity", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("assertion_ids_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("summary", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default
-        sa.Column("note", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-        sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "spine_contradictions",  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("subject_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("conflict_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("severity", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("assertion_ids_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("summary", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("note", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("updated_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `spine_contradictions` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: policy_gate_events ---
     # classification: PASS
     # priority: P0
     # domain: policy
-    op.create_table(
-        "policy_gate_events",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("action", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("allowed", sa.Integer(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("reasons_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `policy_gate_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "policy_gate_events",  # TODO: create_table neutralized: `policy_gate_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `policy_gate_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("action", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `policy_gate_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("allowed", sa.Integer(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `policy_gate_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("reasons_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `policy_gate_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("payload_json", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `policy_gate_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("actor", sa.String(length=255)),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `policy_gate_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `policy_gate_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `policy_gate_events` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: connector_runs ---
     # classification: PASS
     # priority: P1
     # domain: connectors
-    op.create_table(
-        "connector_runs",
-        sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key
-        sa.Column("target_id", sa.Integer()),  # TODO: confirm FK target and migration order
-        sa.Column("target_value", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("target_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("connector", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("command", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("raw_result", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default
-        sa.Column("error", sa.Text()),  # TODO: confirm type/nullability/default
-        sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default
-    )
+    # op.create_table(  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # "connector_runs",  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("id", sa.Integer(), primary_key=True),  # TODO: confirm primary key  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("target_id", sa.Integer()),  # TODO: confirm FK target and migration order  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("target_value", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("target_type", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("connector", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("status", sa.String(length=255), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("command", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("raw_result", sa.Text(), nullable=False),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("error", sa.Text()),  # TODO: confirm type/nullability/default  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+        # sa.Column("created_at", sa.DateTime(timezone=True)),  # TODO: confirm timezone/default  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
+    # )  # TODO: create_table neutralized: `connector_runs` already exists at 0017_v12_10_schema_reconciliation; review original schema ownership
 
     # --- approved table: all_tab_identity_cols ---
     # classification: PASS
@@ -385,20 +385,20 @@ def upgrade():
 def downgrade():
     # Reverse dependency order.
     op.drop_table("all_tab_identity_cols")
-    op.drop_table("connector_runs")
-    op.drop_table("policy_gate_events")
-    op.drop_table("spine_contradictions")
-    op.drop_table("identity_nodes")
-    op.drop_table("identity_merge_candidates")
-    op.drop_table("identity_graphs")
-    op.drop_table("identity_edges")
+    # op.drop_table("connector_runs")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("policy_gate_events")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("spine_contradictions")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("identity_nodes")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("identity_merge_candidates")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("identity_graphs")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("identity_edges")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
     op.drop_table("identity_columns")
-    op.drop_table("workbench_jobs")
-    op.drop_table("retention_runs")
-    op.drop_table("spine_validation_events")
-    op.drop_table("spine_subjects")
-    op.drop_table("spine_seeds")
-    op.drop_table("spine_observations")
-    op.drop_table("spine_raw_artifacts")
-    op.drop_table("spine_dossier_assertions")
-    op.drop_table("spine_connector_runs")
+    # op.drop_table("workbench_jobs")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("retention_runs")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("spine_validation_events")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("spine_subjects")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("spine_seeds")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("spine_observations")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("spine_raw_artifacts")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("spine_dossier_assertions")  # TODO: collision table existed before 0018; downgrade must not drop baseline table
+    # op.drop_table("spine_connector_runs")  # TODO: collision table existed before 0018; downgrade must not drop baseline table

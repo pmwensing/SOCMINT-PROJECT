@@ -4,10 +4,15 @@ DB smoke is not GO. Do not release and do not run a real DB upgrade.
 
 ## Repair queue
 
-### unclassified_db_smoke_failure
+### sqlite_dialect_incompatibility
 
 - severity: `review`
-- repair: Inspect DB_MIGRATION_SMOKE_V12_10_38.md step outputs manually.
+- repair: Adjust migration for SQLite-safe smoke or use batch_alter_table/portable SQLAlchemy types.
+
+### downgrade_failure_or_lingering_tables
+
+- severity: `blocker`
+- repair: Fix drop order and downgrade symmetry for 0018 approved tables.
 
 ## Safety
 

@@ -1007,3 +1007,18 @@ report121048:
 	@echo 'Decision: release/full_db_smoke_trace/NEXT_PATCH_DECISION_V12_10_48.md'
 	@echo 'Full output: release/full_db_smoke_trace/ALEMBIC_UPGRADE_HEAD_FULL_OUTPUT_V12_10_48.txt'
 	@echo 'SQL output:  release/full_db_smoke_trace/ALEMBIC_UPGRADE_HEAD_SQL_MODE_V12_10_48.sql'
+
+collisionguard121049:
+	python scripts/existing_table_collision_guard_v12_10_49.py
+
+test121049:
+	bash scripts/test_v12_10_49.sh
+
+report121049:
+	python scripts/existing_table_collision_guard_v12_10_49.py
+	python scripts/db_migration_smoke_v12_10_38.py || true
+	python scripts/db_smoke_result_gate_v12_10_39.py || true
+	python scripts/full_db_smoke_trace_capture_v12_10_48.py || true
+	@echo 'Guard: release/existing_table_collision_guard/EXISTING_TABLE_COLLISION_GUARD_V12_10_49.md'
+	@echo 'Gate:  release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
+	@echo 'Trace: release/full_db_smoke_trace/FULL_DB_SMOKE_TRACE_CAPTURE_V12_10_48.md'

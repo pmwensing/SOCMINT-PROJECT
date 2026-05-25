@@ -4,14 +4,9 @@ Use this for v12.10.49. Do not patch blindly.
 
 ## Exact exception
 
-`sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table spine_connector_runs already exists`
+`None`
 
 ## Findings
-
-### already_exists
-
-- severity: `blocker`
-- repair: The migration creates an object already present from earlier migration; guard or remove duplicate create.
 
 ### foreign_key_reference_issue
 
