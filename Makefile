@@ -994,3 +994,16 @@ report121047:
 	@echo 'Neutralizer: release/identity_constraint_neutralizer/IDENTITY_CONSTRAINT_NEUTRALIZER_V12_10_47.md'
 	@echo 'Gate:        release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
 	@echo 'Target:      release/db_smoke_exact_failure/DB_SMOKE_FAILED_TABLE_REPAIR_TARGET_V12_10_42.md'
+
+trace121048:
+	python scripts/full_db_smoke_trace_capture_v12_10_48.py
+
+test121048:
+	bash scripts/test_v12_10_48.sh
+
+report121048:
+	python scripts/full_db_smoke_trace_capture_v12_10_48.py
+	@echo 'Report: release/full_db_smoke_trace/FULL_DB_SMOKE_TRACE_CAPTURE_V12_10_48.md'
+	@echo 'Decision: release/full_db_smoke_trace/NEXT_PATCH_DECISION_V12_10_48.md'
+	@echo 'Full output: release/full_db_smoke_trace/ALEMBIC_UPGRADE_HEAD_FULL_OUTPUT_V12_10_48.txt'
+	@echo 'SQL output:  release/full_db_smoke_trace/ALEMBIC_UPGRADE_HEAD_SQL_MODE_V12_10_48.sql'
