@@ -776,3 +776,15 @@ report121032:
 	python scripts/model_migration_reconciliation_audit_v12_10_32.py
 	@echo 'Report: release/model_migration_reconciliation/MODEL_MIGRATION_RECONCILIATION_V12_10_32.md'
 	@echo 'Plan:   release/model_migration_reconciliation/ALEMBIC_CANDIDATE_PLAN_V12_10_32.md'
+
+extract121033:
+	python scripts/extract_p0_p1_migration_candidates_v12_10_33.py
+
+test121033:
+	bash scripts/test_v12_10_33.sh
+
+report121033:
+	python scripts/extract_p0_p1_migration_candidates_v12_10_33.py
+	@echo 'Worksheet: release/p0_p1_migration_review/P0_P1_MIGRATION_WORKSHEET_V12_10_33.md'
+	@echo 'Draft:     release/p0_p1_migration_review/NON_EXECUTABLE_ALEMBIC_DRAFT_V12_10_33.py'
+	@echo 'Review:    release/p0_p1_migration_review/PASS_REVIEW_CLASSIFICATION_V12_10_33.md'

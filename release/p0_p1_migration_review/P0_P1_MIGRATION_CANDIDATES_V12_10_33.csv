@@ -1,0 +1,21 @@
+classification,priority_bucket,priority_score,table,domain,status,migration_action,column_count,blockers,warnings,sources
+PASS,P0,89,spine_connector_runs,connectors,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,14,,,scripts/write_spine_files.py; src/socmint/database.py
+PASS,P0,89,spine_dossier_assertions,dossier,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,18,,,scripts/write_spine_files.py; src/socmint/database.py
+PASS,P0,89,spine_raw_artifacts,evidence,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,18,,,scripts/write_spine_files.py; src/socmint/database.py
+PASS,P0,89,spine_observations,identity,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,20,,,scripts/write_spine_files.py; src/socmint/database.py
+PASS,P0,89,spine_seeds,identity,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,14,,,scripts/write_spine_files.py; src/socmint/database.py
+PASS,P0,89,spine_subjects,identity,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,6,,,scripts/write_spine_files.py; src/socmint/database.py
+PASS,P0,89,spine_validation_events,identity,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,12,,,scripts/write_spine_files.py; src/socmint/database.py
+PASS,P0,85,retention_runs,connectors,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,6,,,src/socmint/database.py
+PASS,P0,85,workbench_jobs,connectors,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,14,,,src/socmint/database.py
+PASS,P0,85,identity_columns,identity,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,8,,,var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/dialects/mssql/information_schema.py
+PASS,P0,85,identity_edges,identity,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,10,,,src/socmint/database.py
+PASS,P0,85,identity_graphs,identity,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,4,,,src/socmint/database.py
+PASS,P0,85,identity_merge_candidates,identity,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,12,,,src/socmint/database.py
+PASS,P0,85,identity_nodes,identity,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,9,,,src/socmint/database.py
+PASS,P0,85,spine_contradictions,identity,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,12,,,src/socmint/database.py
+PASS,P0,85,policy_gate_events,policy,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,7,,,src/socmint/database.py
+PASS,P1,70,connector_runs,connectors,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,10,,,src/socmint/database.py
+PASS,P1,70,all_tab_identity_cols,identity,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,73,,,var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/dialects/oracle/dictionary.py
+PASS_WITH_REVIEW_NOTES,P1,65,media_profile_enrichments,connectors,active_candidate,human_review_for_rename_or_indirect_coverage,9,,possible indirect/rename coverage exists,src/socmint/database.py
+REVIEW,P1,60,employee,uncategorized,active_candidate,candidate_for_explicit_alembic_migration_after_column_review,0,no SQLAlchemy column hints extracted,,var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/ext/automap.py; var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/ext/declarative/extensions.py; var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/orm/decl_api.py; var/venvs/v12_10_17/lib/python3.13/site-packages/sqlalchemy/orm/mapper.py
