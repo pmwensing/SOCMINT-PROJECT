@@ -902,3 +902,15 @@ report121042:
 	@echo 'Report: release/db_smoke_exact_failure/DB_SMOKE_EXACT_FAILURE_LOCATOR_V12_10_42.md'
 	@echo 'Target: release/db_smoke_exact_failure/DB_SMOKE_FAILED_TABLE_REPAIR_TARGET_V12_10_42.md'
 	@echo 'Output: release/db_smoke_exact_failure/FAILING_UPGRADE_OUTPUT_V12_10_42.txt'
+
+repairloop121044:
+	python scripts/iterative_db_smoke_repair_loop_v12_10_44.py
+
+test121044:
+	bash scripts/test_v12_10_44.sh
+
+report121044:
+	python scripts/iterative_db_smoke_repair_loop_v12_10_44.py || true
+	@echo 'Loop:   release/db_smoke_repair_loop/ITERATIVE_DB_SMOKE_REPAIR_LOOP_V12_10_44.md'
+	@echo 'Gate:   release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
+	@echo 'Target: release/db_smoke_exact_failure/DB_SMOKE_FAILED_TABLE_REPAIR_TARGET_V12_10_42.md'

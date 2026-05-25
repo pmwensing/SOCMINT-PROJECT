@@ -10,7 +10,7 @@
 - **lingering_after_downgrade**: `16`
 - **version_after_upgrade**: `0017_v12_10_schema_reconciliation`
 - **version_after_downgrade**: `0017_v12_10_schema_reconciliation`
-- **temp_db_path**: `/tmp/socmint_v12_10_38_6lp6svdz/dry_run.sqlite`
+- **temp_db_path**: `/tmp/socmint_v12_10_38_28wh34w2/dry_run.sqlite`
 
 ## Errors
 
