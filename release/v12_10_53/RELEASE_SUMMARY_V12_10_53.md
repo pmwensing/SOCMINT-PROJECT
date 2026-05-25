@@ -3,7 +3,7 @@
 - **release_status**: `PASS GO`
 - **source_readiness**: `/home/pmwens/Projects/SOCMINT-PROJECT/release/final_readiness/FINAL_RELEASE_READINESS_MANIFEST_V12_10_52A.json`
 - **branch**: `feat/v12.10.22-12.10.28-command-center`
-- **commit**: `77b442c`
+- **commit**: `f8c6a69`
 - **alembic_head**: `0018_approved_model_migration`
 - **schema_lock**: `BASELINE_AWARE_DB_SMOKE_GO`
 - **production_db_touched**: `False`

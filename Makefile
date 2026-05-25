@@ -1094,3 +1094,14 @@ report121053A:
 	python scripts/post_commit_package_refresh_v12_10_53A.py || true
 	@echo 'Tag-ready: release/v12_10_53A/TAG_READY_MANIFEST_V12_10_53A.json'
 	@echo 'Report:    release/v12_10_53A/POST_COMMIT_PACKAGE_REFRESH_REPORT_V12_10_53A.md'
+
+sync121053B:
+	python scripts/final_tag_manifest_head_sync_v12_10_53B.py
+
+test121053B:
+	bash scripts/test_v12_10_53B.sh
+
+report121053B:
+	python scripts/final_tag_manifest_head_sync_v12_10_53B.py || true
+	@echo 'Report JSON: release/v12_10_53B/FINAL_TAG_MANIFEST_HEAD_SYNC_V12_10_53B.json'
+	@echo 'Report MD:   release/v12_10_53B/FINAL_TAG_MANIFEST_HEAD_SYNC_V12_10_53B.md'
