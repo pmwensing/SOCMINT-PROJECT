@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "socmint"
-version = "12.10.39"
+version = "12.10.40"
 description = "SOCMINT Full Profile Dossier Generator"
 authors = [{name = "Your Name", email = "your.email@example.com"}]
 dependencies = [

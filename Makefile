@@ -865,3 +865,14 @@ report121039:
 	@echo 'Gate:   release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
 	@echo 'Repair: release/db_smoke_gate/DB_SMOKE_REPAIR_PLAN_V12_10_39.md'
 	@echo 'Ready:  release/db_smoke_gate/PROMOTION_READY_MANIFEST_V12_10_39.json'
+
+failure121040:
+	python scripts/db_smoke_failure_extractor_v12_10_40.py
+
+test121040:
+	bash scripts/test_v12_10_40.sh
+
+report121040:
+	python scripts/db_smoke_failure_extractor_v12_10_40.py
+	@echo 'Report: release/db_smoke_failure/DB_SMOKE_FAILURE_EXTRACTOR_V12_10_40.md'
+	@echo 'Plan:   release/db_smoke_failure/DB_SMOKE_REPAIR_TARGETS_V12_10_40.md'
