@@ -853,3 +853,15 @@ report121038:
 	python scripts/db_migration_smoke_v12_10_38.py || true
 	@echo 'Report: release/db_migration_smoke/DB_MIGRATION_SMOKE_V12_10_38.md'
 	@echo 'JSON:   release/db_migration_smoke/DB_MIGRATION_SMOKE_V12_10_38.json'
+
+gate121039:
+	python scripts/db_smoke_result_gate_v12_10_39.py
+
+test121039:
+	bash scripts/test_v12_10_39.sh
+
+report121039:
+	python scripts/db_smoke_result_gate_v12_10_39.py || true
+	@echo 'Gate:   release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
+	@echo 'Repair: release/db_smoke_gate/DB_SMOKE_REPAIR_PLAN_V12_10_39.md'
+	@echo 'Ready:  release/db_smoke_gate/PROMOTION_READY_MANIFEST_V12_10_39.json'
