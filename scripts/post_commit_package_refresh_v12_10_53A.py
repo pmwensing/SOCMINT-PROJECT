@@ -14,14 +14,12 @@ VERSION = "12.10.53A"
 
 SOURCE_MANIFEST = ROOT / "release/v12_10_53/RELEASE_ARTIFACT_MANIFEST_V12_10_53.json"
 SOURCE_TAG_MANIFEST = ROOT / "release/v12_10_53/TAG_MANIFEST_V12_10_53.json"
-SOURCE_REPORT = ROOT / "release/v12_10_53/RELEASE_PACKAGE_REPORT_V12_10_53.md"
 
 OUT_DIR = ROOT / "release/v12_10_53A"
 TAG_READY_JSON = OUT_DIR / "TAG_READY_MANIFEST_V12_10_53A.json"
 REPORT_MD = OUT_DIR / "POST_COMMIT_PACKAGE_REFRESH_REPORT_V12_10_53A.md"
 
 EXPECTED_HEAD = "0018_approved_model_migration"
-EXPECTED_RELEASE_STATUS = "PASS GO"
 EXPECTED_SCHEMA_LOCK = "BASELINE_AWARE_DB_SMOKE_GO"
 
 TARBALL = ROOT / "dist/SOCMINT-PROJECT-v12.10.53-release.tar.gz"
@@ -43,7 +41,6 @@ def run(cmd: List[str]) -> Tuple[int, str]:
 def sha256(path: Path) -> str | None:
     if not path.exists():
         return None
-
     h = hashlib.sha256()
     with path.open("rb") as f:
         for chunk in iter(lambda: f.read(1024 * 1024), b""):
@@ -57,67 +54,16 @@ def load_json(path: Path) -> Dict[str, Any]:
     return json.loads(path.read_text())
 
 
-def rerun_v12_10_53_package_builder() -> Dict[str, Any]:
-    code, out = run(["python", "scripts/release_package_tag_manifest_v12_10_53.py"])
-    return {
-        "returncode": code,
-        "output": out,
-        "output_tail": out[-6000:],
-        "passed": code == 0,
-    }
-
-
-def is_expected_or_only_generated_status(git_status: str) -> Dict[str, Any]:
-    """Working tree may be dirty because this build refreshes package outputs.
-
-    Tag-ready should require no unexpected source changes. Release/dist/report
-    refreshes are acceptable before the final commit.
-    """
-    allowed_prefixes = (
-        "release/v12_10_53/",
-        "release/v12_10_53A/",
-        "release/V12_10_53A_POST_COMMIT_PACKAGE_REFRESH.md",
-        "dist/SOCMINT-PROJECT-v12.10.53-release.tar.gz",
-        "dist/SOCMINT-PROJECT-v12.10.53-release.zip",
-        "scripts/post_commit_package_refresh_v12_10_53A.py",
-        "scripts/test_v12_10_53A.sh",
-        "tests/test_v12_10_53A_post_commit_package_refresh.py",
-        "Makefile",
-        "pyproject.toml",
-        "src/socmint/__init__.py",
-    )
-
-    unexpected = []
-    entries = []
-
-    for line in git_status.splitlines():
-        if not line.strip():
-            continue
-
-        path = line[3:] if len(line) > 3 else line
-        entries.append({"status": line[:2], "path": path})
-
-        if not any(path.startswith(prefix) or path == prefix for prefix in allowed_prefixes):
-            unexpected.append(line)
-
-    return {
-        "entries": entries,
-        "unexpected": unexpected,
-        "unexpected_count": len(unexpected),
-        "clean_or_expected_only": len(unexpected) == 0,
-    }
-
-
 def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    before_head_code, before_head = run(["git", "rev-parse", "HEAD"])
+    before_code, before_head = run(["git", "rev-parse", "HEAD"])
     before_short_code, before_short = run(["git", "rev-parse", "--short", "HEAD"])
 
-    rerun = rerun_v12_10_53_package_builder()
+    rerun_code, rerun_out = run(["python", "scripts/release_package_tag_manifest_v12_10_53.py"])
 
-    current_head_code, current_head = run(["git", "rev-parse", "HEAD"])
-    current_short_code, current_short = run(["git", "rev-parse", "--short", "HEAD"])
+    head_code, current_head = run(["git", "rev-parse", "HEAD"])
+    short_code, current_short = run(["git", "rev-parse", "--short", "HEAD"])
     branch_code, branch = run(["git", "branch", "--show-current"])
     status_code, git_status = run(["git", "status", "--short"])
     heads_code, heads_out = run(["alembic", "heads"])
@@ -128,11 +74,9 @@ def main() -> int:
     tar_hash = sha256(TARBALL)
     zip_hash = sha256(ZIPFILE)
 
-    status_check = is_expected_or_only_generated_status(git_status)
-
-    checks: List[Dict[str, Any]] = []
     errors: List[str] = []
     warnings: List[str] = []
+    checks: List[Dict[str, Any]] = []
 
     def check(name: str, ok: bool, detail: Any, hard: bool = True) -> None:
         checks.append({"name": name, "ok": ok, "detail": detail, "hard": hard})
@@ -141,8 +85,8 @@ def main() -> int:
         elif not ok:
             warnings.append(f"{name}: {detail}")
 
-    check("rerun_v12_10_53_builder_passed", rerun["passed"], rerun["output_tail"])
-    check("manifest_release_status_pass_go", manifest.get("release_status") == EXPECTED_RELEASE_STATUS, manifest.get("release_status"))
+    check("rerun_v12_10_53_builder_passed", rerun_code == 0, rerun_out[-6000:])
+    check("manifest_release_status_pass_go", manifest.get("release_status") == "PASS GO", manifest.get("release_status"))
     check("manifest_schema_lock_go", manifest.get("schema_lock") == EXPECTED_SCHEMA_LOCK, manifest.get("schema_lock"))
     check("manifest_alembic_head_0018", EXPECTED_HEAD in str(manifest.get("alembic_head")), manifest.get("alembic_head"))
     check("live_alembic_head_0018", heads_code == 0 and EXPECTED_HEAD in heads_out, heads_out)
@@ -160,21 +104,45 @@ def main() -> int:
     })
     check("tarball_exists", TARBALL.exists(), str(TARBALL))
     check("zip_exists", ZIPFILE.exists(), str(ZIPFILE))
-    check("tarball_hash_refreshed", tar_hash == manifest.get("archives", {}).get("tarball", {}).get("sha256"), {
+    check("tarball_hash_matches_manifest", tar_hash == manifest.get("archives", {}).get("tarball", {}).get("sha256"), {
         "actual": tar_hash,
         "manifest": manifest.get("archives", {}).get("tarball", {}).get("sha256"),
     })
-    check("zip_hash_refreshed", zip_hash == manifest.get("archives", {}).get("zip", {}).get("sha256"), {
+    check("zip_hash_matches_manifest", zip_hash == manifest.get("archives", {}).get("zip", {}).get("sha256"), {
         "actual": zip_hash,
         "manifest": manifest.get("archives", {}).get("zip", {}).get("sha256"),
     })
     check("production_db_not_touched", manifest.get("production_db_touched") is False, manifest.get("production_db_touched"))
     check("real_config_upgrade_not_run", manifest.get("real_config_upgrade_run") is False, manifest.get("real_config_upgrade_run"))
-    check("working_tree_has_no_unexpected_changes", status_check["clean_or_expected_only"], status_check["unexpected"], hard=False)
+
+    # Expected after refresh: release/dist files may be modified before this v12.10.53A commit.
+    allowed_dirty_prefixes = (
+        "release/v12_10_53/",
+        "release/v12_10_53A/",
+        "release/V12_10_53A_POST_COMMIT_PACKAGE_REFRESH.md",
+        "dist/SOCMINT-PROJECT-v12.10.53-release.tar.gz",
+        "dist/SOCMINT-PROJECT-v12.10.53-release.zip",
+        "scripts/post_commit_package_refresh_v12_10_53A.py",
+        "scripts/test_v12_10_53A.sh",
+        "tests/test_v12_10_53A_post_commit_package_refresh.py",
+        "Makefile",
+        "pyproject.toml",
+        "src/socmint/__init__.py",
+    )
+
+    unexpected_dirty = []
+    for line in git_status.splitlines():
+        if not line.strip():
+            continue
+        path = line[3:] if len(line) > 3 else line
+        if not any(path.startswith(prefix) or path == prefix for prefix in allowed_dirty_prefixes):
+            unexpected_dirty.append(line)
+
+    check("working_tree_has_no_unexpected_changes", not unexpected_dirty, unexpected_dirty, hard=False)
 
     tag_ready = len(errors) == 0
 
-    out = {
+    output = {
         "version": VERSION,
         "generated_at": now(),
         "tag_ready": tag_ready,
@@ -197,30 +165,28 @@ def main() -> int:
         "zip_sha256": zip_hash,
         "source_manifest": str(SOURCE_MANIFEST),
         "source_tag_manifest": str(SOURCE_TAG_MANIFEST),
-        "source_report": str(SOURCE_REPORT),
-        "rerun": rerun,
         "checks": checks,
         "errors": errors,
         "warnings": warnings,
         "git_status_short": git_status,
-        "git_status_analysis": status_check,
+        "unexpected_dirty": unexpected_dirty,
         "recommended_tag": "v12.10.53",
         "create_tag_command": "git tag -a v12.10.53 -m 'SOCMINT-PROJECT v12.10.53 release package'",
         "push_tag_command": "git push origin v12.10.53",
-        "next_action": "commit v12.10.53A refreshed package, then tag current HEAD" if tag_ready else "fix hard tag-ready blockers",
+        "next_action": "commit v12.10.53A refreshed package outputs, rerun make report121053A once more if desired, then tag current HEAD",
     }
 
-    TAG_READY_JSON.write_text(json.dumps(out, indent=2, sort_keys=True))
-    write_report(out)
+    TAG_READY_JSON.write_text(json.dumps(output, indent=2, sort_keys=True))
+    write_report(output)
 
     print(json.dumps({
         "version": VERSION,
         "tag_ready": tag_ready,
-        "release_status": out["release_status"],
+        "release_status": output["release_status"],
         "current_head": current_short,
         "manifest_commit": manifest.get("commit"),
-        "alembic_head": out["alembic_head"],
-        "schema_lock": out["schema_lock"],
+        "alembic_head": output["alembic_head"],
+        "schema_lock": output["schema_lock"],
         "error_count": len(errors),
         "warning_count": len(warnings),
         "tarball_sha256": tar_hash,
@@ -234,42 +200,40 @@ def main() -> int:
     return 0 if tag_ready else 1
 
 
-def write_report(out: Dict[str, Any]) -> None:
+def write_report(output: Dict[str, Any]) -> None:
     lines = [
         "# v12.10.53A Post-Commit Package Refresh + Tag-Ready Verification",
         "",
-        f"- **tag_ready**: `{out['tag_ready']}`",
-        f"- **release_status**: `{out['release_status']}`",
-        f"- **branch**: `{out['branch']}`",
-        f"- **current_head**: `{out['current_short']}`",
-        f"- **manifest_commit**: `{out['manifest_commit']}`",
-        f"- **alembic_head**: `{out['alembic_head']}`",
-        f"- **schema_lock**: `{out['schema_lock']}`",
+        f"- **tag_ready**: `{output['tag_ready']}`",
+        f"- **release_status**: `{output['release_status']}`",
+        f"- **branch**: `{output['branch']}`",
+        f"- **current_head**: `{output['current_short']}`",
+        f"- **manifest_commit**: `{output['manifest_commit']}`",
+        f"- **alembic_head**: `{output['alembic_head']}`",
+        f"- **schema_lock**: `{output['schema_lock']}`",
         "- **production_db_touched**: `False`",
         "- **real_config_upgrade_run**: `False`",
-        f"- **tarball_sha256**: `{out['tarball_sha256']}`",
-        f"- **zip_sha256**: `{out['zip_sha256']}`",
+        f"- **tarball_sha256**: `{output['tarball_sha256']}`",
+        f"- **zip_sha256**: `{output['zip_sha256']}`",
         "",
         "## Checks",
         "",
     ]
 
-    for check in out["checks"]:
+    for check in output["checks"]:
         mark = "PASS" if check["ok"] else ("WARN" if not check["hard"] else "FAIL")
         lines.append(f"- **{mark}** `{check['name']}` — `{check['detail']}`")
 
     lines.extend(["", "## Errors", ""])
-
-    if out["errors"]:
-        for err in out["errors"]:
+    if output["errors"]:
+        for err in output["errors"]:
             lines.append(f"- {err}")
     else:
         lines.append("- none")
 
     lines.extend(["", "## Warnings", ""])
-
-    if out["warnings"]:
-        for warning in out["warnings"]:
+    if output["warnings"]:
+        for warning in output["warnings"]:
             lines.append(f"- {warning}")
     else:
         lines.append("- none")
@@ -278,16 +242,16 @@ def write_report(out: Dict[str, Any]) -> None:
         "",
         "## Tag commands",
         "",
-        "Do not run these until after committing the refreshed package outputs.",
+        "Do not run these until after committing the refreshed v12.10.53A package outputs.",
         "",
         "```bash",
-        out["create_tag_command"],
-        out["push_tag_command"],
+        output["create_tag_command"],
+        output["push_tag_command"],
         "```",
         "",
         "## Next action",
         "",
-        out["next_action"],
+        output["next_action"],
     ])
 
     REPORT_MD.write_text("\n".join(lines))
