@@ -967,3 +967,15 @@ report121045C:
 	@echo 'Repair: release/blocked_identity_table_repair/BLOCKED_IDENTITY_TABLE_REPAIR_V12_10_45B.md'
 	@echo 'Gate:   release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
 	@echo 'Target: release/db_smoke_exact_failure/DB_SMOKE_FAILED_TABLE_REPAIR_TARGET_V12_10_42.md'
+
+diag121046:
+	python scripts/exact_alembic_exception_diagnostic_v12_10_46.py
+
+test121046:
+	bash scripts/test_v12_10_46.sh
+
+report121046:
+	python scripts/exact_alembic_exception_diagnostic_v12_10_46.py
+	@echo 'Report: release/exact_alembic_exception/EXACT_ALEMBIC_EXCEPTION_DIAGNOSTIC_V12_10_46.md'
+	@echo 'Blocks: release/exact_alembic_exception/IDENTITY_TABLE_BLOCKS_V12_10_46.md'
+	@echo 'Hints:  release/exact_alembic_exception/IDENTITY_REPAIR_HINTS_V12_10_46.md'
