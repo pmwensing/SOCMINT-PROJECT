@@ -765,3 +765,14 @@ report121031H:
 	python scripts/drift_lock_audit_v12_10_31A.py || true
 	@echo 'Latest report:'
 	@ls -1 release/drift_lock/DRIFT_LOCK_AUDIT_V12_10_31*.md | tail -n 1
+
+reconcile121032:
+	python scripts/model_migration_reconciliation_audit_v12_10_32.py
+
+test121032:
+	bash scripts/test_v12_10_32.sh
+
+report121032:
+	python scripts/model_migration_reconciliation_audit_v12_10_32.py
+	@echo 'Report: release/model_migration_reconciliation/MODEL_MIGRATION_RECONCILIATION_V12_10_32.md'
+	@echo 'Plan:   release/model_migration_reconciliation/ALEMBIC_CANDIDATE_PLAN_V12_10_32.md'
