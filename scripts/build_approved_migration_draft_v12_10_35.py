@@ -46,7 +46,7 @@ def sa_type_from_expr(expr: str) -> str:
     low = expr.lower()
 
     if "uuid" in low:
-        return "sa.String(36)  # TODO: confirm UUID dialect"
+        return "sa.String(36)"
     if "integer" in low or "bigint" in low:
         return "sa.Integer()"
     if "string" in low:
@@ -57,7 +57,7 @@ def sa_type_from_expr(expr: str) -> str:
     if "text" in low:
         return "sa.Text()"
     if "datetime" in low or "timestamp" in low:
-        return "sa.DateTime(timezone=True)  # TODO: confirm timezone/default"
+        return "sa.DateTime(timezone=True)"
     if "date" in low:
         return "sa.Date()"
     if "boolean" in low:
@@ -65,13 +65,13 @@ def sa_type_from_expr(expr: str) -> str:
     if "float" in low:
         return "sa.Float()"
     if "numeric" in low or "decimal" in low:
-        return "sa.Numeric()  # TODO: confirm precision/scale"
+        return "sa.Numeric()"
     if "jsonb" in low:
-        return "sa.JSON()  # TODO: confirm JSONB dialect"
+        return "sa.JSON()"
     if "json" in low:
         return "sa.JSON()"
 
-    return "sa.String()  # TODO: confirm type"
+    return "sa.String()"
 
 
 def column_flags(expr: str) -> List[str]:

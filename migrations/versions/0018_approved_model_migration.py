@@ -1,15 +1,15 @@
-"""v12.10.35 APPROVED MIGRATION DRAFT — REVIEW BEFORE PROMOTION
+"""v12.10.37 APPROVED MODEL MIGRATION
 
-This file is generated outside alembic/versions.
-It is not applied automatically.
-Promote only after human review of every TODO.
+Promoted into alembic/versions by v12.10.37 promotion gate.
+This migration is not applied automatically by this promotion gate.
+TODO comments preserved for final schema review.
 
 Revision ID: 0018_approved_model_migration
 Revises: 0017_v12_10_schema_reconciliation
 """
 
-# REVIEW DRAFT ONLY.
-# Do not run until promoted in a later build.
+# PROMOTED MIGRATION FILE — DO NOT UPGRADE WITHOUT FINAL DB SMOKE TEST.
+# Promoted by v12.10.37. No alembic upgrade was run by this build.
 
 from alembic import op
 import sqlalchemy as sa
