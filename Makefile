@@ -890,3 +890,15 @@ report121041:
 	@echo 'Repair: release/db_smoke_repair/TODO_PLACEHOLDER_REPAIR_V12_10_41.md'
 	@echo 'Smoke:  release/db_migration_smoke/DB_MIGRATION_SMOKE_V12_10_38.md'
 	@echo 'Gate:   release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
+
+locator121042:
+	python scripts/db_smoke_exact_failure_locator_v12_10_42.py
+
+test121042:
+	bash scripts/test_v12_10_42.sh
+
+report121042:
+	python scripts/db_smoke_exact_failure_locator_v12_10_42.py
+	@echo 'Report: release/db_smoke_exact_failure/DB_SMOKE_EXACT_FAILURE_LOCATOR_V12_10_42.md'
+	@echo 'Target: release/db_smoke_exact_failure/DB_SMOKE_FAILED_TABLE_REPAIR_TARGET_V12_10_42.md'
+	@echo 'Output: release/db_smoke_exact_failure/FAILING_UPGRADE_OUTPUT_V12_10_42.txt'
