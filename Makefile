@@ -830,3 +830,26 @@ test121036:
 report121036:
 	python scripts/validate_approved_migration_draft_v12_10_36.py || true
 	@echo 'Report: release/approved_draft_validation/APPROVED_DRAFT_STATIC_VALIDATION_V12_10_36.md'
+
+promote121037:
+	python scripts/promote_approved_migration_v12_10_37.py
+
+test121037:
+	bash scripts/test_v12_10_37.sh
+
+report121037:
+	python scripts/promote_approved_migration_v12_10_37.py
+	@echo 'Promoted: alembic/versions/0018_approved_model_migration.py'
+	@echo 'Manifest: release/migration_promotion/MIGRATION_PROMOTION_MANIFEST_V12_10_37.json'
+	@echo 'Report:   release/migration_promotion/MIGRATION_PROMOTION_REPORT_V12_10_37.md'
+
+dbsmoke121038:
+	python scripts/db_migration_smoke_v12_10_38.py
+
+test121038:
+	bash scripts/test_v12_10_38.sh
+
+report121038:
+	python scripts/db_migration_smoke_v12_10_38.py || true
+	@echo 'Report: release/db_migration_smoke/DB_MIGRATION_SMOKE_V12_10_38.md'
+	@echo 'JSON:   release/db_migration_smoke/DB_MIGRATION_SMOKE_V12_10_38.json'
