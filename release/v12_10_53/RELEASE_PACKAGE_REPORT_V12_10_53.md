@@ -2,19 +2,19 @@
 
 - **release_status**: `PASS GO`
 - **branch**: `feat/v12.10.22-12.10.28-command-center`
-- **commit**: `b58e0b2`
+- **commit**: `c900d47`
 - **alembic_head**: `0018_approved_model_migration`
 - **schema_lock**: `BASELINE_AWARE_DB_SMOKE_GO`
 - **production_db_touched**: `False`
 - **real_config_upgrade_run**: `False`
-- **artifact_count**: `176`
+- **artifact_count**: `180`
 
 ## Archives
 
 - tarball: `/home/pmwens/Projects/SOCMINT-PROJECT/dist/SOCMINT-PROJECT-v12.10.53-release.tar.gz`
-- tarball_sha256: `5bb23cd9ce0c43bc74f3ee96398f7d4187d86f69da907ac54c30e51526148834`
+- tarball_sha256: `3f887389706316c617a532392db7725470aee35ea750132a54e90c768ca4b338`
 - zip: `/home/pmwens/Projects/SOCMINT-PROJECT/dist/SOCMINT-PROJECT-v12.10.53-release.zip`
-- zip_sha256: `97593159361e4fb1abde7e9af792ca11e3715dbb87803a3c759372c30d2ed32e`
+- zip_sha256: `756c4747a40f0d8062d0e13e0bcb2cb2cbb8935e6cf1b35f61538627533a42ac`
 
 ## Tag
 

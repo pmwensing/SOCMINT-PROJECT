@@ -1083,3 +1083,14 @@ report121053:
 	@echo 'Tag manifest: release/v12_10_53/TAG_MANIFEST_V12_10_53.json'
 	@echo 'Tarball:      dist/SOCMINT-PROJECT-v12.10.53-release.tar.gz'
 	@echo 'Zip:          dist/SOCMINT-PROJECT-v12.10.53-release.zip'
+
+refresh121053A:
+	python scripts/post_commit_package_refresh_v12_10_53A.py
+
+test121053A:
+	bash scripts/test_v12_10_53A.sh
+
+report121053A:
+	python scripts/post_commit_package_refresh_v12_10_53A.py || true
+	@echo 'Tag-ready: release/v12_10_53A/TAG_READY_MANIFEST_V12_10_53A.json'
+	@echo 'Report:    release/v12_10_53A/POST_COMMIT_PACKAGE_REFRESH_REPORT_V12_10_53A.md'
