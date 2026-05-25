@@ -2,9 +2,9 @@
 
 - **candidate_count**: `20`
 - **approval_file_exists**: `True`
-- **approved_set_created**: `False`
-- **approved_table_count**: `0`
-- **approval_valid**: `False`
+- **approved_set_created**: `True`
+- **approved_table_count**: `18`
+- **approval_valid**: `True`
 - **schema_mutation**: `none`
 - **migration_created**: `False`
 - **alembic_versions_mutated**: `False`
