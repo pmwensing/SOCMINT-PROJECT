@@ -820,3 +820,13 @@ report121035:
 	@echo 'Manifest: release/approved_migration_draft/APPROVED_MIGRATION_DRAFT_MANIFEST_V12_10_35.json'
 	@echo 'Report:   release/approved_migration_draft/APPROVED_MIGRATION_DRAFT_REPORT_V12_10_35.md'
 	@echo 'Refusal:  release/approved_migration_draft/APPROVED_MIGRATION_DRAFT_REFUSAL_V12_10_35.md'
+
+validate121036:
+	python scripts/validate_approved_migration_draft_v12_10_36.py
+
+test121036:
+	bash scripts/test_v12_10_36.sh
+
+report121036:
+	python scripts/validate_approved_migration_draft_v12_10_36.py || true
+	@echo 'Report: release/approved_draft_validation/APPROVED_DRAFT_STATIC_VALIDATION_V12_10_36.md'
