@@ -979,3 +979,18 @@ report121046:
 	@echo 'Report: release/exact_alembic_exception/EXACT_ALEMBIC_EXCEPTION_DIAGNOSTIC_V12_10_46.md'
 	@echo 'Blocks: release/exact_alembic_exception/IDENTITY_TABLE_BLOCKS_V12_10_46.md'
 	@echo 'Hints:  release/exact_alembic_exception/IDENTITY_REPAIR_HINTS_V12_10_46.md'
+
+neutralizeidentity121047:
+	python scripts/identity_constraint_neutralizer_v12_10_47.py
+
+test121047:
+	bash scripts/test_v12_10_47.sh
+
+report121047:
+	python scripts/identity_constraint_neutralizer_v12_10_47.py
+	python scripts/db_migration_smoke_v12_10_38.py || true
+	python scripts/db_smoke_result_gate_v12_10_39.py || true
+	python scripts/db_smoke_exact_failure_locator_v12_10_42.py || true
+	@echo 'Neutralizer: release/identity_constraint_neutralizer/IDENTITY_CONSTRAINT_NEUTRALIZER_V12_10_47.md'
+	@echo 'Gate:        release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
+	@echo 'Target:      release/db_smoke_exact_failure/DB_SMOKE_FAILED_TABLE_REPAIR_TARGET_V12_10_42.md'

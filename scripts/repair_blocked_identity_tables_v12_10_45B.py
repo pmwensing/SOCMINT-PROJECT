@@ -105,12 +105,12 @@ def patch_executable_todo(code: str) -> Tuple[str, bool]:
     original = code
 
     replacements = {
-        "length=TODO": "length=255",
+        "length=255": "length=255",
         "length = TODO": "length=255",
-        "sa.String(TODO)": "sa.String(255)",
-        "String(TODO)": "String(255)",
-        "sa.String(length=TODO)": "sa.String(length=255)",
-        "String(length=TODO)": "String(length=255)",
+        "sa.String(255)": "sa.String(255)",
+        "String(255)": "String(255)",
+        "sa.String(length=255)": "sa.String(length=255)",
+        "String(length=255)": "String(length=255)",
         "nullable=TODO": "nullable=True",
         "nullable = TODO": "nullable=True",
         "index=TODO": "index=False",
@@ -288,10 +288,10 @@ def patch_generators() -> List[Dict[str, Any]]:
 
         before = path.read_text()
         after = before
-        after = after.replace("sa.String(length=TODO)", "sa.String(length=255)")
-        after = after.replace("length=TODO", "length=255")
-        after = after.replace("sa.String(TODO)", "sa.String(255)")
-        after = after.replace("String(TODO)", "String(255)")
+        after = after.replace("sa.String(length=255)", "sa.String(length=255)")
+        after = after.replace("length=255", "length=255")
+        after = after.replace("sa.String(255)", "sa.String(255)")
+        after = after.replace("String(255)", "String(255)")
 
         if after != before:
             path.write_text(after)
