@@ -1196,3 +1196,17 @@ report121054G:
 	@echo 'Discovery: release/v12_10_54D/RUNTIME_APP_DISCOVERY_REPORT_V12_10_54D.md'
 	@echo 'Trace:     release/v12_10_54G/RUNTIME_APP_DISCOVERY_TRACE_V12_10_54G.txt'
 	@echo 'Runtime:   release/v12_10_54/POST_RELEASE_RUNTIME_HARDENING_REPORT_V12_10_54.md'
+
+routemount121055:
+	python scripts/real_runtime_route_mount_report_v12_10_55.py
+
+test121055:
+	bash scripts/test_v12_10_55.sh
+
+report121055:
+	python scripts/real_runtime_route_mount_report_v12_10_55.py
+	python scripts/runtime_app_discovery_report_v12_10_54D.py
+	python scripts/post_release_runtime_hardening_report_v12_10_54.py
+	@echo 'Runtime mount: release/v12_10_55/REAL_RUNTIME_ROUTE_MOUNT_REPORT_V12_10_55.md'
+	@echo 'Route map:      release/v12_10_55/REAL_RUNTIME_ROUTE_MAP_V12_10_55.txt'
+	@echo '54G fallback:   release/v12_10_54D/RUNTIME_APP_DISCOVERY_REPORT_V12_10_54D.md'
