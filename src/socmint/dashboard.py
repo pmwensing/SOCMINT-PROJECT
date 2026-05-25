@@ -7035,3 +7035,20 @@ try:
 except NameError:
     pass
 # --- end v12.10.31B runtime route lock ---
+
+# V12_10_54_SAFE_ROUTE_HOOK
+def _register_v12_10_54_runtime_guard_routes_safe():
+    """Register v12.10.54 runtime guard routes without running DB migration."""
+    try:
+        from .v12_10_54_runtime_guard_routes import register_v12_10_54_routes
+    except Exception:
+        return False
+
+    try:
+        register_v12_10_54_routes(app)
+        return True
+    except Exception:
+        return False
+
+
+_register_v12_10_54_runtime_guard_routes_safe()
