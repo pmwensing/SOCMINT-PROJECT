@@ -1022,3 +1022,17 @@ report121049:
 	@echo 'Guard: release/existing_table_collision_guard/EXISTING_TABLE_COLLISION_GUARD_V12_10_49.md'
 	@echo 'Gate:  release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
 	@echo 'Trace: release/full_db_smoke_trace/FULL_DB_SMOKE_TRACE_CAPTURE_V12_10_48.md'
+
+repairdowngrade121050:
+	python scripts/downgrade_symmetry_repair_v12_10_50.py
+
+test121050:
+	bash scripts/test_v12_10_50.sh
+
+report121050:
+	python scripts/downgrade_symmetry_repair_v12_10_50.py
+	python scripts/db_migration_smoke_v12_10_38.py || true
+	python scripts/db_smoke_result_gate_v12_10_39.py || true
+	@echo 'Repair: release/downgrade_symmetry_repair/DOWNGRADE_SYMMETRY_REPAIR_V12_10_50.md'
+	@echo 'Gate:   release/db_smoke_gate/DB_SMOKE_RESULT_GATE_V12_10_39.md'
+	@echo 'Smoke:  release/db_migration_smoke/DB_MIGRATION_SMOKE_V12_10_38.md'
