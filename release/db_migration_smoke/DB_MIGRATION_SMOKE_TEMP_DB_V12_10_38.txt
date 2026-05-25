@@ -1,5 +1,5 @@
-tmp_root=/tmp/socmint_v12_10_38_28wh34w2
-db_path=/tmp/socmint_v12_10_38_28wh34w2/dry_run.sqlite
-db_url=sqlite:////tmp/socmint_v12_10_38_28wh34w2/dry_run.sqlite
-alembic_config=/tmp/socmint_v12_10_38_28wh34w2/alembic_v12_10_38.ini
+tmp_root=/tmp/socmint_v12_10_38_mtv5oubz
+db_path=/tmp/socmint_v12_10_38_mtv5oubz/dry_run.sqlite
+db_url=sqlite:////tmp/socmint_v12_10_38_mtv5oubz/dry_run.sqlite
+alembic_config=/tmp/socmint_v12_10_38_mtv5oubz/alembic_v12_10_38.ini
 production_db_touched=false
