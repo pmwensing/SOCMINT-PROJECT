@@ -1105,3 +1105,94 @@ report121053B:
 	python scripts/final_tag_manifest_head_sync_v12_10_53B.py || true
 	@echo 'Report JSON: release/v12_10_53B/FINAL_TAG_MANIFEST_HEAD_SYNC_V12_10_53B.json'
 	@echo 'Report MD:   release/v12_10_53B/FINAL_TAG_MANIFEST_HEAD_SYNC_V12_10_53B.md'
+
+guard121054:
+	python scripts/real_db_upgrade_guard_v12_10_54.py
+
+archive121054:
+	python scripts/release_archive_integrity_v12_10_54.py
+
+tagreport121054:
+	python scripts/tag_verification_report_v12_10_54.py || true
+
+test121054:
+	bash scripts/test_v12_10_54.sh
+
+fixdash121054A:
+	python scripts/fix_dashboard_route_registration_v12_10_54A.py
+
+test121054A:
+	bash scripts/test_v12_10_54A.sh
+
+report121054A:
+	python scripts/fix_dashboard_route_registration_v12_10_54A.py
+	python scripts/post_release_runtime_hardening_report_v12_10_54.py
+	@echo 'Fix:     release/v12_10_54A/DASHBOARD_ROUTE_FIX_V12_10_54A.md'
+	@echo 'Runtime: release/v12_10_54/POST_RELEASE_RUNTIME_HARDENING_REPORT_V12_10_54.md'
+
+fixdash121054B:
+	python scripts/fix_dashboard_compile_recovery_v12_10_54B.py
+
+test121054B:
+	bash scripts/test_v12_10_54B.sh
+
+report121054B:
+	python scripts/fix_dashboard_compile_recovery_v12_10_54B.py
+	python scripts/post_release_runtime_hardening_report_v12_10_54.py
+	@echo 'Fix:     release/v12_10_54B/DASHBOARD_COMPILE_RECOVERY_V12_10_54B.md'
+	@echo 'Context: release/v12_10_54B/DASHBOARD_COMPILE_ERROR_CONTEXT_V12_10_54B.txt'
+	@echo 'Runtime: release/v12_10_54/POST_RELEASE_RUNTIME_HARDENING_REPORT_V12_10_54.md'
+
+restoredash121054C:
+	python scripts/restore_dashboard_safe_hook_v12_10_54C.py
+
+test121054C:
+	bash scripts/test_v12_10_54C.sh
+
+report121054C:
+	python scripts/restore_dashboard_safe_hook_v12_10_54C.py
+	python scripts/post_release_runtime_hardening_report_v12_10_54.py
+	@echo 'Restore: release/v12_10_54C/RESTORE_DASHBOARD_SAFE_HOOK_V12_10_54C.md'
+	@echo 'Context: release/v12_10_54C/dashboard_compile_context_v12_10_54C.txt'
+	@echo 'Runtime: release/v12_10_54/POST_RELEASE_RUNTIME_HARDENING_REPORT_V12_10_54.md'
+
+appdiscover121054D:
+	python scripts/runtime_app_discovery_report_v12_10_54D.py
+
+test121054D:
+	bash scripts/test_v12_10_54D.sh
+
+report121054D:
+	python scripts/runtime_app_discovery_report_v12_10_54D.py
+	python scripts/post_release_runtime_hardening_report_v12_10_54.py
+	@echo 'Discovery: release/v12_10_54D/RUNTIME_APP_DISCOVERY_REPORT_V12_10_54D.md'
+	@echo 'Runtime:   release/v12_10_54/POST_RELEASE_RUNTIME_HARDENING_REPORT_V12_10_54.md'
+
+test121054E:
+	bash scripts/test_v12_10_54E.sh
+
+report121054E:
+	python scripts/runtime_app_discovery_report_v12_10_54D.py
+	python scripts/post_release_runtime_hardening_report_v12_10_54.py
+	@echo 'Discovery: release/v12_10_54D/RUNTIME_APP_DISCOVERY_REPORT_V12_10_54D.md'
+	@echo 'Runtime:   release/v12_10_54/POST_RELEASE_RUNTIME_HARDENING_REPORT_V12_10_54.md'
+
+test121054F:
+	bash scripts/test_v12_10_54F.sh
+
+report121054F:
+	python scripts/runtime_app_discovery_report_v12_10_54D.py
+	python scripts/post_release_runtime_hardening_report_v12_10_54.py
+	@echo 'Discovery: release/v12_10_54D/RUNTIME_APP_DISCOVERY_REPORT_V12_10_54D.md'
+	@echo 'Trace:     release/v12_10_54F/RUNTIME_APP_DISCOVERY_TRACE_V12_10_54F.txt'
+	@echo 'Runtime:   release/v12_10_54/POST_RELEASE_RUNTIME_HARDENING_REPORT_V12_10_54.md'
+
+test121054G:
+	bash scripts/test_v12_10_54G.sh
+
+report121054G:
+	python scripts/runtime_app_discovery_report_v12_10_54D.py
+	python scripts/post_release_runtime_hardening_report_v12_10_54.py
+	@echo 'Discovery: release/v12_10_54D/RUNTIME_APP_DISCOVERY_REPORT_V12_10_54D.md'
+	@echo 'Trace:     release/v12_10_54G/RUNTIME_APP_DISCOVERY_TRACE_V12_10_54G.txt'
+	@echo 'Runtime:   release/v12_10_54/POST_RELEASE_RUNTIME_HARDENING_REPORT_V12_10_54.md'
