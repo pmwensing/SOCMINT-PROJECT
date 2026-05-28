@@ -4,11 +4,12 @@ from __future__ import annotations
 import json
 import sys
 
+from socmint.build_audit_routes import register_build_audit_routes
 from socmint.dashboard import create_app
 from socmint.full_report_alias import register_full_report_aliases
+from socmint.real_world_audit import build_real_world_audit
+from socmint.real_world_audit import register_real_world_audit_routes
 from socmint.scope_lock_routes import register_scope_lock_routes
-from socmint.build_audit_routes import register_build_audit_routes
-from socmint.real_world_audit import build_real_world_audit, register_real_world_audit_routes
 
 
 def main() -> int:
@@ -48,7 +49,9 @@ def main() -> int:
         "capability_score": payload.get("capability_score"),
         "missing_payload_keys": missing,
         "missing_routes": route_missing,
-        "build_plan_phases": [item.get("phase") for item in payload.get("build_plan", [])],
+        "build_plan_phases": [
+            item.get("phase") for item in payload.get("build_plan", [])
+        ],
     }
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result["status"] == "pass" else 1
