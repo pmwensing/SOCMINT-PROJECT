@@ -27,7 +27,18 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Lint
-        run: ruff check src tests scripts
+        run: |
+          mkdir -p var/socmint/ci_reports
+          ruff check src tests scripts --output-format=full > var/socmint/ci_reports/ruff.log
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: socmint-ci-lint-${{ github.run_id }}
+          path: var/socmint/ci_reports/ruff.log
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Test
         run: |
