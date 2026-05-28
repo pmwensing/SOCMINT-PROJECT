@@ -28,6 +28,22 @@
       <span class="status-label">Dossier readiness</span>
       <strong>{{ payload.operator.dossier_readiness.state|upper }}</strong>
       <p class="muted">{{ payload.operator.dossier_readiness.label }}</p>
+      {% if payload.operator.dossier_readiness.blockers %}
+      <p><strong>Blocking items</strong></p>
+      <ul>
+        {% for blocker in payload.operator.dossier_readiness.blockers %}
+        <li>{{ blocker }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% if payload.operator.dossier_readiness.warnings %}
+      <p><strong>Warnings</strong></p>
+      <ul>
+        {% for warning in payload.operator.dossier_readiness.warnings %}
+        <li>{{ warning }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
     </article>
     <article class="card status-card ok">
       <span class="status-label">Next action</span>
