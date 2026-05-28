@@ -88,7 +88,6 @@ def run_gate() -> dict[str, Any]:
 
         payload = release_status()
         gates = latest_gate_reports()
-        runtime_override = truthy("SOCMINT_RELEASE_DASHBOARD_ASSUME_RUNTIME_READY")
         runtime_ready = bool(payload.get("checks", {}).get("runtime_ready"))
         decision_go = payload.get("decision") == "GO"
         status_pass = payload.get("status") == "pass"
@@ -143,24 +142,9 @@ def run_gate() -> dict[str, Any]:
             in {"informational", "pass"},
             str(payload.get("sections", {}).get("file_visibility")),
         )
-        add(
-            checks,
-            "runtime_ready_or_ci_override",
-            runtime_ready or runtime_override,
-            f"runtime_ready={runtime_ready}; override={runtime_override}",
-        )
-        add(
-            checks,
-            "dashboard_decision_go_or_ci_override",
-            decision_go or runtime_override,
-            f"decision={payload.get('decision')}; override={runtime_override}",
-        )
-        add(
-            checks,
-            "dashboard_status_pass_or_ci_override",
-            status_pass or runtime_override,
-            f"status={payload.get('status')}; override={runtime_override}",
-        )
+        add(checks, "runtime_ready", runtime_ready, str(runtime_ready))
+        add(checks, "dashboard_decision_go", decision_go, str(payload.get("decision")))
+        add(checks, "dashboard_status_pass", status_pass, str(payload.get("status")))
     except Exception as exc:
         add(checks, "decision_engine_import_and_run", False, repr(exc))
 
