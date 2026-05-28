@@ -8,6 +8,7 @@ from .dossier_readiness_routes_v13 import register_dossier_readiness_routes
 from .claim_evidence_ledger_routes_v13 import register_claim_evidence_ledger_routes
 from .handoff_status_routes_v13 import register_handoff_status_routes
 from .normalization_review_queue_routes_v13 import register_normalization_review_queue_routes
+from .normalization_review_update_routes_v13 import register_normalization_review_update_routes
 from .connector_runtime_routes import register_connector_runtime_routes
 from .spine_intelligence_routes import register_spine_intelligence_routes
 from .ultimate_dossier_routes import register_ultimate_dossier_routes
@@ -54,6 +55,7 @@ register_dossier_readiness_routes(app)
 register_claim_evidence_ledger_routes(app)
 register_handoff_status_routes(app)
 register_normalization_review_queue_routes(app)
+register_normalization_review_update_routes(app)
 register_connector_runtime_routes(app)
 register_spine_intelligence_routes(app)
 register_ultimate_dossier_routes(app)
