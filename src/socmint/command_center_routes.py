@@ -10,6 +10,12 @@ from .test_data_controls import clean_test_data, test_data_summary
 from .v11_readiness import v11_readiness_summary
 
 
+def _operator_payload() -> dict:
+    payload = command_center_payload()
+    payload["operator"] = command_center_next_action_payload(payload)
+    return payload
+
+
 def register_command_center_routes(app) -> None:
     if "api_command_center" in app.view_functions:
         return
@@ -18,11 +24,11 @@ def register_command_center_routes(app) -> None:
 
     @login_required
     def command_center_index():
-        return render_template("command_center.html", payload=command_center_payload())
+        return render_template("command_center.html", payload=_operator_payload())
 
     @login_required
     def api_command_center():
-        return jsonify(command_center_payload())
+        return jsonify(_operator_payload())
 
     @login_required
     def api_command_center_next_action():
