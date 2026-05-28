@@ -45,11 +45,11 @@ REAL_WORLD_BUILD_PLAN = [
         "phase": "repair_first",
         "title": "Stabilize fresh deploy and version truth",
         "priority": "P0",
-        "why": "A real operator must be able to clone, configure, migrate, log in, and run the core dossier path without hand fixes.",
+        "why": "Clean configure, migrate, log in, and run the dossier path.",
         "deliverables": [
             "Keep drift-report and audit-report green on current head.",
             "Keep .env.example aligned with runtime settings names.",
-            "Keep version.py, pyproject.toml, health/status routes, and release docs synchronized.",
+            "Keep version metadata, health routes, and release docs synchronized.",
             "Run a fresh-db gate before feature work merges.",
         ],
     },
@@ -57,11 +57,11 @@ REAL_WORLD_BUILD_PLAN = [
         "phase": "operator_flow",
         "title": "Make the happy path obvious",
         "priority": "P0",
-        "why": "The project already has many modules; usability depends on one clear case -> subject -> seed -> review -> dossier workflow.",
+        "why": "Usability depends on one clear case-to-dossier workflow.",
         "deliverables": [
             "Command-center checklist with next best action.",
             "Dossier readiness state: ready, draft-only, or blocked.",
-            "Buttons for run full report, inspect latest report, and export integrity pack.",
+            "Buttons for report generation, latest report, and integrity export.",
         ],
     },
     {
@@ -70,18 +70,18 @@ REAL_WORLD_BUILD_PLAN = [
         "priority": "P1",
         "why": "Dossier value comes from traceable claims, not raw connector volume.",
         "deliverables": [
-            "Every promoted claim shows source, confidence, review status, and evidence link.",
-            "Final exports include claim/evidence/review CSV ledgers.",
-            "Hash mismatch and unresolved contradiction warnings block final-mode export unless overridden as draft.",
+            "Every promoted claim shows source, confidence, review, and evidence.",
+            "Final exports include claim, evidence, and review ledgers.",
+            "Hash mismatch and high-severity contradictions block final export.",
         ],
     },
     {
         "phase": "connector_normalization",
         "title": "Normalize connector output before expanding coverage",
         "priority": "P1",
-        "why": "More connectors create noise unless each output becomes a pending finding with source/confidence/review state.",
+        "why": "Connector volume creates noise without reviewable normalized findings.",
         "deliverables": [
-            "Connector output contract: case_id, subject_id, source, finding_type, value, raw, confidence, evidence_url, collected_at, review_status.",
+            "Normalize source, type, value, raw, confidence, URL, and status.",
             "Candidate findings stay out of final dossiers until promoted.",
             "Connector quality metrics stay visible in the operator UI.",
         ],
@@ -90,11 +90,11 @@ REAL_WORLD_BUILD_PLAN = [
         "phase": "export_packaging",
         "title": "Professional case package export",
         "priority": "P2",
-        "why": "The highest-value artifact is a portable review bundle, not just an in-app graph.",
+        "why": "The highest-value artifact is a portable review bundle.",
         "deliverables": [
-            "ZIP bundle with dossier PDF/HTML/JSON, evidence manifest, hash manifest, graph JSON, timeline CSV, and audit report.",
-            "Package verification endpoint that checks required files and hashes.",
-            "Human-readable release/case package report.",
+            "ZIP dossier PDF, HTML, JSON, manifests, graph, timeline, and audit.",
+            "Package verification endpoint checks required files and hashes.",
+            "Human-readable release and case package report.",
         ],
     },
 ]
@@ -118,8 +118,9 @@ def _capability_score(app) -> tuple[list[dict[str, Any]], int]:
     for key, required_routes in CORE_ROUTE_REQUIREMENTS.items():
         present = [route for route in required_routes if route in routes]
         missing = [route for route in required_routes if route not in routes]
-        score = round((len(present) / len(required_routes)) * 100) if required_routes else 100
-        total += len(required_routes)
+        route_count = len(required_routes)
+        score = round((len(present) / route_count) * 100) if route_count else 100
+        total += route_count
         available += len(present)
         if score == 100:
             status = "works"
@@ -140,64 +141,70 @@ def _capability_score(app) -> tuple[list[dict[str, Any]], int]:
     return capabilities, overall
 
 
-def _findings_from_capabilities(capabilities: list[dict[str, Any]]) -> dict[str, list[str]]:
+def _gap_message(label: str, missing_count: int, status: str) -> str:
+    if status == "partial":
+        prefix = "partial route coverage"
+    else:
+        prefix = "not operator-ready"
+    return f"{label}: {prefix}; missing {missing_count} required route(s)."
+
+
+def _findings_from_capabilities(
+    capabilities: list[dict[str, Any]],
+) -> dict[str, list[str]]:
     works: list[str] = []
     gaps: list[str] = []
     for item in capabilities:
         label = item["key"].replace("_", " ")
-        if item["status"] == "works":
+        status = item["status"]
+        missing_count = len(item["missing_routes"])
+        if status == "works":
             works.append(f"{label}: required runtime routes are present.")
-        elif item["status"] == "partial":
-            gaps.append(
-                f"{label}: partial route coverage; missing {len(item['missing_routes'])} required route(s)."
-            )
         else:
-            gaps.append(
-                f"{label}: not operator-ready; missing {len(item['missing_routes'])} required route(s)."
-            )
+            gaps.append(_gap_message(label, missing_count, status))
     return {"what_works": works, "what_does_not": gaps}
 
 
-def build_real_world_audit(app=None) -> dict[str, Any]:
-    """Return an operator-facing product audit and repair/value build plan.
+def _blockers_from_drift(drift: dict[str, Any]) -> list[str]:
+    blockers = []
+    if drift.get("missing_tables"):
+        blockers.append("Database/schema drift: required tables are missing.")
+    if drift.get("missing_routes"):
+        blockers.append("Runtime route drift: required routes are missing.")
+    if drift.get("environment_findings"):
+        blockers.append("Configuration warnings: deployment risk findings exist.")
+    return blockers
 
-    This intentionally scores concrete runtime surface area instead of marketing claims.
-    It is safe to call during smoke tests because it does not execute connectors, crawlers,
-    browser automation, or destructive retention actions.
-    """
+
+def _readiness(blockers: list[str], route_score: int) -> str:
+    if blockers:
+        return "repair_before_feature_expansion"
+    if route_score < 90:
+        return "partial_operator_ready"
+    return "operator_ready_for_next_value_slice"
+
+
+def build_real_world_audit(app=None) -> dict[str, Any]:
+    """Return an operator-facing product audit and repair/value build plan."""
 
     drift = build_drift_report(app)
     audit = build_audit_report(app, limit=100)
     capabilities, route_score = _capability_score(app)
     findings = _findings_from_capabilities(capabilities)
-
-    blockers = []
-    if drift.get("missing_tables"):
-        blockers.append("Database/schema drift: required tables are missing from the active database.")
-    if drift.get("missing_routes"):
-        blockers.append("Runtime route drift: required routes are missing from the active app map.")
-    if drift.get("environment_findings"):
-        blockers.append("Configuration warnings: runtime environment has one or more deployment-risk findings.")
-
-    if blockers:
-        readiness = "repair_before_feature_expansion"
-    elif route_score < 90:
-        readiness = "partial_operator_ready"
-    else:
-        readiness = "operator_ready_for_next_value_slice"
+    blockers = _blockers_from_drift(drift)
 
     value_assessment = {
         "current_value_score": route_score,
         "highest_value_center": "Full Entity Profile Dossier Builder",
-        "positioning": "case -> entity -> evidence -> confidence -> human review -> dossier/report export",
-        "do_not_optimize_for": "raw connector count before claim/evidence/review integrity",
+        "positioning": "case to evidence to review to dossier export",
+        "do_not_optimize_for": "raw connector count before traceability",
     }
 
     return {
         "schema": SCHEMA,
         "generated_at": _utc_now(),
         "version": version_payload(),
-        "readiness": readiness,
+        "readiness": _readiness(blockers, route_score),
         "blockers": blockers,
         "capability_score": route_score,
         "capabilities": capabilities,
@@ -231,8 +238,6 @@ def register_real_world_audit_routes(app) -> None:
 
     @login_required
     def real_world_audit_view():
-        # The API payload is deliberately the authoritative UI for this build:
-        # it is copy/pasteable into release notes, audits, and next-step prompts.
         return jsonify(build_real_world_audit(app))
 
     app.add_url_rule(
