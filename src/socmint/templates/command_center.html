@@ -14,6 +14,36 @@
   </div>
 </section>
 
+{% if payload.operator %}
+<section class="panel guided-investigation-panel">
+  <div class="section-header">
+    <div>
+      <h2>Operator next best action</h2>
+      <p class="muted">One clear action from subject intake to dossier export.</p>
+    </div>
+    <a class="button-link" href="{{ payload.operator.next_best_action.href }}">{{ payload.operator.next_best_action.label }}</a>
+  </div>
+  <div class="card-grid">
+    <article class="card status-card {{ 'ok' if payload.operator.dossier_readiness.state in ['draft_ready', 'exported'] else 'warning' }}">
+      <span class="status-label">Dossier readiness</span>
+      <strong>{{ payload.operator.dossier_readiness.state|upper }}</strong>
+      <p class="muted">{{ payload.operator.dossier_readiness.label }}</p>
+    </article>
+    <article class="card status-card ok">
+      <span class="status-label">Next action</span>
+      <strong>{{ payload.operator.next_best_action.label }}</strong>
+      <p class="muted">{{ payload.operator.next_best_action.reason }}</p>
+      <a class="card-link" href="{{ payload.operator.next_best_action.href }}">Continue</a>
+    </article>
+    <article class="card status-card">
+      <span class="status-label">Workflow</span>
+      <strong>Subject to package</strong>
+      <p class="muted">{{ payload.operator.operator_flow|join(' / ') }}</p>
+    </article>
+  </div>
+</section>
+{% endif %}
+
 <section class="metric-grid">
   <article class="metric-card"><span>Subjects</span><strong>{{ payload.summary.subject_count }}</strong></article>
   <article class="metric-card"><span>Queued jobs</span><strong>{{ payload.summary.queued_jobs }}</strong></article>
