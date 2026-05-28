@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-import sys
 
 for candidate in ("/app/src", "/app", ".", "./src"):
     if candidate not in sys.path:
@@ -20,8 +20,6 @@ except ModuleNotFoundError:
     from src.socmint.release_status_v12_10_19 import release_status
     from src.socmint.version import VERSION
 
-
-import os
 
 def _report_root() -> Path:
     candidates = [
@@ -43,6 +41,7 @@ def _report_root() -> Path:
             continue
     raise PermissionError("No writable SOCMINT report directory found")
 
+
 REPORT_ROOT = _report_root()
 
 runtime = release_runtime_readiness()
@@ -53,7 +52,10 @@ checks = {
     "local_runtime_ready": bool(runtime.get("local_runtime_ready")),
     "readyz_http_ok": bool(runtime.get("checks", {}).get("local_readyz_http")),
     "dashboard_http_ok": bool(runtime.get("checks", {}).get("local_dashboard_http")),
-    "tor_nonblocking_policy": runtime.get("policy", {}).get("tor_file_visibility_blocks_release_status") is False,
+    "tor_nonblocking_policy": runtime.get("policy", {}).get(
+        "tor_file_visibility_blocks_release_status"
+    )
+    is False,
     "release_status_go": status.get("decision") == "GO",
 }
 
