@@ -27,6 +27,11 @@ case -> entity -> evidence -> confidence -> human review -> dossier/report expor
   - `scripts/real_world_audit_smoke_v12_10_22.py`
   - `tests/test_real_world_audit_v12_10_22.py`
 
+- CI/release-gate repair:
+  - CI now uploads ruff lint output as an artifact when lint fails.
+  - The runtime verify workflow starts Gunicorn before running the dashboard gate.
+  - The dashboard gate verifies `/readyz` through the runtime-readiness path instead of assuming readiness.
+
 ## Build plan encoded in runtime output
 
 1. Repair-first stabilization.
@@ -41,7 +46,7 @@ The new audit endpoint answers:
 
 - What works now?
 - What does not work yet?
-- What is the current value center?
+- What is the current product value center?
 - Which blockers must be repaired before more features are added?
 - What should be built next?
 
@@ -49,9 +54,17 @@ The new audit endpoint answers:
 
 The audit service does **not** run connectors, crawlers, scraping jobs, browser automation, or destructive retention operations. It only inspects runtime routes, drift/audit payloads, and build-readiness signals.
 
-## Verification
+## Remote verification
 
-```bash
-PYTHONPATH=src python3 scripts/real_world_audit_smoke_v12_10_22.py
-PYTHONPATH=src pytest -q tests/test_real_world_audit_v12_10_22.py
+Required remote checks:
+
+```text
+CI / test: pass
+SOCMINT v12.10.19 Verify / verify: pass
+```
+
+The verify workflow must prove runtime readiness by starting the application and polling:
+
+```text
+GET http://127.0.0.1:5000/readyz
 ```
