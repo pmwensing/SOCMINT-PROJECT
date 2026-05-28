@@ -94,7 +94,7 @@ ci: install
 clean:
 	rm -rf __pycache__ src/socmint/__pycache__ tests/__pycache__ .pytest_cache
 
-include Makefile.releases
+-include Makefile.releases
 
 test-v12-10-22:
 	PYTHONPATH=src python3 scripts/real_world_audit_smoke_v12_10_22.py
