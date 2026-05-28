@@ -4,6 +4,7 @@ from .full_report_browser import register_full_report_browser_flow
 from .full_report_history import register_full_report_history_routes
 from .full_report_retention import register_full_report_retention_routes
 from .command_center_routes import register_command_center_routes
+from .dossier_readiness_routes_v13 import register_dossier_readiness_routes
 from .connector_runtime_routes import register_connector_runtime_routes
 from .spine_intelligence_routes import register_spine_intelligence_routes
 from .ultimate_dossier_routes import register_ultimate_dossier_routes
@@ -46,6 +47,7 @@ register_full_report_browser_flow(app)
 register_full_report_history_routes(app)
 register_full_report_retention_routes(app)
 register_command_center_routes(app)
+register_dossier_readiness_routes(app)
 register_connector_runtime_routes(app)
 register_spine_intelligence_routes(app)
 register_ultimate_dossier_routes(app)
