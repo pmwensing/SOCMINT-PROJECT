@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-VERSION = "12.10.21"
-RELEASE_NAME = "Runtime Readiness Split"
+VERSION = "12.10.22"
+RELEASE_NAME = "Real World Audit Build Plan"
 RELEASE_CHANNEL = "rc"
-RELEASE_TAG = "v12.10.21-rc1"
+RELEASE_TAG = "v12.10.22-rc1"
 SCHEMA = "socmint.version"
 
 
