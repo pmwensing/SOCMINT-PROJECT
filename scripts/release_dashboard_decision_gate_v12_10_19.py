@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA = "socmint.release_dashboard_decision_gate.v12_10_19"
-VERSION = "12.10.19"
+VERSION = "12.10.21"
 REPORT_ROOT = Path("var/socmint/rc_reports")
 
 
@@ -27,9 +27,9 @@ def add(rows: list[dict[str, Any]], name: str, ok: bool, detail: str = "") -> No
 
 def seed_passing_gate_report() -> Path:
     REPORT_ROOT.mkdir(parents=True, exist_ok=True)
-    path = REPORT_ROOT / "socmint_v12_10_19_seeded_runtime_route_gate.json"
+    path = REPORT_ROOT / "socmint_v12_10_21_seeded_runtime_route_gate.json"
     payload = {
-        "schema": "socmint.release.runtime_route_gate.v12_10_19.seed",
+        "schema": "socmint.release.runtime_route_gate.v12_10_21.seed",
         "version": VERSION,
         "generated_at": now(),
         "status": "pass",
@@ -43,11 +43,11 @@ def seed_passing_gate_report() -> Path:
 def write_report(report: dict[str, Any]) -> dict[str, str]:
     REPORT_ROOT.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
-    jp = REPORT_ROOT / f"socmint_v12_10_19_release_dashboard_decision_gate_{stamp}.json"
-    mp = REPORT_ROOT / f"socmint_v12_10_19_release_dashboard_decision_gate_{stamp}.md"
+    jp = REPORT_ROOT / f"socmint_v12_10_21_release_dashboard_decision_gate_{stamp}.json"
+    mp = REPORT_ROOT / f"socmint_v12_10_21_release_dashboard_decision_gate_{stamp}.md"
     jp.write_text(json.dumps(report, indent=2, sort_keys=True))
     lines = [
-        "# SOCMINT v12.10.19 Release Dashboard Decision Gate",
+        "# SOCMINT Release Dashboard Decision Gate",
         "",
         f"- Status: `{report['status']}`",
         f"- Decision: `{report['decision']}`",
@@ -62,10 +62,10 @@ def write_report(report: dict[str, Any]) -> dict[str, str]:
 
 
 def run_gate() -> dict[str, Any]:
-    os.environ.setdefault("SOCMINT_SECRET_KEY", "test-v12-10-19-dashboard-decision-secret-key-000000")
+    os.environ.setdefault("SOCMINT_SECRET_KEY", "test-v12-10-21-dashboard-decision-secret-key-000000")
     os.environ.setdefault("SOCMINT_AUTO_CREATE_DB", "true")
-    os.environ.setdefault("DATABASE_URL", "sqlite:///var/test_v12_10_19_dashboard_gate.db")
-    os.environ.setdefault("SOCMINT_DATA_DIR", "var/test_v12_10_19_data")
+    os.environ.setdefault("DATABASE_URL", "sqlite:///var/test_v12_10_21_dashboard_gate.db")
+    os.environ.setdefault("SOCMINT_DATA_DIR", "var/test_v12_10_21_data")
     os.environ.setdefault("SOCMINT_DOCKER_TOR", "true")
 
     seed_path = None
@@ -76,14 +76,15 @@ def run_gate() -> dict[str, Any]:
     payload: dict[str, Any] = {}
     gates: dict[str, Any] = {}
     try:
+        from socmint.release_status_v12_10_19 import latest_gate_reports, release_status
         from socmint.version import VERSION as package_version
-        from socmint.release_status_v12_10_19 import release_status, latest_gate_reports
+
         payload = release_status()
         gates = latest_gate_reports()
         add(checks, "package_version", package_version == VERSION, package_version)
         add(checks, "seed_report_created_if_requested", (seed_path is not None and seed_path.exists()) or not truthy("SOCMINT_RELEASE_DASHBOARD_SEED_PASS_REPORT"), str(seed_path))
-        add(checks, "status_schema", payload.get("schema") == "socmint.release_status.v12_10_19", str(payload.get("schema")))
-        add(checks, "gates_schema", gates.get("schema") == "socmint.release_gates.latest.v12_10_19", str(gates.get("schema")))
+        add(checks, "status_schema", payload.get("schema") == "socmint.release_status.v12_10_21", str(payload.get("schema")))
+        add(checks, "gates_schema", gates.get("schema") == "socmint.release_gates.latest.v12_10_21", str(gates.get("schema")))
         add(checks, "latest_overall_visible", gates.get("latest_overall") is not None, str((gates.get("latest_overall") or {}).get("name")))
         add(checks, "latest_pass_visible", gates.get("latest_pass") is not None, str((gates.get("latest_pass") or {}).get("name")))
         add(checks, "latest_release_gate_pass_visible", gates.get("latest_release_gate_pass") is not None, str((gates.get("latest_release_gate_pass") or {}).get("name")))
