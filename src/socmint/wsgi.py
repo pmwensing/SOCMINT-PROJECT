@@ -30,6 +30,7 @@ from .entity_profile_intelligence_routes import register_entity_profile_intellig
 from .entity_profile_intelligence_ui_routes import register_entity_profile_intelligence_ui_routes
 from .scope_lock_routes import register_scope_lock_routes
 from .build_audit_routes import register_build_audit_routes
+from .real_world_audit import register_real_world_audit_routes
 from .forensic_intake_routes_v12_5_1 import register_forensic_intake_routes
 from .recon_document_locator_routes import register_recon_document_locator_routes
 from .narrative_intelligence_routes_v12_6 import register_narrative_intelligence_routes
@@ -71,6 +72,7 @@ register_entity_profile_intelligence_routes(app)
 register_entity_profile_intelligence_ui_routes(app)
 register_scope_lock_routes(app)
 register_build_audit_routes(app)
+register_real_world_audit_routes(app)
 register_recon_document_locator_routes(app)
 register_forensic_intake_routes(app)
 register_narrative_intelligence_routes(app)
