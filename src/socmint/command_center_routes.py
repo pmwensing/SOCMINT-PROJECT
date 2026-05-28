@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import flash, jsonify, redirect, render_template, session, url_for
 
 from .command_center import command_center_payload
+from .command_center_next_action_v13 import command_center_next_action_payload
 from .jobs import process_scan_jobs
 from .runtime_import_health import runtime_import_health_report
 from .test_data_controls import clean_test_data, test_data_summary
@@ -22,6 +23,10 @@ def register_command_center_routes(app) -> None:
     @login_required
     def api_command_center():
         return jsonify(command_center_payload())
+
+    @login_required
+    def api_command_center_next_action():
+        return jsonify(command_center_next_action_payload(command_center_payload()))
 
     @login_required
     def api_test_data_summary():
@@ -90,6 +95,12 @@ def register_command_center_routes(app) -> None:
         "/api/v1/command-center",
         endpoint="api_command_center",
         view_func=api_command_center,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/command-center/next-action",
+        endpoint="api_command_center_next_action",
+        view_func=api_command_center_next_action,
         methods=["GET"],
     )
     app.add_url_rule(
