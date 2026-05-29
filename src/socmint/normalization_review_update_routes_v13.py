@@ -5,6 +5,13 @@ from flask import jsonify, request
 from .normalization_review_decisions_v13 import apply_normalization_review_decision
 
 
+def normalization_update_payload() -> dict:
+    payload = request.get_json(silent=True)
+    if isinstance(payload, dict) and payload:
+        return payload
+    return dict(request.form.items())
+
+
 def register_normalization_review_update_routes(app) -> None:
     if "api_normalization_review_update_v13" in app.view_functions:
         return
@@ -13,7 +20,7 @@ def register_normalization_review_update_routes(app) -> None:
 
     @login_required
     def api_normalization_review_update_v13():
-        payload = request.get_json(silent=True) or {}
+        payload = normalization_update_payload()
         result = apply_normalization_review_decision(
             kind=str(payload.get("kind") or ""),
             item_id=int(payload.get("id") or 0),
