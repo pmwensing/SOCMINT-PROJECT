@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Normalization Review</p>
+    <h1>Review normalized connector output before it becomes dossier material.</h1>
+    <p class="muted">Showing {{ payload.count }} item(s) · State filter: {{ review_state }}</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/review/normalization-queue?review_state=unreviewed">Unreviewed</a>
+    <a class="button-link secondary" href="/review/normalization-queue?review_state=confirmed">Confirmed</a>
+    <a class="button-link secondary" href="/api/v1/review/normalization-queue">API payload</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  {% for state, count in payload.state_counts.items() %}
+  <article class="metric-card"><span>{{ state }}</span><strong>{{ count }}</strong></article>
+  {% else %}
+  <article class="metric-card"><span>Queue</span><strong>0</strong></article>
+  {% endfor %}
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Review Queue</h2>
+      <p class="muted">Use the API route to update state: POST /api/v1/review/normalization-update.</p>
+    </div>
+  </div>
+  <div class="card-grid">
+    {% for item in payload.items %}
+    <article class="card status-card {{ 'ok' if item.review_state == 'confirmed' else 'warning' }}">
+      <span class="status-label">{{ item.kind }} · {{ item.review_state }}</span>
+      <strong>{{ item.type }}</strong>
+      <p class="muted">{{ item.value }}</p>
+      <p class="muted">Subject {{ item.subject_id }} · Confidence {{ item.confidence }} · Source {{ item.source }}</p>
+      {% if item.evidence_ref %}<p class="muted">Evidence: {{ item.evidence_ref }}</p>{% endif %}
+      <form method="post" action="/api/v1/review/normalization-update">
+        <input type="hidden" name="kind" value="{{ item.kind }}">
+        <input type="hidden" name="id" value="{{ item.id }}">
+        <input type="hidden" name="review_state" value="confirmed">
+        <button type="submit">Mark confirmed</button>
+      </form>
+    </article>
+    {% else %}
+    <div class="empty-state"><h3>No review items</h3><p>No normalized items match this filter.</p></div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
