@@ -5,7 +5,7 @@ from typing import Any
 
 from . import database as db
 
-SCHEMA = "socmint.normalization_review_queue.v13_7"
+SCHEMA = "socmint.normalization_review_queue.v13_14"
 
 
 def loads_dict(value: str | None) -> dict[str, Any]:
@@ -16,6 +16,13 @@ def loads_dict(value: str | None) -> dict[str, Any]:
     except Exception:
         return {}
     return data if isinstance(data, dict) else {}
+
+
+def confidence_float(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def observation_item(item) -> dict[str, Any]:
@@ -51,9 +58,30 @@ def account_item(item) -> dict[str, Any]:
     }
 
 
+def filter_queue_items(
+    items: list[dict[str, Any]],
+    review_state: str | None = None,
+    kind: str | None = None,
+    min_confidence: float | None = None,
+) -> list[dict[str, Any]]:
+    if review_state:
+        items = [item for item in items if item["review_state"] == review_state]
+    if kind:
+        items = [item for item in items if item["kind"] == kind]
+    if min_confidence is not None:
+        items = [
+            item
+            for item in items
+            if confidence_float(item.get("confidence")) >= min_confidence
+        ]
+    return items
+
+
 def build_normalization_review_queue(
     subject_id: int | None = None,
     review_state: str | None = None,
+    kind: str | None = None,
+    min_confidence: float | None = None,
     limit: int = 100,
 ) -> dict[str, Any]:
     db.ensure_configured()
@@ -76,8 +104,12 @@ def build_normalization_review_queue(
         )
         items = [observation_item(item) for item in observations]
         items.extend(account_item(item) for item in accounts)
-        if review_state:
-            items = [item for item in items if item["review_state"] == review_state]
+        items = filter_queue_items(
+            items,
+            review_state=review_state,
+            kind=kind,
+            min_confidence=min_confidence,
+        )
         items = sorted(items, key=lambda item: item.get("created_at") or "", reverse=True)
         items = items[:limit]
         counts: dict[str, int] = {}
@@ -88,6 +120,8 @@ def build_normalization_review_queue(
             "schema": SCHEMA,
             "subject_id": subject_id,
             "review_state": review_state,
+            "kind": kind,
+            "min_confidence": min_confidence,
             "count": len(items),
             "state_counts": counts,
             "items": items,
