@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flask import jsonify, request
+from flask import jsonify, redirect, request
 
 from .normalization_review_decisions_v13 import apply_normalization_review_decision
 
@@ -10,6 +10,17 @@ def normalization_update_payload() -> dict:
     if isinstance(payload, dict) and payload:
         return payload
     return dict(request.form.items())
+
+
+def normalization_update_wants_json() -> bool:
+    if request.is_json:
+        return True
+    accept = request.headers.get("Accept", "")
+    return "application/json" in accept and "text/html" not in accept
+
+
+def normalization_update_return_target() -> str:
+    return request.headers.get("Referer") or "/review/normalization-queue"
 
 
 def register_normalization_review_update_routes(app) -> None:
@@ -28,7 +39,9 @@ def register_normalization_review_update_routes(app) -> None:
             actor=str(payload.get("actor") or ""),
             note=payload.get("note"),
         )
-        return jsonify(result)
+        if normalization_update_wants_json():
+            return jsonify(result)
+        return redirect(normalization_update_return_target())
 
     app.add_url_rule(
         "/api/v1/review/normalization-update",
