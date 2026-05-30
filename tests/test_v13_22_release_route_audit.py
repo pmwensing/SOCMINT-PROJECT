@@ -29,8 +29,8 @@ V13_ROUTE_REGISTRARS = [
 
 EXPECTED_V13_ROUTES = {
     "/command-center",
-    "/api/v1/command-center/next-best-action",
-    "/api/v1/command-center/operator-payload",
+    "/api/v1/command-center",
+    "/api/v1/command-center/next-action",
     "/review/normalization-queue",
     "/api/v1/review/normalization-queue",
     "/api/v1/review/normalization-update",
