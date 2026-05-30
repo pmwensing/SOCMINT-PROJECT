@@ -8,6 +8,7 @@
   </div>
   <div class="hero-actions">
     <a class="button-link" href="/spine">Create / Open Subject</a>
+    <a class="button-link secondary" href="/review/normalization-queue">Review Queue</a>
     <a class="button-link secondary" href="{{ payload.guided_investigation.href }}">Guided Investigation</a>
     <a class="button-link secondary" href="/narrative/storyboard">Narrative</a>
     <a class="button-link secondary" href="/assertions/trust/gate">Assertion Gate</a>
@@ -55,6 +56,7 @@
       <span class="status-label">Workflow</span>
       <strong>Subject to package</strong>
       <p class="muted">{{ payload.operator.operator_flow|join(' / ') }}</p>
+      <p><a class="card-link" href="/review/normalization-queue">Open normalization review</a></p>
     </article>
   </div>
 </section>
@@ -100,10 +102,11 @@
   <div class="section-header"><div><h2>One-click investigation drilldowns</h2><p class="muted">Fast path into evidence, integrity, story, and assertion trust.</p></div></div>
   <div class="workflow-steps">
     <a href="/forensic/intake"><strong>1</strong><span>Evidence intake</span></a>
-    <a href="/evidence/integrity/gate"><strong>2</strong><span>Integrity gate</span></a>
-    <a href="/narrative/storyboard"><strong>3</strong><span>Narrative</span></a>
-    <a href="/assertions/trust/gate"><strong>4</strong><span>Assertion trust</span></a>
-    <a href="/investigation/flow"><strong>5</strong><span>Guided flow</span></a>
+    <a href="/review/normalization-queue"><strong>2</strong><span>Review queue</span></a>
+    <a href="/evidence/integrity/gate"><strong>3</strong><span>Integrity gate</span></a>
+    <a href="/narrative/storyboard"><strong>4</strong><span>Narrative</span></a>
+    <a href="/assertions/trust/gate"><strong>5</strong><span>Assertion trust</span></a>
+    <a href="/investigation/flow"><strong>6</strong><span>Guided flow</span></a>
   </div>
 </section>
 
@@ -126,6 +129,10 @@
       <h3>{{ subject.label }}</h3>
       <p>Subject ID: {{ subject.id }} · Reports: {{ subject.report_count }}</p>
       <div class="mini-actions">
+        <a href="/review/normalization-queue?subject_id={{ subject.id }}">Review Queue</a>
+        <a href="/subjects/{{ subject.id }}/dossier/readiness">Readiness</a>
+        <a href="/subjects/{{ subject.id }}/claim-evidence-ledger">Ledger</a>
+        <a href="/api/v1/subjects/{{ subject.id }}/export-manifest-draft">Manifest</a>
         <a href="/investigation/flow?subject_id={{ subject.id }}">Guided Flow</a>
         <a href="/narrative/storyboard?subject_id={{ subject.id }}">Narrative</a>
         <a href="/assertions/trust/gate?subject_id={{ subject.id }}">Assertion Gate</a>
