@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Claim / Evidence Ledger</p>
+    <h1>Inspect dossier claims, evidence references, artifact links, and review state.</h1>
+    <p class="muted">Subject {{ subject_id }}{% if payload.subject_label %} · {{ payload.subject_label }}{% endif %}</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/spine/subjects/{{ subject_id }}/dossier">Open Dossier</a>
+    <a class="button-link secondary" href="/api/v1/subjects/{{ subject_id }}/claim-evidence-ledger">API payload</a>
+    <a class="button-link secondary" href="/api/v1/subjects/{{ subject_id }}/dossier/readiness">Readiness</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>Claims</span><strong>{{ payload.summary.claim_count }}</strong></article>
+  <article class="metric-card"><span>With evidence</span><strong>{{ payload.summary.with_evidence }}</strong></article>
+  <article class="metric-card"><span>Missing evidence</span><strong>{{ payload.summary.missing_evidence }}</strong></article>
+  <article class="metric-card"><span>Unreviewed</span><strong>{{ payload.summary.unreviewed }}</strong></article>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Ledger Rows</h2>
+      <p class="muted">Each row maps a claim candidate to evidence references and artifact hashes where available.</p>
+    </div>
+  </div>
+  <div class="card-grid">
+    {% for row in payload.rows %}
+    <article class="card status-card {{ 'ok' if row.has_evidence else 'warning' }}">
+      <span class="status-label">{{ row.source }} · {{ row.review_state }}</span>
+      <strong>{{ row.claim_type }}</strong>
+      <p class="muted">{{ row.claim_value }}</p>
+      <p class="muted">Claim ID: {{ row.claim_id }} · Confidence: {{ row.confidence }}</p>
+      {% if row.evidence_refs %}
+      <p><strong>Evidence refs</strong></p>
+      <ul>
+        {% for ref in row.evidence_refs %}<li>{{ ref }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+      {% if row.artifact_links %}
+      <p><strong>Artifacts</strong></p>
+      <ul>
+        {% for artifact in row.artifact_links %}
+        <li>{{ artifact.kind }} · {{ artifact.path }} · {{ artifact.sha256 }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% if not row.has_evidence %}<p class="muted">No evidence link attached yet.</p>{% endif %}
+    </article>
+    {% else %}
+    <div class="empty-state"><h3>No ledger rows</h3><p>Promote confirmed review items or create dossier assertions to populate this ledger.</p></div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
