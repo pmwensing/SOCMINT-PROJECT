@@ -9,6 +9,7 @@
   <div class="hero-actions">
     <a class="button-link" href="/spine/subjects/{{ subject_id }}/dossier">Open Dossier</a>
     <a class="button-link secondary" href="/subjects/{{ subject_id }}/claim-evidence-ledger">Claim/Evidence Ledger</a>
+    <a class="button-link secondary" href="/api/v1/subjects/{{ subject_id }}/handoff-status">Status API</a>
     <a class="button-link secondary" href="/api/v1/subjects/{{ subject_id }}/dossier/readiness">API payload</a>
   </div>
 </section>
@@ -58,6 +59,12 @@
       <p class="muted">Pending review</p>
       <p class="muted">Unresolved contradictions: {{ payload.counts.unresolved_contradiction_count }}</p>
       <p class="muted">Hash mismatches: {{ payload.counts.hash_mismatch_count }}</p>
+    </article>
+    <article class="card status-card">
+      <span class="status-label">Subject status</span>
+      <strong>Checklist</strong>
+      <p class="muted">Open the combined subject status API for readiness, claim coverage, report availability, and verification rows.</p>
+      <p><a class="card-link" href="/api/v1/subjects/{{ subject_id }}/handoff-status">Open status API</a></p>
     </article>
   </div>
 </section>
