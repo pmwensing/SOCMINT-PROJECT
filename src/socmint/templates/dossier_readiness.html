@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Dossier Readiness</p>
+    <h1>Review blockers, warnings, counts, and export readiness before generating a dossier.</h1>
+    <p class="muted">Subject {{ subject_id }} · State: {{ payload.state }}</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/spine/subjects/{{ subject_id }}/dossier">Open Dossier</a>
+    <a class="button-link secondary" href="/subjects/{{ subject_id }}/claim-evidence-ledger">Claim/Evidence Ledger</a>
+    <a class="button-link secondary" href="/api/v1/subjects/{{ subject_id }}/dossier/readiness">API payload</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>State</span><strong>{{ payload.state|upper }}</strong></article>
+  <article class="metric-card"><span>Draft export</span><strong>{{ 'YES' if payload.draft_export_allowed else 'NO' }}</strong></article>
+  <article class="metric-card"><span>Final export</span><strong>{{ 'YES' if payload.final_export_allowed else 'NO' }}</strong></article>
+  <article class="metric-card"><span>Seeds</span><strong>{{ payload.counts.seed_count }}</strong></article>
+  <article class="metric-card"><span>Findings</span><strong>{{ payload.counts.finding_count }}</strong></article>
+  <article class="metric-card"><span>Reports</span><strong>{{ payload.counts.report_count }}</strong></article>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Readiness Summary</h2>
+      <p class="muted">{{ payload.label }}</p>
+    </div>
+  </div>
+  <div class="card-grid">
+    <article class="card status-card {{ 'ok' if not payload.blockers else 'warning' }}">
+      <span class="status-label">Blockers</span>
+      <strong>{{ payload.blockers|length }}</strong>
+      {% if payload.blockers %}
+      <ul>
+        {% for blocker in payload.blockers %}<li>{{ blocker }}</li>{% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No blockers.</p>
+      {% endif %}
+    </article>
+    <article class="card status-card {{ 'ok' if not payload.warnings else 'warning' }}">
+      <span class="status-label">Warnings</span>
+      <strong>{{ payload.warnings|length }}</strong>
+      {% if payload.warnings %}
+      <ul>
+        {% for warning in payload.warnings %}<li>{{ warning }}</li>{% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No warnings.</p>
+      {% endif %}
+    </article>
+    <article class="card status-card">
+      <span class="status-label">Review counts</span>
+      <strong>{{ payload.counts.pending_review_count }}</strong>
+      <p class="muted">Pending review</p>
+      <p class="muted">Unresolved contradictions: {{ payload.counts.unresolved_contradiction_count }}</p>
+      <p class="muted">Hash mismatches: {{ payload.counts.hash_mismatch_count }}</p>
+    </article>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Next Actions</h2>
+      <p class="muted">Follow the suggested action to move the dossier forward.</p>
+    </div>
+  </div>
+  <div class="card-grid">
+    {% for action in payload.next_actions %}
+    <article class="card status-card">
+      <span class="status-label">{{ action.key }}</span>
+      <strong>{{ action.label }}</strong>
+      <p><a class="card-link" href="{{ action.href }}">Open</a></p>
+    </article>
+    {% else %}
+    <div class="empty-state"><h3>No next action</h3><p>The readiness gate did not return a suggested action.</p></div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
