@@ -31,7 +31,7 @@
     </div>
   </div>
   <div class="card-grid">
-    {% for item in payload.items %}
+    {% for item in payload['items'] %}
     <article class="card status-card {{ 'ok' if item.review_state == 'confirmed' else 'warning' }}">
       <span class="status-label">{{ item.kind }} · {{ item.review_state }}</span>
       <strong>{{ item.type }}</strong>
