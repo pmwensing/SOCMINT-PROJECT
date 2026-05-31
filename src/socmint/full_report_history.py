@@ -33,7 +33,17 @@ def _load_export(path: Path) -> dict[str, Any]:
 
 
 def full_report_export_history(subject_id: int, limit: int = 25) -> dict[str, Any]:
-    root = dossier_root()
+    try:
+        root = dossier_root()
+    except OSError as exc:
+        return {
+            "schema": "socmint.full_report_export_history.v7_5_5",
+            "subject_id": subject_id,
+            "count": 0,
+            "exports": [],
+            "available": False,
+            "error": str(exc),
+        }
     pattern = f"subject-{subject_id}-full-entity-dossier-v2-*-EXPORT.json"
     matches = sorted(root.glob(pattern), reverse=True) if root.exists() else []
     exports = []
@@ -47,6 +57,7 @@ def full_report_export_history(subject_id: int, limit: int = 25) -> dict[str, An
         "subject_id": subject_id,
         "count": len(exports),
         "exports": exports,
+        "available": True,
     }
 
 
@@ -118,40 +129,23 @@ def _history_html(history: dict[str, Any], compare: dict[str, Any]) -> str:
             f"<td><code>{item.get('zip_name', '')}</code></td>"
             "</tr>"
         )
-    rows_html = "".join(rows) or "<tr><td colspan='4'>No exports found.</td></tr>"
-
+    if not rows:
+        rows.append("<tr><td colspan='4'>No exports yet.</td></tr>")
+    compare_block = ""
     if compare.get("available"):
-        delta_rows = []
-        for key, item in (compare.get("score_delta") or {}).items():
-            delta_rows.append(
-                "<tr>"
-                f"<td>{key}</td>"
-                f"<td>{item.get('left')}</td>"
-                f"<td>{item.get('right')}</td>"
-                f"<td>{item.get('delta')}</td>"
-                "</tr>"
-            )
-        compare_html = (
-            "<h2>Compare Previous Reports</h2>"
-            f"<p><strong>Left:</strong> <code>{compare['left'].get('name')}</code></p>"
-            f"<p><strong>Right:</strong> <code>{compare['right'].get('name')}</code></p>"
-            "<table border='1' cellpadding='6'><thead><tr><th>Score</th><th>Previous</th><th>Latest</th><th>Delta</th></tr></thead>"
-            f"<tbody>{''.join(delta_rows)}</tbody></table>"
-        )
+        compare_block = f"<h2>Comparison</h2><pre>{json.dumps(compare, indent=2)}</pre>"
     else:
-        compare_html = f"<h2>Compare Previous Reports</h2><p>{compare.get('reason')}</p>"
-
+        compare_block = f"<p><strong>Comparison:</strong> {compare.get('reason')}</p>"
     return f"""
-    <!doctype html>
-    <html><head><meta charset='utf-8'><title>Full Report History</title></head>
+    <html><head><title>Full Report Export History</title></head>
     <body>
       <h1>Full Report Export History — Subject {subject_id}</h1>
-      <p><strong>Exports:</strong> {history.get('count')}</p>
-      <table border='1' cellpadding='6'>
-        <thead><tr><th>Export</th><th>Generated</th><th>Artifacts</th><th>ZIP</th></tr></thead>
-        <tbody>{rows_html}</tbody>
+      <p>Exports: {history.get('count', 0)}</p>
+      <table border="1" cellpadding="6">
+        <tr><th>Name</th><th>Generated</th><th>Artifacts</th><th>Zip</th></tr>
+        {''.join(rows)}
       </table>
-      {compare_html}
+      {compare_block}
     </body></html>
     """
 
@@ -164,8 +158,7 @@ def register_full_report_history_routes(app) -> None:
 
     @login_required
     def api_full_report_history(subject_id: int):
-        limit = int(request.args.get("limit", 25))
-        return jsonify(full_report_export_history(subject_id, limit=limit))
+        return jsonify(full_report_export_history(subject_id))
 
     @login_required
     def api_full_report_compare(subject_id: int):
@@ -178,10 +171,14 @@ def register_full_report_history_routes(app) -> None:
         )
 
     @login_required
-    def ui_full_report_history(subject_id: int):
-        history = full_report_export_history(subject_id)
-        compare = compare_full_report_exports(subject_id)
-        return Response(_history_html(history, compare), mimetype="text/html; charset=utf-8")
+    def full_report_history_page(subject_id: int):
+        history = full_report_export_history(subject_id, limit=100)
+        compare = compare_full_report_exports(
+            subject_id,
+            left=request.args.get("left"),
+            right=request.args.get("right"),
+        )
+        return Response(_history_html(history, compare), mimetype="text/html")
 
     app.add_url_rule(
         "/api/v1/spine/subjects/<int:subject_id>/full-report/history",
@@ -197,7 +194,7 @@ def register_full_report_history_routes(app) -> None:
     )
     app.add_url_rule(
         "/spine/subjects/<int:subject_id>/full-report/history",
-        endpoint="ui_full_report_history",
-        view_func=ui_full_report_history,
+        endpoint="full_report_history_page",
+        view_func=full_report_history_page,
         methods=["GET"],
     )
