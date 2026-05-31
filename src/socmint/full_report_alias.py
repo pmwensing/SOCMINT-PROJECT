@@ -15,7 +15,15 @@ from .entity_dossier_v2 import safe_dossier_path
 def latest_full_report_export(subject_id: int) -> dict[str, Any]:
     """Return UI/API metadata for the newest full-report export."""
 
-    root = dossier_root()
+    try:
+        root = dossier_root()
+    except OSError as exc:
+        return {
+            "subject_id": subject_id,
+            "available": False,
+            "latest": None,
+            "error": str(exc),
+        }
     pattern = f"subject-{subject_id}-full-entity-dossier-v2-*-EXPORT.json"
     matches = sorted(root.glob(pattern), reverse=True) if root.exists() else []
     if not matches:
