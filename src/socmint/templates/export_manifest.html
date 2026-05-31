@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero command-hero">
+  <div>
+    <p class="eyebrow">Export Manifest</p>
+    <h1>Preview the subject package checklist before final export work begins.</h1>
+    <p class="muted">Subject {{ subject_id }} · State: {{ payload.state }} · Entries: {{ payload.entry_count }}</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link" href="/command-center">Command Center</a>
+    <a class="button-link secondary" href="/subjects/{{ subject_id }}/dossier/readiness">Readiness</a>
+    <a class="button-link secondary" href="/subjects/{{ subject_id }}/claim-evidence-ledger">Claim/Evidence Ledger</a>
+    <a class="button-link secondary" href="/api/v1/subjects/{{ subject_id }}/export-manifest-draft">API payload</a>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span>State</span><strong>{{ payload.state|upper }}</strong></article>
+  <article class="metric-card"><span>Entries</span><strong>{{ payload.entry_count }}</strong></article>
+  <article class="metric-card"><span>Readiness</span><strong>{{ payload.readiness_state|upper }}</strong></article>
+  <article class="metric-card"><span>Claims</span><strong>{{ payload.ledger_summary.claim_count }}</strong></article>
+  <article class="metric-card"><span>Missing evidence</span><strong>{{ payload.ledger_summary.missing_evidence }}</strong></article>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Manifest Entries</h2>
+      <p class="muted">This is a draft manifest. It lists expected package components and writes no files.</p>
+    </div>
+  </div>
+  <div class="card-grid">
+    {% for entry in payload.entries %}
+    <article class="card status-card">
+      <span class="status-label">{{ entry.kind }} · {{ entry.status }}</span>
+      <strong>{{ entry.name }}</strong>
+      <p class="muted">{{ entry.detail }}</p>
+      <p><a class="card-link" href="{{ entry.ref }}">Open</a></p>
+    </article>
+    {% else %}
+    <div class="empty-state"><h3>No manifest entries</h3><p>The manifest draft returned no entries.</p></div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Notes</h2>
+      <p class="muted">Operator notes returned by the manifest draft contract.</p>
+    </div>
+  </div>
+  <ul>
+    {% for note in payload.notes %}<li>{{ note }}</li>{% endfor %}
+  </ul>
+</section>
+{% endblock %}
