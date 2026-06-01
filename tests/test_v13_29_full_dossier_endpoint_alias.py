@@ -2,7 +2,8 @@ def test_full_report_history_ui_endpoint_alias_registered():
     from socmint.dashboard import app
 
     assert "ui_full_report_history" in app.view_functions
-    url = app.url_for("ui_full_report_history", subject_id=4)
+    with app.test_request_context():
+        url = app.url_for("ui_full_report_history", subject_id=4)
     assert url == "/spine/subjects/4/full-report/history"
 
 
