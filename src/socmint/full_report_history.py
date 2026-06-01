@@ -198,3 +198,9 @@ def register_full_report_history_routes(app) -> None:
         view_func=full_report_history_page,
         methods=["GET"],
     )
+    app.add_url_rule(
+        "/spine/subjects/<int:subject_id>/full-report/history",
+        endpoint="ui_full_report_history",
+        view_func=full_report_history_page,
+        methods=["GET"],
+    )
