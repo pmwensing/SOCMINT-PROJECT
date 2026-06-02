@@ -1,0 +1,162 @@
+/* v13.30 runtime visual hardening: keep long hashes, URLs, paths, and JSON inside cards. */
+* {
+    box-sizing: border-box;
+}
+
+.app-main,
+.panel,
+.card,
+.metric-card,
+.status-card,
+.subject-card,
+.empty-state,
+.metadata-table,
+.card-grid,
+.metric-grid,
+.workflow-steps,
+.mini-actions,
+.hero,
+.hero-actions,
+.section-header {
+    min-width: 0;
+}
+
+.card,
+.metric-card,
+.status-card,
+.subject-card,
+.empty-state,
+.panel,
+.status-banner,
+.warning-panel,
+.metadata-table,
+.media-item,
+pre,
+code,
+table,
+td,
+th,
+li,
+p,
+a,
+span,
+strong {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.card-grid > *,
+.metric-grid > *,
+.workflow-steps > *,
+.review-card,
+.ledger-card,
+.dossier-card,
+.export-card {
+    min-width: 0;
+}
+
+pre,
+code {
+    white-space: pre-wrap;
+}
+
+pre {
+    overflow-x: auto;
+    padding: 0.85rem;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+}
+
+.metadata-table,
+.table-scroll,
+.runtime-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.metadata-table table,
+.runtime-table-wrap table {
+    min-width: 100%;
+}
+
+.status-card .muted,
+.card .muted,
+.card li,
+.status-card li {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.mini-actions form,
+.hero-actions a,
+.hero-actions button,
+.button-link,
+button {
+    max-width: 100%;
+}
+
+.runtime-utility-page {
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #1f2937;
+    background: #f3f4f6;
+    margin: 0;
+    padding: 2rem;
+}
+
+.runtime-utility-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.runtime-utility-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.runtime-utility-card h1,
+.runtime-utility-card h2 {
+    margin-top: 0;
+}
+
+.runtime-utility-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.runtime-utility-actions a,
+.runtime-utility-actions button,
+.runtime-utility-card button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #e5e7eb;
+    color: #111827;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.runtime-utility-card table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.runtime-utility-card th,
+.runtime-utility-card td {
+    text-align: left;
+    padding: 0.55rem;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+}
