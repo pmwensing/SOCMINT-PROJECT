@@ -67,7 +67,7 @@ def _status_panel(subject_id: int, latest: dict) -> Response:
         artifact_cards = _artifact_cards(subject_id, files)
         history_url = url_for("ui_full_report_history", subject_id=subject_id)
         retention_url = url_for("ui_full_report_retention", subject_id=subject_id)
-        dossier_url = url_for("dashboard.subject_dossier_v2", subject_id=subject_id)
+        dossier_url = f"/spine/subjects/{subject_id}/dossier"
         html_name = latest.get("html_name")
         open_html = (
             f"<a class='export-artifact-primary' href='{url_for('ui_full_report_open_latest', subject_id=subject_id)}'>Open HTML Report</a>"
