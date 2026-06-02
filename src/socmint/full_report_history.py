@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import html
 import json
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from flask import Response, jsonify, request
 
@@ -117,35 +119,81 @@ def compare_full_report_exports(subject_id: int, left: str | None = None, right:
     }
 
 
+def _download_url(subject_id: int, name: str | None) -> str:
+    return f"/api/v1/spine/subjects/{subject_id}/full-report/download?name={quote(name or '')}"
+
+
+def _view_url(subject_id: int, name: str | None) -> str:
+    return f"/spine/subjects/{subject_id}/full-report/artifact?name={quote(name or '')}"
+
+
+def _artifact_link(label: str, href: str, primary: bool = False) -> str:
+    cls = " class='export-artifact-primary'" if primary else ""
+    return f"<a{cls} href='{html.escape(href)}'>{html.escape(label)}</a>"
+
+
 def _history_html(history: dict[str, Any], compare: dict[str, Any]) -> str:
     subject_id = history["subject_id"]
-    rows = []
+    cards = []
     for item in history.get("exports", []):
-        rows.append(
-            "<tr>"
-            f"<td><code>{item.get('name', '')}</code></td>"
-            f"<td>{item.get('generated_at', '')}</td>"
-            f"<td>{item.get('artifact_count', '')}</td>"
-            f"<td><code>{item.get('zip_name', '')}</code></td>"
-            "</tr>"
+        actions = []
+        if item.get("zip_name"):
+            actions.append(_artifact_link("Download ZIP", _download_url(subject_id, item.get("zip_name")), True))
+        if item.get("manifest_name"):
+            actions.append(_artifact_link("Download Manifest", _download_url(subject_id, item.get("manifest_name"))))
+            actions.append(_artifact_link("View Manifest", _view_url(subject_id, item.get("manifest_name"))))
+        if item.get("html_name"):
+            actions.append(_artifact_link("Open HTML", _view_url(subject_id, item.get("html_name"))))
+        if item.get("json_name"):
+            actions.append(_artifact_link("View JSON", _view_url(subject_id, item.get("json_name"))))
+        if item.get("markdown_name"):
+            actions.append(_artifact_link("View Markdown", _view_url(subject_id, item.get("markdown_name"))))
+        cards.append(
+            "<article class='export-artifact-card'>"
+            f"<span>Export result</span><strong>{html.escape(str(item.get('name') or ''))}</strong>"
+            f"<p>Generated: {html.escape(str(item.get('generated_at') or ''))}</p>"
+            f"<p>Artifacts: {html.escape(str(item.get('artifact_count') or 0))}</p>"
+            f"<code>{html.escape(str(item.get('zip_name') or 'No ZIP artifact'))}</code>"
+            f"<div class='export-artifact-actions'>{''.join(actions)}</div>"
+            "</article>"
         )
-    if not rows:
-        rows.append("<tr><td colspan='4'>No exports yet.</td></tr>")
+    cards_html = "".join(cards) or "<p>No exports yet.</p>"
     compare_block = ""
     if compare.get("available"):
-        compare_block = f"<h2>Comparison</h2><pre>{json.dumps(compare, indent=2)}</pre>"
+        compare_block = f"<pre>{html.escape(json.dumps(compare, indent=2))}</pre>"
     else:
-        compare_block = f"<p><strong>Comparison:</strong> {compare.get('reason')}</p>"
+        compare_block = f"<p><strong>Comparison:</strong> {html.escape(str(compare.get('reason') or 'Unavailable'))}</p>"
+    view_url = f"/spine/subjects/{subject_id}/full-report/view"
+    retention_url = f"/spine/subjects/{subject_id}/full-report/retention"
+    dossier_url = f"/spine/subjects/{subject_id}/dossier"
     return f"""
-    <html><head><title>Full Report Export History</title></head>
-    <body>
-      <h1>Full Report Export History — Subject {subject_id}</h1>
-      <p>Exports: {history.get('count', 0)}</p>
-      <table border="1" cellpadding="6">
-        <tr><th>Name</th><th>Generated</th><th>Artifacts</th><th>Zip</th></tr>
-        {''.join(rows)}
-      </table>
-      {compare_block}
+    <!doctype html>
+    <html><head><meta charset='utf-8'><title>Full Report Export History</title>
+      <link rel='stylesheet' href='/static/runtime_visual.css'>
+    </head>
+    <body class='runtime-utility-page'>
+      <main class='runtime-utility-container'>
+        <section class='runtime-utility-card'>
+          <h1>Full Report Export History — Subject {subject_id}</h1>
+          <div class='export-summary-list'>
+            <div><span>Exports</span><strong>{history.get('count', 0)}</strong></div>
+            <div><span>History API</span><code>{html.escape(history.get('schema', ''))}</code></div>
+          </div>
+          <div class='runtime-utility-actions'>
+            <a href='{view_url}'>Export Panel</a>
+            <a href='{retention_url}'>Retention / Pins</a>
+            <a href='{dossier_url}'>Full Dossier v2</a>
+          </div>
+        </section>
+        <section class='runtime-utility-card'>
+          <h2>Export Artifact Cards</h2>
+          <div class='export-artifact-grid'>{cards_html}</div>
+        </section>
+        <section class='runtime-utility-card'>
+          <h2>Comparison</h2>
+          {compare_block}
+        </section>
+      </main>
     </body></html>
     """
 
@@ -178,7 +226,7 @@ def register_full_report_history_routes(app) -> None:
             left=request.args.get("left"),
             right=request.args.get("right"),
         )
-        return Response(_history_html(history, compare), mimetype="text/html")
+        return Response(_history_html(history, compare), mimetype="text/html; charset=utf-8")
 
     app.add_url_rule(
         "/api/v1/spine/subjects/<int:subject_id>/full-report/history",

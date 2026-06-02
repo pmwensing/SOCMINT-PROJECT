@@ -35,104 +35,108 @@
 <section class="card">
   <h2>Latest Full Report Export</h2>
   {% if latest_export.available %}
-  <table>
-    <tbody>
-      <tr><th>Generated</th><td>{{ latest_export.generated_at }}</td></tr>
-      <tr><th>Schema</th><td><code>{{ latest_export.schema }}</code></td></tr>
-      <tr><th>Result</th><td><code>{{ latest_export.result_name }}</code></td></tr>
-      <tr><th>Manifest artifacts</th><td>{{ latest_export.manifest.artifact_count }}</td></tr>
-    </tbody>
-  </table>
+  <div class="export-summary-list">
+    <div><span>Generated</span><strong>{{ latest_export.generated_at }}</strong></div>
+    <div><span>Schema</span><code>{{ latest_export.schema }}</code></div>
+    <div><span>Result</span><code>{{ latest_export.result_name }}</code></div>
+    <div><span>Manifest artifacts</span><strong>{{ latest_export.manifest.artifact_count }}</strong></div>
+  </div>
 
-  <p class="actions">
-    <a class="button" href="{{ url_for(
-        'ui_full_report_view_panel',
-        subject_id=payload.subject_id
-      ) }}">View Export Panel</a>
-
-    <a class="button" href="{{ url_for(
-        'ui_full_report_history',
-        subject_id=payload.subject_id
-      ) }}">Export History</a>
-
-    <a class="button" href="{{ url_for(
-        'ui_full_report_retention',
-        subject_id=payload.subject_id
-      ) }}">Retention / Pins</a>
-
-    <a class="button" href="{{ url_for(
-        'api_full_report_compare',
-        subject_id=payload.subject_id
-      ) }}">Compare Previous Reports</a>
-
+  <div class="runtime-utility-actions">
+    <a class="export-artifact-primary" href="{{ url_for('ui_full_report_view_panel', subject_id=payload.subject_id) }}">View Export Panel</a>
+    <a href="{{ url_for('ui_full_report_history', subject_id=payload.subject_id) }}">Export History</a>
+    <a href="{{ url_for('ui_full_report_retention', subject_id=payload.subject_id) }}">Retention / Pins</a>
+    <a href="{{ url_for('api_full_report_compare', subject_id=payload.subject_id) }}">Compare Previous Reports</a>
     {% if latest_export.html_name %}
-    <a class="button" href="{{ url_for(
-        'ui_full_report_open_latest',
-        subject_id=payload.subject_id
-      ) }}">Open Latest HTML Report</a>
+    <a href="{{ url_for('ui_full_report_open_latest', subject_id=payload.subject_id) }}">Open Latest HTML Report</a>
     {% endif %}
+  </div>
 
+  <div class="export-artifact-grid">
     {% if latest_export.zip_name %}
-    <a class="button" href="{{ url_for(
-        'api_full_report_download',
-        subject_id=payload.subject_id,
-        name=latest_export.zip_name
-      ) }}">Download ZIP</a>
+    <article class="export-artifact-card">
+      <span>ZIP Bundle</span>
+      <strong>{{ latest_export.zip_name }}</strong>
+      <p>Portable package containing dossier artifacts and README.</p>
+      <div class="export-artifact-actions">
+        <a class="export-artifact-primary" href="{{ url_for('api_full_report_download', subject_id=payload.subject_id, name=latest_export.zip_name) }}">Download ZIP</a>
+      </div>
+    </article>
     {% endif %}
 
     {% if latest_export.manifest_name %}
-    <a class="button" href="{{ url_for(
-        'api_full_report_download',
-        subject_id=payload.subject_id,
-        name=latest_export.manifest_name
-      ) }}">Download Manifest</a>
-    <a class="button" href="{{ url_for(
-        'ui_full_report_view_artifact',
-        subject_id=payload.subject_id,
-        name=latest_export.manifest_name
-      ) }}">View Manifest</a>
+    <article class="export-artifact-card">
+      <span>Manifest</span>
+      <strong>{{ latest_export.manifest_name }}</strong>
+      <p>Artifact inventory with SHA-256 hashes and sizes.</p>
+      <div class="export-artifact-actions">
+        <a class="export-artifact-primary" href="{{ url_for('api_full_report_download', subject_id=payload.subject_id, name=latest_export.manifest_name) }}">Download Manifest</a>
+        <a href="{{ url_for('ui_full_report_view_artifact', subject_id=payload.subject_id, name=latest_export.manifest_name) }}">View Manifest</a>
+      </div>
+    </article>
     {% endif %}
 
     {% if latest_export.html_name %}
-    <a class="button" href="{{ url_for(
-        'api_full_report_download',
-        subject_id=payload.subject_id,
-        name=latest_export.html_name
-      ) }}">Download HTML</a>
+    <article class="export-artifact-card">
+      <span>HTML Report</span>
+      <strong>{{ latest_export.html_name }}</strong>
+      <p>Readable report view for browser review.</p>
+      <div class="export-artifact-actions">
+        <a class="export-artifact-primary" href="{{ url_for('ui_full_report_open_latest', subject_id=payload.subject_id) }}">Open HTML</a>
+        <a href="{{ url_for('api_full_report_download', subject_id=payload.subject_id, name=latest_export.html_name) }}">Download HTML</a>
+      </div>
+    </article>
     {% endif %}
-  </p>
+
+    {% if latest_export.json_name %}
+    <article class="export-artifact-card">
+      <span>JSON</span>
+      <strong>{{ latest_export.json_name }}</strong>
+      <p>Machine-readable full dossier payload.</p>
+      <div class="export-artifact-actions">
+        <a class="export-artifact-primary" href="{{ url_for('ui_full_report_view_artifact', subject_id=payload.subject_id, name=latest_export.json_name) }}">View JSON</a>
+        <a href="{{ url_for('api_full_report_download', subject_id=payload.subject_id, name=latest_export.json_name) }}">Download JSON</a>
+      </div>
+    </article>
+    {% endif %}
+
+    {% if latest_export.markdown_name %}
+    <article class="export-artifact-card">
+      <span>Markdown</span>
+      <strong>{{ latest_export.markdown_name }}</strong>
+      <p>Portable text report for review or downstream editing.</p>
+      <div class="export-artifact-actions">
+        <a class="export-artifact-primary" href="{{ url_for('ui_full_report_view_artifact', subject_id=payload.subject_id, name=latest_export.markdown_name) }}">View Markdown</a>
+        <a href="{{ url_for('api_full_report_download', subject_id=payload.subject_id, name=latest_export.markdown_name) }}">Download Markdown</a>
+      </div>
+    </article>
+    {% endif %}
+  </div>
 
   {% if latest_export.manifest.files %}
-  <table>
-    <thead><tr><th>Role</th><th>Name</th><th>Size</th><th>SHA-256</th></tr></thead>
-    <tbody>
-      {% for item in latest_export.manifest.files %}
-      <tr>
-        <td>{{ item.role }}</td>
-        <td><code>{{ item.name }}</code></td>
-        <td>{{ item.size_bytes }}</td>
-        <td><code>{{ item.sha256 }}</code></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="runtime-table-wrap">
+    <table>
+      <thead><tr><th>Role</th><th>Name</th><th>Size</th><th>SHA-256</th></tr></thead>
+      <tbody>
+        {% for item in latest_export.manifest.files %}
+        <tr>
+          <td>{{ item.role }}</td>
+          <td><code>{{ item.name }}</code></td>
+          <td>{{ item.size_bytes }}</td>
+          <td><code>{{ item.sha256 }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   {% endif %}
   {% else %}
   <p>No full-report export has been generated for this subject yet.</p>
   <p>Use <strong>Run Full Report</strong> to create a ZIP, manifest, HTML, Markdown, and JSON export.</p>
   <p class="actions">
-    <a class="button" href="{{ url_for(
-        'ui_full_report_view_panel',
-        subject_id=payload.subject_id
-      ) }}">View Export Panel</a>
-    <a class="button" href="{{ url_for(
-        'ui_full_report_history',
-        subject_id=payload.subject_id
-      ) }}">Export History</a>
-    <a class="button" href="{{ url_for(
-        'ui_full_report_retention',
-        subject_id=payload.subject_id
-      ) }}">Retention / Pins</a>
+    <a class="button" href="{{ url_for('ui_full_report_view_panel', subject_id=payload.subject_id) }}">View Export Panel</a>
+    <a class="button" href="{{ url_for('ui_full_report_history', subject_id=payload.subject_id) }}">Export History</a>
+    <a class="button" href="{{ url_for('ui_full_report_retention', subject_id=payload.subject_id) }}">Retention / Pins</a>
   </p>
   {% endif %}
 </section>
