@@ -43,12 +43,12 @@
   </div>
 
   <div class="runtime-utility-actions">
-    <a class="export-artifact-primary" href="{{ url_for('ui_full_report_view_panel', subject_id=payload.subject_id) }}">Export Panel</a>
+    <a class="export-artifact-primary" href="{{ url_for('ui_full_report_view_panel', subject_id=payload.subject_id) }}">View Export Panel</a>
     <a href="{{ url_for('ui_full_report_history', subject_id=payload.subject_id) }}">Export History</a>
     <a href="{{ url_for('ui_full_report_retention', subject_id=payload.subject_id) }}">Retention / Pins</a>
     <a href="{{ url_for('api_full_report_compare', subject_id=payload.subject_id) }}">Compare Previous Reports</a>
     {% if latest_export.html_name %}
-    <a href="{{ url_for('ui_full_report_open_latest', subject_id=payload.subject_id) }}">Open HTML Report</a>
+    <a href="{{ url_for('ui_full_report_open_latest', subject_id=payload.subject_id) }}">Open Latest HTML Report</a>
     {% endif %}
   </div>
 
