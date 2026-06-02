@@ -135,7 +135,9 @@ button {
 
 .runtime-utility-actions a,
 .runtime-utility-actions button,
-.runtime-utility-card button {
+.runtime-utility-card button,
+.export-artifact-actions a,
+.export-artifact-actions button {
     display: inline-flex;
     align-items: center;
     min-height: 2.25rem;
@@ -159,4 +161,62 @@ button {
     padding: 0.55rem;
     border-bottom: 1px solid #e5e7eb;
     vertical-align: top;
+}
+
+.export-artifact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.export-artifact-card {
+    background: #f8fafc;
+    border: 1px solid #dbeafe;
+    border-radius: 14px;
+    padding: 1rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.export-artifact-card strong,
+.export-artifact-card code {
+    display: block;
+}
+
+.export-artifact-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.export-artifact-primary {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+}
+
+.export-summary-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.export-summary-list div {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0.85rem;
+}
+
+.export-summary-list span {
+    display: block;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
