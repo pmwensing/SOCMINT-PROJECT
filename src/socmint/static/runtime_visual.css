@@ -220,3 +220,116 @@ button {
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
+
+.operator-status-banner {
+    border-left: 5px solid #2563eb;
+}
+
+.eyebrow {
+    margin: 0 0 0.35rem;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.section-header-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.compact-summary {
+    min-width: min(420px, 100%);
+    flex: 1;
+}
+
+.compact-summary div {
+    padding: 0.65rem;
+}
+
+.dossier-section-index a {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.dossier-record-controls {
+    margin: 1rem 0;
+}
+
+.dossier-record-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.dossier-record-card,
+.dossier-record-card-static {
+    min-width: 0;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #94a3b8;
+    border-radius: 14px;
+    padding: 0.9rem;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.dossier-record-card summary {
+    cursor: pointer;
+    list-style-position: outside;
+}
+
+.dossier-record-card summary span,
+.dossier-record-card-static p span {
+    display: block;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.dossier-record-card summary strong {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 1.05rem;
+}
+
+.record-facts {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0.85rem 0;
+}
+
+.record-facts p {
+    margin: 0;
+    padding: 0.55rem;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+}
+
+.record-facts span {
+    display: block;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.record-raw-json {
+    margin-top: 0.75rem;
+}
+
+.record-raw-json summary {
+    cursor: pointer;
+    font-weight: 800;
+}

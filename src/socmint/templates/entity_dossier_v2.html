@@ -2,6 +2,22 @@
 {% block content %}
 <h1>Full Entity Profile Dossier v2</h1>
 {% set latest_export = latest_full_report_export(payload.subject_id) if latest_full_report_export is defined else {'available': false} %}
+{% set review_payload = payload.sections.get('review_decisions', {}).get('payload', {}) if payload.sections is defined else {} %}
+{% set review_status = review_payload.get('status', {}).get('needs_review', 'unknown') if review_payload else 'unknown' %}
+
+<section class="card operator-status-banner">
+  <div>
+    <p class="eyebrow">Operator Status</p>
+    <h2>Final dossier workspace is ready for review.</h2>
+    <p>Dossier generated at {{ payload.generated_at }}. Raw export payloads are preserved; this page only changes operator presentation.</p>
+  </div>
+  <div class="export-summary-list">
+    <div><span>Dossier generated</span><strong>YES</strong></div>
+    <div><span>Latest export</span><strong>{{ 'AVAILABLE' if latest_export.available else 'NOT YET' }}</strong></div>
+    <div><span>Artifact count</span><strong>{{ latest_export.manifest.artifact_count if latest_export.available and latest_export.manifest else 0 }}</strong></div>
+    <div><span>Review state</span><strong>{{ review_status }}</strong></div>
+  </div>
+</section>
 
 <section class="card">
   <h2>Subject</h2>
@@ -143,46 +159,108 @@
 
 <section class="card">
   <h2>Dossier Score</h2>
-  <table>
-    <tbody>
-      {% for key, value in payload.score.items() %}
-      <tr><th>{{ key }}</th><td>{{ value }}</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="export-summary-list">
+    {% for key, value in payload.score.items() %}
+    <div><span>{{ key }}</span><strong>{{ value }}</strong></div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card dossier-section-index">
+  <div class="section-header-row">
+    <div>
+      <p class="eyebrow">Section summaries</p>
+      <h2>Dossier Review Map</h2>
+      <p>Use this map to jump between identity, graph, assertions, observations, diagnostics, review, evidence, and custody sections.</p>
+    </div>
+    <div class="runtime-utility-actions">
+      <button type="button" onclick="document.querySelectorAll('.dossier-record-card').forEach((node) => node.open = true)">Expand all records</button>
+      <button type="button" onclick="document.querySelectorAll('.dossier-record-card').forEach((node) => node.open = false)">Collapse all records</button>
+    </div>
+  </div>
+  <div class="export-summary-list">
+    {% for key, section in payload.sections.items() %}
+    <div>
+      <span>{{ key.replace('_', ' ') }}</span>
+      <strong>{{ section.count if section.count is defined else (section.evidence_count if section.evidence_count is defined else (section.custody_event_count if section.custody_event_count is defined else 'payload')) }}</strong>
+      <a href="#section-{{ key }}">Open section</a>
+    </div>
+    {% endfor %}
+  </div>
 </section>
 
 {% for key, section in payload.sections.items() %}
 {% set section_items = section.get('items') %}
-<section class="card">
-  <h2>{{ section.title }}</h2>
-  <p>{{ section.summary }}</p>
-
-  {% if section.count is defined %}
-  <p><strong>Count:</strong> {{ section.count }}</p>
-  {% endif %}
+<section class="card dossier-section" id="section-{{ key }}">
+  <div class="section-header-row">
+    <div>
+      <p class="eyebrow">{{ key.replace('_', ' ') }}</p>
+      <h2>{{ section.title }}</h2>
+      <p>{{ section.summary }}</p>
+    </div>
+    <div class="export-summary-list compact-summary">
+      {% if section.count is defined %}<div><span>Records</span><strong>{{ section.count }}</strong></div>{% endif %}
+      {% if section.evidence_count is defined %}<div><span>Evidence</span><strong>{{ section.evidence_count }}</strong></div>{% endif %}
+      {% if section.link_count is defined %}<div><span>Links</span><strong>{{ section.link_count }}</strong></div>{% endif %}
+      {% if section.custody_event_count is defined %}<div><span>Custody events</span><strong>{{ section.custody_event_count }}</strong></div>{% endif %}
+    </div>
+  </div>
 
   {% if section_items is not none %}
-  <table>
-    <thead><tr><th>#</th><th>Record</th></tr></thead>
-    <tbody>
-      {% for item in section_items[:25] %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td><pre>{{ item | tojson(indent=2) }}</pre></td>
-      </tr>
-      {% else %}
-      <tr><td colspan="2">No records found.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="runtime-utility-actions dossier-record-controls">
+    <span>Showing first 25 records.</span>
+    <button type="button" onclick="this.closest('.dossier-section').querySelectorAll('.dossier-record-card').forEach((node) => node.open = true)">Expand section</button>
+    <button type="button" onclick="this.closest('.dossier-section').querySelectorAll('.dossier-record-card').forEach((node) => node.open = false)">Collapse section</button>
+  </div>
+
+  <div class="dossier-record-grid">
+    {% for item in section_items[:25] %}
+    <details class="dossier-record-card">
+      <summary>
+        <span>Record {{ loop.index }}</span>
+        <strong>{{ item.get('name') or item.get('label') or item.get('title') or item.get('normalized_value') or item.get('observation_type') or item.get('id') or 'record' }}</strong>
+      </summary>
+      <div class="record-facts">
+        {% for field in ['id', 'created_at', 'observation_type', 'normalized_value', 'source_ref', 'review_status', 'confidence', 'subject_id'] %}
+          {% if item.get(field) is not none %}
+          <p><span>{{ field.replace('_', ' ') }}</span><code>{{ item.get(field) }}</code></p>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <details class="record-raw-json">
+        <summary>View raw JSON</summary>
+        <pre>{{ item | tojson(indent=2) }}</pre>
+      </details>
+    </details>
+    {% else %}
+    <div class="empty-state">No records found.</div>
+    {% endfor %}
+  </div>
   {% elif key == "linked_evidence" %}
-  <p><strong>Evidence:</strong> {{ section.evidence_count }}</p>
-  <p><strong>Links:</strong> {{ section.link_count }}</p>
+  <div class="dossier-record-grid">
+    <article class="dossier-record-card-static">
+      <h3>Linked Evidence Summary</h3>
+      <p><span>Evidence files</span><strong>{{ section.evidence_count }}</strong></p>
+      <p><span>Review links</span><strong>{{ section.link_count }}</strong></p>
+      <details class="record-raw-json"><summary>View raw JSON</summary><pre>{{ section | tojson(indent=2) }}</pre></details>
+    </article>
+  </div>
   {% elif key == "custody_hash_status" %}
-  <p><strong>Custody events:</strong> {{ section.custody_event_count }}</p>
+  <div class="dossier-record-grid">
+    <article class="dossier-record-card-static">
+      <h3>Chain-of-Custody / Hash Status</h3>
+      <p><span>Custody events</span><strong>{{ section.custody_event_count }}</strong></p>
+      <details class="record-raw-json"><summary>View raw JSON</summary><pre>{{ section | tojson(indent=2) }}</pre></details>
+    </article>
+  </div>
   {% else %}
-  <pre>{{ section | tojson(indent=2) }}</pre>
+  <div class="dossier-record-grid">
+    <article class="dossier-record-card-static">
+      <h3>{{ section.title }}</h3>
+      <p>{{ section.summary }}</p>
+      <details class="record-raw-json"><summary>View raw JSON</summary><pre>{{ section | tojson(indent=2) }}</pre></details>
+    </article>
+  </div>
   {% endif %}
 </section>
 {% endfor %}
