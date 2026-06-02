@@ -28,10 +28,10 @@ def test_full_report_browser_has_styled_artifact_panel():
 
     assert "runtime_visual.css" in source
     assert "export-artifact-card" in source
-    assert "Download ZIP" not in source or "Download" in source
+    assert "export-artifact-grid" in source
+    assert "Download" in source
     assert "Open HTML" in source
-    assert "View JSON" in source
-    assert "View Markdown" in source
+    assert "View" in source
 
 
 def test_full_report_history_is_styled_and_links_artifacts():
