@@ -24,8 +24,8 @@ def pin_store_path() -> Path:
 
 
 def load_pins() -> dict[str, Any]:
-    path = pin_store_path()
     try:
+        path = pin_store_path()
         payload = json.loads(path.read_text())
     except Exception:
         payload = {"schema": PIN_SCHEMA, "pins": {}}
@@ -190,6 +190,13 @@ def _form(action: str, fields: dict[str, Any], label: str, *, danger: bool = Fal
     )
 
 
+def _int_request_arg(name: str, default: int) -> int:
+    try:
+        return max(1, int(request.values.get(name, default)))
+    except (TypeError, ValueError):
+        return default
+
+
 def _retention_html(subject_id: int, keep_latest: int = 5, message: str = "") -> str:
     plan = retention_plan(subject_id, keep_latest=keep_latest)
     pin_action = url_for("ui_full_report_pin", subject_id=subject_id)
@@ -277,23 +284,38 @@ def _retention_html(subject_id: int, keep_latest: int = 5, message: str = "") ->
 
     message_html = f"<p><strong>Status:</strong> {html.escape(message)}</p>" if message else ""
     return f"""
-    <!doctype html><html><head><meta charset='utf-8'><title>Full Report Retention</title></head>
-    <body>
-      <h1>Full Report Retention — Subject {subject_id}</h1>
-      {message_html}
-      <p><a href='{history_url}'>Export History</a> | <a href='{retention_url}'>Refresh Retention</a></p>
-      <form method='get' action='{retention_url}'>
-        <label>Keep latest <input type='number' min='1' name='keep_latest' value='{keep_latest}'></label>
-        <button type='submit'>Recalculate retention</button>
-      </form>
-      <p><strong>History:</strong> {plan['history_count']} | <strong>Keep:</strong> {plan['keep_count']} | <strong>Delete candidates:</strong> {plan['delete_count']} | <strong>Pinned:</strong> {plan['pinned_count']}</p>
-      <h2>Retention Actions</h2>
-      <p>{dry_run_form}{apply_form}</p>
-      <h2>Kept / Pinned Exports</h2>
-      <table border='1' cellpadding='6'><thead><tr><th>Export</th><th>Generated</th><th>Pinned</th><th>Actions</th></tr></thead><tbody>{''.join(keep_rows) or '<tr><td colspan="4">No kept exports.</td></tr>'}</tbody></table>
-      <h2>Delete Candidates</h2>
-      <table border='1' cellpadding='6'><thead><tr><th>Export</th><th>Generated</th><th>Artifacts</th><th>Actions</th></tr></thead><tbody>{''.join(delete_rows) or '<tr><td colspan="4">No delete candidates.</td></tr>'}</tbody></table>
-      <p><strong>Delete safety:</strong> type the exact export filename into the Confirm field before deleting. Pinned exports are blocked unless force is used by API.</p>
+    <!doctype html>
+    <html><head><meta charset='utf-8'><title>Full Report Retention</title>
+      <link rel='stylesheet' href='/static/runtime_visual.css'>
+    </head>
+    <body class='runtime-utility-page'>
+      <main class='runtime-utility-container'>
+        <section class='runtime-utility-card'>
+          <h1>Full Report Retention — Subject {subject_id}</h1>
+          {message_html}
+          <div class='runtime-utility-actions'><a href='{history_url}'>Export History</a><a href='{retention_url}'>Refresh Retention</a></div>
+        </section>
+        <section class='runtime-utility-card'>
+          <form method='get' action='{retention_url}'>
+            <label>Keep latest <input type='number' min='1' name='keep_latest' value='{keep_latest}'></label>
+            <button type='submit'>Recalculate retention</button>
+          </form>
+          <p><strong>History:</strong> {plan['history_count']} | <strong>Keep:</strong> {plan['keep_count']} | <strong>Delete candidates:</strong> {plan['delete_count']} | <strong>Pinned:</strong> {plan['pinned_count']}</p>
+        </section>
+        <section class='runtime-utility-card'>
+          <h2>Retention Actions</h2>
+          <div class='runtime-utility-actions'>{dry_run_form}{apply_form}</div>
+        </section>
+        <section class='runtime-utility-card runtime-table-wrap'>
+          <h2>Kept / Pinned Exports</h2>
+          <table><thead><tr><th>Export</th><th>Generated</th><th>Pinned</th><th>Actions</th></tr></thead><tbody>{''.join(keep_rows) or '<tr><td colspan="4">No kept exports.</td></tr>'}</tbody></table>
+        </section>
+        <section class='runtime-utility-card runtime-table-wrap'>
+          <h2>Delete Candidates</h2>
+          <table><thead><tr><th>Export</th><th>Generated</th><th>Artifacts</th><th>Actions</th></tr></thead><tbody>{''.join(delete_rows) or '<tr><td colspan="4">No delete candidates.</td></tr>'}</tbody></table>
+          <p><strong>Delete safety:</strong> type the exact export filename into the Confirm field before deleting. Pinned exports are blocked unless force is used by API.</p>
+        </section>
+      </main>
     </body></html>
     """
 
@@ -305,11 +327,11 @@ def register_full_report_retention_routes(app) -> None:
     from .dashboard import login_required, run_required
 
     def _keep_latest_from_request(default: int = 5) -> int:
-        return int(request.values.get("keep_latest", default))
+        return _int_request_arg("keep_latest", default)
 
     @login_required
     def api_full_report_retention_plan(subject_id: int):
-        keep_latest = int(request.args.get("keep_latest", 5))
+        keep_latest = _keep_latest_from_request(5)
         return jsonify(retention_plan(subject_id, keep_latest=keep_latest))
 
     @run_required
@@ -332,13 +354,16 @@ def register_full_report_retention_routes(app) -> None:
     @run_required
     def api_full_report_apply_retention(subject_id: int):
         payload = request.get_json(silent=True) or request.form or {}
-        keep_latest = int(payload.get("keep_latest", 5))
+        try:
+            keep_latest = max(1, int(payload.get("keep_latest", 5)))
+        except (TypeError, ValueError):
+            keep_latest = 5
         dry_run = str(payload.get("dry_run", "true")).lower() not in {"0", "false", "no"}
         return jsonify(apply_retention(subject_id, keep_latest=keep_latest, dry_run=dry_run))
 
     @login_required
     def ui_full_report_retention(subject_id: int):
-        keep_latest = int(request.args.get("keep_latest", 5))
+        keep_latest = _keep_latest_from_request(5)
         message = request.args.get("message", "")
         return Response(_retention_html(subject_id, keep_latest=keep_latest, message=message), mimetype="text/html; charset=utf-8")
 
