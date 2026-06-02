@@ -3,9 +3,6 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
-from playwright.sync_api import sync_playwright
-
 BASE = os.getenv("SOCMINT_BASE_URL", "http://127.0.0.1:5000")
 USER = os.getenv("SOCMINT_CAPTURE_USER", "admin")
 PASSWORD = os.getenv("SOCMINT_CAPTURE_PASSWORD", "")
@@ -24,22 +21,33 @@ PAGES = [
 ]
 
 
-def capture_viewports(page, name: str) -> None:
-    page.screenshot(path=str(OUT / f"{name}-top.png"), full_page=False, timeout=90000, animations="disabled")
-    height = page.evaluate("() => document.body.scrollHeight")
-    viewport = page.viewport_size or {"width": 1440, "height": 1600}
-    if height > viewport["height"]:
-        page.evaluate("(y) => window.scrollTo(0, y)", min(height // 2, height - viewport["height"]))
-        page.wait_for_timeout(500)
-        page.screenshot(path=str(OUT / f"{name}-middle.png"), full_page=False, timeout=90000, animations="disabled")
-        page.evaluate("(y) => window.scrollTo(0, y)", max(0, height - viewport["height"]))
-        page.wait_for_timeout(500)
-        page.screenshot(path=str(OUT / f"{name}-bottom.png"), full_page=False, timeout=90000, animations="disabled")
+def capture_viewports(page, name: str, timeout_error_type: type[Exception]) -> None:
+    try:
+        page.screenshot(path=str(OUT / f"{name}-top.png"), full_page=False, timeout=90000, animations="disabled")
+        height = page.evaluate("() => document.body.scrollHeight")
+        viewport = page.viewport_size or {"width": 1440, "height": 1600}
+        if height > viewport["height"]:
+            page.evaluate("(y) => window.scrollTo(0, y)", min(height // 2, height - viewport["height"]))
+            page.wait_for_timeout(500)
+            page.screenshot(path=str(OUT / f"{name}-middle.png"), full_page=False, timeout=90000, animations="disabled")
+            page.evaluate("(y) => window.scrollTo(0, y)", max(0, height - viewport["height"]))
+            page.wait_for_timeout(500)
+            page.screenshot(path=str(OUT / f"{name}-bottom.png"), full_page=False, timeout=90000, animations="disabled")
+    except timeout_error_type as exc:
+        print(f"[!] screenshot timeout for {name}: {exc}")
+        (OUT / f"{name}.html").write_text(page.content(), encoding="utf-8")
 
 
 def main() -> None:
     if not PASSWORD:
         raise SystemExit("SOCMINT_CAPTURE_PASSWORD is required")
+
+    try:
+        from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+        from playwright.sync_api import sync_playwright
+    except ImportError as exc:
+        raise SystemExit("Install Playwright in a local venv before running this helper.") from exc
+
     OUT.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--disable-dev-shm-usage", "--disable-gpu", "--no-sandbox"])
@@ -56,11 +64,7 @@ def main() -> None:
             print(f"[+] Capture {path}")
             page.goto(BASE + path, wait_until="domcontentloaded", timeout=90000)
             page.wait_for_timeout(1000)
-            try:
-                capture_viewports(page, name)
-            except PlaywrightTimeoutError as exc:
-                print(f"[!] screenshot timeout for {path}: {exc}")
-                (OUT / f"{name}.html").write_text(page.content(), encoding="utf-8")
+            capture_viewports(page, name, PlaywrightTimeoutError)
         browser.close()
 
 
