@@ -11,6 +11,7 @@ from typing import Any
 from sqlalchemy import inspect, text
 
 from . import database as db
+from .config import load_settings
 
 DOSSIER_SCHEMA = "socmint.full_entity_profile_dossier.v7_8_1"
 EXPORT_SCHEMA = "socmint.full_entity_profile_dossier_export.v7_5_1"
@@ -24,7 +25,8 @@ def utc_now() -> str:
 
 
 def dossier_root() -> Path:
-    root = Path("var/socmint/dossiers")
+    settings = load_settings(require_secret=False)
+    root = Path(settings.data_dir) / "dossiers"
     root.mkdir(parents=True, exist_ok=True)
     return root
 
