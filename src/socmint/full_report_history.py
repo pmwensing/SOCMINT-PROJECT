@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
-from flask import Response, jsonify, request, url_for
+from flask import Response, jsonify, request
 
 from .entity_dossier_v2 import dossier_root
 
@@ -163,6 +163,9 @@ def _history_html(history: dict[str, Any], compare: dict[str, Any]) -> str:
         compare_block = f"<pre>{html.escape(json.dumps(compare, indent=2))}</pre>"
     else:
         compare_block = f"<p><strong>Comparison:</strong> {html.escape(str(compare.get('reason') or 'Unavailable'))}</p>"
+    view_url = f"/spine/subjects/{subject_id}/full-report/view"
+    retention_url = f"/spine/subjects/{subject_id}/full-report/retention"
+    dossier_url = f"/spine/subjects/{subject_id}/dossier"
     return f"""
     <!doctype html>
     <html><head><meta charset='utf-8'><title>Full Report Export History</title>
@@ -177,9 +180,9 @@ def _history_html(history: dict[str, Any], compare: dict[str, Any]) -> str:
             <div><span>History API</span><code>{html.escape(history.get('schema', ''))}</code></div>
           </div>
           <div class='runtime-utility-actions'>
-            <a href='{url_for('ui_full_report_view_panel', subject_id=subject_id)}'>Export Panel</a>
-            <a href='{url_for('ui_full_report_retention', subject_id=subject_id)}'>Retention / Pins</a>
-            <a href='{url_for('dashboard.subject_dossier_v2', subject_id=subject_id)}'>Full Dossier v2</a>
+            <a href='{view_url}'>Export Panel</a>
+            <a href='{retention_url}'>Retention / Pins</a>
+            <a href='{dossier_url}'>Full Dossier v2</a>
           </div>
         </section>
         <section class='runtime-utility-card'>
