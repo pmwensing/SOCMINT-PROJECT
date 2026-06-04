@@ -4,6 +4,7 @@ from .full_report_browser import register_full_report_browser_flow
 from .full_report_history import register_full_report_history_routes
 from .full_report_retention import register_full_report_retention_routes
 from .final_rc_routes_v13_33 import register_final_rc_routes_v13_33
+from .support_bundle_v13_34 import register_support_bundle_routes_v13_34
 from .command_center_routes import register_command_center_routes
 from .dossier_readiness_routes_v13 import register_dossier_readiness_routes
 from .dossier_readiness_ui_routes_v13 import register_dossier_readiness_ui_routes
@@ -58,6 +59,7 @@ register_full_report_browser_flow(app)
 register_full_report_history_routes(app)
 register_full_report_retention_routes(app)
 register_final_rc_routes_v13_33(app)
+register_support_bundle_routes_v13_34(app)
 register_command_center_routes(app)
 register_dossier_readiness_routes(app)
 register_dossier_readiness_ui_routes(app)
