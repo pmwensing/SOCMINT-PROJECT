@@ -4,6 +4,7 @@ from .full_report_browser import register_full_report_browser_flow
 from .full_report_history import register_full_report_history_routes
 from .full_report_retention import register_full_report_retention_routes
 from .final_rc_routes_v13_33 import register_final_rc_routes_v13_33
+from .support_bundle_route_health_fix_v13_34 import install_support_bundle_route_health_fix_v13_34
 from .support_bundle_v13_34 import register_support_bundle_routes_v13_34
 from .command_center_routes import register_command_center_routes
 from .dossier_readiness_routes_v13 import register_dossier_readiness_routes
@@ -53,6 +54,7 @@ from .assertion_trust_routes_v12_8 import register_assertion_trust_routes
 from .assertion_trust_gate_routes_v12_8_1 import register_assertion_trust_gate_routes
 from .guided_investigation_routes_v12_9 import register_guided_investigation_routes
 
+install_support_bundle_route_health_fix_v13_34()
 app = create_app()
 register_full_report_aliases(app)
 register_full_report_browser_flow(app)
