@@ -6,6 +6,10 @@
       <h1>Export Blockers</h1>
       <p class="muted">Review export gate decisions by case and subject.</p>
     </div>
+    <div class="mini-actions">
+      <a href="/api/v1/dossier-builder/v3/export-blockers/screenshot-manifest">Manifest JSON</a>
+      <a href="/dossier/export-blockers/screenshot-manifest/download">Download Manifest</a>
+    </div>
   </div>
   <form method="get" class="filter-form">
     <label>Case ID <input type="text" name="case_id" value="{{ case_id }}" placeholder="case-id"></label>

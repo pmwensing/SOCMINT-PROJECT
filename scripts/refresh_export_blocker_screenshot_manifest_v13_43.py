@@ -21,7 +21,11 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def refresh_manifest(manifest_path: str | Path = DEFAULT_MANIFEST, root: str | Path = ROOT) -> dict[str, Any]:
+def refresh_manifest(
+    manifest_path: str | Path = DEFAULT_MANIFEST,
+    root: str | Path = ROOT,
+    require_existing: bool = True,
+) -> dict[str, Any]:
     path = Path(manifest_path)
     root_path = Path(root)
     manifest = json.loads(path.read_text(encoding="utf-8"))
@@ -29,6 +33,7 @@ def refresh_manifest(manifest_path: str | Path = DEFAULT_MANIFEST, root: str | P
     manifest["version"] = "v13.43"
     manifest["refresh_script"] = "scripts/refresh_export_blocker_screenshot_manifest_v13_43.py"
 
+    missing: list[str] = []
     for item in manifest.get("artifacts", []):
         artifact_path = root_path / item["path"]
         item["exists"] = artifact_path.exists()
@@ -38,8 +43,11 @@ def refresh_manifest(manifest_path: str | Path = DEFAULT_MANIFEST, root: str | P
         else:
             item["size_bytes"] = 0
             item["sha256"] = None
+            missing.append(item["path"])
 
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if require_existing and missing:
+        raise FileNotFoundError(f"Missing screenshot artifact(s): {', '.join(missing)}")
     return manifest
 
 
