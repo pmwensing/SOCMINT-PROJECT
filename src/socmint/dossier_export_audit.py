@@ -19,6 +19,7 @@ ALLOWED_AUDIT_ACTIONS = {
     "download_resolved",
     "download_blocked",
     "download_missing",
+    "screenshot_manifest_downloaded",
 }
 
 

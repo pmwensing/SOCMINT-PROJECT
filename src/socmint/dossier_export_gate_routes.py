@@ -4,16 +4,32 @@ from pathlib import Path
 
 from flask import jsonify, render_template, request, send_file, session
 
+from .dossier_export_audit import audit_event
 from .dossier_export_gate import export_gate_decision
 from .dossier_export_gate import export_gate_report
 from .dossier_export_gate import export_gate_summary
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 EXPORT_BLOCKER_SCREENSHOT_MANIFEST = REPO_ROOT / "release/V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json"
+SCREENSHOT_MANIFEST_AUDIT_CASE_ID = "export-blocker-screenshots"
+SCREENSHOT_MANIFEST_AUDIT_SUBJECT_ID = "screenshot-manifest"
 
 
 def _login_required() -> bool:
     return bool(session.get("user"))
+
+
+def _audit_screenshot_manifest_download(route: str) -> dict:
+    return audit_event(
+        "screenshot_manifest_downloaded",
+        case_id=SCREENSHOT_MANIFEST_AUDIT_CASE_ID,
+        subject_id=SCREENSHOT_MANIFEST_AUDIT_SUBJECT_ID,
+        actor=session.get("user"),
+        detail={
+            "manifest_path": str(EXPORT_BLOCKER_SCREENSHOT_MANIFEST),
+            "route": route,
+        },
+    )
 
 
 def register_dossier_export_gate_routes(app):
@@ -48,6 +64,7 @@ def register_dossier_export_gate_routes(app):
             return jsonify({"error": "login required"}), 401
         if not EXPORT_BLOCKER_SCREENSHOT_MANIFEST.exists():
             return jsonify({"status": "missing", "manifest_path": str(EXPORT_BLOCKER_SCREENSHOT_MANIFEST)}), 404
+        _audit_screenshot_manifest_download("/dossier/export-blockers/screenshot-manifest/download")
         return send_file(
             EXPORT_BLOCKER_SCREENSHOT_MANIFEST,
             as_attachment=True,

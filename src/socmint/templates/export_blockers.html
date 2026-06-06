@@ -16,6 +16,10 @@
     <label>Subject ID <input type="text" name="subject_id" value="{{ subject_id }}" placeholder="subject-id"></label>
     <button type="submit">Check Gate</button>
   </form>
+  <div class="support-copy">
+    <p class="muted">Support artifacts: screenshot manifest JSON is available at <code>/api/v1/dossier-builder/v3/export-blockers/screenshot-manifest</code>, and the audited download is <code>/dossier/export-blockers/screenshot-manifest/download</code>.</p>
+    <p class="muted">The dedicated workflow uploads the screenshot bundle as <code>export-blocker-screenshots-&lt;run_id&gt;</code>.</p>
+  </div>
 </section>
 
 {% if decision %}
