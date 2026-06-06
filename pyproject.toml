@@ -39,3 +39,8 @@ socmint = "socmint.main:main"
 
 [tool.ruff.lint]
 ignore = ["E501", "F401"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:The default datetime adapter is deprecated as of Python 3\\.12:DeprecationWarning:sqlalchemy\\.engine\\.default",
+]

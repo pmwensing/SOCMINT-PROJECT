@@ -38,10 +38,7 @@ jobs:
           python -m gunicorn --bind 127.0.0.1:5000 src.socmint.wsgi:app > var/socmint/rc_reports/runtime.log 2>&1 &
           echo $! > var/socmint/rc_reports/runtime.pid
           for i in $(seq 1 30); do
-            if python - <<'PY'
-import urllib.request
-urllib.request.urlopen('http://127.0.0.1:5000/readyz', timeout=2)
-PY
+            if python -c 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:5000/readyz", timeout=2)'
             then
               exit 0
             fi

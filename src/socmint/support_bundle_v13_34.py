@@ -28,6 +28,8 @@ SUPPORT_BUNDLE_ROUTES = [
     "/spine/subjects/4/full-report/view",
     "/spine/subjects/4/full-report/retention",
     "/release/final-rc/v13.33",
+    "/api/v1/dossier-builder/v3/export-blockers/screenshot-manifest",
+    "/dossier/export-blockers/screenshot-manifest/download",
 ]
 SECRET_MARKERS = ("PASSWORD", "SECRET", "TOKEN", "KEY", "PASSPHRASE", "INVITE")
 
@@ -157,6 +159,7 @@ def support_bundle_payload(app=None, subject_id: int = 4) -> dict[str, Any]:
             "clean_install": "scripts/clean_install_acceptance_v13_33.sh",
             "runtime_acceptance": "scripts/runtime_acceptance_v13_33.sh",
             "screenshot_capture": "scripts/capture_runtime_pages_v13_33.py",
+            "support_bundle_capture": "scripts/support_bundle_v13_34.sh",
         },
     }
 

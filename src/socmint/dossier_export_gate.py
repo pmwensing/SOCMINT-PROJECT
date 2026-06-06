@@ -57,4 +57,5 @@ def export_gate_decision(subject_id: str, case_id: str, root: str | Path = DEFAU
         "subject_id": subject_id,
         "case_id": case_id,
         "blockers": summary["blockers"],
+        "verification_summary": summary["verification_summary"],
     }

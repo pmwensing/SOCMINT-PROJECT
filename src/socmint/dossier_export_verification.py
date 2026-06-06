@@ -7,6 +7,7 @@ from typing import Any
 from .dossier_export_audit import audit_summary
 from .dossier_export_index import find_export_entry
 from .dossier_export_store import DEFAULT_EXPORT_ROOT
+from .dossier_export_store import export_scope_matches
 from .dossier_export_store import load_export_manifest
 
 DOSSIER_EXPORT_VERIFICATION_SCHEMA = "socmint.dossier_export_verification.v10_9_0"
@@ -22,6 +23,17 @@ def sha256_file(path: str | Path) -> str:
 
 def verify_artifact_hashes(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
     manifest = load_export_manifest(subject_id=subject_id, case_id=case_id, root=root)
+    scope = export_scope_matches(manifest, subject_id=subject_id, case_id=case_id)
+    if scope["status"] != "pass":
+        return {
+            "schema": DOSSIER_EXPORT_VERIFICATION_SCHEMA,
+            "status": "blocked",
+            "subject_id": subject_id,
+            "case_id": case_id,
+            "artifact_count": 0,
+            "checks": [],
+            "scope": scope,
+        }
     checks = []
     for artifact in manifest.get("artifacts", []):
         path = Path(str(artifact.get("path", "")))
@@ -62,6 +74,8 @@ def verify_artifact_hashes(subject_id: str, case_id: str, root: str | Path = DEF
 def verify_manifest_index(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
     manifest = load_export_manifest(subject_id=subject_id, case_id=case_id, root=root)
     index_entry = find_export_entry(case_id=case_id, subject_id=subject_id, root=root)
+    manifest_scope = export_scope_matches(manifest, subject_id=subject_id, case_id=case_id)
+    index_scope = export_scope_matches(index_entry, subject_id=subject_id, case_id=case_id)
     manifest_present = manifest.get("status") != "missing"
     index_present = index_entry.get("status") != "missing"
     artifact_count_match = len(manifest.get("artifacts", [])) == len(index_entry.get("artifacts", []))
@@ -70,6 +84,8 @@ def verify_manifest_index(subject_id: str, case_id: str, root: str | Path = DEFA
     checks = {
         "manifest_present": manifest_present,
         "index_present": index_present,
+        "manifest_scope": manifest_scope["status"] == "pass",
+        "index_scope": index_scope["status"] == "pass",
         "artifact_count_match": artifact_count_match,
         "subject_match": subject_match,
         "case_match": case_match,
@@ -80,6 +96,10 @@ def verify_manifest_index(subject_id: str, case_id: str, root: str | Path = DEFA
         "subject_id": subject_id,
         "case_id": case_id,
         "checks": checks,
+        "scope": {
+            "manifest": manifest_scope,
+            "index": index_scope,
+        },
         "manifest_path": manifest.get("manifest_path"),
         "index_manifest_path": index_entry.get("manifest_path"),
     }

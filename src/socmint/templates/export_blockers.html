@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h1>Export Blockers</h1>
+      <p class="muted">Review export gate decisions by case and subject.</p>
+    </div>
+    <div class="mini-actions">
+      <a href="/api/v1/dossier-builder/v3/export-blockers/screenshot-manifest">Manifest JSON</a>
+      <a href="/dossier/export-blockers/screenshot-manifest/download">Download Manifest</a>
+    </div>
+  </div>
+  <form method="get" class="filter-form">
+    <label>Case ID <input type="text" name="case_id" value="{{ case_id }}" placeholder="case-id"></label>
+    <label>Subject ID <input type="text" name="subject_id" value="{{ subject_id }}" placeholder="subject-id"></label>
+    <button type="submit">Check Gate</button>
+  </form>
+  <div class="support-copy">
+    <p class="muted">Support artifacts: screenshot manifest JSON is available at <code>/api/v1/dossier-builder/v3/export-blockers/screenshot-manifest</code>, and the audited download is <code>/dossier/export-blockers/screenshot-manifest/download</code>.</p>
+    <p class="muted">The dedicated workflow uploads the screenshot bundle as <code>export-blocker-screenshots-&lt;run_id&gt;</code>.</p>
+  </div>
+</section>
+
+{% if decision %}
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Decision</h2>
+      <p class="muted">{{ decision.case_id }} / {{ decision.subject_id }}</p>
+    </div>
+    <span class="status-pill {{ 'completed' if decision.decision == 'allow' else 'failed' }}">{{ decision.decision }}</span>
+  </div>
+  <div class="summary-grid">
+    <div><span>Status</span><strong>{{ decision.decision }}</strong></div>
+    <div><span>Reason</span><strong>{{ decision.reason }}</strong></div>
+    <div><span>Passed</span><strong>{{ decision.verification_summary.passed_checks }} / {{ decision.verification_summary.total_checks }}</strong></div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Blockers</h2>
+  {% if decision.blockers %}
+  <div class="card-grid">
+    {% for blocker in decision.blockers %}
+    <article class="card">
+      <h3>{{ blocker }}</h3>
+      <p class="muted">Resolve this check before final distribution.</p>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p>No blockers detected.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Verification Checks</h2>
+  <div class="card-grid">
+    {% for name, passed in decision.verification_summary.checks.items() %}
+    <article class="card">
+      <h3>{{ name }}</h3>
+      <p><span class="status-pill {{ 'completed' if passed else 'failed' }}">{{ 'pass' if passed else 'blocked' }}</span></p>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

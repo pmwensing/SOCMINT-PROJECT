@@ -12,6 +12,8 @@ OUT = Path(os.getenv("SOCMINT_CAPTURE_OUT", "runtime_screenshots_v13_33"))
 
 PAGES = [
     ("/command-center", "command-center"),
+    ("/dossier/export-blockers?case_id=case-export-ok-v13-40&subject_id=subject-export-ok-v13-40", "export-blockers-allowed"),
+    ("/dossier/export-blockers?case_id=case-export-held-v13-40&subject_id=subject-export-held-v13-40", "export-blockers-denied"),
     ("/review/normalization-queue", "normalization-review"),
     (f"/subjects/{SUBJECT_ID}/dossier/readiness", "dossier-readiness"),
     (f"/subjects/{SUBJECT_ID}/claim-evidence-ledger", "claim-evidence-ledger"),

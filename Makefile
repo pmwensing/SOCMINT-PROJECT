@@ -1,12 +1,16 @@
-PYTHON=./venv/bin/python
-PIP=./venv/bin/pip
+VENV ?= $(if $(wildcard .venv),.venv,venv)
+PYTHON := $(VENV)/bin/python
+PIP := $(VENV)/bin/pip
+SCREENSHOT_PYTHON ?= .venv-screenshots/bin/python
+SOCMINT_SCREENSHOT_BASE_URL ?= http://127.0.0.1:5000
+SOCMINT_SCREENSHOT_OUT ?= runtime_screenshots_v13_40
 
-.PHONY: all venv install install-prod install-scanners test migrate serve serve-prod process-jobs clean lint format precommit-install secrets backup-restore-smoke production-smoke production-docker-smoke ci connectors-health connectors-health-json install-connectors
+.PHONY: all venv install install-prod install-scanners test migrate serve serve-prod process-jobs clean lint format precommit-install secrets backup-restore-smoke production-smoke production-docker-smoke ci connectors-health connectors-health-json install-connectors export-blocker-runtime-screenshots refresh-export-blocker-screenshot-manifest
 
 all: install
 
 venv:
-	python3 -m venv venv
+	python3 -m venv $(VENV)
 	$(PIP) install --upgrade pip
 
 install: venv
@@ -28,7 +32,7 @@ serve: install
 	$(PYTHON) -m src.socmint.main --serve
 
 serve-prod: install
-	./venv/bin/gunicorn --bind 127.0.0.1:5000 src.socmint.wsgi:app
+	$(VENV)/bin/gunicorn --bind 127.0.0.1:5000 src.socmint.wsgi:app
 
 process-jobs: install
 	$(PYTHON) -m src.socmint.main process-jobs --max-jobs=$${MAX_JOBS:-1}
@@ -43,10 +47,10 @@ install-connectors:
 	bash ./scripts/install_connector_runtime_v7_6_0.sh
 
 lint: install
-	./venv/bin/ruff check src tests scripts
+	$(VENV)/bin/ruff check src tests scripts
 
 format: install
-	./venv/bin/ruff check --fix src tests scripts
+	$(VENV)/bin/ruff check --fix src tests scripts
 
 precommit-install: install
 	@if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then \
@@ -63,7 +67,7 @@ precommit-install: install
 		echo "Git repository not found. Initializing Git repository..."; \
 		git init; \
 	fi
-	./venv/bin/pre-commit install
+	$(VENV)/bin/pre-commit install
 
 secrets: install-prod
 	$(PYTHON) -m src.socmint.main generate-secrets
@@ -77,10 +81,19 @@ production-smoke: install-prod
 production-docker-smoke: install-prod
 	$(PYTHON) scripts/production_docker_smoke.py
 
+export-blocker-runtime-screenshots:
+	@if [ -z "$${SOCMINT_CAPTURE_PASSWORD:-}" ]; then echo "SOCMINT_CAPTURE_PASSWORD is required"; exit 1; fi
+	$(PYTHON) scripts/create_export_blocker_fixture_v13_40.py
+	SOCMINT_BASE_URL=$(SOCMINT_SCREENSHOT_BASE_URL) SOCMINT_CAPTURE_OUT=$(SOCMINT_SCREENSHOT_OUT) $(SCREENSHOT_PYTHON) scripts/capture_runtime_pages_v13_33.py
+	$(PYTHON) scripts/refresh_export_blocker_screenshot_manifest_v13_43.py
+
+refresh-export-blocker-screenshot-manifest:
+	$(PYTHON) scripts/refresh_export_blocker_screenshot_manifest_v13_43.py
+
 ci: install
-	./venv/bin/ruff check src tests scripts
-	./venv/bin/pre-commit run --all-files
-	./venv/bin/pytest -q
+	$(VENV)/bin/ruff check src tests scripts
+	$(VENV)/bin/pre-commit run --all-files
+	$(VENV)/bin/pytest -q
 	@if [ ! -f .env ]; then cp .env.example .env; rm_env=1; fi; \
 	 docker compose --env-file .env.example config; \
 	 docker compose --env-file .env.example --profile postgres config; \
@@ -88,8 +101,8 @@ ci: install
 	 if [ "$$rm_env" = "1" ]; then rm -f .env; fi
 	rm -rf /tmp/socmint-ci
 	mkdir -p /tmp/socmint-ci
-	DATABASE_URL=sqlite:////tmp/socmint-ci/socmint.db SOCMINT_DATA_DIR=/tmp/socmint-ci SOCMINT_AUTO_CREATE_DB=false ./venv/bin/alembic upgrade head
-	./venv/bin/pip-audit -r requirements.lock
+	DATABASE_URL=sqlite:////tmp/socmint-ci/socmint.db SOCMINT_DATA_DIR=/tmp/socmint-ci SOCMINT_AUTO_CREATE_DB=false $(VENV)/bin/alembic upgrade head
+	$(VENV)/bin/pip-audit -r requirements.lock
 
 clean:
 	rm -rf __pycache__ src/socmint/__pycache__ tests/__pycache__ .pytest_cache

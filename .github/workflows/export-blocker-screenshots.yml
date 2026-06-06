@@ -1,0 +1,76 @@
+name: Export Blocker Screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Runtime base URL to capture"
+        required: false
+        default: "http://127.0.0.1:5000"
+      capture_user:
+        description: "Runtime login username"
+        required: false
+        default: "admin"
+      capture_password:
+        description: "Runtime login password for the local CI app"
+        required: false
+        default: "ExportBlocker-v13-44-Local-CI!12345"
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Start local runtime
+        env:
+          SOCMINT_SECRET_KEY: export-blocker-v13-44-ci-secret-key-000000000000000000000
+          SOCMINT_ADMIN_USER: ${{ inputs.capture_user }}
+          SOCMINT_ADMIN_PASSWORD: ${{ inputs.capture_password }}
+          SOCMINT_AUTO_CREATE_DB: "true"
+          DATABASE_URL: sqlite:///var/export_blocker_screenshots/socmint.db
+          SOCMINT_DATA_DIR: var/export_blocker_screenshots
+        run: |
+          mkdir -p var/export_blocker_screenshots
+          python -m gunicorn --bind 127.0.0.1:5000 src.socmint.wsgi:app > var/export_blocker_screenshots/runtime.log 2>&1 &
+          for i in $(seq 1 30); do
+            if python -c 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:5000/readyz", timeout=2).read()'
+            then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat var/export_blocker_screenshots/runtime.log || true
+          exit 1
+
+      - name: Capture export blocker screenshots
+        env:
+          SOCMINT_CAPTURE_PASSWORD: ${{ inputs.capture_password }}
+          SOCMINT_CAPTURE_USER: ${{ inputs.capture_user }}
+          SOCMINT_SCREENSHOT_BASE_URL: ${{ inputs.base_url }}
+          SCREENSHOT_PYTHON: python
+        run: make export-blocker-runtime-screenshots PYTHON=python SCREENSHOT_PYTHON=python
+
+      - name: Upload export blocker screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: export-blocker-screenshots-${{ github.run_id }}
+          path: |
+            runtime_screenshots_v13_40/**
+            release/V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json
+          if-no-files-found: error
+          retention-days: 30
