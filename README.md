@@ -301,7 +301,7 @@ CI runs:
 
 ## Makefile Commands
 
-- `make install` - install project dependencies into `./venv`
+- `make install` - install project dependencies into the chosen virtualenv directory (`.venv` by default, or `venv` when `.venv` is not present)
 - `make install-prod` - install only production dashboard dependencies
 - `make install-scanners` - install optional scanner integrations
 - `make secrets` - generate safe environment values

@@ -24,6 +24,7 @@ def test_wsgi_registers_support_bundle_routes():
 def test_support_bundle_script_and_docs_exist():
     script = Path("scripts/support_bundle_v13_34.sh").read_text()
     docs = Path("docs/TROUBLESHOOTING.md").read_text()
+    release = Path("release/V13_34_SUPPORT_BUNDLE_DIAGNOSTICS.md").read_text()
 
     assert "support_bundle_v13_34" in script
     assert "support_bundle_api.json" in script
@@ -31,6 +32,8 @@ def test_support_bundle_script_and_docs_exist():
     assert "SOCMINT Troubleshooting" in docs
     assert "/support/bundle/v13.34" in docs
     assert "does not include plaintext secrets" in docs
+    assert "Support Bundle Diagnostics" in release
+    assert "scripts/support_bundle_v13_34.sh" in release
 
 
 def test_support_bundle_payload_redacts_secret_values(monkeypatch):
@@ -39,3 +42,11 @@ def test_support_bundle_payload_redacts_secret_values(monkeypatch):
     assert redact_value("SOCMINT_ADMIN_PASSWORD", "secret-value") == "<redacted:12 chars>"
     assert redact_value("SOCMINT_SECRET_KEY", "abc") == "<redacted:3 chars>"
     assert redact_value("SOCMINT_DATA_DIR", "/tmp/data") == "/tmp/data"
+
+
+def test_support_bundle_payload_points_to_latest_support_capture():
+    from socmint.support_bundle_v13_34 import support_bundle_payload
+
+    payload = support_bundle_payload()
+
+    assert payload["acceptance_scripts"]["support_bundle_capture"] == "scripts/support_bundle_v13_34.sh"

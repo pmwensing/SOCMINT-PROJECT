@@ -157,6 +157,7 @@ def support_bundle_payload(app=None, subject_id: int = 4) -> dict[str, Any]:
             "clean_install": "scripts/clean_install_acceptance_v13_33.sh",
             "runtime_acceptance": "scripts/runtime_acceptance_v13_33.sh",
             "screenshot_capture": "scripts/capture_runtime_pages_v13_33.py",
+            "support_bundle_capture": "scripts/support_bundle_v13_34.sh",
         },
     }
 

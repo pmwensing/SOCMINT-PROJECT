@@ -2433,4 +2433,3 @@ def review_spine_assertion(assertion_id, validation_state, actor=None, note=None
         return item
     finally:
         session.close()
-

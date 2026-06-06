@@ -52,11 +52,7 @@ jobs:
           for i in $(seq 1 36); do
             echo "[+] readiness attempt ${i}/36"
             docker compose ps
-            if docker compose exec -T app python - <<'PY'
-import urllib.request
-urllib.request.urlopen("http://127.0.0.1:5000/readyz", timeout=5).read()
-print("ready")
-PY
+            if docker compose exec -T app python -c 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:5000/readyz", timeout=5).read(); print("ready")'
             then
               ready=1
               break
