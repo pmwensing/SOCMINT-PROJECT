@@ -51,6 +51,10 @@ jobs:
           fi
           exit "$status"
 
+      - name: Command Center export gate verification
+        run: |
+          pytest -q tests/test_command_center_export_gate_v13_40.py tests/test_export_blocker_routes_v13_39.py
+
       - name: Docker Compose config
         env:
           SOCMINT_ENV_FILE: .env.example

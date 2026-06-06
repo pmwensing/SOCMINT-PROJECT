@@ -1,8 +1,11 @@
 VENV ?= $(if $(wildcard .venv),.venv,venv)
 PYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
+SCREENSHOT_PYTHON ?= .venv-screenshots/bin/python
+SOCMINT_SCREENSHOT_BASE_URL ?= http://127.0.0.1:5000
+SOCMINT_SCREENSHOT_OUT ?= runtime_screenshots_v13_40
 
-.PHONY: all venv install install-prod install-scanners test migrate serve serve-prod process-jobs clean lint format precommit-install secrets backup-restore-smoke production-smoke production-docker-smoke ci connectors-health connectors-health-json install-connectors
+.PHONY: all venv install install-prod install-scanners test migrate serve serve-prod process-jobs clean lint format precommit-install secrets backup-restore-smoke production-smoke production-docker-smoke ci connectors-health connectors-health-json install-connectors export-blocker-runtime-screenshots
 
 all: install
 
@@ -77,6 +80,11 @@ production-smoke: install-prod
 
 production-docker-smoke: install-prod
 	$(PYTHON) scripts/production_docker_smoke.py
+
+export-blocker-runtime-screenshots:
+	@if [ -z "$${SOCMINT_CAPTURE_PASSWORD:-}" ]; then echo "SOCMINT_CAPTURE_PASSWORD is required"; exit 1; fi
+	$(PYTHON) scripts/create_export_blocker_fixture_v13_40.py
+	SOCMINT_BASE_URL=$(SOCMINT_SCREENSHOT_BASE_URL) SOCMINT_CAPTURE_OUT=$(SOCMINT_SCREENSHOT_OUT) $(SCREENSHOT_PYTHON) scripts/capture_runtime_pages_v13_33.py
 
 ci: install
 	$(VENV)/bin/ruff check src tests scripts
