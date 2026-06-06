@@ -1,0 +1,21 @@
+{
+  "schema": "socmint.release_artifact_manifest.v13_42",
+  "version": "v13.42",
+  "artifact_set": "export_blocker_runtime_screenshots",
+  "source_workflow": "make export-blocker-runtime-screenshots",
+  "fixture_script": "scripts/create_export_blocker_fixture_v13_40.py",
+  "capture_script": "scripts/capture_runtime_pages_v13_33.py",
+  "output_directory": "runtime_screenshots_v13_40",
+  "artifacts": [
+    {
+      "path": "runtime_screenshots_v13_40/export-blockers-allowed-top.png",
+      "route": "/dossier/export-blockers?case_id=case-export-ok-v13-40&subject_id=subject-export-ok-v13-40",
+      "state": "allowed"
+    },
+    {
+      "path": "runtime_screenshots_v13_40/export-blockers-denied-top.png",
+      "route": "/dossier/export-blockers?case_id=case-export-held-v13-40&subject_id=subject-export-held-v13-40",
+      "state": "denied"
+    }
+  ]
+}

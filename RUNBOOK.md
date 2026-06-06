@@ -102,6 +102,25 @@ dossier, and verify media links.
   assertions, and review `/api/v1/spine/assertions/review-queue` for prioritized
   analyst decisions.
 
+## Export Blocker Screenshots
+
+Use this workflow when validating the Export Blockers operator panel in a live
+runtime:
+
+1. Start the app and confirm `/readyz` is healthy.
+2. Set `SOCMINT_CAPTURE_PASSWORD` for the runtime admin account.
+3. Run:
+
+```bash
+SOCMINT_CAPTURE_PASSWORD='...' \
+SOCMINT_SCREENSHOT_BASE_URL=http://127.0.0.1:5000 \
+make export-blocker-runtime-screenshots
+```
+
+The target seeds one allowed and one denied fixture export, then captures the
+runtime pages into `runtime_screenshots_v13_40/`. The release artifact manifest
+is `release/V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json`.
+
 ## Incident Checklist
 
 1. Preserve logs and note request IDs.
