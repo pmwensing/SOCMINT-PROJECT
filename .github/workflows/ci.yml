@@ -9,6 +9,10 @@ on:
         description: "Run the Docker/Tor production deployment rehearsal"
         required: false
         default: "false"
+      upload_runtime_screenshots:
+        description: "Upload runtime screenshot artifacts when a manual screenshot workflow has produced them"
+        required: false
+        default: "false"
 
 jobs:
   test:
@@ -80,6 +84,17 @@ jobs:
 
       - name: Dependency audit
         run: pip-audit -r requirements.lock
+
+      - name: Upload runtime screenshots
+        if: github.event_name == 'workflow_dispatch' && inputs.upload_runtime_screenshots == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: socmint-runtime-screenshots-v13-40-${{ github.run_id }}
+          path: |
+            runtime_screenshots_v13_40/**
+            release/V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json
+          if-no-files-found: warn
+          retention-days: 30
 
   docker-smoke:
     if: github.event_name == 'workflow_dispatch' && inputs.docker_smoke == 'true'

@@ -17,7 +17,10 @@ def _login(client):
 def test_export_blocker_screenshot_artifact_manifest_lists_expected_outputs():
     manifest = json.loads(Path("release/V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json").read_text())
 
-    assert manifest["schema"] == "socmint.release_artifact_manifest.v13_42"
+    assert manifest["schema"] in {
+        "socmint.release_artifact_manifest.v13_42",
+        "socmint.release_artifact_manifest.v13_43",
+    }
     assert manifest["source_workflow"] == "make export-blocker-runtime-screenshots"
     paths = {item["path"] for item in manifest["artifacts"]}
     assert "runtime_screenshots_v13_40/export-blockers-allowed-top.png" in paths

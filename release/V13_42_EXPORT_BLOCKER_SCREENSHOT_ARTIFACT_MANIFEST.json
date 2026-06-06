@@ -1,21 +1,28 @@
 {
-  "schema": "socmint.release_artifact_manifest.v13_42",
-  "version": "v13.42",
   "artifact_set": "export_blocker_runtime_screenshots",
-  "source_workflow": "make export-blocker-runtime-screenshots",
-  "fixture_script": "scripts/create_export_blocker_fixture_v13_40.py",
-  "capture_script": "scripts/capture_runtime_pages_v13_33.py",
-  "output_directory": "runtime_screenshots_v13_40",
   "artifacts": [
     {
+      "exists": true,
       "path": "runtime_screenshots_v13_40/export-blockers-allowed-top.png",
       "route": "/dossier/export-blockers?case_id=case-export-ok-v13-40&subject_id=subject-export-ok-v13-40",
+      "sha256": "896f67d0df49f4d0e364f39eeb7e571e5bb71f1b5dd13186017e8c222bbfd3ae",
+      "size_bytes": 20269,
       "state": "allowed"
     },
     {
+      "exists": true,
       "path": "runtime_screenshots_v13_40/export-blockers-denied-top.png",
       "route": "/dossier/export-blockers?case_id=case-export-held-v13-40&subject_id=subject-export-held-v13-40",
+      "sha256": "896f67d0df49f4d0e364f39eeb7e571e5bb71f1b5dd13186017e8c222bbfd3ae",
+      "size_bytes": 20269,
       "state": "denied"
     }
-  ]
+  ],
+  "capture_script": "scripts/capture_runtime_pages_v13_33.py",
+  "fixture_script": "scripts/create_export_blocker_fixture_v13_40.py",
+  "output_directory": "runtime_screenshots_v13_40",
+  "refresh_script": "scripts/refresh_export_blocker_screenshot_manifest_v13_43.py",
+  "schema": "socmint.release_artifact_manifest.v13_43",
+  "source_workflow": "make export-blocker-runtime-screenshots",
+  "version": "v13.43"
 }
