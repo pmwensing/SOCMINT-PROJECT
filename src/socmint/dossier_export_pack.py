@@ -12,6 +12,8 @@ from .dossier_builder_v3 import dossier_builder_summary
 
 DOSSIER_EXPORT_SCHEMA = "socmint.dossier_export.v10_4_0"
 SUPPORTED_EXPORT_FORMATS = ["json", "html"]
+UNREVIEWED_STATES = {"unreviewed", "pending", "needs_review", "needs-review"}
+CONTRADICTION_STATES = {"contradicted", "conflict", "contradiction", "blocked_contradiction"}
 
 
 def canonical_json(data: dict[str, Any]) -> str:
@@ -61,9 +63,82 @@ def render_dossier_html(dossier: dict[str, Any]) -> str:
     )
 
 
+def _evidence_claim_key(item: dict[str, Any]) -> str | None:
+    for key in ("claim_id", "assertion_id"):
+        if item.get(key):
+            return str(item[key])
+    if item.get("claim") or item.get("assertion_type"):
+        return str(item.get("claim") or item.get("assertion_type"))
+    return None
+
+
+def export_policy_blockers(dossier: dict[str, Any]) -> list[dict[str, Any]]:
+    evidence = dossier.get("evidence_matrix") or []
+    blockers: list[dict[str, Any]] = []
+    unreviewed = [
+        item
+        for item in evidence
+        if str(item.get("validation_state") or item.get("review_state") or "").lower() in UNREVIEWED_STATES
+    ]
+    if unreviewed:
+        blockers.append(
+            {
+                "code": "unreviewed_assertions",
+                "severity": "block",
+                "count": len(unreviewed),
+                "items": [item.get("assertion_id") or item.get("claim_id") or item.get("evidence_id") for item in unreviewed],
+            }
+        )
+
+    claim_sources: dict[str, set[str]] = {}
+    claim_items: dict[str, list[dict[str, Any]]] = {}
+    for item in evidence:
+        claim_key = _evidence_claim_key(item)
+        if not claim_key:
+            continue
+        claim_sources.setdefault(claim_key, set()).add(str(item.get("source") or "unknown"))
+        claim_items.setdefault(claim_key, []).append(item)
+    single_source = [
+        {"claim_id": claim_key, "sources": sorted(sources), "evidence_count": len(claim_items[claim_key])}
+        for claim_key, sources in claim_sources.items()
+        if len(sources) < 2
+    ]
+    if single_source:
+        blockers.append(
+            {
+                "code": "single_source_claims",
+                "severity": "block",
+                "count": len(single_source),
+                "items": single_source,
+            }
+        )
+
+    contradictions = [
+        item
+        for item in evidence
+        if item.get("contradiction") is True
+        or str(item.get("status") or item.get("validation_state") or item.get("review_state") or "").lower() in CONTRADICTION_STATES
+    ]
+    dossier_contradictions = dossier.get("contradictions") or []
+    if contradictions or dossier_contradictions:
+        blockers.append(
+            {
+                "code": "contradictory_identity_claims",
+                "severity": "block",
+                "count": len(contradictions) + len(dossier_contradictions),
+                "items": [
+                    item.get("assertion_id") or item.get("claim_id") or item.get("evidence_id")
+                    for item in contradictions
+                ],
+            }
+        )
+    return blockers
+
+
 def export_preflight(dossier: dict[str, Any]) -> dict[str, Any]:
     builder_preflight = dossier.get("export_preflight", {})
     missing = []
+    blockers = export_policy_blockers(dossier)
     if dossier.get("schema") != DOSSIER_BUILDER_SCHEMA:
         missing.append("valid dossier builder schema")
     if not dossier.get("subject", {}).get("subject_id"):
@@ -76,8 +151,9 @@ def export_preflight(dossier: dict[str, Any]) -> dict[str, Any]:
         missing.append("builder export_preflight ready")
     return {
         "schema": DOSSIER_EXPORT_SCHEMA,
-        "ready": not missing,
+        "ready": not missing and not blockers,
         "missing": missing,
+        "blockers": blockers,
         "builder_ready": bool(builder_preflight.get("ready")),
     }
 

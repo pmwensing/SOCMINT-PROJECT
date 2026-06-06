@@ -13,6 +13,8 @@ DOSSIER_EXPORT_AUDIT_SCHEMA = "socmint.dossier_export_audit.v10_7_0"
 AUDIT_FILENAME = "audit.jsonl"
 ALLOWED_AUDIT_ACTIONS = {
     "export_created",
+    "export_scope_allowed",
+    "export_scope_blocked",
     "manifest_read",
     "download_resolved",
     "download_blocked",

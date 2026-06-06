@@ -52,3 +52,10 @@ var/
 
 .env.deployment.local
 .connector-tools/
+
+# Generated runtime captures and support artifacts
+.runtime-login.txt
+runtime_screenshots*/
+runtime_screenshots*.zip
+support_bundle_v*.zip
+support_bundle_v*/
