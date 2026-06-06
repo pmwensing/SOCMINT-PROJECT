@@ -5,12 +5,14 @@ def test_v13_35A_audit_routes_registered():
     wsgi = Path("src/socmint/wsgi.py").read_text()
 
     assert "register_correlation_scope_audit_routes_v13_35" in wsgi
-    assert "/api/v1/audit/correlation-scope/v13.35" in Path(
-        "src/socmint/correlation_scope_audit_v13_35.py"
-    ).read_text()
-    assert "/audit/correlation-scope/v13.35" in Path(
-        "src/socmint/correlation_scope_audit_v13_35.py"
-    ).read_text()
+    assert (
+        "/api/v1/audit/correlation-scope/v13.35"
+        in Path("src/socmint/correlation_scope_audit_v13_35.py").read_text()
+    )
+    assert (
+        "/audit/correlation-scope/v13.35"
+        in Path("src/socmint/correlation_scope_audit_v13_35.py").read_text()
+    )
 
 
 def test_scope_gate_quarantines_ambiguous_cross_scope_match():
@@ -50,7 +52,9 @@ def test_schema_scope_coverage_is_audit_only_and_reports_missing_columns():
 
 
 def test_payload_records_safe_decision_and_policy_gate():
-    from src.socmint.correlation_scope_audit_v13_35 import correlation_scope_audit_payload
+    from src.socmint.correlation_scope_audit_v13_35 import (
+        correlation_scope_audit_payload,
+    )
 
     payload = correlation_scope_audit_payload()
 

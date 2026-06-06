@@ -122,7 +122,9 @@ def run_grouping_snapshot(subject_id: int | None = None) -> dict[str, Any]:
                 "seed_id": seed_id,
                 "connector_key": run.connector_key,
                 "status": run.status,
-                "raw_result_status": raw.get("status") if isinstance(raw, dict) else None,
+                "raw_result_status": raw.get("status")
+                if isinstance(raw, dict)
+                else None,
                 "created_at": run.created_at.isoformat()
                 if getattr(run, "created_at", None)
                 else None,
@@ -130,7 +132,8 @@ def run_grouping_snapshot(subject_id: int | None = None) -> dict[str, Any]:
         )
 
     mixed_groups = [
-        key for key, rows in grouped.items()
+        key
+        for key, rows in grouped.items()
         if len({row["seed_id"] for row in rows}) > 1
     ]
 
@@ -207,32 +210,32 @@ def render_correlation_scope_audit_html(payload: dict[str, Any]) -> str:
             <h1>Correlation Scope Lock + Run Isolation Audit v13.35A</h1>
             <p>Audit-first policy gate. This page does not run schema migrations.</p>
             <div class='export-summary-list'>
-              <div><span>Status</span><strong>{html.escape(payload['status'])}</strong></div>
-              <div><span>Risk flags</span><strong>{len(payload['risk_flags'])}</strong></div>
-              <div><span>Scope coverage complete</span><strong>{'YES' if payload['scope_coverage']['coverage_complete'] else 'NO'}</strong></div>
-              <div><span>Run groups</span><strong>{payload['run_grouping']['group_count']}</strong></div>
+              <div><span>Status</span><strong>{html.escape(payload["status"])}</strong></div>
+              <div><span>Risk flags</span><strong>{len(payload["risk_flags"])}</strong></div>
+              <div><span>Scope coverage complete</span><strong>{"YES" if payload["scope_coverage"]["coverage_complete"] else "NO"}</strong></div>
+              <div><span>Run groups</span><strong>{payload["run_grouping"]["group_count"]}</strong></div>
             </div>
           </section>
 
           <section class='runtime-utility-card'>
             <h2>Safe Decision</h2>
-            <pre>{html.escape(json.dumps(payload['safe_decision'], indent=2, sort_keys=True))}</pre>
+            <pre>{html.escape(json.dumps(payload["safe_decision"], indent=2, sort_keys=True))}</pre>
           </section>
 
           <section class='runtime-utility-card'>
             <h2>Missing Persistent Scope Coverage</h2>
-            <div class='export-artifact-grid'>{missing_cards or '<p>No missing scope columns detected.</p>'}</div>
+            <div class='export-artifact-grid'>{missing_cards or "<p>No missing scope columns detected.</p>"}</div>
           </section>
 
           <section class='runtime-utility-card'>
             <h2>Initial Search / Run Grouping Snapshot</h2>
-            <p>{html.escape(payload['run_grouping']['group_key_policy'])}</p>
-            <div class='export-artifact-grid'>{group_cards or '<p>No connector runs found.</p>'}</div>
+            <p>{html.escape(payload["run_grouping"]["group_key_policy"])}</p>
+            <div class='export-artifact-grid'>{group_cards or "<p>No connector runs found.</p>"}</div>
           </section>
 
           <section class='runtime-utility-card'>
             <h2>Promotion Policy Gate</h2>
-            <pre>{html.escape(json.dumps(payload['policy_gate'], indent=2, sort_keys=True))}</pre>
+            <pre>{html.escape(json.dumps(payload["policy_gate"], indent=2, sort_keys=True))}</pre>
           </section>
         </main>
       </body>
