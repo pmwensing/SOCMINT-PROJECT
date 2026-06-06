@@ -2,6 +2,7 @@ import pytest
 
 from src.socmint.dossier_export_audit import audit_summary
 from src.socmint.dossier_export_pack import build_export_pack
+from src.socmint.dossier_export_pack import export_pack_summary
 from src.socmint.dossier_export_pack import export_preflight
 from src.socmint.dossier_export_store import persist_export_pack
 from src.socmint.dossier_builder_v3 import build_dossier_payload
@@ -63,7 +64,9 @@ def test_export_preflight_blocks_single_source_claims():
     )
 
     assert pack["status"] == "needs_review"
-    assert any(blocker["code"] == "single_source_claims" for blocker in pack["preflight"]["blockers"])
+    summary = export_pack_summary(pack)
+    assert "single_source_claims" in summary["blocker_codes"]
+    assert any(blocker["code"] == "single_source_claims" for blocker in summary["blockers"])
 
 
 def test_export_preflight_blocks_contradictory_identity_claims():

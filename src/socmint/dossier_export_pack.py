@@ -206,10 +206,14 @@ def build_export_pack(
 
 
 def export_pack_summary(pack: dict[str, Any]) -> dict[str, Any]:
+    blockers = pack.get("preflight", {}).get("blockers", [])
     return {
         "schema": DOSSIER_EXPORT_SCHEMA,
         "status": pack.get("status"),
         "ready": pack.get("preflight", {}).get("ready"),
+        "blocker_count": len(blockers),
+        "blocker_codes": [item.get("code") for item in blockers],
+        "blockers": blockers,
         "artifact_count": pack.get("manifest", {}).get("artifact_count", 0),
         "formats": pack.get("manifest", {}).get("formats", []),
         "subject_id": pack.get("summary", {}).get("subject_id"),

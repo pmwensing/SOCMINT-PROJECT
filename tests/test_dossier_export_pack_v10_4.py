@@ -61,6 +61,8 @@ def test_v10_4_export_summary_shape():
 
     assert summary["schema"] == "socmint.dossier_export.v10_4_0"
     assert summary["ready"] is True
+    assert summary["blocker_count"] == 0
+    assert summary["blockers"] == []
     assert summary["artifact_count"] == 2
     assert summary["subject_id"] == "sub-104"
     assert summary["case_id"] == "case-104"

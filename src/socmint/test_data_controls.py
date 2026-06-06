@@ -46,7 +46,7 @@ def _dossier_file_hits() -> list[dict[str, Any]]:
     return hits
 
 
-def test_data_summary() -> dict[str, Any]:
+def collect_test_data_summary() -> dict[str, Any]:
     db.ensure_configured()
     session = db.Session()
     try:
@@ -158,5 +158,9 @@ def clean_test_data(actor: str | None = None) -> dict[str, Any]:
             shutil.rmtree(artifact_dir)
             summary["artifact_dirs_deleted"].append(str(artifact_dir))
     summary["status"] = "cleaned"
-    summary["post_summary"] = test_data_summary()
+    summary["post_summary"] = collect_test_data_summary()
     return summary
+
+
+test_data_summary = collect_test_data_summary
+test_data_summary.__test__ = False
