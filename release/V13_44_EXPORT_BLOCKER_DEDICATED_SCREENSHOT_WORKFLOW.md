@@ -16,3 +16,10 @@ This build adds a dedicated screenshot capture workflow, stricter manifest valid
 ## Operator Result
 
 Operators can run a dedicated screenshot workflow, fail fast on missing screenshot artifacts, and retrieve the screenshot artifact manifest from the Export Blockers page.
+
+## Workflow Artifact
+
+- Workflow: `.github/workflows/export-blocker-screenshots.yml`
+- Artifact name: `export-blocker-screenshots-${{ github.run_id }}`
+- Manifest: `release/V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json`
+- Runtime screenshots: `runtime_screenshots_v13_40/**`

@@ -28,6 +28,8 @@ def test_support_bundle_dynamic_route_health_resolves_known_routes():
         "/spine/subjects/4/full-report/view",
         "/spine/subjects/4/full-report/retention",
         "/release/final-rc/v13.33",
+        "/api/v1/dossier-builder/v3/export-blockers/screenshot-manifest",
+        "/dossier/export-blockers/screenshot-manifest/download",
     ]:
         assert by_route[route]["registered"] is True, route
         assert by_route[route]["endpoint"], route

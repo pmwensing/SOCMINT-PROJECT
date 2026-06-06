@@ -121,6 +121,15 @@ The target seeds one allowed and one denied fixture export, then captures the
 runtime pages into `runtime_screenshots_v13_40/`. The release artifact manifest
 is `release/V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json`.
 
+To run the dedicated GitHub workflow, open **Export Blocker Screenshots** in
+GitHub Actions and choose **Run workflow**. The workflow starts a local CI
+runtime, captures `runtime_screenshots_v13_40/`, refreshes the screenshot
+manifest, and uploads an artifact named `export-blocker-screenshots-<run_id>`.
+The manifest is also available from the app at:
+
+- `/api/v1/dossier-builder/v3/export-blockers/screenshot-manifest`
+- `/dossier/export-blockers/screenshot-manifest/download`
+
 ## Incident Checklist
 
 1. Preserve logs and note request IDs.

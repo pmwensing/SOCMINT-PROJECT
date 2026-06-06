@@ -28,6 +28,8 @@ SUPPORT_BUNDLE_ROUTES = [
     "/spine/subjects/4/full-report/view",
     "/spine/subjects/4/full-report/retention",
     "/release/final-rc/v13.33",
+    "/api/v1/dossier-builder/v3/export-blockers/screenshot-manifest",
+    "/dossier/export-blockers/screenshot-manifest/download",
 ]
 SECRET_MARKERS = ("PASSWORD", "SECRET", "TOKEN", "KEY", "PASSPHRASE", "INVITE")
 

@@ -12,6 +12,8 @@ def test_support_bundle_module_defines_safe_schema_routes_and_redaction():
     assert "/api/v1/support/bundle/v13.34" in source
     assert "/support/bundle/v13.34" in source
     assert "/support/bundle/v13.34/download" in source
+    assert "/api/v1/dossier-builder/v3/export-blockers/screenshot-manifest" in source
+    assert "/dossier/export-blockers/screenshot-manifest/download" in source
 
 
 def test_wsgi_registers_support_bundle_routes():
@@ -50,3 +52,14 @@ def test_support_bundle_payload_points_to_latest_support_capture():
     payload = support_bundle_payload()
 
     assert payload["acceptance_scripts"]["support_bundle_capture"] == "scripts/support_bundle_v13_34.sh"
+
+
+def test_export_blocker_workflow_docs_and_release_artifact_reference_exist():
+    runbook = Path("RUNBOOK.md").read_text()
+    release = Path("release/V13_44_EXPORT_BLOCKER_DEDICATED_SCREENSHOT_WORKFLOW.md").read_text()
+    v13_45 = Path("release/V13_45_EXPORT_BLOCKER_WORKFLOW_DOCS_AND_ROUTE_HEALTH.md").read_text()
+
+    assert "Export Blocker Screenshots" in runbook
+    assert "export-blocker-screenshots-<run_id>" in runbook
+    assert "export-blocker-screenshots-${{ github.run_id }}" in release
+    assert "support-bundle route-health coverage" in v13_45
