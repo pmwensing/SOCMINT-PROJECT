@@ -12,6 +12,7 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    inspect,
     text,
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
@@ -194,12 +195,24 @@ engine = None
 Session = None
 
 
+def _ensure_runtime_schema_updates(current_engine):
+    inspector = inspect(current_engine)
+    if "spine_subjects" not in inspector.get_table_names():
+        return
+    columns = {column["name"] for column in inspector.get_columns("spine_subjects")}
+    with current_engine.begin() as connection:
+        if "case_key" not in columns:
+            connection.execute(text("ALTER TABLE spine_subjects ADD COLUMN case_key VARCHAR(128)"))
+        connection.execute(text("CREATE INDEX IF NOT EXISTS ix_spine_subjects_case_key ON spine_subjects (case_key)"))
+
+
 def configure_database(database_url=None, create_schema=True):
     global engine, Session
     engine = get_engine(database_url)
     Session = sessionmaker(bind=engine)
     if create_schema:
         Base.metadata.create_all(engine)
+        _ensure_runtime_schema_updates(engine)
     return engine
 
 
@@ -747,6 +760,7 @@ def list_findings(limit=200, target_id=None, finding_type=None):
 class SpineSubject(Base):
     __tablename__ = "spine_subjects"
     id = Column(Integer, primary_key=True)
+    case_key = Column(String(128), nullable=True, index=True)
     label = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
 
@@ -857,11 +871,20 @@ def _detach_all(session, items):
     return items
 
 
-def create_spine_subject(label=None):
+def _require_subject_case(session, subject_id, case_key=None):
+    subject = session.query(SpineSubject).filter_by(id=subject_id).first()
+    if not subject:
+        raise ValueError("Subject not found.")
+    if case_key is not None and subject.case_key != case_key:
+        raise ValueError("Subject is outside the requested case scope.")
+    return subject
+
+
+def create_spine_subject(label=None, case_key=None):
     ensure_configured()
     session = Session()
     try:
-        subject = SpineSubject(label=label)
+        subject = SpineSubject(label=label, case_key=case_key)
         session.add(subject)
         session.commit()
         session.refresh(subject)
@@ -882,22 +905,24 @@ def get_spine_subject(subject_id):
         session.close()
 
 
-def list_spine_subjects(limit=100):
+def list_spine_subjects(limit=100, case_key=None):
     ensure_configured()
     session = Session()
     try:
-        items = session.query(SpineSubject).order_by(
-            SpineSubject.created_at.desc()
-        ).limit(limit).all()
+        query = session.query(SpineSubject)
+        if case_key is not None:
+            query = query.filter_by(case_key=case_key)
+        items = query.order_by(SpineSubject.created_at.desc()).limit(limit).all()
         return _detach_all(session, items)
     finally:
         session.close()
 
 
-def add_spine_seed(subject_id, seed_type, raw_value, normalized_value, pii_hash):
+def add_spine_seed(subject_id, seed_type, raw_value, normalized_value, pii_hash, case_key=None):
     ensure_configured()
     session = Session()
     try:
+        _require_subject_case(session, subject_id, case_key=case_key)
         existing = session.query(SpineSeed).filter_by(
             subject_id=subject_id,
             seed_type=seed_type,
@@ -938,10 +963,18 @@ def create_spine_connector_run(
     seed_id,
     status,
     raw_result,
+    case_key=None,
 ):
     ensure_configured()
     session = Session()
     try:
+        _require_subject_case(session, subject_id, case_key=case_key)
+        if seed_id is not None:
+            seed = session.query(SpineSeed).filter_by(id=seed_id).first()
+            if not seed:
+                raise ValueError("Seed not found.")
+            if seed.subject_id != subject_id:
+                raise ValueError("Seed is outside the requested subject scope.")
         run = SpineConnectorRun(
             subject_id=subject_id,
             connector_key=connector_key,
