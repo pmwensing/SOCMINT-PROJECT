@@ -69,6 +69,32 @@
   <article class="metric-card"><span>Narrative</span><strong>{{ payload.summary.narrative_rating|upper }}</strong></article>
   <article class="metric-card"><span>Guided flow</span><strong>{{ payload.summary.guided_readiness|upper }}</strong></article>
   <article class="metric-card"><span>Guided score</span><strong>{{ payload.summary.guided_score }}</strong></article>
+  <article class="metric-card"><span>Export blockers</span><strong>{{ payload.summary.export_blocker_count }}</strong></article>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Export Gate</h2>
+      <p class="muted">Persisted dossier export distribution readiness.</p>
+    </div>
+    <a class="button-link secondary" href="{{ payload.export_gate.href }}">Review Export Blockers</a>
+  </div>
+  <div class="card-grid">
+    <article class="card status-card {{ 'ok' if payload.export_gate.status == 'ready' else 'warning' }}">
+      <span class="status-label">Gate status</span>
+      <strong>{{ payload.export_gate.status|upper }}</strong>
+      <p class="muted">Exports: {{ payload.export_gate.export_count }} · Allowed: {{ payload.export_gate.allowed_count }} · Blocked: {{ payload.export_gate.blocked_count }}</p>
+    </article>
+    {% for item in payload.export_gate.blocked_exports %}
+    <article class="card status-card warning">
+      <span class="status-label">Blocked export</span>
+      <strong>{{ item.case_id }}</strong>
+      <p class="muted">Subject {{ item.subject_id }} · {{ item.blockers|join(', ') }}</p>
+      <a class="card-link" href="{{ item.href }}">Open blocker panel</a>
+    </article>
+    {% endfor %}
+  </div>
 </section>
 
 <section class="panel guided-investigation-panel">

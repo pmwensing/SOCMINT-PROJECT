@@ -6,6 +6,8 @@ from typing import Any
 
 from . import database as db
 from .full_report_history import full_report_export_history
+from .dossier_export_gate import export_gate_decision
+from .dossier_export_index import export_index
 from .guided_investigation_v12_9 import guided_investigation_payload
 from .narrative_export_v12_6_1 import narrative_dashboard_polish_payload
 from .runtime_import_health import runtime_import_health_report
@@ -118,6 +120,47 @@ def _guided_card(subjects: list[Any]) -> dict[str, Any]:
         return {"status": "unavailable", "score": 0, "subject_id": subject_id, "action_count": 0, "next_action": {"label": "Open guided investigation", "href": "/investigation/flow", "reason": str(exc)}, "progress_rail": [], "href": "/investigation/flow", "error": str(exc)}
 
 
+def _export_gate_card() -> dict[str, Any]:
+    try:
+        index = export_index()
+        decisions = []
+        for entry in index.get("entries", []):
+            case_id = entry.get("case_id")
+            subject_id = entry.get("subject_id")
+            if not case_id or not subject_id:
+                continue
+            decision = export_gate_decision(subject_id=str(subject_id), case_id=str(case_id))
+            decisions.append(
+                {
+                    "case_id": case_id,
+                    "subject_id": subject_id,
+                    "decision": decision.get("decision"),
+                    "blockers": decision.get("blockers", []),
+                    "href": f"/dossier/export-blockers?case_id={case_id}&subject_id={subject_id}",
+                }
+            )
+        blocked = [item for item in decisions if item["decision"] != "allow"]
+        allowed = [item for item in decisions if item["decision"] == "allow"]
+        return {
+            "status": "blocked" if blocked else "ready" if allowed else "no_exports",
+            "export_count": len(decisions),
+            "allowed_count": len(allowed),
+            "blocked_count": len(blocked),
+            "blocked_exports": blocked[:5],
+            "href": blocked[0]["href"] if blocked else "/dossier/export-blockers",
+        }
+    except Exception as exc:
+        return {
+            "status": "unavailable",
+            "export_count": 0,
+            "allowed_count": 0,
+            "blocked_count": 0,
+            "blocked_exports": [],
+            "href": "/dossier/export-blockers",
+            "error": str(exc),
+        }
+
+
 def command_center_payload() -> dict[str, Any]:
     db.ensure_configured()
     session = db.Session()
@@ -132,6 +175,7 @@ def command_center_payload() -> dict[str, Any]:
         readiness = v11_readiness_summary()
         narrative = _narrative_card(subjects)
         guided = _guided_card(subjects)
+        export_gate = _export_gate_card()
         total_report_count = 0
         for subject in subjects:
             try:
@@ -177,6 +221,10 @@ def command_center_payload() -> dict[str, Any]:
                 "guided_readiness": guided.get("status"),
                 "guided_score": guided.get("score"),
                 "guided_action_count": guided.get("action_count"),
+                "export_gate_status": export_gate.get("status"),
+                "export_count": export_gate.get("export_count"),
+                "export_blocker_count": export_gate.get("blocked_count"),
+                "export_allowed_count": export_gate.get("allowed_count"),
                 "worker_hint": "Jobs are queued. Run Process queued jobs now or start process-jobs." if queued_count else "No queued jobs waiting.",
             },
             "tor": tor_status,
@@ -185,6 +233,7 @@ def command_center_payload() -> dict[str, Any]:
             "v11_readiness": readiness,
             "narrative_confidence": narrative,
             "guided_investigation": guided,
+            "export_gate": export_gate,
             "subjects": [_serialize_subject(subject) for subject in subjects],
             "targets": [_serialize_target(target) for target in targets],
             "jobs": serialized_jobs,
@@ -198,6 +247,7 @@ def command_center_payload() -> dict[str, Any]:
                 {"label": "Review queued jobs", "href": "/jobs", "priority": "secondary"},
                 {"label": "Open enrichment review", "href": "/spine/enrichment-review", "priority": "secondary"},
                 {"label": "Open export center", "href": "/reports/export-center", "priority": "secondary"},
+                {"label": "Review export blockers", "href": export_gate.get("href", "/dossier/export-blockers"), "priority": "secondary"},
                 {"label": "Review v11 readiness", "href": "/api/v1/admin/v11/readiness-summary", "priority": "secondary"},
             ],
             "tool_guidance": [
