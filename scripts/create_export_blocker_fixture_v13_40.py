@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.socmint.export_blocker_demo_v13_40 import create_export_blocker_demo
+from src.socmint.export_blocker_demo_v13_40 import create_export_blocker_demo  # noqa: E402
 
 
 def main() -> None:
