@@ -96,7 +96,7 @@ def test_dedicated_screenshot_workflow_is_available():
     assert "Export Blocker Screenshots" in source
     assert "Start local runtime" in source
     assert "python -m gunicorn --bind 127.0.0.1:5000 src.socmint.wsgi:app" in source
-    assert "make export-blocker-runtime-screenshots" in source
+    assert "make export-blocker-runtime-screenshots PYTHON=python SCREENSHOT_PYTHON=python" in source
     assert "pip install playwright" in source
     assert "actions/upload-artifact@v4" in source
     assert "if-no-files-found: error" in source

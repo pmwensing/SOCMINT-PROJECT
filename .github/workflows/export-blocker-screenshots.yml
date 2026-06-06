@@ -62,7 +62,7 @@ jobs:
           SOCMINT_CAPTURE_USER: ${{ inputs.capture_user }}
           SOCMINT_SCREENSHOT_BASE_URL: ${{ inputs.base_url }}
           SCREENSHOT_PYTHON: python
-        run: make export-blocker-runtime-screenshots
+        run: make export-blocker-runtime-screenshots PYTHON=python SCREENSHOT_PYTHON=python
 
       - name: Upload export blocker screenshots
         if: always()
