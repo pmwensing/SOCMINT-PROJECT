@@ -28,6 +28,21 @@ jobs:
       - name: Prepare compose environment
         run: |
           cp .env.example .env
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path(".env")
+          s = p.read_text()
+          replacements = {
+              "SOCMINT_ADMIN_PASSWORD=replace-with-a-strong-admin-password": "SOCMINT_ADMIN_PASSWORD=CI-FullVerify-Admin-2026!",
+              "SOCMINT_SECRET_KEY=replace-with-a-long-random-secret": "SOCMINT_SECRET_KEY=ci-full-verification-secret-key-2026-not-a-placeholder",
+              "SOCMINT_BACKUP_PASSPHRASE=replace-with-a-long-backup-passphrase": "SOCMINT_BACKUP_PASSPHRASE=CI-FullVerify-Backup-2026!",
+              "SOCMINT_SIGNUP_INVITE_CODE=replace-with-a-private-invite-code": "SOCMINT_SIGNUP_INVITE_CODE=ci-full-verification-invite-2026",
+          }
+          for before, after in replacements.items():
+              s = s.replace(before, after)
+          p.write_text(s)
+          PY
 
       - name: Build SOCMINT runtime
         run: |
