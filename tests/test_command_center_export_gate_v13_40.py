@@ -1,9 +1,11 @@
+from src.socmint import database as db
 from src.socmint.command_center import command_center_payload
 from src.socmint.export_blocker_demo_v13_40 import create_export_blocker_demo
 
 
 def test_command_center_summary_includes_export_blocker_counts(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    db.configure_database(f"sqlite:///{tmp_path / 'socmint-test.db'}", create_schema=True)
     create_export_blocker_demo()
 
     payload = command_center_payload()
