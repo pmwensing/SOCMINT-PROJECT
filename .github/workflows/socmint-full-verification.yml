@@ -34,9 +34,10 @@ jobs:
           p = Path(".env")
           s = p.read_text()
           replacements = {
-              "SOCMINT_ADMIN_PASSWORD=ChangeMe123!": "SOCMINT_ADMIN_PASSWORD=CI-FullVerify-Admin-2026!",
-              "SOCMINT_SECRET_KEY=dev-secret-change-me": "SOCMINT_SECRET_KEY=ci-full-verification-secret-key-2026",
-              "SOCMINT_BACKUP_PASSPHRASE=ChangeMe123!": "SOCMINT_BACKUP_PASSPHRASE=CI-FullVerify-Backup-2026!",
+              "SOCMINT_ADMIN_PASSWORD=replace-with-a-strong-admin-password": "SOCMINT_ADMIN_PASSWORD=CI-FullVerify-Admin-2026!",
+              "SOCMINT_SECRET_KEY=replace-with-a-long-random-secret": "SOCMINT_SECRET_KEY=ci-full-verification-secret-key-2026-not-a-placeholder",
+              "SOCMINT_BACKUP_PASSPHRASE=replace-with-a-long-backup-passphrase": "SOCMINT_BACKUP_PASSPHRASE=CI-FullVerify-Backup-2026!",
+              "SOCMINT_SIGNUP_INVITE_CODE=replace-with-a-private-invite-code": "SOCMINT_SIGNUP_INVITE_CODE=ci-full-verification-invite-2026",
           }
           for before, after in replacements.items():
               s = s.replace(before, after)
