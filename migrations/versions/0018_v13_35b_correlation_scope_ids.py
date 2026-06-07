@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "0018_v13_35b_correlation_scope_ids"
-down_revision = "0017_v12_10_schema_reconciliation"
+down_revision = "0015_spine_subject_case_scope"
 branch_labels = None
 depends_on = None
 
