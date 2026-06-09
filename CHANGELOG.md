@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a v13.45-v13.48 export-blocker workflow index covering screenshot
+  runbook guidance, manifest route health, download audit, and runner-portable
+  Playwright capture commands.
 - Updated CI workflows to Node 24-backed GitHub Actions pins for checkout,
   Python setup, and artifact upload.
 - Added a v13.36-v13.44 export-blocker index linking scoped export
