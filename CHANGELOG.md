@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Updated CI workflows to Node 24-backed GitHub Actions pins for checkout,
+  Python setup, and artifact upload.
 - Added a v13.36-v13.44 export-blocker index linking scoped export
   persistence, policy blockers, operator surfaces, and screenshot manifests.
 - Added the v13.35 final correlation-scope closure note and `v13.35` tag,

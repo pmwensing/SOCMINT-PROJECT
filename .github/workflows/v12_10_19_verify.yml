@@ -16,8 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: pip
@@ -58,7 +58,7 @@ jobs:
         run: python scripts/release_dashboard_decision_gate_v12_10_19.py
       - name: Upload reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: socmint-v12-10-19-verify-${{ github.run_id }}
           path: |
