@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v13.35 final correlation-scope closure note and `v13.35` tag,
+  closing the case/correlation scope correctness gate before the v13.36+
+  export-blocker line.
 - Added v13.35D correlation-scope model integration, DB-backed proof/backfill
   routes, additive runtime schema repair for older spine databases, and
   regression coverage for isolated initial searches.
