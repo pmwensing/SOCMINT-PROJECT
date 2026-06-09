@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added a v13 release sequence audit documenting closure indexes and known
+  release-note gaps across the v13 line.
 - Added a v13.45-v13.48 export-blocker workflow index covering screenshot
   runbook guidance, manifest route health, download audit, and runner-portable
   Playwright capture commands.
