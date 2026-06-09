@@ -199,11 +199,27 @@ def _ensure_runtime_schema_updates(current_engine):
     inspector = inspect(current_engine)
     if "spine_subjects" not in inspector.get_table_names():
         return
-    columns = {column["name"] for column in inspector.get_columns("spine_subjects")}
     with current_engine.begin() as connection:
+        columns = {column["name"] for column in inspector.get_columns("spine_subjects")}
         if "case_key" not in columns:
             connection.execute(text("ALTER TABLE spine_subjects ADD COLUMN case_key VARCHAR(128)"))
         connection.execute(text("CREATE INDEX IF NOT EXISTS ix_spine_subjects_case_key ON spine_subjects (case_key)"))
+
+        for table_name in [
+            "spine_seeds",
+            "spine_connector_runs",
+            "spine_observations",
+            "spine_dossier_assertions",
+        ]:
+            if table_name not in inspector.get_table_names():
+                continue
+            table_columns = {column["name"] for column in inspector.get_columns(table_name)}
+            if "correlation_scope_id" not in table_columns:
+                connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN correlation_scope_id VARCHAR(80)"))
+            if "correlation_scope_state" not in table_columns:
+                connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN correlation_scope_state VARCHAR(40)"))
+            if "correlation_scope_reason" not in table_columns:
+                connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN correlation_scope_reason TEXT"))
 
 
 def configure_database(database_url=None, create_schema=True):
@@ -212,7 +228,7 @@ def configure_database(database_url=None, create_schema=True):
     Session = sessionmaker(bind=engine)
     if create_schema:
         Base.metadata.create_all(engine)
-        _ensure_runtime_schema_updates(engine)
+    _ensure_runtime_schema_updates(engine)
     return engine
 
 
@@ -767,6 +783,9 @@ class SpineSubject(Base):
 
 class SpineSeed(Base):
     __tablename__ = "spine_seeds"
+    correlation_scope_id = Column(String(80), nullable=True)
+    correlation_scope_state = Column(String(40), nullable=True)
+    correlation_scope_reason = Column(Text, nullable=True)
     id = Column(Integer, primary_key=True)
     subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
     seed_type = Column(String, nullable=False)
@@ -778,6 +797,9 @@ class SpineSeed(Base):
 
 class SpineConnectorRun(Base):
     __tablename__ = "spine_connector_runs"
+    correlation_scope_id = Column(String(80), nullable=True)
+    correlation_scope_state = Column(String(40), nullable=True)
+    correlation_scope_reason = Column(Text, nullable=True)
     id = Column(Integer, primary_key=True)
     subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
     connector_key = Column(String, nullable=False)
@@ -802,6 +824,9 @@ class SpineRawArtifact(Base):
 
 class SpineObservation(Base):
     __tablename__ = "spine_observations"
+    correlation_scope_id = Column(String(80), nullable=True)
+    correlation_scope_state = Column(String(40), nullable=True)
+    correlation_scope_reason = Column(Text, nullable=True)
     id = Column(Integer, primary_key=True)
     subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
     run_id = Column(Integer, ForeignKey("spine_connector_runs.id"), nullable=False)
@@ -816,6 +841,9 @@ class SpineObservation(Base):
 
 class SpineDossierAssertion(Base):
     __tablename__ = "spine_dossier_assertions"
+    correlation_scope_id = Column(String(80), nullable=True)
+    correlation_scope_state = Column(String(40), nullable=True)
+    correlation_scope_reason = Column(Text, nullable=True)
     id = Column(Integer, primary_key=True)
     subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
     assertion_type = Column(String, nullable=False)
