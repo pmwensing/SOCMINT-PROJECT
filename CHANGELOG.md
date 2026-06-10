@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v14.0 Operator Release Console with local release evidence checks,
+  git metadata, clean PR queue closure state, UI/API routes, and regression
+  coverage.
 - Added a v10.32-v10.37 open PR triage note documenting stale branch state,
   mergeability, and non-destructive handling guidance.
 - Added a v13 release documentation closure note and regression coverage that
