@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added retroactive v13.23 and v13.27-v13.31 release notes for
+  test-backed workflow navigation, full-report runtime safety, route
+  hardening, endpoint aliases, visual polish, and export artifact UX.
 - Added a v13 release sequence audit documenting closure indexes and known
   release-note gaps across the v13 line.
 - Added a v13.45-v13.48 export-blocker workflow index covering screenshot
