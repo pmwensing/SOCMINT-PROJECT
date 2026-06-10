@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added the missing v13.11 normalization form update release note and narrowed
+  the v13 sequence audit to the remaining v13.25 evidence gap.
 - Added retroactive v13.23 and v13.27-v13.31 release notes for
   test-backed workflow navigation, full-report runtime safety, route
   hardening, endpoint aliases, visual polish, and export artifact UX.
