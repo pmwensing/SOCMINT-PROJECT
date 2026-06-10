@@ -17,23 +17,23 @@ This audit records the current v13 release-note sequence after the v13.35 correl
 | v13.0-v13.10 | Documented | Command Center, readiness, claim ledger, handoff status, normalization review, and review UI release notes exist. |
 | v13.11 | Gap | No `V13_11_*` release note or direct `test_v13_11*` file is present. |
 | v13.12-v13.22 | Documented | Review queue UX, promotion, ledger UI, readiness UI, subject status, manifest draft, dry-run spec, usability smoke, and route audit notes exist. |
-| v13.23 | Test-backed gap | `tests/test_v13_23_workflow_navigation.py` covers Command Center workflow navigation, but no `V13_23_*` release note is present. |
+| v13.23 | Documented | `V13_23_WORKFLOW_NAVIGATION.md` documents Command Center workflow navigation coverage. |
 | v13.24 | Documented | Export manifest UI release note exists. |
 | v13.25 | Gap | No `V13_25_*` release note or direct `test_v13_25*` file is present. |
 | v13.26 | Documented | Operator guide and test script release note exists. |
-| v13.27-v13.31 | Test-backed gap | Runtime/full-report/export-artifact regression tests exist, but no matching release notes are present. |
+| v13.27-v13.31 | Documented | Runtime/full-report/export-artifact regression notes now exist for v13.27 through v13.31. |
 | v13.32-v13.35D | Documented | Full dossier UX, final RC lock, support bundle diagnostics, and correlation-scope A-D release notes exist. |
 | v13.36-v13.48 | Indexed | Export-blocker and screenshot workflow release notes are present and indexed. |
 
-## Test-backed gaps
+## Former test-backed gaps
 
-- v13.23: `tests/test_v13_23_workflow_navigation.py`
-- v13.27: `tests/test_v13_27_full_report_history_runtime_safe.py`
-- v13.28: `tests/test_v13_28_runtime_route_hardening.py`
-- v13.29: `tests/test_v13_29_full_dossier_endpoint_alias.py`
-- v13.30: `tests/test_v13_30_runtime_visual_polish.py`
-- v13.31: `tests/test_v13_31_export_artifact_ux.py`
+- v13.23: `V13_23_WORKFLOW_NAVIGATION.md`, backed by `tests/test_v13_23_workflow_navigation.py`
+- v13.27: `V13_27_FULL_REPORT_HISTORY_RUNTIME_SAFE.md`, backed by `tests/test_v13_27_full_report_history_runtime_safe.py`
+- v13.28: `V13_28_RUNTIME_ROUTE_HARDENING.md`, backed by `tests/test_v13_28_runtime_route_hardening.py`
+- v13.29: `V13_29_FULL_DOSSIER_ENDPOINT_ALIAS.md`, backed by `tests/test_v13_29_full_dossier_endpoint_alias.py`
+- v13.30: `V13_30_RUNTIME_VISUAL_POLISH.md`, backed by `tests/test_v13_30_runtime_visual_polish.py`
+- v13.31: `V13_31_EXPORT_ARTIFACT_UX.md`, backed by `tests/test_v13_31_export_artifact_ux.py`
 
 ## Handoff
 
-Future v13 documentation work should either add explicit retroactive notes for the test-backed gaps or leave this audit as the source of truth. New v13 release work should keep a one-to-one relationship between release notes, changelog entries, and focused regression coverage.
+Future v13 documentation work should either close the true v13.11/v13.25 gaps with evidence or leave this audit as the source of truth. New v13 release work should keep a one-to-one relationship between release notes, changelog entries, and focused regression coverage.
