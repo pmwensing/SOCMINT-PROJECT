@@ -5,6 +5,7 @@ from flask import Response, jsonify, redirect, render_template, request, session
 from .case_delivery_handoff_package_v15_1 import build_case_delivery_handoff_package_from_request
 from .case_delivery_handoff_package_v15_1 import case_delivery_handoff_markdown
 from .case_delivery_handoff_verification_v15_2 import verify_case_delivery_handoff_package_from_request
+from .case_delivery_readiness_receipt_v15_3 import build_case_delivery_readiness_receipt_from_request
 from .case_delivery_workspace_v15 import build_case_delivery_workspace_from_request
 
 
@@ -60,5 +61,13 @@ def register_case_delivery_workspace_routes_v15(app):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
         return jsonify(verify_case_delivery_handoff_package_from_request(case_id, _request_payload()))
+
+    @app.post("/api/v1/case-delivery/<case_id>/readiness-receipt")
+    def api_case_delivery_readiness_receipt_post_v15_3(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        result = build_case_delivery_readiness_receipt_from_request(case_id, _request_payload())
+        status_code = 200 if result.get("status") == "issued" else 409
+        return jsonify(result), status_code
 
     return app

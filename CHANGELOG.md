@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v15.3 Delivery Readiness Receipt with a signed-style canonical
+  payload hash, signature hash, receipt id, and a strict v15.2 verification
+  prerequisite before a receipt is emitted.
 - Added the v15.2 Case Delivery Handoff Verification layer with manifest
   hash checks, gate/disposition consistency checks, package case matching,
   and a verification API for v15 handoff packages.

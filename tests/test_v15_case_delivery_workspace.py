@@ -6,6 +6,8 @@ from src.socmint.case_delivery_handoff_package_v15_1 import CASE_DELIVERY_HANDOF
 from src.socmint.case_delivery_handoff_package_v15_1 import build_case_delivery_handoff_package
 from src.socmint.case_delivery_handoff_verification_v15_2 import CASE_DELIVERY_HANDOFF_VERIFICATION_SCHEMA
 from src.socmint.case_delivery_handoff_verification_v15_2 import verify_case_delivery_handoff_package
+from src.socmint.case_delivery_readiness_receipt_v15_3 import CASE_DELIVERY_READINESS_RECEIPT_SCHEMA
+from src.socmint.case_delivery_readiness_receipt_v15_3 import build_case_delivery_readiness_receipt
 from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
 from src.socmint.case_delivery_workspace_v15 import CASE_DELIVERY_GATE_SCHEMA
 from src.socmint.case_delivery_workspace_v15 import CASE_DELIVERY_WORKSPACE_SCHEMA
@@ -162,6 +164,31 @@ def test_case_delivery_handoff_verification_blocks_tampered_manifest():
     assert any(blocker["key"] == "manifest_mismatch" for blocker in verification["blockers"])
 
 
+def test_case_delivery_readiness_receipt_issues_after_verified_package():
+    package = build_case_delivery_handoff_package("case-v15-receipt", ready_payload(operator="operator"))
+    result = build_case_delivery_readiness_receipt(package, issuer="release-lead")
+
+    assert result["status"] == "issued"
+    assert result["blocker_count"] == 0
+    assert result["receipt"]["schema"] == CASE_DELIVERY_READINESS_RECEIPT_SCHEMA
+    assert result["receipt"]["verified"] is True
+    assert result["receipt"]["issued_by"] == "release-lead"
+    assert result["receipt"]["signature_algorithm"] == "sha256-canonical-json"
+    assert result["receipt"]["signature_sha256"]
+    assert result["receipt"]["receipt_id"]
+
+
+def test_case_delivery_readiness_receipt_blocks_tampered_package():
+    package = build_case_delivery_handoff_package("case-v15-receipt-block", ready_payload())
+    package["manifest"]["files"][0]["sha256"] = "tampered"
+    result = build_case_delivery_readiness_receipt(package)
+
+    assert result["status"] == "blocked"
+    assert result["receipt"] is None
+    assert result["blocker_count"] > 0
+    assert any(blocker["key"] == "manifest_mismatch" for blocker in result["blockers"])
+
+
 def test_case_delivery_workspace_routes_require_login(tmp_path, monkeypatch):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
@@ -181,6 +208,13 @@ def test_case_delivery_workspace_routes_require_login(tmp_path, monkeypatch):
     assert (
         client.post(
             "/api/v1/case-delivery/case-1/handoff-package/verify",
+            headers={"X-CSRF-Token": "test-csrf"},
+        ).status_code
+        == 401
+    )
+    assert (
+        client.post(
+            "/api/v1/case-delivery/case-1/readiness-receipt",
             headers={"X-CSRF-Token": "test-csrf"},
         ).status_code
         == 401
@@ -220,6 +254,11 @@ def test_case_delivery_workspace_routes_render_for_logged_in_user(tmp_path, monk
         json=ready_payload(operator="operator"),
         headers={"X-CSRF-Token": "test-csrf"},
     )
+    receipt_response = client.post(
+        "/api/v1/case-delivery/case-1/readiness-receipt",
+        json=ready_payload(operator="operator", issuer="release-lead"),
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
     ui_response = client.get("/case-delivery?case_id=case-1")
 
     assert api_response.status_code == 200
@@ -230,6 +269,9 @@ def test_case_delivery_workspace_routes_render_for_logged_in_user(tmp_path, monk
     assert b"Case Delivery Handoff" in markdown_response.data
     assert verification_response.status_code == 200
     assert verification_response.get_json()["status"] == "verified"
+    assert receipt_response.status_code == 200
+    assert receipt_response.get_json()["status"] == "issued"
+    assert receipt_response.get_json()["receipt"]["signature_sha256"]
     assert ui_response.status_code == 200
     assert b"Case Delivery Workspace" in ui_response.data
     assert b"handoff-package" in ui_response.data
@@ -239,11 +281,14 @@ def test_v15_release_note_and_changelog_are_present():
     note = Path("release/V15_0_CASE_DELIVERY_WORKSPACE.md").read_text(encoding="utf-8")
     handoff_note = Path("release/V15_1_CASE_DELIVERY_HANDOFF_PACKAGE.md").read_text(encoding="utf-8")
     verification_note = Path("release/V15_2_CASE_DELIVERY_HANDOFF_VERIFICATION.md").read_text(encoding="utf-8")
+    receipt_note = Path("release/V15_3_DELIVERY_READINESS_RECEIPT.md").read_text(encoding="utf-8")
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/case-delivery/<case_id>" in note
     assert "/api/v1/case-delivery/<case_id>/handoff-package" in handoff_note
     assert "/api/v1/case-delivery/<case_id>/handoff-package/verify" in verification_note
+    assert "/api/v1/case-delivery/<case_id>/readiness-receipt" in receipt_note
     assert "v15.0 Case Delivery Workspace" in changelog
     assert "v15.1 Case Delivery Handoff Package" in changelog
     assert "v15.2 Case Delivery Handoff Verification" in changelog
+    assert "v15.3 Delivery Readiness Receipt" in changelog
