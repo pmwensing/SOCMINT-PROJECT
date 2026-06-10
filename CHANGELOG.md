@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v15.1 Case Delivery Handoff Package with deterministic handoff
+  manifests, operator receipts, deliver/hold disposition, and remediation
+  actions derived from the v15 case delivery gate.
 - Added the v15.0 Case Delivery Workspace with a case-level delivery gate
   spanning dossier readiness, evidence completeness, export blockers, delivery
   registry state, and human approval.
