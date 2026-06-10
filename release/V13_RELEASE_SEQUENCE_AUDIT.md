@@ -19,7 +19,7 @@ This audit records the current v13 release-note sequence after the v13.35 correl
 | v13.12-v13.22 | Documented | Review queue UX, promotion, ledger UI, readiness UI, subject status, manifest draft, dry-run spec, usability smoke, and route audit notes exist. |
 | v13.23 | Documented | `V13_23_WORKFLOW_NAVIGATION.md` documents Command Center workflow navigation coverage. |
 | v13.24 | Documented | Export manifest UI release note exists. |
-| v13.25 | Gap | No `V13_25_*` release note or direct `test_v13_25*` file is present. |
+| v13.25 | Reserved gap | `V13_25_RESERVED_GAP.md` records that no implementation evidence has been found for this slot. |
 | v13.26 | Documented | Operator guide and test script release note exists. |
 | v13.27-v13.31 | Documented | Runtime/full-report/export-artifact regression notes now exist for v13.27 through v13.31. |
 | v13.32-v13.35D | Documented | Full dossier UX, final RC lock, support bundle diagnostics, and correlation-scope A-D release notes exist. |
@@ -36,4 +36,4 @@ This audit records the current v13 release-note sequence after the v13.35 correl
 
 ## Handoff
 
-Future v13 documentation work should either close the true v13.25 gap with evidence or leave this audit as the source of truth. New v13 release work should keep a one-to-one relationship between release notes, changelog entries, and focused regression coverage.
+Future v13 documentation work should replace the v13.25 reserved-gap note only if concrete implementation evidence is found. New v13 release work should keep a one-to-one relationship between release notes, changelog entries, and focused regression coverage.
