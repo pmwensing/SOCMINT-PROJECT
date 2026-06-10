@@ -253,6 +253,43 @@ def _load_release_health_snapshot(root: Path) -> dict[str, Any]:
     }
 
 
+def _operator_release_evaluation(checks: list[dict[str, Any]], release_health: dict[str, Any]) -> dict[str, Any]:
+    blockers = [item for item in checks if not item["ok"]]
+    snapshot_status = release_health.get("status")
+    freshness = release_health.get("freshness", {})
+    if blockers:
+        decision = "PAUSE_FOR_REPAIR"
+        next_action = "Repair release-console blockers before adding new release scope."
+    elif snapshot_status == "pass" and freshness.get("ok"):
+        decision = "EVALUATION_POINT_REACHED"
+        next_action = "Use the console state to choose the next product or release line."
+    else:
+        decision = "REFRESH_RELEASE_HEALTH"
+        next_action = RELEASE_HEALTH_REFRESH_COMMAND
+    return {
+        "decision": decision,
+        "status": "pass" if not blockers else "needs_review",
+        "blocker_count": len(blockers),
+        "blockers": [
+            {
+                "key": item["key"],
+                "label": item["label"],
+                "source": item["source"],
+                "detail": item["detail"],
+            }
+            for item in blockers
+        ],
+        "next_action": next_action,
+        "criteria": [
+            "release docs accounted for",
+            "open PR queue clean",
+            "local git metadata available",
+            "release health snapshot passing",
+            "release health snapshot fresh",
+        ],
+    }
+
+
 def operator_release_console_payload(root: str | Path | None = None) -> dict[str, Any]:
     repo_root = Path(root) if root is not None else DEFAULT_REPO_ROOT
     repo_root = repo_root.resolve()
@@ -292,9 +329,10 @@ def operator_release_console_payload(root: str | Path | None = None) -> dict[str
 
     passed = sum(1 for item in checks if item["ok"])
     failed = len(checks) - passed
+    evaluation = _operator_release_evaluation(checks, release_health)
     decision = "GO_FOR_V14" if failed == 0 else "HOLD_FOR_RELEASE_REPAIR"
     next_action = (
-        "Continue v14 implementation line from the operator release console."
+        evaluation["next_action"]
         if decision == "GO_FOR_V14"
         else "Repair missing release evidence before extending the release line."
     )
@@ -314,6 +352,7 @@ def operator_release_console_payload(root: str | Path | None = None) -> dict[str
         "git": git,
         "pr_queue": queue,
         "release_health": release_health,
+        "evaluation": evaluation,
         "checks": checks,
         "sources": {
             "repo_root": str(repo_root),

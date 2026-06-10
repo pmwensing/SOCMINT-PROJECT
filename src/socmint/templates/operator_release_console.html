@@ -41,6 +41,37 @@
 <section class="panel">
   <div class="section-header">
     <div>
+      <h2>Evaluation</h2>
+      <p class="muted">{{ payload.evaluation.next_action }}</p>
+    </div>
+    <span class="status-pill {{ 'completed' if payload.evaluation.status == 'pass' else 'failed' }}">{{ payload.evaluation.decision }}</span>
+  </div>
+  <table class="data-table">
+    <tbody>
+      <tr><td>Criteria</td><td>{{ payload.evaluation.criteria | join(', ') }}</td></tr>
+      <tr><td>Blockers</td><td>{{ payload.evaluation.blocker_count }}</td></tr>
+      <tr><td>Next action</td><td>{{ payload.evaluation.next_action }}</td></tr>
+    </tbody>
+  </table>
+  {% if payload.evaluation.blockers %}
+  <table class="data-table">
+    <thead><tr><th>Blocker</th><th>Source</th><th>Detail</th></tr></thead>
+    <tbody>
+    {% for blocker in payload.evaluation.blockers %}
+      <tr>
+        <td>{{ blocker.label }}</td>
+        <td><code>{{ blocker.source }}</code></td>
+        <td>{{ blocker.detail }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
       <h2>Release Health Snapshot</h2>
       <p class="muted">{{ payload.release_health.note }}</p>
     </div>

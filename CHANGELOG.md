@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added the v14.3 Operator Release Console evaluation point with blocker
+  rollup, explicit continue/pause decisions, and next-action guidance.
 - Added v14.2 release-health freshness checks for the Operator Release Console,
   including snapshot age, configurable max age, and refresh command display.
 - Added a v14.1 release-health snapshot for the Operator Release Console,
