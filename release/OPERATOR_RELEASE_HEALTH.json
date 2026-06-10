@@ -1,0 +1,38 @@
+{
+  "checks": [
+    {
+      "conclusion": "success",
+      "createdAt": "2026-06-10T04:29:38Z",
+      "databaseId": 27253248035,
+      "headSha": "6107bc1bd9aa788f48a0762325424a772c47f7e3",
+      "status": "completed",
+      "url": "https://github.com/pmwensing/SOCMINT-PROJECT/actions/runs/27253248035",
+      "workflowName": "SOCMINT v12.10.19 Verify"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-06-10T04:29:38Z",
+      "databaseId": 27253248033,
+      "headSha": "6107bc1bd9aa788f48a0762325424a772c47f7e3",
+      "status": "completed",
+      "url": "https://github.com/pmwensing/SOCMINT-PROJECT/actions/runs/27253248033",
+      "workflowName": "CI"
+    }
+  ],
+  "generated_at": "2026-06-10T05:59:25.674328+00:00",
+  "latest_master": {
+    "conclusion": "success",
+    "createdAt": "2026-06-10T04:29:38Z",
+    "databaseId": 27253248035,
+    "headSha": "6107bc1bd9aa788f48a0762325424a772c47f7e3",
+    "status": "completed",
+    "url": "https://github.com/pmwensing/SOCMINT-PROJECT/actions/runs/27253248035",
+    "workflowName": "SOCMINT v12.10.19 Verify"
+  },
+  "note": "generated from GitHub CLI release health query",
+  "open_pr_count": 0,
+  "open_prs": [],
+  "schema": "socmint.operator_release_health.v14_1",
+  "source": "gh",
+  "status": "pass"
+}

@@ -31,11 +31,44 @@
     </article>
     <article class="card">
       <h2>PR Queue</h2>
-      <p class="metric">{{ payload.pr_queue.status }}</p>
+      <p class="metric">{{ payload.release_health.open_pr_count if payload.release_health.open_pr_count is not none else payload.pr_queue.status }}</p>
       <p><strong>Source:</strong> {{ payload.pr_queue.source }}</p>
       <p><strong>Closed:</strong> {{ payload.pr_queue.closed_superseded_prs | join(', ') or 'n/a' }}</p>
     </article>
   </div>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Release Health Snapshot</h2>
+      <p class="muted">{{ payload.release_health.note }}</p>
+    </div>
+    <span class="status-pill {{ 'completed' if payload.release_health.status == 'pass' else 'failed' }}">{{ payload.release_health.status }}</span>
+  </div>
+  <table class="data-table">
+    <tbody>
+      <tr><td>Source</td><td><code>{{ payload.release_health.source }}</code></td></tr>
+      <tr><td>Generated</td><td>{{ payload.release_health.generated_at or 'n/a' }}</td></tr>
+      <tr><td>Open PRs</td><td>{{ payload.release_health.open_pr_count if payload.release_health.open_pr_count is not none else 'n/a' }}</td></tr>
+      <tr><td>Latest master</td><td><code>{{ payload.release_health.latest_master.headSha if payload.release_health.latest_master else 'n/a' }}</code></td></tr>
+    </tbody>
+  </table>
+  {% if payload.release_health.checks %}
+  <table class="data-table">
+    <thead><tr><th>Workflow</th><th>Status</th><th>Conclusion</th><th>URL</th></tr></thead>
+    <tbody>
+    {% for check in payload.release_health.checks %}
+      <tr>
+        <td>{{ check.workflowName }}</td>
+        <td>{{ check.status }}</td>
+        <td><span class="badge {{ 'ok' if check.conclusion == 'success' else 'warn' }}">{{ check.conclusion or 'pending' }}</span></td>
+        <td><a href="{{ check.url }}">{{ check.url }}</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
 </section>
 
 <section class="panel">

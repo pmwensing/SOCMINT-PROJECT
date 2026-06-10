@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a v14.1 release-health snapshot for the Operator Release Console,
+  including a GitHub CLI refresh script and console rendering for live-derived
+  PR/check status.
 - Added the v14.0 Operator Release Console with local release evidence checks,
   git metadata, clean PR queue closure state, UI/API routes, and regression
   coverage.
