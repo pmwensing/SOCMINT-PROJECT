@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added a v13 release documentation closure note and regression coverage that
+  verifies every numbered v13 slot from v13.0 through v13.48 is accounted for.
 - Added a v13.25 reserved-gap note so the v13 release sequence explicitly
   records the only slot without implementation evidence.
 - Added the missing v13.11 normalization form update release note and narrowed
