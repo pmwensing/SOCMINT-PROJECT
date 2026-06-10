@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="page-header">
+    <div>
+      <h1>Operator Release Console</h1>
+      <p>Release line, local evidence, PR queue state, and next action in one operator view.</p>
+    </div>
+    <div class="status-pill {{ 'completed' if payload.status == 'pass' else 'failed' }}">
+      {{ payload.decision }}
+    </div>
+  </div>
+
+  <div class="grid cards-4">
+    <article class="card">
+      <h2>Release Line</h2>
+      <p class="metric">{{ payload.release_line }}</p>
+      <p><strong>Status:</strong> {{ payload.status }}</p>
+      <p><strong>Schema:</strong> {{ payload.schema }}</p>
+    </article>
+    <article class="card">
+      <h2>Checks</h2>
+      <p class="metric">{{ payload.summary.passed }} / {{ payload.summary.total }}</p>
+      <p><strong>Needs review:</strong> {{ payload.summary.needs_review }}</p>
+    </article>
+    <article class="card">
+      <h2>Git</h2>
+      <p class="metric">{{ payload.git.latest_tag or 'untagged' }}</p>
+      <p><strong>Branch:</strong> {{ payload.git.branch or 'unknown' }}</p>
+      <p><strong>Commit:</strong> {{ payload.git.commit or 'unknown' }}</p>
+    </article>
+    <article class="card">
+      <h2>PR Queue</h2>
+      <p class="metric">{{ payload.pr_queue.status }}</p>
+      <p><strong>Source:</strong> {{ payload.pr_queue.source }}</p>
+      <p><strong>Closed:</strong> {{ payload.pr_queue.closed_superseded_prs | join(', ') or 'n/a' }}</p>
+    </article>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Release Evidence</h2>
+      <p class="muted">{{ payload.summary.next_action }}</p>
+    </div>
+    <a class="button-link secondary" href="/api/v1/operator/release-console">JSON</a>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr><th>Gate</th><th>Status</th><th>Source</th><th>Detail</th></tr>
+    </thead>
+    <tbody>
+    {% for item in payload.checks %}
+      <tr>
+        <td>{{ item.label }}</td>
+        <td><span class="badge {{ 'ok' if item.ok else 'warn' }}">{{ item.status }}</span></td>
+        <td><code>{{ item.source }}</code></td>
+        <td>{{ item.detail }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Source Index</h2>
+  <table class="data-table">
+    <tbody>
+      <tr><td>Repository root</td><td><code>{{ payload.sources.repo_root }}</code></td></tr>
+      <tr><td>Changelog</td><td><code>{{ payload.sources.changelog }}</code></td></tr>
+      <tr><td>Release documents</td><td>{{ payload.sources.release_docs | length }}</td></tr>
+      <tr><td>Working tree</td><td>{{ payload.git.dirty_detail }}</td></tr>
+    </tbody>
+  </table>
+</section>
+{% endblock %}
