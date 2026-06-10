@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v15.2 Case Delivery Handoff Verification layer with manifest
+  hash checks, gate/disposition consistency checks, package case matching,
+  and a verification API for v15 handoff packages.
 - Added the v15.1 Case Delivery Handoff Package with deterministic handoff
   manifests, operator receipts, deliver/hold disposition, and remediation
   actions derived from the v15 case delivery gate.
