@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added v14.2 release-health freshness checks for the Operator Release Console,
+  including snapshot age, configurable max age, and refresh command display.
 - Added a v14.1 release-health snapshot for the Operator Release Console,
   including a GitHub CLI refresh script and console rendering for live-derived
   PR/check status.

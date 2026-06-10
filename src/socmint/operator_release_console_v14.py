@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import json
 import subprocess
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +11,8 @@ from typing import Any
 OPERATOR_RELEASE_CONSOLE_SCHEMA = "socmint.operator_release_console.v14_0"
 DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[2]
 RELEASE_HEALTH_SNAPSHOT = Path("release/OPERATOR_RELEASE_HEALTH.json")
+DEFAULT_RELEASE_HEALTH_MAX_AGE_HOURS = 24
+RELEASE_HEALTH_REFRESH_COMMAND = "python scripts/refresh_operator_release_health_v14_1.py"
 
 REQUIRED_RELEASE_DOCS = [
     {
@@ -151,6 +154,56 @@ def _queue_summary(root: Path) -> dict[str, Any]:
     }
 
 
+def _max_snapshot_age_hours() -> int:
+    raw = os.environ.get("SOCMINT_RELEASE_HEALTH_MAX_AGE_HOURS", "").strip()
+    if not raw:
+        return DEFAULT_RELEASE_HEALTH_MAX_AGE_HOURS
+    try:
+        hours = int(raw)
+    except ValueError:
+        return DEFAULT_RELEASE_HEALTH_MAX_AGE_HOURS
+    return max(1, hours)
+
+
+def _snapshot_freshness(generated_at: str | None, now: datetime | None = None) -> dict[str, Any]:
+    max_age_hours = _max_snapshot_age_hours()
+    if not generated_at:
+        return {
+            "status": "missing_timestamp",
+            "ok": False,
+            "age_hours": None,
+            "max_age_hours": max_age_hours,
+            "detail": "snapshot generated_at is missing",
+        }
+    try:
+        generated = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+    except ValueError:
+        return {
+            "status": "invalid_timestamp",
+            "ok": False,
+            "age_hours": None,
+            "max_age_hours": max_age_hours,
+            "detail": "snapshot generated_at is invalid",
+        }
+    if generated.tzinfo is None:
+        generated = generated.replace(tzinfo=UTC)
+    now = now or datetime.now(UTC)
+    age_seconds = max(0.0, (now - generated).total_seconds())
+    age_hours = round(age_seconds / 3600, 2)
+    ok = age_hours <= max_age_hours
+    return {
+        "status": "fresh" if ok else "stale",
+        "ok": ok,
+        "age_hours": age_hours,
+        "max_age_hours": max_age_hours,
+        "detail": (
+            f"snapshot age {age_hours}h is within {max_age_hours}h"
+            if ok
+            else f"snapshot age {age_hours}h exceeds {max_age_hours}h"
+        ),
+    }
+
+
 def _load_release_health_snapshot(root: Path) -> dict[str, Any]:
     path = root / RELEASE_HEALTH_SNAPSHOT
     if not path.exists():
@@ -161,6 +214,8 @@ def _load_release_health_snapshot(root: Path) -> dict[str, Any]:
             "checks": [],
             "open_pr_count": None,
             "latest_master": None,
+            "freshness": _snapshot_freshness(None),
+            "refresh_command": RELEASE_HEALTH_REFRESH_COMMAND,
             "note": "release health snapshot has not been generated",
         }
     try:
@@ -173,13 +228,16 @@ def _load_release_health_snapshot(root: Path) -> dict[str, Any]:
             "checks": [],
             "open_pr_count": None,
             "latest_master": None,
+            "freshness": _snapshot_freshness(None),
+            "refresh_command": RELEASE_HEALTH_REFRESH_COMMAND,
             "note": f"release health snapshot could not be read: {exc}",
         }
     checks = payload.get("checks") or []
     open_pr_count = payload.get("open_pr_count")
+    freshness = _snapshot_freshness(payload.get("generated_at"))
     passing_checks = all(check.get("conclusion") == "success" for check in checks)
     queue_clean = open_pr_count == 0
-    status = "pass" if queue_clean and passing_checks else "needs_review"
+    status = "pass" if queue_clean and passing_checks and freshness["ok"] else "needs_review"
     return {
         "available": True,
         "status": status,
@@ -189,7 +247,9 @@ def _load_release_health_snapshot(root: Path) -> dict[str, Any]:
         "open_pr_count": open_pr_count,
         "latest_master": payload.get("latest_master"),
         "checks": checks,
-        "note": payload.get("note", "release health snapshot loaded"),
+        "freshness": freshness,
+        "refresh_command": RELEASE_HEALTH_REFRESH_COMMAND,
+        "note": freshness["detail"] if not freshness["ok"] else payload.get("note", "release health snapshot loaded"),
     }
 
 

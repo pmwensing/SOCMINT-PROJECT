@@ -1,9 +1,11 @@
 from pathlib import Path
 import json
+from datetime import UTC, datetime
 
 from src.socmint.dashboard import create_app
 from src.socmint.operator_release_console_routes_v14 import register_operator_release_console_routes_v14
 from src.socmint.operator_release_console_v14 import OPERATOR_RELEASE_CONSOLE_SCHEMA
+from src.socmint.operator_release_console_v14 import _snapshot_freshness
 from src.socmint.operator_release_console_v14 import operator_release_console_payload
 from scripts.refresh_operator_release_health_v14_1 import SCHEMA as RELEASE_HEALTH_SCHEMA
 from scripts.refresh_operator_release_health_v14_1 import build_release_health_snapshot
@@ -114,6 +116,46 @@ def test_operator_release_console_payload_loads_release_health_snapshot(tmp_path
     assert next(item for item in payload["checks"] if item["key"] == "release_health_snapshot")["ok"] is True
 
 
+def test_release_health_snapshot_freshness_marks_fresh_snapshot(monkeypatch):
+    monkeypatch.delenv("SOCMINT_RELEASE_HEALTH_MAX_AGE_HOURS", raising=False)
+
+    freshness = _snapshot_freshness(
+        "2026-06-10T04:40:00+00:00",
+        now=datetime(2026, 6, 10, 6, 10, tzinfo=UTC),
+    )
+
+    assert freshness["status"] == "fresh"
+    assert freshness["ok"] is True
+    assert freshness["age_hours"] == 1.5
+    assert freshness["max_age_hours"] == 24
+
+
+def test_release_health_snapshot_freshness_marks_stale_snapshot(monkeypatch):
+    monkeypatch.setenv("SOCMINT_RELEASE_HEALTH_MAX_AGE_HOURS", "2")
+
+    freshness = _snapshot_freshness(
+        "2026-06-10T04:00:00+00:00",
+        now=datetime(2026, 6, 10, 7, 30, tzinfo=UTC),
+    )
+
+    assert freshness["status"] == "stale"
+    assert freshness["ok"] is False
+    assert freshness["age_hours"] == 3.5
+    assert freshness["max_age_hours"] == 2
+
+
+def test_release_health_snapshot_freshness_handles_missing_and_invalid_timestamp(monkeypatch):
+    monkeypatch.delenv("SOCMINT_RELEASE_HEALTH_MAX_AGE_HOURS", raising=False)
+
+    missing = _snapshot_freshness(None)
+    invalid = _snapshot_freshness("not-a-date")
+
+    assert missing["status"] == "missing_timestamp"
+    assert missing["ok"] is False
+    assert invalid["status"] == "invalid_timestamp"
+    assert invalid["ok"] is False
+
+
 def test_refresh_release_health_snapshot_builds_from_gh_payload(monkeypatch):
     def fake_gh_json(args):
         if args[:3] == ["pr", "list", "--state"]:
@@ -190,9 +232,12 @@ def test_operator_release_console_routes_render_for_logged_in_user(tmp_path, mon
 def test_v14_release_note_and_changelog_are_present():
     note = Path("release/V14_0_OPERATOR_RELEASE_CONSOLE.md").read_text(encoding="utf-8")
     v14_1_note = Path("release/V14_1_RELEASE_HEALTH_SNAPSHOT.md").read_text(encoding="utf-8")
+    v14_2_note = Path("release/V14_2_RELEASE_HEALTH_FRESHNESS.md").read_text(encoding="utf-8")
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/operator/release-console" in note
     assert "OPERATOR_RELEASE_HEALTH.json" in v14_1_note
+    assert "SOCMINT_RELEASE_HEALTH_MAX_AGE_HOURS" in v14_2_note
     assert "v14.0 Operator Release Console" in changelog
     assert "v14.1 release-health snapshot" in changelog
+    assert "v14.2 release-health freshness" in changelog
