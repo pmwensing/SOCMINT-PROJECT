@@ -15,7 +15,7 @@ This audit records the current v13 release-note sequence after the v13.35 correl
 | Range | Status | Notes |
 | --- | --- | --- |
 | v13.0-v13.10 | Documented | Command Center, readiness, claim ledger, handoff status, normalization review, and review UI release notes exist. |
-| v13.11 | Gap | No `V13_11_*` release note or direct `test_v13_11*` file is present. |
+| v13.11 | Documented | `V13_11_NORMALIZATION_FORM_UPDATE.md` documents normalization update route form-post fallback from historical commit `6f5773f`. |
 | v13.12-v13.22 | Documented | Review queue UX, promotion, ledger UI, readiness UI, subject status, manifest draft, dry-run spec, usability smoke, and route audit notes exist. |
 | v13.23 | Documented | `V13_23_WORKFLOW_NAVIGATION.md` documents Command Center workflow navigation coverage. |
 | v13.24 | Documented | Export manifest UI release note exists. |
@@ -36,4 +36,4 @@ This audit records the current v13 release-note sequence after the v13.35 correl
 
 ## Handoff
 
-Future v13 documentation work should either close the true v13.11/v13.25 gaps with evidence or leave this audit as the source of truth. New v13 release work should keep a one-to-one relationship between release notes, changelog entries, and focused regression coverage.
+Future v13 documentation work should either close the true v13.25 gap with evidence or leave this audit as the source of truth. New v13 release work should keep a one-to-one relationship between release notes, changelog entries, and focused regression coverage.

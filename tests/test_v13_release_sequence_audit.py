@@ -19,7 +19,17 @@ def test_v13_test_backed_gap_release_notes_exist():
 def test_v13_release_sequence_audit_marks_remaining_true_gaps():
     audit = Path("release/V13_RELEASE_SEQUENCE_AUDIT.md").read_text()
 
-    assert "| v13.11 | Gap |" in audit
     assert "| v13.25 | Gap |" in audit
+    assert "| v13.11 | Documented |" in audit
     assert "| v13.23 | Documented |" in audit
     assert "| v13.27-v13.31 | Documented |" in audit
+
+
+def test_v13_11_release_note_records_form_payload_fallback():
+    note = Path("release/V13_11_NORMALIZATION_FORM_UPDATE.md").read_text()
+    source = Path("src/socmint/normalization_review_update_routes_v13.py").read_text()
+
+    assert "normalization_update_payload" in note
+    assert "request.form" in note
+    assert "normalization_update_payload" in source
+    assert "request.form" in source
