@@ -1,9 +1,12 @@
 from pathlib import Path
+import json
 
 from src.socmint.dashboard import create_app
 from src.socmint.operator_release_console_routes_v14 import register_operator_release_console_routes_v14
 from src.socmint.operator_release_console_v14 import OPERATOR_RELEASE_CONSOLE_SCHEMA
 from src.socmint.operator_release_console_v14 import operator_release_console_payload
+from scripts.refresh_operator_release_health_v14_1 import SCHEMA as RELEASE_HEALTH_SCHEMA
+from scripts.refresh_operator_release_health_v14_1 import build_release_health_snapshot
 
 
 def test_operator_release_console_payload_summarizes_release_evidence():
@@ -15,6 +18,8 @@ def test_operator_release_console_payload_summarizes_release_evidence():
     assert payload["status"] == "pass"
     assert payload["summary"]["needs_review"] == 0
     assert payload["pr_queue"]["status"] == "clean_documented"
+    assert payload["release_health"]["status"] == "pass"
+    assert payload["release_health"]["open_pr_count"] == 0
     assert payload["pr_queue"]["closed_superseded_prs"] == [
         "#139",
         "#140",
@@ -34,6 +39,117 @@ def test_operator_release_console_payload_marks_missing_docs(tmp_path):
     assert payload["status"] == "needs_review"
     assert payload["summary"]["needs_review"] > 0
     assert any(item["source"] == "release/V13_RELEASE_DOCUMENTATION_CLOSURE.md" for item in payload["checks"])
+
+
+def test_operator_release_console_payload_marks_missing_release_health_snapshot(tmp_path):
+    release_dir = tmp_path / "release"
+    release_dir.mkdir()
+    for source in [
+        "V13_RELEASE_DOCUMENTATION_CLOSURE.md",
+        "V13_RELEASE_SEQUENCE_AUDIT.md",
+        "V13_35_FINAL_CORRELATION_SCOPE_CLOSURE.md",
+        "V13_36_TO_44_EXPORT_BLOCKER_INDEX.md",
+        "V13_45_TO_48_EXPORT_BLOCKER_WORKFLOW_INDEX.md",
+        "V13_25_RESERVED_GAP.md",
+        "V10_32_TO_37_OPEN_PR_TRIAGE.md",
+    ]:
+        (release_dir / source).write_text("# present\n", encoding="utf-8")
+    (release_dir / "OPEN_PR_QUEUE_CLOSURE.md").write_text(
+        "\n".join(f"PR #{number} closed" for number in range(139, 145)),
+        encoding="utf-8",
+    )
+    (tmp_path / "CHANGELOG.md").write_text("v14.0 Operator Release Console\n", encoding="utf-8")
+
+    payload = operator_release_console_payload(tmp_path)
+
+    assert payload["release_health"]["status"] == "missing"
+    assert payload["decision"] == "HOLD_FOR_RELEASE_REPAIR"
+    assert any(item["key"] == "release_health_snapshot" for item in payload["checks"])
+
+
+def test_operator_release_console_payload_loads_release_health_snapshot(tmp_path):
+    release_dir = tmp_path / "release"
+    release_dir.mkdir()
+    for source in [
+        "V13_RELEASE_DOCUMENTATION_CLOSURE.md",
+        "V13_RELEASE_SEQUENCE_AUDIT.md",
+        "V13_35_FINAL_CORRELATION_SCOPE_CLOSURE.md",
+        "V13_36_TO_44_EXPORT_BLOCKER_INDEX.md",
+        "V13_45_TO_48_EXPORT_BLOCKER_WORKFLOW_INDEX.md",
+        "V13_25_RESERVED_GAP.md",
+        "V10_32_TO_37_OPEN_PR_TRIAGE.md",
+    ]:
+        (release_dir / source).write_text("# present\n", encoding="utf-8")
+    (release_dir / "OPEN_PR_QUEUE_CLOSURE.md").write_text(
+        "\n".join(f"PR #{number} closed" for number in range(139, 145)),
+        encoding="utf-8",
+    )
+    (release_dir / "OPERATOR_RELEASE_HEALTH.json").write_text(
+        json.dumps(
+            {
+                "schema": RELEASE_HEALTH_SCHEMA,
+                "generated_at": "2026-06-10T04:40:00+00:00",
+                "open_pr_count": 0,
+                "latest_master": {"headSha": "abc123"},
+                "checks": [
+                    {
+                        "workflowName": "CI",
+                        "status": "completed",
+                        "conclusion": "success",
+                        "url": "https://example.test/ci",
+                    }
+                ],
+                "note": "test snapshot",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "CHANGELOG.md").write_text("v14.0 Operator Release Console\n", encoding="utf-8")
+
+    payload = operator_release_console_payload(tmp_path)
+
+    assert payload["release_health"]["status"] == "pass"
+    assert payload["release_health"]["schema"] == RELEASE_HEALTH_SCHEMA
+    assert payload["release_health"]["latest_master"]["headSha"] == "abc123"
+    assert next(item for item in payload["checks"] if item["key"] == "release_health_snapshot")["ok"] is True
+
+
+def test_refresh_release_health_snapshot_builds_from_gh_payload(monkeypatch):
+    def fake_gh_json(args):
+        if args[:3] == ["pr", "list", "--state"]:
+            return []
+        return [
+            {
+                "databaseId": 1,
+                "workflowName": "CI",
+                "status": "completed",
+                "conclusion": "success",
+                "headSha": "abc123",
+                "url": "https://example.test/ci",
+                "createdAt": "2026-06-10T04:40:00Z",
+            },
+            {
+                "databaseId": 2,
+                "workflowName": "SOCMINT v12.10.19 Verify",
+                "status": "completed",
+                "conclusion": "success",
+                "headSha": "abc123",
+                "url": "https://example.test/verify",
+                "createdAt": "2026-06-10T04:40:00Z",
+            },
+        ]
+
+    monkeypatch.setattr("scripts.refresh_operator_release_health_v14_1._gh_json", fake_gh_json)
+
+    snapshot = build_release_health_snapshot()
+
+    assert snapshot["schema"] == RELEASE_HEALTH_SCHEMA
+    assert snapshot["status"] == "pass"
+    assert snapshot["open_pr_count"] == 0
+    assert [check["workflowName"] for check in snapshot["checks"]] == [
+        "CI",
+        "SOCMINT v12.10.19 Verify",
+    ]
 
 
 def test_operator_release_console_routes_require_login(tmp_path, monkeypatch):
@@ -73,7 +189,10 @@ def test_operator_release_console_routes_render_for_logged_in_user(tmp_path, mon
 
 def test_v14_release_note_and_changelog_are_present():
     note = Path("release/V14_0_OPERATOR_RELEASE_CONSOLE.md").read_text(encoding="utf-8")
+    v14_1_note = Path("release/V14_1_RELEASE_HEALTH_SNAPSHOT.md").read_text(encoding="utf-8")
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/operator/release-console" in note
+    assert "OPERATOR_RELEASE_HEALTH.json" in v14_1_note
     assert "v14.0 Operator Release Console" in changelog
+    assert "v14.1 release-health snapshot" in changelog

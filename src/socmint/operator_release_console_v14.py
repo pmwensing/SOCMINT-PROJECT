@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import json
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -8,6 +9,7 @@ from typing import Any
 
 OPERATOR_RELEASE_CONSOLE_SCHEMA = "socmint.operator_release_console.v14_0"
 DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[2]
+RELEASE_HEALTH_SNAPSHOT = Path("release/OPERATOR_RELEASE_HEALTH.json")
 
 REQUIRED_RELEASE_DOCS = [
     {
@@ -149,6 +151,48 @@ def _queue_summary(root: Path) -> dict[str, Any]:
     }
 
 
+def _load_release_health_snapshot(root: Path) -> dict[str, Any]:
+    path = root / RELEASE_HEALTH_SNAPSHOT
+    if not path.exists():
+        return {
+            "available": False,
+            "status": "missing",
+            "source": str(RELEASE_HEALTH_SNAPSHOT),
+            "checks": [],
+            "open_pr_count": None,
+            "latest_master": None,
+            "note": "release health snapshot has not been generated",
+        }
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {
+            "available": False,
+            "status": "invalid",
+            "source": str(RELEASE_HEALTH_SNAPSHOT),
+            "checks": [],
+            "open_pr_count": None,
+            "latest_master": None,
+            "note": f"release health snapshot could not be read: {exc}",
+        }
+    checks = payload.get("checks") or []
+    open_pr_count = payload.get("open_pr_count")
+    passing_checks = all(check.get("conclusion") == "success" for check in checks)
+    queue_clean = open_pr_count == 0
+    status = "pass" if queue_clean and passing_checks else "needs_review"
+    return {
+        "available": True,
+        "status": status,
+        "source": str(RELEASE_HEALTH_SNAPSHOT),
+        "schema": payload.get("schema"),
+        "generated_at": payload.get("generated_at"),
+        "open_pr_count": open_pr_count,
+        "latest_master": payload.get("latest_master"),
+        "checks": checks,
+        "note": payload.get("note", "release health snapshot loaded"),
+    }
+
+
 def operator_release_console_payload(root: str | Path | None = None) -> dict[str, Any]:
     repo_root = Path(root) if root is not None else DEFAULT_REPO_ROOT
     repo_root = repo_root.resolve()
@@ -156,6 +200,7 @@ def operator_release_console_payload(root: str | Path | None = None) -> dict[str
     changelog_item = _changelog_item(repo_root)
     queue = _queue_summary(repo_root)
     git = _git_summary(repo_root)
+    release_health = _load_release_health_snapshot(repo_root)
     checks = release_docs + [changelog_item]
     checks.append(
         _status_item(
@@ -173,6 +218,15 @@ def operator_release_console_payload(root: str | Path | None = None) -> dict[str
             bool(git["available"] and git["commit"]),
             "git",
             git["dirty_detail"],
+        )
+    )
+    checks.append(
+        _status_item(
+            "release_health_snapshot",
+            "release health snapshot",
+            release_health["status"] == "pass",
+            release_health["source"],
+            release_health["note"],
         )
     )
 
@@ -199,6 +253,7 @@ def operator_release_console_payload(root: str | Path | None = None) -> dict[str
         },
         "git": git,
         "pr_queue": queue,
+        "release_health": release_health,
         "checks": checks,
         "sources": {
             "repo_root": str(repo_root),
