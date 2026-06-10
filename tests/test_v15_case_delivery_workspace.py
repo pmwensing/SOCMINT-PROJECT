@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from src.socmint.case_delivery_handoff_package_v15_1 import CASE_DELIVERY_HANDOFF_PACKAGE_SCHEMA
+from src.socmint.case_delivery_handoff_package_v15_1 import build_case_delivery_handoff_package
 from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
 from src.socmint.case_delivery_workspace_v15 import CASE_DELIVERY_GATE_SCHEMA
 from src.socmint.case_delivery_workspace_v15 import CASE_DELIVERY_WORKSPACE_SCHEMA
@@ -109,13 +111,50 @@ def test_case_delivery_workspace_blocks_without_subject_or_delivery():
     assert any(blocker["key"] == "delivery_registered" for blocker in workspace["gate"]["blockers"])
 
 
+def test_case_delivery_handoff_package_delivers_ready_case():
+    package = build_case_delivery_handoff_package(
+        "case-v15-handoff",
+        ready_payload(operator="lead-analyst", notes="Ready for client handoff."),
+        operator="lead-analyst",
+        notes="Ready for client handoff.",
+    )
+
+    assert package["schema"] == CASE_DELIVERY_HANDOFF_PACKAGE_SCHEMA
+    assert package["disposition"] == "deliver"
+    assert package["gate_decision"] == "READY_FOR_DELIVERY"
+    assert package["operator_receipt"]["accepted_for_delivery"] is True
+    assert package["manifest"]["file_count"] == 5
+    assert any(row["path"] == "delivery_gate.json" and row["sha256"] for row in package["files"])
+
+
+def test_case_delivery_handoff_package_holds_blocked_case_with_remediation():
+    package = build_case_delivery_handoff_package(
+        "case-v15-hold",
+        ready_payload(export_blockers=[{"key": "policy", "label": "Policy review missing"}]),
+    )
+
+    assert package["disposition"] == "hold"
+    assert package["gate_decision"] == "BLOCKED"
+    assert package["operator_receipt"]["accepted_for_delivery"] is False
+    assert any(action["key"] == "export_clear" for action in package["remediation_actions"])
+
+
 def test_case_delivery_workspace_routes_require_login(tmp_path, monkeypatch):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
     client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["_csrf_token"] = "test-csrf"
 
     assert client.get("/api/v1/case-delivery/case-1").status_code == 401
+    assert (
+        client.post(
+            "/api/v1/case-delivery/case-1/handoff-package",
+            headers={"X-CSRF-Token": "test-csrf"},
+        ).status_code
+        == 401
+    )
     response = client.get("/case-delivery")
     assert response.status_code == 302
     assert "/login" in response.headers["Location"]
@@ -136,17 +175,35 @@ def test_case_delivery_workspace_routes_render_for_logged_in_user(tmp_path, monk
         json=ready_payload(),
         headers={"X-CSRF-Token": "test-csrf"},
     )
+    package_response = client.post(
+        "/api/v1/case-delivery/case-1/handoff-package",
+        json=ready_payload(operator="operator"),
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+    markdown_response = client.post(
+        "/api/v1/case-delivery/case-1/handoff-package/markdown",
+        json=ready_payload(operator="operator"),
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
     ui_response = client.get("/case-delivery?case_id=case-1")
 
     assert api_response.status_code == 200
     assert api_response.get_json()["gate"]["decision"] == "READY_FOR_DELIVERY"
+    assert package_response.status_code == 200
+    assert package_response.get_json()["disposition"] == "deliver"
+    assert markdown_response.status_code == 200
+    assert b"Case Delivery Handoff" in markdown_response.data
     assert ui_response.status_code == 200
     assert b"Case Delivery Workspace" in ui_response.data
+    assert b"handoff-package" in ui_response.data
 
 
 def test_v15_release_note_and_changelog_are_present():
     note = Path("release/V15_0_CASE_DELIVERY_WORKSPACE.md").read_text(encoding="utf-8")
+    handoff_note = Path("release/V15_1_CASE_DELIVERY_HANDOFF_PACKAGE.md").read_text(encoding="utf-8")
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/case-delivery/<case_id>" in note
+    assert "/api/v1/case-delivery/<case_id>/handoff-package" in handoff_note
     assert "v15.0 Case Delivery Workspace" in changelog
+    assert "v15.1 Case Delivery Handoff Package" in changelog

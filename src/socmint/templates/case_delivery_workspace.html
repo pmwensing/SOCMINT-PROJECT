@@ -65,6 +65,8 @@
       <tr><td>Latest readiness</td><td>{{ payload.delivery_registry.latest_readiness or 'n/a' }}</td></tr>
       <tr><td>Latest delivery</td><td><code>{{ payload.delivery_registry.latest_delivery_id or 'n/a' }}</code></td></tr>
       <tr><td>Raw API</td><td><code>/api/v1/case-delivery/{{ payload.case_id }}</code></td></tr>
+      <tr><td>Handoff package</td><td><code>/api/v1/case-delivery/{{ payload.case_id }}/handoff-package</code></td></tr>
+      <tr><td>Handoff markdown</td><td><code>/api/v1/case-delivery/{{ payload.case_id }}/handoff-package/markdown</code></td></tr>
     </tbody>
   </table>
 </section>
