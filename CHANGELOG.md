@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added a v13.25 reserved-gap note so the v13 release sequence explicitly
+  records the only slot without implementation evidence.
 - Added the missing v13.11 normalization form update release note and narrowed
   the v13 sequence audit to the remaining v13.25 evidence gap.
 - Added retroactive v13.23 and v13.27-v13.31 release notes for
