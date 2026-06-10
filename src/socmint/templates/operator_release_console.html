@@ -50,8 +50,10 @@
     <tbody>
       <tr><td>Source</td><td><code>{{ payload.release_health.source }}</code></td></tr>
       <tr><td>Generated</td><td>{{ payload.release_health.generated_at or 'n/a' }}</td></tr>
+      <tr><td>Freshness</td><td>{{ payload.release_health.freshness.status }}{% if payload.release_health.freshness.age_hours is not none %} · {{ payload.release_health.freshness.age_hours }}h / {{ payload.release_health.freshness.max_age_hours }}h{% endif %}</td></tr>
       <tr><td>Open PRs</td><td>{{ payload.release_health.open_pr_count if payload.release_health.open_pr_count is not none else 'n/a' }}</td></tr>
       <tr><td>Latest master</td><td><code>{{ payload.release_health.latest_master.headSha if payload.release_health.latest_master else 'n/a' }}</code></td></tr>
+      <tr><td>Refresh</td><td><code>{{ payload.release_health.refresh_command }}</code></td></tr>
     </tbody>
   </table>
   {% if payload.release_health.checks %}
