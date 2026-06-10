@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v15.4 Delivery Readiness Receipt Verification layer with
+  canonical payload-hash, signature-hash, receipt-id, package-match, and
+  handoff-package verification checks.
 - Added the v15.3 Delivery Readiness Receipt with a signed-style canonical
   payload hash, signature hash, receipt id, and a strict v15.2 verification
   prerequisite before a receipt is emitted.
