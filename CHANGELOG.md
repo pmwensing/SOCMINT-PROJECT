@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added a v10.32-v10.37 open PR triage note documenting stale branch state,
+  mergeability, and non-destructive handling guidance.
 - Added a v13 release documentation closure note and regression coverage that
   verifies every numbered v13 slot from v13.0 through v13.48 is accounted for.
 - Added a v13.25 reserved-gap note so the v13 release sequence explicitly
