@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 
 def test_v13_test_backed_gap_release_notes_exist():
@@ -42,3 +43,26 @@ def test_v13_25_reserved_gap_note_requires_evidence_before_backfill():
     assert "Reserved gap" in note
     assert "No direct `test_v13_25*` regression file is present." in note
     assert "Do not backfill this slot without concrete implementation evidence" in note
+
+
+def test_v13_numbered_release_sequence_is_accounted_for():
+    release_numbers = set()
+    for path in Path("release").glob("V13_*"):
+        match = re.match(r"V13_(\d+)(?:_|$)", path.name)
+        if match:
+            release_numbers.add(int(match.group(1)))
+
+    expected = set(range(0, 49))
+    missing = sorted(expected - release_numbers)
+
+    assert missing == []
+
+
+def test_v13_release_documentation_closure_points_to_audit_and_indexes():
+    closure = Path("release/V13_RELEASE_DOCUMENTATION_CLOSURE.md").read_text()
+
+    assert "V13_RELEASE_SEQUENCE_AUDIT.md" in closure
+    assert "V13_35_FINAL_CORRELATION_SCOPE_CLOSURE.md" in closure
+    assert "V13_36_TO_44_EXPORT_BLOCKER_INDEX.md" in closure
+    assert "V13_45_TO_48_EXPORT_BLOCKER_WORKFLOW_INDEX.md" in closure
+    assert "V13_25_RESERVED_GAP.md" in closure
