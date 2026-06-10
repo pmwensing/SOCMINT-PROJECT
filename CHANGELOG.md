@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v15.0 Case Delivery Workspace with a case-level delivery gate
+  spanning dossier readiness, evidence completeness, export blockers, delivery
+  registry state, and human approval.
 - Added the v14.3 Operator Release Console evaluation point with blocker
   rollup, explicit continue/pause decisions, and next-action guidance.
 - Added v14.2 release-health freshness checks for the Operator Release Console,

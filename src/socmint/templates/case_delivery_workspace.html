@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="page-header">
+    <div>
+      <h1>Case Delivery Workspace</h1>
+      <p>Case {{ payload.case_id }} delivery readiness, evidence, export blockers, and approval state.</p>
+    </div>
+    <div class="status-pill {{ 'completed' if payload.gate.status == 'pass' else 'failed' }}">
+      {{ payload.gate.decision }}
+    </div>
+  </div>
+
+  <div class="grid cards-4">
+    <article class="card">
+      <h2>Dossier</h2>
+      <p class="metric">{{ payload.dossier_readiness.state }}</p>
+      <p>{{ payload.dossier_readiness.label }}</p>
+    </article>
+    <article class="card">
+      <h2>Evidence</h2>
+      <p class="metric">{{ 'complete' if payload.evidence_summary.complete else 'incomplete' }}</p>
+      <p><strong>Findings:</strong> {{ payload.evidence_summary.finding_count | default('n/a') }}</p>
+    </article>
+    <article class="card">
+      <h2>Export</h2>
+      <p class="metric">{{ payload.export_blockers | length }}</p>
+      <p>blockers</p>
+    </article>
+    <article class="card">
+      <h2>Approval</h2>
+      <p class="metric">{{ payload.approval_gate.decision }}</p>
+      <p><strong>Delivery:</strong> {{ payload.approval_gate.delivery_id or 'n/a' }}</p>
+    </article>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Delivery Gate</h2>
+      <p class="muted">{{ payload.gate.next_action }}</p>
+    </div>
+    <span class="status-pill {{ 'completed' if payload.gate.status == 'pass' else 'failed' }}">{{ payload.gate.status }}</span>
+  </div>
+  <table class="data-table">
+    <thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead>
+    <tbody>
+    {% for check in payload.gate.checks %}
+      <tr>
+        <td>{{ check.label }}</td>
+        <td><span class="badge {{ 'ok' if check.ok else 'warn' }}">{{ check.status }}</span></td>
+        <td>{{ check.detail }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Delivery Registry</h2>
+  <table class="data-table">
+    <tbody>
+      <tr><td>Delivery count</td><td>{{ payload.delivery_registry.delivery_count }}</td></tr>
+      <tr><td>Latest readiness</td><td>{{ payload.delivery_registry.latest_readiness or 'n/a' }}</td></tr>
+      <tr><td>Latest delivery</td><td><code>{{ payload.delivery_registry.latest_delivery_id or 'n/a' }}</code></td></tr>
+      <tr><td>Raw API</td><td><code>/api/v1/case-delivery/{{ payload.case_id }}</code></td></tr>
+    </tbody>
+  </table>
+</section>
+{% endblock %}

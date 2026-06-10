@@ -25,6 +25,7 @@
                 <details class="nav-group" {% if current_path.startswith('/command-center') or current_path.startswith('/investigation') or current_path in ['/jobs', '/workbench/jobs', '/analyst/console', '/responsible-use'] or current_path.startswith('/workbench') %}open{% endif %}>
                     <summary class="{{ 'active' if current_path.startswith('/command-center') or current_path.startswith('/investigation') or current_path in ['/jobs', '/workbench/jobs', '/analyst/console', '/responsible-use'] or current_path.startswith('/workbench') else '' }}">Operate</summary>
                     {{ nav_link('/command-center', 'Command Center') }}
+                    {{ nav_link('/case-delivery', 'Case Delivery') }}
                     {{ nav_link('/investigation/flow', 'Guided Investigation') }}
                     {{ nav_link('/jobs', 'Jobs') }}
                     {{ nav_link('/workbench/jobs', 'Workbench') }}
