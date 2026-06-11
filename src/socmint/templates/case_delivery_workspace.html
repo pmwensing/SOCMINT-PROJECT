@@ -75,6 +75,23 @@
 </section>
 
 <section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>v16.4 Recovery Execution</h2>
+      <p class="muted">Record the operator outcome for each recovery queue item.</p>
+    </div>
+    <span class="status-pill">execution record</span>
+  </div>
+  <table class="data-table">
+    <tbody>
+      <tr><td>Execution endpoint</td><td><code>/api/v1/case-delivery/{{ payload.case_id }}/recovery-execution</code></td></tr>
+      <tr><td>Record source</td><td>v16.3 recovery queue</td></tr>
+      <tr><td>Supported states</td><td><code>retried</code>, <code>held</code>, <code>escalated</code>, <code>remediated</code>, <code>completed</code>, <code>failed</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
   <h2>Delivery Registry</h2>
   <table class="data-table">
     <tbody>
@@ -93,6 +110,7 @@
       <tr><td>Attempt ledger</td><td><code>/api/v1/case-delivery/{{ payload.case_id }}/attempt-ledger</code></td></tr>
       <tr><td>Exception review</td><td><code>/api/v1/case-delivery/{{ payload.case_id }}/exception-review</code></td></tr>
       <tr><td>Recovery queue</td><td><code>/api/v1/case-delivery/{{ payload.case_id }}/recovery</code></td></tr>
+      <tr><td>Recovery execution</td><td><code>/api/v1/case-delivery/{{ payload.case_id }}/recovery-execution</code></td></tr>
     </tbody>
   </table>
 </section>
