@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v16.3 Delivery Recovery / Retry Resolution Layer with deterministic
+  recovery ids, operator recovery queue state, retry/hold/escalate/remediate
+  decisions, and authenticated recovery API/workspace wiring.
 - Added the v16.2 Delivery Exception Review with deterministic failed-attempt
   classification, exception ids, retryable exception counts, escalation state,
   and recommended operator actions.
