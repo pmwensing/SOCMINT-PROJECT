@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v16.4 Delivery Recovery Execution Record with deterministic execution
+  ids, operator action states, recovery result summary, and authenticated
+  recovery-execution API/workspace wiring.
 - Added the v16.3 Delivery Recovery / Retry Resolution Layer with deterministic
   recovery ids, operator recovery queue state, retry/hold/escalate/remediate
   decisions, and authenticated recovery API/workspace wiring.
