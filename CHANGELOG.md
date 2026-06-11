@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v16.2 Delivery Exception Review with deterministic failed-attempt
+  classification, exception ids, retryable exception counts, escalation state,
+  and recommended operator actions.
 - Added the v16.1 Delivery Attempt Ledger with deterministic attempt ids,
   delivery outcome state, retry eligibility, latest-attempt status, and
   blocked operations handling.
