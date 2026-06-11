@@ -12,6 +12,7 @@ from src.socmint.case_delivery_exception_review_v16_2 import CASE_DELIVERY_EXCEP
 from src.socmint.case_delivery_exception_review_v16_2 import build_case_delivery_exception_review
 from src.socmint.case_delivery_operations_v16_0 import CASE_DELIVERY_OPERATIONS_SCHEMA
 from src.socmint.case_delivery_operations_v16_0 import build_case_delivery_operations
+from src.socmint.case_delivery_recovery_v16_3 import build_case_delivery_recovery
 from src.socmint.case_delivery_handoff_package_v15_1 import CASE_DELIVERY_HANDOFF_PACKAGE_SCHEMA
 from src.socmint.case_delivery_handoff_package_v15_1 import build_case_delivery_handoff_package
 from src.socmint.case_delivery_handoff_verification_v15_2 import CASE_DELIVERY_HANDOFF_VERIFICATION_SCHEMA
@@ -364,6 +365,152 @@ def test_case_delivery_operations_snapshot_blocks_operator_exception():
     assert result["dispatchable"] is False
     assert result["blocker_count"] == 1
     assert any(blocker["key"] == "operator_exception" for blocker in result["blockers"])
+
+
+def test_case_delivery_operations_id_changes_when_event_detail_changes():
+    first = build_case_delivery_operations(
+        "case-v16-ops",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            events=[
+                {
+                    "type": "dispatch_confirmed",
+                    "operator": "delivery-lead",
+                    "detail": "Delivered to partner A.",
+                }
+            ],
+        ),
+    )
+    second = build_case_delivery_operations(
+        "case-v16-ops",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            events=[
+                {
+                    "type": "dispatch_confirmed",
+                    "operator": "delivery-lead",
+                    "detail": "Delivered to partner B.",
+                }
+            ],
+        ),
+    )
+
+    assert first["operation_id"] != second["operation_id"]
+
+
+def test_case_delivery_attempt_ledger_id_changes_when_attempt_detail_changes():
+    first = build_case_delivery_attempt_ledger(
+        "case-v16-ledger-retry",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            attempts=[
+                {
+                    "channel": "secure_portal",
+                    "status": "failed",
+                    "operator": "delivery-lead",
+                    "detail": "Recipient did not acknowledge.",
+                }
+            ],
+        ),
+    )
+    second = build_case_delivery_attempt_ledger(
+        "case-v16-ledger-retry",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            attempts=[
+                {
+                    "channel": "secure_portal",
+                    "status": "failed",
+                    "operator": "delivery-lead",
+                    "detail": "Recipient did not confirm receipt.",
+                }
+            ],
+        ),
+    )
+
+    assert first["ledger_id"] != second["ledger_id"]
+
+
+def test_case_delivery_exception_review_id_changes_when_exception_detail_changes():
+    first = build_case_delivery_exception_review(
+        "case-v16-exception-review",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            attempts=[
+                {
+                    "channel": "secure_portal",
+                    "status": "failed",
+                    "operator": "delivery-lead",
+                    "detail": "Recipient did not acknowledge.",
+                }
+            ],
+        ),
+    )
+    second = build_case_delivery_exception_review(
+        "case-v16-exception-review",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            attempts=[
+                {
+                    "channel": "secure_portal",
+                    "status": "failed",
+                    "operator": "delivery-lead",
+                    "detail": "Recipient did not respond.",
+                }
+            ],
+        ),
+    )
+
+    assert first["review_id"] != second["review_id"]
+
+
+def test_case_delivery_recovery_queue_id_changes_when_recovery_details_change():
+    first = build_case_delivery_recovery(
+        "case-v16-recovery",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            attempts=[
+                {
+                    "channel": "secure_portal",
+                    "status": "failed",
+                    "operator": "delivery-lead",
+                    "detail": "Recipient did not acknowledge.",
+                }
+            ],
+        ),
+    )
+    second = build_case_delivery_recovery(
+        "case-v16-recovery",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            attempts=[
+                {
+                    "channel": "secure_portal",
+                    "status": "failed",
+                    "operator": "delivery-lead",
+                    "detail": "Recipient failed to acknowledge receipt.",
+                }
+            ],
+        ),
+    )
+
+    assert first["queue_id"] != second["queue_id"]
 
 
 def test_case_delivery_attempt_ledger_is_ready_without_attempts():

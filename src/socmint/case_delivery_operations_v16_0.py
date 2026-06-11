@@ -78,13 +78,16 @@ def build_case_delivery_operations(
         "event_count": len(events),
         "blocker_count": len(blockers),
     }
-    return {
+    result = {
         **payload_core,
-        "operation_id": sha256_text(canonical_json(payload_core)),
         "execution_envelope": envelope,
         "events": events,
         "blockers": blockers,
         "next_action": "dispatch_delivery" if state == "ready_for_dispatch" else "review_delivery_operations",
+    }
+    return {
+        **result,
+        "operation_id": sha256_text(canonical_json(result)),
     }
 
 
