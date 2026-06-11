@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v15.5 Delivery Authorization Record with a strict v15.4 receipt
+  verification prerequisite, blocked authorization handling, and a compact
+  canonical authorization id.
 - Added the v15.4 Delivery Readiness Receipt Verification layer with
   canonical payload-hash, signature-hash, receipt-id, package-match, and
   handoff-package verification checks.
