@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v15.6 Delivery Execution Envelope with a strict v15.5
+  authorization prerequisite, authorized delivery links, and a compact
+  execution id for the final delivery boundary.
 - Added the v15.5 Delivery Authorization Record with a strict v15.4 receipt
   verification prerequisite, blocked authorization handling, and a compact
   canonical authorization id.
