@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v16.1 Delivery Attempt Ledger with deterministic attempt ids,
+  delivery outcome state, retry eligibility, latest-attempt status, and
+  blocked operations handling.
 - Added the v16.0 Delivery Operations Snapshot with v15.6 execution-envelope
   gating, deterministic operation ids, operator event rollup, dispatch state,
   and blocked-operation reporting.
