@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v16.0 Delivery Operations Snapshot with v15.6 execution-envelope
+  gating, deterministic operation ids, operator event rollup, dispatch state,
+  and blocked-operation reporting.
 - Added the v15.6 Delivery Execution Envelope with a strict v15.5
   authorization prerequisite, authorized delivery links, and a compact
   execution id for the final delivery boundary.

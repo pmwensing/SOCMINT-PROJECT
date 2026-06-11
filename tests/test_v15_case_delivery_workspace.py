@@ -6,6 +6,8 @@ from src.socmint.case_delivery_authorization_record_v15_5 import CASE_DELIVERY_A
 from src.socmint.case_delivery_authorization_record_v15_5 import build_case_delivery_authorization_record
 from src.socmint.case_delivery_execution_envelope_v15_6 import CASE_DELIVERY_EXECUTION_ENVELOPE_SCHEMA
 from src.socmint.case_delivery_execution_envelope_v15_6 import build_case_delivery_execution_envelope
+from src.socmint.case_delivery_operations_v16_0 import CASE_DELIVERY_OPERATIONS_SCHEMA
+from src.socmint.case_delivery_operations_v16_0 import build_case_delivery_operations
 from src.socmint.case_delivery_handoff_package_v15_1 import CASE_DELIVERY_HANDOFF_PACKAGE_SCHEMA
 from src.socmint.case_delivery_handoff_package_v15_1 import build_case_delivery_handoff_package
 from src.socmint.case_delivery_handoff_verification_v15_2 import CASE_DELIVERY_HANDOFF_VERIFICATION_SCHEMA
@@ -299,6 +301,67 @@ def test_case_delivery_execution_envelope_blocks_tampered_authorization():
     assert any(blocker["key"] == "authorization_id_mismatch" for blocker in result["blockers"])
 
 
+def test_case_delivery_operations_snapshot_is_ready_from_execution_envelope():
+    result = build_case_delivery_operations(
+        "case-v16-ops",
+        ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
+    )
+
+    assert result["schema"] == CASE_DELIVERY_OPERATIONS_SCHEMA
+    assert result["state"] == "ready_for_dispatch"
+    assert result["dispatchable"] is True
+    assert result["blocker_count"] == 0
+    assert result["execution_id"]
+    assert result["operation_id"]
+    assert result["next_action"] == "dispatch_delivery"
+
+
+def test_case_delivery_operations_snapshot_tracks_dispatch_event():
+    result = build_case_delivery_operations(
+        "case-v16-dispatched",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            events=[
+                {
+                    "type": "dispatch_confirmed",
+                    "operator": "delivery-lead",
+                    "detail": "Delivery handed off.",
+                }
+            ],
+        ),
+    )
+
+    assert result["state"] == "dispatched"
+    assert result["dispatchable"] is True
+    assert result["event_count"] == 1
+    assert result["events"][0]["event_id"]
+
+
+def test_case_delivery_operations_snapshot_blocks_operator_exception():
+    result = build_case_delivery_operations(
+        "case-v16-blocked",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            events=[
+                {
+                    "type": "exception",
+                    "operator": "delivery-lead",
+                    "detail": "Recipient channel unavailable.",
+                }
+            ],
+        ),
+    )
+
+    assert result["state"] == "blocked"
+    assert result["dispatchable"] is False
+    assert result["blocker_count"] == 1
+    assert any(blocker["key"] == "operator_exception" for blocker in result["blockers"])
+
+
 def test_case_delivery_workspace_routes_require_login(tmp_path, monkeypatch):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
@@ -346,6 +409,13 @@ def test_case_delivery_workspace_routes_require_login(tmp_path, monkeypatch):
     assert (
         client.post(
             "/api/v1/case-delivery/case-1/execution-envelope",
+            headers={"X-CSRF-Token": "test-csrf"},
+        ).status_code
+        == 401
+    )
+    assert (
+        client.post(
+            "/api/v1/case-delivery/case-1/operations",
             headers={"X-CSRF-Token": "test-csrf"},
         ).status_code
         == 401
@@ -405,6 +475,11 @@ def test_case_delivery_workspace_routes_render_for_logged_in_user(tmp_path, monk
         json=ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
         headers={"X-CSRF-Token": "test-csrf"},
     )
+    operations_response = client.post(
+        "/api/v1/case-delivery/case-1/operations",
+        json=ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
     ui_response = client.get("/case-delivery?case_id=case-1")
 
     assert api_response.status_code == 200
@@ -426,6 +501,9 @@ def test_case_delivery_workspace_routes_render_for_logged_in_user(tmp_path, monk
     assert execution_response.status_code == 200
     assert execution_response.get_json()["status"] == "ready_to_execute"
     assert execution_response.get_json()["envelope"]["execution_id"]
+    assert operations_response.status_code == 200
+    assert operations_response.get_json()["state"] == "ready_for_dispatch"
+    assert operations_response.get_json()["operation_id"]
     assert ui_response.status_code == 200
     assert b"Case Delivery Workspace" in ui_response.data
     assert b"handoff-package" in ui_response.data
@@ -439,6 +517,7 @@ def test_v15_release_note_and_changelog_are_present():
     receipt_verify_note = Path("release/V15_4_DELIVERY_READINESS_RECEIPT_VERIFICATION.md").read_text(encoding="utf-8")
     authorization_note = Path("release/V15_5_DELIVERY_AUTHORIZATION_RECORD.md").read_text(encoding="utf-8")
     execution_note = Path("release/V15_6_DELIVERY_EXECUTION_ENVELOPE.md").read_text(encoding="utf-8")
+    operations_note = Path("release/V16_0_DELIVERY_OPERATIONS_SNAPSHOT.md").read_text(encoding="utf-8")
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/case-delivery/<case_id>" in note
@@ -448,6 +527,7 @@ def test_v15_release_note_and_changelog_are_present():
     assert "/api/v1/case-delivery/<case_id>/readiness-receipt/verify" in receipt_verify_note
     assert "/api/v1/case-delivery/<case_id>/authorization-record" in authorization_note
     assert "/api/v1/case-delivery/<case_id>/execution-envelope" in execution_note
+    assert "/api/v1/case-delivery/<case_id>/operations" in operations_note
     assert "v15.0 Case Delivery Workspace" in changelog
     assert "v15.1 Case Delivery Handoff Package" in changelog
     assert "v15.2 Case Delivery Handoff Verification" in changelog
@@ -455,3 +535,4 @@ def test_v15_release_note_and_changelog_are_present():
     assert "v15.4 Delivery Readiness Receipt Verification" in changelog
     assert "v15.5 Delivery Authorization Record" in changelog
     assert "v15.6 Delivery Execution Envelope" in changelog
+    assert "v16.0 Delivery Operations Snapshot" in changelog
