@@ -114,6 +114,101 @@ def test_case_delivery_recovery_blocks_when_exception_review_blocks():
     assert result["next_action"] == "resolve_recovery_blockers"
 
 
+def test_case_delivery_operations_route_returns_dispatchable_payload(tmp_path, monkeypatch):
+    monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
+    app = create_app()
+    register_case_delivery_workspace_routes_v15(app)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["user"] = "operator"
+        sess["is_admin"] = False
+        sess["_csrf_token"] = "test-csrf"
+
+    response = client.post(
+        "/api/v1/case-delivery/case-1/operations",
+        json=ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["schema"] == "socmint.case_delivery_operations.v16_0"
+    assert payload["dispatchable"] is True
+    assert payload["next_action"] == "dispatch_delivery"
+
+
+def test_case_delivery_attempt_ledger_route_returns_retry_ready_payload(tmp_path, monkeypatch):
+    monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
+    app = create_app()
+    register_case_delivery_workspace_routes_v15(app)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["user"] = "operator"
+        sess["is_admin"] = False
+        sess["_csrf_token"] = "test-csrf"
+
+    response = client.post(
+        "/api/v1/case-delivery/case-1/attempt-ledger",
+        json=ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            attempts=[
+                {
+                    "channel": "secure_portal",
+                    "status": "failed",
+                    "operator": "delivery-lead",
+                    "detail": "Recipient did not acknowledge.",
+                }
+            ],
+        ),
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["schema"] == "socmint.case_delivery_attempt_ledger.v16_1"
+    assert payload["state"] == "retry_ready"
+    assert payload["retry_eligible"] is True
+    assert payload["attempt_count"] == 1
+
+
+def test_case_delivery_exception_review_route_returns_review_payload(tmp_path, monkeypatch):
+    monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
+    app = create_app()
+    register_case_delivery_workspace_routes_v15(app)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["user"] = "operator"
+        sess["is_admin"] = False
+        sess["_csrf_token"] = "test-csrf"
+
+    response = client.post(
+        "/api/v1/case-delivery/case-1/exception-review",
+        json=ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            attempts=[
+                {
+                    "channel": "secure_portal",
+                    "status": "failed",
+                    "operator": "delivery-lead",
+                    "detail": "Recipient did not acknowledge.",
+                }
+            ],
+        ),
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["schema"] == "socmint.case_delivery_exception_review.v16_2"
+    assert payload["state"] == "review_required"
+    assert payload["exception_count"] == 1
+    assert payload["next_action"] == "review_delivery_exceptions"
+
+
 def test_case_delivery_recovery_route_requires_login(tmp_path, monkeypatch):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
