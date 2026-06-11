@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import Response, jsonify, redirect, render_template, request, session, url_for
 
+from .case_delivery_authorization_record_v15_5 import build_case_delivery_authorization_record_from_request
 from .case_delivery_handoff_package_v15_1 import build_case_delivery_handoff_package_from_request
 from .case_delivery_handoff_package_v15_1 import case_delivery_handoff_markdown
 from .case_delivery_handoff_verification_v15_2 import verify_case_delivery_handoff_package_from_request
@@ -79,6 +80,14 @@ def register_case_delivery_workspace_routes_v15(app):
             return jsonify({"error": "login required"}), 401
         result = verify_case_delivery_readiness_receipt_from_request(case_id, _request_payload())
         status_code = 200 if result.get("status") == "verified" else 409
+        return jsonify(result), status_code
+
+    @app.post("/api/v1/case-delivery/<case_id>/authorization-record")
+    def api_case_delivery_authorization_record_post_v15_5(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        result = build_case_delivery_authorization_record_from_request(case_id, _request_payload())
+        status_code = 200 if result.get("status") == "authorized" else 409
         return jsonify(result), status_code
 
     return app
