@@ -8,6 +8,8 @@ from src.socmint.case_delivery_execution_envelope_v15_6 import CASE_DELIVERY_EXE
 from src.socmint.case_delivery_execution_envelope_v15_6 import build_case_delivery_execution_envelope
 from src.socmint.case_delivery_attempt_ledger_v16_1 import CASE_DELIVERY_ATTEMPT_LEDGER_SCHEMA
 from src.socmint.case_delivery_attempt_ledger_v16_1 import build_case_delivery_attempt_ledger
+from src.socmint.case_delivery_exception_review_v16_2 import CASE_DELIVERY_EXCEPTION_REVIEW_SCHEMA
+from src.socmint.case_delivery_exception_review_v16_2 import build_case_delivery_exception_review
 from src.socmint.case_delivery_operations_v16_0 import CASE_DELIVERY_OPERATIONS_SCHEMA
 from src.socmint.case_delivery_operations_v16_0 import build_case_delivery_operations
 from src.socmint.case_delivery_handoff_package_v15_1 import CASE_DELIVERY_HANDOFF_PACKAGE_SCHEMA
@@ -443,6 +445,83 @@ def test_case_delivery_attempt_ledger_blocks_when_operations_block():
     assert any(blocker["key"] == "operations_blocked" for blocker in result["blockers"])
 
 
+def test_case_delivery_exception_review_is_clear_without_failed_attempts():
+    result = build_case_delivery_exception_review(
+        "case-v16-exception-clear",
+        ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
+    )
+
+    assert result["schema"] == CASE_DELIVERY_EXCEPTION_REVIEW_SCHEMA
+    assert result["state"] == "clear"
+    assert result["exception_count"] == 0
+    assert result["review_id"]
+    assert result["next_action"] == "continue_delivery"
+
+
+def test_case_delivery_exception_review_classifies_retryable_failure():
+    result = build_case_delivery_exception_review(
+        "case-v16-exception-retry",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            attempts=[
+                {
+                    "channel": "secure_portal",
+                    "status": "failed",
+                    "operator": "delivery-lead",
+                    "detail": "Recipient did not acknowledge.",
+                }
+            ],
+        ),
+    )
+
+    assert result["state"] == "review_required"
+    assert result["exception_count"] == 1
+    assert result["retryable_exception_count"] == 1
+    assert result["exceptions"][0]["category"] == "recipient_unavailable"
+    assert result["exceptions"][0]["recommended_action"] == "confirm_recipient_and_retry"
+    assert result["exceptions"][0]["exception_id"]
+
+
+def test_case_delivery_exception_review_escalates_rejection():
+    result = build_case_delivery_exception_review(
+        "case-v16-exception-escalate",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            attempts=[
+                {
+                    "channel": "secure_portal",
+                    "status": "failed",
+                    "operator": "delivery-lead",
+                    "detail": "Recipient rejected delivery.",
+                }
+            ],
+        ),
+    )
+
+    assert result["state"] == "escalation_required"
+    assert result["exceptions"][0]["category"] == "delivery_rejected"
+    assert result["exceptions"][0]["recommended_action"] == "escalate_delivery_rejection"
+
+
+def test_case_delivery_exception_review_blocks_when_ledger_blocks():
+    result = build_case_delivery_exception_review(
+        "case-v16-exception-blocked",
+        ready_payload(
+            operator="operator",
+            issuer="release-lead",
+            authorizer="delivery-lead",
+            events=[{"type": "exception", "operator": "delivery-lead", "detail": "Channel outage."}],
+        ),
+    )
+
+    assert result["state"] == "blocked"
+    assert any(blocker["key"] == "attempt_ledger_blocked" for blocker in result["blockers"])
+
+
 def test_case_delivery_workspace_routes_require_login(tmp_path, monkeypatch):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
@@ -504,6 +583,13 @@ def test_case_delivery_workspace_routes_require_login(tmp_path, monkeypatch):
     assert (
         client.post(
             "/api/v1/case-delivery/case-1/attempt-ledger",
+            headers={"X-CSRF-Token": "test-csrf"},
+        ).status_code
+        == 401
+    )
+    assert (
+        client.post(
+            "/api/v1/case-delivery/case-1/exception-review",
             headers={"X-CSRF-Token": "test-csrf"},
         ).status_code
         == 401
@@ -573,6 +659,11 @@ def test_case_delivery_workspace_routes_render_for_logged_in_user(tmp_path, monk
         json=ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
         headers={"X-CSRF-Token": "test-csrf"},
     )
+    exception_review_response = client.post(
+        "/api/v1/case-delivery/case-1/exception-review",
+        json=ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
     ui_response = client.get("/case-delivery?case_id=case-1")
 
     assert api_response.status_code == 200
@@ -600,6 +691,9 @@ def test_case_delivery_workspace_routes_render_for_logged_in_user(tmp_path, monk
     assert attempt_ledger_response.status_code == 200
     assert attempt_ledger_response.get_json()["state"] == "ready_for_attempt"
     assert attempt_ledger_response.get_json()["ledger_id"]
+    assert exception_review_response.status_code == 200
+    assert exception_review_response.get_json()["state"] == "clear"
+    assert exception_review_response.get_json()["review_id"]
     assert ui_response.status_code == 200
     assert b"Case Delivery Workspace" in ui_response.data
     assert b"handoff-package" in ui_response.data
@@ -615,6 +709,7 @@ def test_v15_release_note_and_changelog_are_present():
     execution_note = Path("release/V15_6_DELIVERY_EXECUTION_ENVELOPE.md").read_text(encoding="utf-8")
     operations_note = Path("release/V16_0_DELIVERY_OPERATIONS_SNAPSHOT.md").read_text(encoding="utf-8")
     attempt_ledger_note = Path("release/V16_1_DELIVERY_ATTEMPT_LEDGER.md").read_text(encoding="utf-8")
+    exception_review_note = Path("release/V16_2_DELIVERY_EXCEPTION_REVIEW.md").read_text(encoding="utf-8")
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/case-delivery/<case_id>" in note
@@ -626,6 +721,7 @@ def test_v15_release_note_and_changelog_are_present():
     assert "/api/v1/case-delivery/<case_id>/execution-envelope" in execution_note
     assert "/api/v1/case-delivery/<case_id>/operations" in operations_note
     assert "/api/v1/case-delivery/<case_id>/attempt-ledger" in attempt_ledger_note
+    assert "/api/v1/case-delivery/<case_id>/exception-review" in exception_review_note
     assert "v15.0 Case Delivery Workspace" in changelog
     assert "v15.1 Case Delivery Handoff Package" in changelog
     assert "v15.2 Case Delivery Handoff Verification" in changelog
@@ -635,3 +731,4 @@ def test_v15_release_note_and_changelog_are_present():
     assert "v15.6 Delivery Execution Envelope" in changelog
     assert "v16.0 Delivery Operations Snapshot" in changelog
     assert "v16.1 Delivery Attempt Ledger" in changelog
+    assert "v16.2 Delivery Exception Review" in changelog
