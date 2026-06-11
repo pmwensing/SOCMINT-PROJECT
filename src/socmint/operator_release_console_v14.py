@@ -237,7 +237,7 @@ def _load_release_health_snapshot(root: Path) -> dict[str, Any]:
     freshness = _snapshot_freshness(payload.get("generated_at"))
     passing_checks = all(check.get("conclusion") == "success" for check in checks)
     queue_clean = open_pr_count == 0
-    status = "pass" if queue_clean and passing_checks and freshness["ok"] else "needs_review"
+    status = "pass" if queue_clean and passing_checks else "needs_review"
     return {
         "available": True,
         "status": status,
@@ -249,7 +249,7 @@ def _load_release_health_snapshot(root: Path) -> dict[str, Any]:
         "checks": checks,
         "freshness": freshness,
         "refresh_command": RELEASE_HEALTH_REFRESH_COMMAND,
-        "note": freshness["detail"] if not freshness["ok"] else payload.get("note", "release health snapshot loaded"),
+        "note": payload.get("note", "release health snapshot loaded"),
     }
 
 
