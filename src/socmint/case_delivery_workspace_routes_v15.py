@@ -7,6 +7,9 @@ from .case_delivery_authorization_record_v15_5 import build_case_delivery_author
 from .case_delivery_exception_review_v16_2 import build_case_delivery_exception_review_from_request
 from .case_delivery_execution_envelope_v15_6 import build_case_delivery_execution_envelope_from_request
 from .case_delivery_operations_reentry_envelope_v16_16 import build_case_delivery_operations_reentry_envelope_from_request
+from .case_delivery_operations_reentry_envelope_verification_v16_17 import (
+    verify_case_delivery_operations_reentry_envelope_from_request,
+)
 from .case_delivery_operations_v16_0 import build_case_delivery_operations_from_request
 from .case_delivery_recovery_v16_3 import build_case_delivery_recovery_from_request
 from .case_delivery_recovery_action_receipt_v16_4 import build_case_delivery_recovery_action_receipt_from_request
@@ -266,6 +269,14 @@ def register_case_delivery_workspace_routes_v15(app):
             return jsonify({"error": "login required"}), 401
         result = build_case_delivery_operations_reentry_envelope_from_request(case_id, _request_payload())
         status_code = 200 if result.get("status") == "ready_to_dispatch" else 409
+        return jsonify(result), status_code
+
+    @app.post("/api/v1/case-delivery/<case_id>/operations-reentry-envelope/verify")
+    def api_case_delivery_operations_reentry_envelope_verify_post_v16_17(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        result = verify_case_delivery_operations_reentry_envelope_from_request(case_id, _request_payload())
+        status_code = 200 if result.get("status") == "verified" else 409
         return jsonify(result), status_code
 
     return app
