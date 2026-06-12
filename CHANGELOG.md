@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v16.8 Delivery Recovery Closure Audit Package with verified closure
+  packaging, deterministic audit package ids, per-artifact manifest hashes,
+  linkage checks, and authenticated package API wiring.
 - Added the v16.7 Delivery Recovery Closure Record Verification layer with
   canonical closure payload-hash checks, closure-id verification, receipt/queue
   linkage validation, closure status checks, and authenticated verification API wiring.
