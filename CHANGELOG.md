@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added the v16.13 Delivery Recovery Continuation Gate Verification layer with
+  canonical continuation gate payload-hash checks, continuation gate id
+  verification, finalization verification linkage, gate-open/readiness checks,
+  next-action enforcement, and authenticated verification API wiring.
 - Added the v16.12 Delivery Recovery Continuation Gate with strict v16.11
   finalization verification prerequisite, deterministic continuation gate ids,
   delivery-resume readiness checks, finalization linkage validation, and
