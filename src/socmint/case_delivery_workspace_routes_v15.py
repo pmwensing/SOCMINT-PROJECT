@@ -32,6 +32,7 @@ from .case_delivery_recovery_resume_operations_snapshot_v16_14 import build_case
 from .case_delivery_recovery_resume_operations_snapshot_verification_v16_15 import verify_case_delivery_recovery_resume_operations_snapshot_from_request
 from .case_delivery_recovery_v16_3 import build_case_delivery_recovery_from_request
 from .case_delivery_workspace_v15 import build_case_delivery_workspace_from_request
+from .product_readiness_operator_workflow_v17_0 import build_product_readiness_operator_workflow_snapshot
 
 
 def _login_required() -> bool:
@@ -87,6 +88,13 @@ def register_case_delivery_workspace_routes_v15(app):
             return jsonify({"error": "login required"}), 401
         result = audit_case_delivery_recovery_chain_closure(routes=list(app.url_map.iter_rules()))
         return jsonify(result), 200 if result.get("status") == "closed" else 409
+
+    @app.post("/api/v1/product-readiness/operator-workflow")
+    def api_product_readiness_operator_workflow_post_v17_0():
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        result = build_product_readiness_operator_workflow_snapshot(routes=list(app.url_map.iter_rules()))
+        return jsonify(result), 200 if result.get("status") == "ready" else 409
 
     routes: tuple[tuple[str, str, Callable[..., dict[str, Any]], Callable[[dict[str, Any]], bool] | None], ...] = (
         ("api_case_delivery_workspace_post_v15", "/api/v1/case-delivery/<case_id>", build_case_delivery_workspace_from_request, None),
