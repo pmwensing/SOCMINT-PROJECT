@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added the v16.17 Delivery Operations Re-Entry Envelope Verification layer with
+  canonical re-entry envelope payload-hash checks, re-entry envelope id
+  verification, resume snapshot verification linkage, operations dispatch
+  readiness checks, next-action enforcement, and authenticated verification API wiring.
 - Added the v16.16 Delivery Operations Re-Entry Envelope with strict v16.15
   resume snapshot verification prerequisite, deterministic re-entry envelope ids,
   operations dispatch readiness marking, dispatch next-action routing, and
