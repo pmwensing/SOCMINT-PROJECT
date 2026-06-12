@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v16.7 Delivery Recovery Closure Record Verification layer with
+  canonical closure payload-hash checks, closure-id verification, receipt/queue
+  linkage validation, closure status checks, and authenticated verification API wiring.
 - Added the v16.6 Delivery Recovery Closure Record with strict v16.5 receipt
   verification prerequisite, deterministic closure ids, completed/no-action
   closure handling, pending receipt blocking, and authenticated closure API wiring.
