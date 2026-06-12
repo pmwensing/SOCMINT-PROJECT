@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v16.4 Delivery Recovery Action Receipt with deterministic action
+  receipt ids, operator action status capture for retry/remediate/escalate/hold
+  decisions, blocked-recovery handling, and authenticated receipt API wiring.
 - Added the v16.3 Delivery Recovery / Retry Resolution Layer with deterministic
   recovery ids, operator recovery queue state, retry/hold/escalate/remediate
   decisions, and authenticated recovery API/workspace wiring.
