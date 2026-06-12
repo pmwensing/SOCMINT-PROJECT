@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added the v16.9 Delivery Recovery Closure Audit Package Verification layer with
+  canonical package hash checks, audit package id verification, manifest order
+  validation, per-row manifest id checks, artifact hash checks, and authenticated
+  verification API wiring.
 - Added the v16.8 Delivery Recovery Closure Audit Package with verified closure
   packaging, deterministic audit package ids, per-artifact manifest hashes,
   linkage checks, and authenticated package API wiring.
