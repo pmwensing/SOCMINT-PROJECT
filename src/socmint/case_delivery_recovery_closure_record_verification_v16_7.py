@@ -61,7 +61,7 @@ def verify_case_delivery_recovery_closure_record(
         blockers.append(_blocker("payload_hash_mismatch", "closure payload hash does not match closure fields"))
 
     expected_closure_id = (
-        sha256_text(canonical_json({**_closure_payload(safe_closure), "payload_sha256": expected_payload_hash}))
+        sha256_text(canonical_json({**_closure_payload(safe_closure), "payload_sha256": safe_closure.get("payload_sha256")}))
         if safe_closure
         else None
     )
