@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from pathlib import Path
 
 from src.socmint.case_delivery_recovery_v16_3 import CASE_DELIVERY_RECOVERY_SCHEMA
@@ -175,6 +177,173 @@ def test_case_delivery_recovery_route_chain_from_operations_to_recovery(tmp_path
     assert recovery_payload["state"] == "retry_ready"
     assert recovery_payload["operator_recovery_queue"]
     assert recovery_payload["next_action"] == "operator_retry_delivery"
+
+
+@pytest.mark.parametrize(
+    "attempt_detail, expected_state, expected_decision, expected_recommendation",
+    [
+        ("Channel outage.", "remediation_required", "remediate", "remediate_channel_and_retry"),
+        ("Recipient rejected delivery.", "escalation_required", "escalate", "escalate_to_delivery_owner"),
+    ],
+)
+def test_case_delivery_pipeline_route_chain_recovery_paths(tmp_path, monkeypatch, attempt_detail, expected_state, expected_decision, expected_recommendation):
+    monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
+    app = create_app()
+    register_case_delivery_workspace_routes_v15(app)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["user"] = "operator"
+        sess["is_admin"] = False
+        sess["_csrf_token"] = "test-csrf"
+
+    operations_response = client.post(
+        "/api/v1/case-delivery/case-1/operations",
+        json=ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+    assert operations_response.status_code == 200
+    operations_payload = operations_response.get_json()
+
+    attempt_ledger_response = client.post(
+        "/api/v1/case-delivery/case-1/attempt-ledger",
+        json={
+            "operations": operations_payload,
+            "attempts": [
+                {
+                    "channel": "secure_portal",
+                    "status": "failed",
+                    "operator": "delivery-lead",
+                    "detail": attempt_detail,
+                }
+            ],
+        },
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+    assert attempt_ledger_response.status_code == 200
+    attempt_ledger_payload = attempt_ledger_response.get_json()
+
+    exception_review_response = client.post(
+        "/api/v1/case-delivery/case-1/exception-review",
+        json={"attempt_ledger": attempt_ledger_payload},
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+    assert exception_review_response.status_code == 200
+    exception_review_payload = exception_review_response.get_json()
+
+    recovery_response = client.post(
+        "/api/v1/case-delivery/case-1/recovery",
+        json={"exception_review": exception_review_payload},
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+    assert recovery_response.status_code == 200
+    recovery_payload = recovery_response.get_json()
+    assert recovery_payload["schema"] == "socmint.case_delivery_recovery.v16_3"
+    assert recovery_payload["state"] == expected_state
+    assert recovery_payload["operator_recovery_queue"][0]["decision"] == expected_decision
+    assert recovery_payload["operator_recovery_queue"][0]["recommendation"] == expected_recommendation
+    assert recovery_payload["review_id"] == exception_review_payload["review_id"]
+
+    workspace_response = client.post(
+        "/api/v1/case-delivery/case-1",
+        json={
+            "operations": operations_payload,
+            "attempt_ledger": attempt_ledger_payload,
+            "exception_review": exception_review_payload,
+            "recovery": recovery_payload,
+        },
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+    assert workspace_response.status_code == 200
+    workspace_payload = workspace_response.get_json()
+    pipeline = workspace_payload["delivery_pipeline"]
+    assert pipeline["recovery"]["queue_id"] == recovery_payload["queue_id"]
+    assert pipeline["recovery"]["state"] == expected_state
+    assert pipeline["recovery"]["operator_recovery_queue"][0]["decision"] == expected_decision
+    assert pipeline["recovery"]["operator_recovery_queue"][0]["recommendation"] == expected_recommendation
+
+
+def test_case_delivery_pipeline_route_chain_aggregates_full_v16_workflow(tmp_path, monkeypatch):
+    monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
+    app = create_app()
+    register_case_delivery_workspace_routes_v15(app)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["user"] = "operator"
+        sess["is_admin"] = False
+        sess["_csrf_token"] = "test-csrf"
+
+    operations_response = client.post(
+        "/api/v1/case-delivery/case-1/operations",
+        json=ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+    assert operations_response.status_code == 200
+    operations_payload = operations_response.get_json()
+    assert operations_payload["schema"] == "socmint.case_delivery_operations.v16_0"
+    assert operations_payload["dispatchable"] is True
+
+    attempt_ledger_response = client.post(
+        "/api/v1/case-delivery/case-1/attempt-ledger",
+        json={
+            "operations": operations_payload,
+            "attempts": [
+                {
+                    "channel": "secure_portal",
+                    "status": "failed",
+                    "operator": "delivery-lead",
+                    "detail": "Recipient did not acknowledge.",
+                }
+            ],
+        },
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+    assert attempt_ledger_response.status_code == 200
+    attempt_ledger_payload = attempt_ledger_response.get_json()
+    assert attempt_ledger_payload["schema"] == "socmint.case_delivery_attempt_ledger.v16_1"
+    assert attempt_ledger_payload["state"] == "retry_ready"
+    assert attempt_ledger_payload["operation_id"] == operations_payload["operation_id"]
+
+    exception_review_response = client.post(
+        "/api/v1/case-delivery/case-1/exception-review",
+        json={"attempt_ledger": attempt_ledger_payload},
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+    assert exception_review_response.status_code == 200
+    exception_review_payload = exception_review_response.get_json()
+    assert exception_review_payload["schema"] == "socmint.case_delivery_exception_review.v16_2"
+    assert exception_review_payload["state"] == "review_required"
+    assert exception_review_payload["attempt_ledger"]["ledger_id"] == attempt_ledger_payload["ledger_id"]
+
+    recovery_response = client.post(
+        "/api/v1/case-delivery/case-1/recovery",
+        json={"exception_review": exception_review_payload},
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+    assert recovery_response.status_code == 200
+    recovery_payload = recovery_response.get_json()
+    assert recovery_payload["schema"] == "socmint.case_delivery_recovery.v16_3"
+    assert recovery_payload["state"] == "retry_ready"
+    assert recovery_payload["review_id"] == exception_review_payload["review_id"]
+
+    workspace_response = client.post(
+        "/api/v1/case-delivery/case-1",
+        json={
+            "operations": operations_payload,
+            "attempt_ledger": attempt_ledger_payload,
+            "exception_review": exception_review_payload,
+            "recovery": recovery_payload,
+        },
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+    assert workspace_response.status_code == 200
+    workspace_payload = workspace_response.get_json()
+    pipeline = workspace_payload["delivery_pipeline"]
+    assert pipeline["operations"]["operation_id"] == operations_payload["operation_id"]
+    assert pipeline["attempt_ledger"]["ledger_id"] == attempt_ledger_payload["ledger_id"]
+    assert pipeline["exception_review"]["review_id"] == exception_review_payload["review_id"]
+    assert pipeline["recovery"]["queue_id"] == recovery_payload["queue_id"]
+    assert pipeline["recovery"]["state"] == "retry_ready"
+    assert workspace_payload["delivery_pipeline"]["operations"]["dispatchable"] is True
 
 
 def test_case_delivery_operations_route_returns_dispatchable_payload(tmp_path, monkeypatch):

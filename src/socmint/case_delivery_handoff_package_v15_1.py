@@ -131,7 +131,9 @@ def build_case_delivery_handoff_package(
     operator: str | None = None,
     notes: str | None = None,
 ) -> dict[str, Any]:
-    workspace = build_case_delivery_workspace(case_id, deepcopy(payload or {}))
+    workspace_payload = deepcopy(payload or {})
+    workspace_payload["_skip_delivery_pipeline"] = True
+    workspace = build_case_delivery_workspace(case_id, workspace_payload)
     gate = workspace.get("gate") if isinstance(workspace.get("gate"), dict) else {}
     disposition = "deliver" if gate.get("decision") == "READY_FOR_DELIVERY" else "hold"
     receipt = _operator_receipt(workspace, operator, notes)
