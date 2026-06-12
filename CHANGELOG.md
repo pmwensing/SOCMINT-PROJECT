@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added the v16.18 Recovery Chain Closure / Integration Checkpoint with full
+  v16.3-v16.17 module, route, release-note, changelog, operations-return,
+  duplicate-route, migration-artifact, and orphaned-artifact audits before
+  returning the delivery workstream to product-level work.
 - Added the v16.17 Delivery Operations Re-Entry Envelope Verification layer with
   canonical re-entry envelope payload-hash checks, re-entry envelope id
   verification, resume snapshot verification linkage, operations dispatch
