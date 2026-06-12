@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v16.10 Delivery Recovery Finalization Record with strict v16.9 audit
+  verification prerequisite, deterministic finalization ids, final delivery-continuation
+  readiness marking, linkage checks, and authenticated finalization API wiring.
 - Added the v16.9 Delivery Recovery Closure Audit Package Verification layer with
   canonical package hash checks, audit package id verification, manifest order
   validation, per-row manifest id checks, artifact hash checks, and authenticated
