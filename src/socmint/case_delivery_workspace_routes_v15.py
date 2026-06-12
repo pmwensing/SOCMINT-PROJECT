@@ -23,6 +23,9 @@ from .case_delivery_recovery_closure_record_verification_v16_7 import (
     verify_case_delivery_recovery_closure_record_from_request,
 )
 from .case_delivery_recovery_continuation_gate_v16_12 import build_case_delivery_recovery_continuation_gate_from_request
+from .case_delivery_recovery_continuation_gate_verification_v16_13 import (
+    verify_case_delivery_recovery_continuation_gate_from_request,
+)
 from .case_delivery_recovery_finalization_record_v16_10 import build_case_delivery_recovery_finalization_record_from_request
 from .case_delivery_recovery_finalization_record_verification_v16_11 import (
     verify_case_delivery_recovery_finalization_record_from_request,
@@ -224,6 +227,14 @@ def register_case_delivery_workspace_routes_v15(app):
             return jsonify({"error": "login required"}), 401
         result = build_case_delivery_recovery_continuation_gate_from_request(case_id, _request_payload())
         status_code = 200 if result.get("status") == "open" else 409
+        return jsonify(result), status_code
+
+    @app.post("/api/v1/case-delivery/<case_id>/recovery-continuation-gate/verify")
+    def api_case_delivery_recovery_continuation_gate_verify_post_v16_13(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        result = verify_case_delivery_recovery_continuation_gate_from_request(case_id, _request_payload())
+        status_code = 200 if result.get("status") == "verified" else 409
         return jsonify(result), status_code
 
     return app
