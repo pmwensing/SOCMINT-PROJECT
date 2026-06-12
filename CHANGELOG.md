@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added the v16.5 Delivery Recovery Action Receipt Verification layer with
+  canonical receipt-id checks, queue linkage verification, action receipt-id
+  validation, action/recovery consistency checks, and authenticated verification
+  API wiring.
 - Added the v16.4 Delivery Recovery Action Receipt with deterministic action
   receipt ids, operator action status capture for retry/remediate/escalate/hold
   decisions, blocked-recovery handling, and authenticated receipt API wiring.
