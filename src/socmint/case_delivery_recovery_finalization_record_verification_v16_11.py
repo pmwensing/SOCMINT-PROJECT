@@ -52,12 +52,12 @@ def verify_case_delivery_recovery_finalization_record(
     safe_closure = deepcopy(closure or {})
     safe_audit_package = deepcopy(audit_package or {})
     safe_audit_verification = deepcopy(audit_verification or {})
-    audit_check = verify_case_delivery_recovery_closure_audit_package(
+    audit_check = safe_audit_verification or verify_case_delivery_recovery_closure_audit_package(
         safe_audit_package,
         safe_recovery,
         safe_receipt,
         safe_closure,
-        safe_audit_verification,
+        None,
     )
     blockers = []
 
@@ -89,6 +89,8 @@ def verify_case_delivery_recovery_finalization_record(
         blockers.append(_blocker("closure_id_mismatch", "finalization closure_id does not match closure"))
     if safe_finalization and safe_finalization.get("audit_package_id") != safe_audit_package.get("audit_package_id"):
         blockers.append(_blocker("audit_package_id_mismatch", "finalization audit_package_id does not match audit package"))
+    if safe_finalization and audit_check.get("audit_package_id") and safe_finalization.get("audit_package_id") != audit_check.get("audit_package_id"):
+        blockers.append(_blocker("audit_verification_package_mismatch", "finalization audit_package_id does not match audit verification"))
     if safe_finalization and safe_finalization.get("audit_verification_status") != audit_check.get("status"):
         blockers.append(_blocker("audit_verification_status_mismatch", "finalization audit verification status does not match verification"))
     if safe_finalization and safe_finalization.get("ready_for_delivery_continuation") is not True:
