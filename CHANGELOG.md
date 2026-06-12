@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added the v16.16 Delivery Operations Re-Entry Envelope with strict v16.15
+  resume snapshot verification prerequisite, deterministic re-entry envelope ids,
+  operations dispatch readiness marking, dispatch next-action routing, and
+  authenticated re-entry envelope API wiring.
 - Added the v16.15 Delivery Recovery Resume Operations Snapshot Verification layer
   with canonical resume snapshot payload-hash checks, resume snapshot id
   verification, continuation gate verification linkage, safe operations re-entry
