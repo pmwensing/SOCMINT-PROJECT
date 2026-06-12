@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added the v17.0 Product Readiness / Operator Workflow Integration snapshot with
+  case-delivery UX, normal operations, operator release console alignment,
+  v16.18 recovery-chain closure, duplicate product route, documentation, and
+  end-to-end readiness checks.
 - Added the v16.18 Recovery Chain Closure / Integration Checkpoint with full
   v16.3-v16.17 module, route, release-note, changelog, operations-return,
   duplicate-route, migration-artifact, and orphaned-artifact audits before
