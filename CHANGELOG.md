@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added the v16.14 Delivery Recovery Resume Operations Snapshot with strict v16.13
+  continuation gate verification prerequisite, deterministic resume snapshot ids,
+  safe operations re-entry marking, delivery execution next-action routing, and
+  authenticated resume snapshot API wiring.
 - Added the v16.13 Delivery Recovery Continuation Gate Verification layer with
   canonical continuation gate payload-hash checks, continuation gate id
   verification, finalization verification linkage, gate-open/readiness checks,
