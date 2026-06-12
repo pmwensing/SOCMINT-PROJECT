@@ -105,13 +105,16 @@ def build_case_delivery_exception_review(
         "retryable_exception_count": sum(1 for exception in exceptions if exception.get("retryable") is True),
         "blocker_count": len(blockers),
     }
-    return {
+    result = {
         **payload_core,
-        "review_id": sha256_text(canonical_json(payload_core)),
         "attempt_ledger": ledger,
         "exceptions": exceptions,
         "blockers": blockers,
         "next_action": "continue_delivery" if state == "clear" else "review_delivery_exceptions",
+    }
+    return {
+        **result,
+        "review_id": sha256_text(canonical_json(result)),
     }
 
 

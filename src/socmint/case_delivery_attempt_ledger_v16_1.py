@@ -90,13 +90,16 @@ def build_case_delivery_attempt_ledger(
         "retry_eligible": retry_eligible,
         "blocker_count": len(blockers),
     }
-    return {
+    result = {
         **payload_core,
-        "ledger_id": sha256_text(canonical_json(payload_core)),
         "operations": operations,
         "attempts": attempts,
         "blockers": blockers,
         "next_action": "record_delivery_attempt" if retry_eligible else "review_delivery_attempts",
+    }
+    return {
+        **result,
+        "ledger_id": sha256_text(canonical_json(result)),
     }
 
 

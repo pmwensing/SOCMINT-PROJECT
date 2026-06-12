@@ -98,6 +98,90 @@ def _delivery_registry(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _has_delivery_pipeline_input(payload: dict[str, Any]) -> bool:
+    return any(
+        isinstance(payload.get(key), (dict, list))
+        for key in (
+            "delivery_pipeline",
+            "operations",
+            "attempts",
+            "attempt_ledger",
+            "exception_review",
+            "recovery",
+        )
+    )
+
+
+def _delivery_pipeline(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    if payload.get("_skip_delivery_pipeline"):
+        return {}
+
+    explicit = payload.get("delivery_pipeline")
+    if isinstance(explicit, dict):
+        return deepcopy(explicit)
+    if not _has_delivery_pipeline_input(payload):
+        return {}
+
+    from .case_delivery_attempt_ledger_v16_1 import build_case_delivery_attempt_ledger_from_request
+    from .case_delivery_exception_review_v16_2 import build_case_delivery_exception_review_from_request
+    from .case_delivery_operations_v16_0 import build_case_delivery_operations_from_request
+    from .case_delivery_recovery_v16_3 import build_case_delivery_recovery_from_request
+
+    operations = deepcopy(payload["operations"]) if isinstance(payload.get("operations"), dict) else None
+    attempt_ledger = deepcopy(payload["attempt_ledger"]) if isinstance(payload.get("attempt_ledger"), dict) else None
+    exception_review = deepcopy(payload["exception_review"]) if isinstance(payload.get("exception_review"), dict) else None
+    recovery = deepcopy(payload["recovery"]) if isinstance(payload.get("recovery"), dict) else None
+
+    if operations is None and attempt_ledger is not None:
+        operations = deepcopy(attempt_ledger.get("operations")) if isinstance(attempt_ledger.get("operations"), dict) else {}
+    if operations is None and exception_review is not None:
+        attempt_ledger = (
+            deepcopy(exception_review.get("attempt_ledger"))
+            if isinstance(exception_review.get("attempt_ledger"), dict)
+            else attempt_ledger
+        )
+        operations = (
+            deepcopy(attempt_ledger.get("operations"))
+            if isinstance(attempt_ledger and attempt_ledger.get("operations"), dict)
+            else {}
+        )
+    if operations is None and recovery is not None:
+        exception_review = (
+            deepcopy(recovery.get("exception_review"))
+            if isinstance(recovery.get("exception_review"), dict)
+            else exception_review
+        )
+        attempt_ledger = (
+            deepcopy(exception_review.get("attempt_ledger"))
+            if isinstance(exception_review and exception_review.get("attempt_ledger"), dict)
+            else attempt_ledger
+        )
+        operations = (
+            deepcopy(attempt_ledger.get("operations"))
+            if isinstance(attempt_ledger and attempt_ledger.get("operations"), dict)
+            else {}
+        )
+
+    if attempt_ledger is None:
+        attempt_ledger = build_case_delivery_attempt_ledger_from_request(case_id, payload)
+    if operations is None and isinstance(attempt_ledger.get("operations"), dict):
+        operations = deepcopy(attempt_ledger["operations"])
+    if exception_review is None:
+        exception_review = build_case_delivery_exception_review_from_request(
+            case_id,
+            {**payload, "attempt_ledger": attempt_ledger},
+        )
+    if recovery is None:
+        recovery = build_case_delivery_recovery_from_request(case_id, {**payload, "exception_review": exception_review})
+
+    return {
+        "operations": operations or {},
+        "attempt_ledger": attempt_ledger or {},
+        "exception_review": exception_review or {},
+        "recovery": recovery or {},
+    }
+
+
 def _gate_check(key: str, label: str, ok: bool, detail: str, href: str | None = None) -> dict[str, Any]:
     return {
         "key": key,
@@ -214,6 +298,7 @@ def build_case_delivery_workspace(case_id: str, payload: dict[str, Any] | None =
         "export_blockers": blockers,
         "delivery_registry": registry,
         "approval_gate": approval,
+        "delivery_pipeline": _delivery_pipeline(case_id, safe_payload),
         "latest_delivery": _latest_delivery(registry),
         "operator_links": [
             {"label": "Dossier readiness", "href": "/subjects"},

@@ -132,13 +132,16 @@ def build_case_delivery_recovery(
         "remediate_count": sum(1 for row in recoveries if row.get("decision") == "remediate"),
         "blocker_count": len(blockers),
     }
-    return {
+    result = {
         **payload_core,
-        "queue_id": sha256_text(canonical_json(payload_core)),
         "exception_review": review,
         "operator_recovery_queue": recoveries,
         "blockers": blockers,
         "next_action": _next_action(state),
+    }
+    return {
+        **result,
+        "queue_id": sha256_text(canonical_json(result)),
     }
 
 

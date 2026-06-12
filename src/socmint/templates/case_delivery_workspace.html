@@ -60,6 +60,27 @@
 <section class="panel">
   <div class="section-header">
     <div>
+      <h2>v16 Delivery Pipeline</h2>
+      <p class="muted">Overview of the v16 delivery pipeline states for operations, attempt ledger, exception review, and recovery.</p>
+    </div>
+  </div>
+  {% if payload.delivery_pipeline %}
+  <table class="data-table">
+    <tbody>
+      <tr><td>Operations</td><td>{{ payload.delivery_pipeline.operations.state }}</td></tr>
+      <tr><td>Attempt ledger</td><td>{{ payload.delivery_pipeline.attempt_ledger.state }}</td></tr>
+      <tr><td>Exception review</td><td>{{ payload.delivery_pipeline.exception_review.state }}</td></tr>
+      <tr><td>Recovery</td><td>{{ payload.delivery_pipeline.recovery.state }}</td></tr>
+    </tbody>
+  </table>
+  {% else %}
+  <p>No v16 delivery pipeline data available.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
       <h2>v16.3 Recovery Queue</h2>
       <p class="muted">Use the recovery endpoint after exception review to resolve retry, hold, escalation, or remediation actions.</p>
     </div>
