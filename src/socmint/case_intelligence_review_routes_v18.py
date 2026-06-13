@@ -14,6 +14,9 @@ from .persistent_case_review_decisions_v19_0 import (
     persist_case_review_decision,
     set_persistent_decision_review_state,
 )
+from .persistent_decision_supervisor_queue_v19_3 import (
+    build_persistent_decision_supervisor_queue,
+)
 
 
 def _login_required() -> bool:
@@ -56,6 +59,14 @@ def _persistent_history(case_id: str) -> dict:
     )
 
 
+def _supervisor_queue() -> dict:
+    return build_persistent_decision_supervisor_queue(
+        case_id=request.args.get("case_id") or None,
+        review_state=request.args.get("review_state") or None,
+        assigned_reviewer=request.args.get("assigned_reviewer") or None,
+    )
+
+
 def _workspace(case_id: str, payload: dict | None = None) -> dict:
     workspace = build_case_intelligence_review_workspace(
         case_id,
@@ -77,6 +88,22 @@ def register_case_intelligence_review_routes_v18(app):
             title="Case Intelligence Review Workspace",
             payload=_workspace(case_id),
         )
+
+    @app.get("/case-intelligence-review/supervisor-queue")
+    def case_intelligence_supervisor_queue_get_v19_3():
+        if not _login_required():
+            return redirect(url_for("dashboard.login"))
+        return render_template(
+            "persistent_decision_supervisor_queue_v19_3.html",
+            title="Persistent Decision Supervisor Queue",
+            payload=_supervisor_queue(),
+        )
+
+    @app.get("/api/v1/case-intelligence-review/supervisor-queue")
+    def api_case_intelligence_supervisor_queue_get_v19_3():
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        return jsonify(_supervisor_queue())
 
     @app.get("/api/v1/case-intelligence-review/<case_id>")
     def api_case_intelligence_review_get_v18(case_id: str):
