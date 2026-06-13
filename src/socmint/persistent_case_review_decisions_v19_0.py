@@ -14,6 +14,11 @@ VERSION = "v19.0.0"
 AUDIT_ACTION = "case_intelligence_review_decision"
 
 
+def _ensure_audit_storage() -> None:
+    database.ensure_configured()
+    database.AuditLog.__table__.create(bind=database.engine, checkfirst=True)
+
+
 def persist_case_review_decision(
     case_id: str,
     decision: dict[str, Any],
@@ -38,7 +43,7 @@ def persist_case_review_decision(
             "next_action": "record_valid_case_review_decision",
         }
 
-    database.ensure_configured()
+    _ensure_audit_storage()
     session = database.Session()
     try:
         row = database.AuditLog(
@@ -82,7 +87,7 @@ def list_persistent_case_review_decisions(
     *,
     limit: int = 100,
 ) -> dict[str, Any]:
-    database.ensure_configured()
+    _ensure_audit_storage()
     session = database.Session()
     try:
         rows = (
