@@ -4,23 +4,31 @@ import argparse
 import json
 import os
 import socket
+import sys
 import tempfile
 import threading
-import time
 from pathlib import Path
 from typing import Any
 
-from selenium import webdriver
-from selenium.common.exceptions import WebDriverException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from werkzeug.serving import make_server
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
-from src.socmint.dashboard import create_app
-from src.socmint.operator_release_console_routes_v14 import register_operator_release_console_routes_v14
-from src.socmint.unified_operator_workflow_dashboard_routes_v17_1 import (
+from selenium import webdriver  # noqa: E402
+from selenium.common.exceptions import WebDriverException  # noqa: E402
+from selenium.webdriver.common.by import By  # noqa: E402
+from selenium.webdriver.support import expected_conditions as EC  # noqa: E402
+from selenium.webdriver.support.ui import WebDriverWait  # noqa: E402
+from werkzeug.serving import make_server  # noqa: E402
+
+from src.socmint.case_delivery_workspace_routes_v15 import (  # noqa: E402
+    register_case_delivery_workspace_routes_v15,
+)
+from src.socmint.dashboard import create_app  # noqa: E402
+from src.socmint.operator_release_console_routes_v14 import (  # noqa: E402
+    register_operator_release_console_routes_v14,
+)
+from src.socmint.unified_operator_workflow_dashboard_routes_v17_1 import (  # noqa: E402
     register_unified_operator_workflow_dashboard_routes_v17_1,
 )
 
@@ -99,33 +107,89 @@ def run_browser_validation(driver_name: str, output: Path) -> dict[str, Any]:
             )
             browser.get(base_url + "/operator/workflow-dashboard?case_id=case-v17-7")
             wait = WebDriverWait(browser, 10)
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-operator-workflow-dashboard]")))
+            wait.until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, "[data-operator-workflow-dashboard]")
+                )
+            )
 
-            _check(report, "authenticated_dashboard_render", "Unified Operator Workflow Dashboard" in browser.page_source, browser.current_url)
-            dispatch = browser.find_element(By.CSS_SELECTOR, '[data-action="dispatch_delivery_operations"]')
-            _check(report, "unsafe_dispatch_disabled", not dispatch.is_enabled(), "dispatch disabled on unready preview case")
+            _check(
+                report,
+                "authenticated_dashboard_render",
+                "Unified Operator Workflow Dashboard" in browser.page_source,
+                browser.current_url,
+            )
+            dispatch = browser.find_element(
+                By.CSS_SELECTOR, '[data-action="dispatch_delivery_operations"]'
+            )
+            _check(
+                report,
+                "unsafe_dispatch_disabled",
+                not dispatch.is_enabled(),
+                "dispatch disabled on unready preview case",
+            )
 
-            refresh = browser.find_element(By.CSS_SELECTOR, '[data-action="refresh_release_health"]')
+            refresh = browser.find_element(
+                By.CSS_SELECTOR, '[data-action="refresh_release_health"]'
+            )
             browser.execute_script("window.confirm = () => true;")
             refresh.click()
-            wait.until(EC.visibility_of_element_located((By.ID, "operator-action-feedback")))
+            wait.until(
+                EC.visibility_of_element_located((By.ID, "operator-action-feedback"))
+            )
             banner_text = browser.find_element(By.ID, "operator-action-feedback").text
-            _check(report, "action_result_feedback", bool(banner_text.strip()), banner_text)
+            _check(
+                report,
+                "action_result_feedback",
+                bool(banner_text.strip()),
+                banner_text,
+            )
 
-            wait.until(lambda drv: "1 event(s)" in drv.find_element(By.ID, "operator-action-history-count").text)
-            _check(report, "history_updates_after_action", True, browser.find_element(By.ID, "operator-action-history-count").text)
+            wait.until(
+                lambda drv: "1 event(s)"
+                in drv.find_element(By.ID, "operator-action-history-count").text
+            )
+            _check(
+                report,
+                "history_updates_after_action",
+                True,
+                browser.find_element(By.ID, "operator-action-history-count").text,
+            )
 
             browser.find_element(By.ID, "refresh-action-history").click()
-            wait.until(EC.text_to_be_present_in_element((By.ID, "operator-action-feedback"), "Action history refreshed"))
-            _check(report, "manual_history_refresh", True, browser.find_element(By.ID, "operator-action-feedback").text)
+            wait.until(
+                EC.text_to_be_present_in_element(
+                    (By.ID, "operator-action-feedback"),
+                    "Action history refreshed",
+                )
+            )
+            _check(
+                report,
+                "manual_history_refresh",
+                True,
+                browser.find_element(By.ID, "operator-action-feedback").text,
+            )
 
-            blocker_button = browser.find_element(By.CSS_SELECTOR, '[data-action="review_blockers"]')
+            blocker_button = browser.find_element(
+                By.CSS_SELECTOR, '[data-action="review_blockers"]'
+            )
             blocker_button.click()
             wait.until(lambda drv: "#active-blockers" in drv.current_url)
-            _check(report, "navigation_action", browser.current_url.endswith("#active-blockers"), browser.current_url)
+            _check(
+                report,
+                "navigation_action",
+                browser.current_url.endswith("#active-blockers"),
+                browser.current_url,
+            )
         except Exception as exc:
             report["status"] = "failed"
-            report["checks"].append({"key": "browser_exception", "ok": False, "detail": f"{type(exc).__name__}: {exc}"})
+            report["checks"].append(
+                {
+                    "key": "browser_exception",
+                    "ok": False,
+                    "detail": f"{type(exc).__name__}: {exc}",
+                }
+            )
         finally:
             if browser is not None:
                 browser.quit()
@@ -136,14 +200,26 @@ def run_browser_validation(driver_name: str, output: Path) -> dict[str, Any]:
     report["passed_count"] = sum(1 for item in report["checks"] if item["ok"])
     report["failed_count"] = report["check_count"] - report["passed_count"]
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     return report
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run v17.7 browser-level operator dashboard validation")
-    parser.add_argument("--driver", choices=("chrome", "firefox"), default=os.getenv("SOCMINT_BROWSER_DRIVER", "chrome"))
-    parser.add_argument("--output", default="artifacts/v17_7_operator_dashboard_browser_e2e.json")
+    parser = argparse.ArgumentParser(
+        description="Run v17.7 browser-level operator dashboard validation"
+    )
+    parser.add_argument(
+        "--driver",
+        choices=("chrome", "firefox"),
+        default=os.getenv("SOCMINT_BROWSER_DRIVER", "chrome"),
+    )
+    parser.add_argument(
+        "--output",
+        default="artifacts/v17_7_operator_dashboard_browser_e2e.json",
+    )
     args = parser.parse_args()
     try:
         report = run_browser_validation(args.driver, Path(args.output))
