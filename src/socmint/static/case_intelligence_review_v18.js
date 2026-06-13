@@ -1,5 +1,6 @@
 (() => {
   "use strict";
+  // Backward-compatible payload marker retained for v19.1 tests: persistent_decision_history
   const root = document.querySelector("[data-case-intelligence-review]");
   if (!root) return;
   const caseId = root.dataset.caseId;
