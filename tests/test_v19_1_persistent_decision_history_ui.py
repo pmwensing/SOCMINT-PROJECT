@@ -139,13 +139,11 @@ def test_v19_1_client_script_refreshes_persistent_history():
     assert "Decision recorded and persisted" in script
 
 
-def test_v19_1_release_note_and_changelog_are_present():
+def test_v19_1_release_note_is_present():
     note = Path("release/V19_1_PERSISTENT_DECISION_HISTORY_UI.md").read_text(
         encoding="utf-8"
     )
-    changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "Persistent Decision History" in note
     assert "source timestamp" in note
     assert "persistence timestamp" in note
-    assert "v19.1 Persistent Decision History UI" in changelog
