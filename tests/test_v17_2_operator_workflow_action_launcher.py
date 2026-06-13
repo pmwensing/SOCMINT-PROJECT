@@ -94,7 +94,13 @@ def test_v17_2_dispatch_blocks_when_case_not_ready():
 def test_v17_2_action_route_requires_login(tmp_path, monkeypatch):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     client = _app().test_client()
-    response = client.post("/api/v1/operator/workflow-dashboard/case-1/actions", json={"action": "open_case_delivery"})
+    with client.session_transaction() as sess:
+        sess["_csrf_token"] = "test-csrf"
+    response = client.post(
+        "/api/v1/operator/workflow-dashboard/case-1/actions",
+        json={"action": "open_case_delivery"},
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
     assert response.status_code == 401
 
 
