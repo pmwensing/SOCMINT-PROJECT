@@ -52,6 +52,41 @@
   </div>
 </section>
 
+<section class="panel" id="action-history">
+  <div class="section-header">
+    <div>
+      <h2>Operator Action History</h2>
+      <p class="muted">Recent action receipts and verification results stored only in this login session.</p>
+    </div>
+    <span class="status-pill">{{ payload.action_history.entry_count or 0 }} event(s)</span>
+  </div>
+  {% if payload.action_history.entries %}
+  <div class="grid cards-4">
+    <article class="card"><h3>Verified</h3><p class="metric">{{ payload.action_history.verified_count }}</p></article>
+    <article class="card"><h3>Blocked</h3><p class="metric">{{ payload.action_history.blocked_count }}</p></article>
+    <article class="card"><h3>Awaiting confirmation</h3><p class="metric">{{ payload.action_history.confirmation_required_count }}</p></article>
+    <article class="card"><h3>Storage</h3><p class="metric">Session</p><p>No database persistence</p></article>
+  </div>
+  <table class="data-table">
+    <thead><tr><th>Time</th><th>Action</th><th>Result</th><th>Verification</th><th>Target</th><th>Receipt</th></tr></thead>
+    <tbody>
+    {% for entry in payload.action_history.entries %}
+      <tr>
+        <td>{{ entry.recorded_at or 'unknown' }}</td>
+        <td>{{ entry.label or entry.action or 'unknown' }}{% if entry.confirmed %}<br><small>confirmed</small>{% endif %}</td>
+        <td>{{ entry.result_status or 'unknown' }}</td>
+        <td>{{ entry.verification_status or 'not verified' }}</td>
+        <td>{% if entry.action_target %}<code>{{ entry.action_target }}</code>{% else %}—{% endif %}</td>
+        <td><code>{{ (entry.action_receipt_id or '')[:12] }}</code></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No operator actions have been recorded in this session.</p>
+  {% endif %}
+</section>
+
 <section class="panel">
   <div class="section-header"><div><h2>Workflow Status</h2><p class="muted">Unified state from case delivery, recovery, operations, and release console.</p></div><span class="status-pill {{ 'completed' if payload.summary.blocker_count == 0 else 'failed' }}">{{ payload.summary.blocker_count }} blocker(s)</span></div>
   <table class="data-table"><thead><tr><th>Area</th><th>Status</th><th>Next action</th></tr></thead><tbody>
@@ -76,5 +111,6 @@
   <tr><td>Operator release console</td><td><a href="{{ payload.release_console.href }}">Open release console</a></td></tr>
   <tr><td>Dashboard API</td><td><code>/api/v1/operator/workflow-dashboard/{{ payload.case_id }}</code></td></tr>
   <tr><td>Action launcher API</td><td><code>/api/v1/operator/workflow-dashboard/{{ payload.case_id }}/actions</code></td></tr>
+  <tr><td>Action history API</td><td><code>/api/v1/operator/workflow-dashboard/{{ payload.case_id }}/actions/history</code></td></tr>
 </tbody></table></section>
 {% endblock %}
