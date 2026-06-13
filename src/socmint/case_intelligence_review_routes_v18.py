@@ -35,48 +35,41 @@ def _history() -> list[dict]:
     return value if isinstance(value, list) else []
 
 
+def _workspace(case_id: str, payload: dict | None = None) -> dict:
+    workspace = build_case_intelligence_review_workspace(
+        case_id,
+        payload or {},
+        history=_history(),
+        operator=_operator(),
+    )
+    workspace["persistent_decision_history"] = list_persistent_case_review_decisions(
+        case_id
+    )
+    return workspace
+
+
 def register_case_intelligence_review_routes_v18(app):
     @app.get("/case-intelligence-review/<case_id>")
     def case_intelligence_review_workspace_get_v18(case_id: str):
         if not _login_required():
             return redirect(url_for("dashboard.login"))
-        workspace = build_case_intelligence_review_workspace(
-            case_id,
-            {},
-            history=_history(),
-            operator=_operator(),
-        )
         return render_template(
             "case_intelligence_review_workspace.html",
             title="Case Intelligence Review Workspace",
-            payload=workspace,
+            payload=_workspace(case_id),
         )
 
     @app.get("/api/v1/case-intelligence-review/<case_id>")
     def api_case_intelligence_review_get_v18(case_id: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
-        return jsonify(
-            build_case_intelligence_review_workspace(
-                case_id,
-                {},
-                history=_history(),
-                operator=_operator(),
-            )
-        )
+        return jsonify(_workspace(case_id))
 
     @app.post("/api/v1/case-intelligence-review/<case_id>")
     def api_case_intelligence_review_post_v18(case_id: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
-        return jsonify(
-            build_case_intelligence_review_workspace(
-                case_id,
-                _payload(),
-                history=_history(),
-                operator=_operator(),
-            )
-        )
+        return jsonify(_workspace(case_id, _payload()))
 
     @app.post("/api/v1/case-intelligence-review/<case_id>/decisions")
     def api_case_intelligence_review_decision_post_v18_5(case_id: str):
@@ -102,26 +95,17 @@ def register_case_intelligence_review_routes_v18(app):
             )
         session[SESSION_KEY] = append_case_review_history(_history(), result)
         session.modified = True
-        result["review_history"] = build_case_intelligence_review_workspace(
-            case_id,
-            {},
-            history=_history(),
-            operator=_operator(),
-        )["review_history"]
+        result["review_history"] = _workspace(case_id)["review_history"]
+        result["persistent_decision_history"] = (
+            list_persistent_case_review_decisions(case_id)
+        )
         return jsonify(result), 200 if result.get("status") == "recorded" else 422
 
     @app.get("/api/v1/case-intelligence-review/<case_id>/history")
     def api_case_intelligence_review_history_get_v18_6(case_id: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
-        return jsonify(
-            build_case_intelligence_review_workspace(
-                case_id,
-                {},
-                history=_history(),
-                operator=_operator(),
-            )["review_history"]
-        )
+        return jsonify(_workspace(case_id)["review_history"])
 
     @app.get("/api/v1/case-intelligence-review/<case_id>/decisions/persistent")
     def api_persistent_case_review_decisions_get_v19_0(case_id: str):
