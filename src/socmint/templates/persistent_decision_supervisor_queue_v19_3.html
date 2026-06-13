@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+<div data-supervisor-assignment-queue data-csrf-token="{{ session.get('_csrf_token', '') }}">
 <section class="panel">
   <div class="page-header">
     <div>
@@ -8,6 +9,7 @@
     </div>
     <span class="status-pill">{{ payload.total_outstanding }} outstanding</span>
   </div>
+  <div id="supervisor-assignment-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
 </section>
 
 <section class="panel">
@@ -58,19 +60,28 @@
 
 <section class="panel">
   <h2>Supervisor Queue</h2>
+  <p class="muted">Assignments are separate immutable audit annotations. Reassigning creates a new annotation and never changes the original decision.</p>
   {% if payload.entries %}
   <table class="data-table">
-    <thead><tr><th>Case</th><th>Decision</th><th>Original actor</th><th>Review state</th><th>Assigned reviewer</th><th>Age</th><th>Review note</th><th>Workspace</th></tr></thead>
-    <tbody>
+    <thead><tr><th>Case</th><th>Decision</th><th>Original actor</th><th>Review state</th><th>Assigned reviewer</th><th>Age</th><th>Assignment</th><th>Workspace</th></tr></thead>
+    <tbody id="supervisor-assignment-queue-body">
       {% for item in payload.entries %}
-      <tr>
+      <tr data-case-id="{{ item.case_id }}" data-decision-record-id="{{ item.decision_record_id }}">
         <td>{{ item.case_id }}</td>
         <td>{{ item.decision }}</td>
         <td>{{ item.actor }}</td>
         <td>{{ item.review_state }}</td>
-        <td>{{ item.assigned_reviewer or 'Unassigned' }}</td>
+        <td class="assigned-reviewer-value">{{ item.assigned_reviewer or 'Unassigned' }}{% if item.assigned_by %}<br><small>by {{ item.assigned_by }} · {{ item.assigned_at }}</small>{% endif %}</td>
         <td>{% if item.age_hours is not none %}{{ item.age_hours }} hours{% else %}—{% endif %}</td>
-        <td>{{ item.review_note or '—' }}</td>
+        <td>
+          {% if item.outstanding %}
+          <input class="assignment-reviewer" type="text" value="{{ item.assigned_reviewer or '' }}" placeholder="Reviewer username">
+          <input class="assignment-note" type="text" value="{{ item.assignment_note or '' }}" placeholder="Assignment note">
+          <button type="button" class="save-supervisor-assignment">{{ 'Reassign' if item.assigned_reviewer else 'Assign' }}</button>
+          {% else %}
+          <span class="muted">Completed review state</span>
+          {% endif %}
+        </td>
         <td><a href="{{ item.case_workspace_href }}">Open case workspace</a></td>
       </tr>
       {% endfor %}
@@ -78,4 +89,6 @@
   </table>
   {% else %}<p>No decisions match the selected supervisor filters.</p>{% endif %}
 </section>
+</div>
+<script src="{{ url_for('static', filename='persistent_decision_supervisor_queue_v19_4.js') }}" defer></script>
 {% endblock %}
