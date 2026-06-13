@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="page-header">
+    <div>
+      <h1>Unified Operator Workflow Dashboard</h1>
+      <p>Case {{ payload.case_id }} readiness, recovery closure, delivery operations, and release health.</p>
+    </div>
+    <div class="status-pill {{ 'completed' if payload.status == 'ready' else 'failed' }}">
+      {{ payload.status }}
+    </div>
+  </div>
+
+  <div class="grid cards-4">
+    <article class="card">
+      <h2>Case Delivery</h2>
+      <p class="metric">{{ payload.case_delivery.decision or 'unknown' }}</p>
+      <p>{{ payload.case_delivery.status or 'unknown' }}</p>
+    </article>
+    <article class="card">
+      <h2>Recovery Chain</h2>
+      <p class="metric">{{ 'closed' if payload.recovery_chain.closed else 'blocked' }}</p>
+      <p>{{ payload.recovery_chain.stage_count or 0 }} stages</p>
+    </article>
+    <article class="card">
+      <h2>Operations</h2>
+      <p class="metric">{{ payload.operations.state or 'unknown' }}</p>
+      <p>{{ 'dispatchable' if payload.operations.dispatchable else 'not dispatchable' }}</p>
+    </article>
+    <article class="card">
+      <h2>Release Health</h2>
+      <p class="metric">{{ payload.summary.release_health }}</p>
+      <p>{{ payload.release_console.evaluation.decision if payload.release_console.evaluation else 'unknown' }}</p>
+    </article>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Recommended Next Action</h2>
+      <p class="muted">One prioritized operator action across the full workflow.</p>
+    </div>
+    <span class="status-pill">{{ payload.recommended_action.source }}</span>
+  </div>
+  <article class="card">
+    <h3>{{ payload.recommended_action.label }}</h3>
+    <p><code>{{ payload.recommended_action.key }}</code></p>
+    <p><a href="{{ payload.recommended_action.href }}">Open action target</a></p>
+  </article>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Workflow Status</h2>
+      <p class="muted">Unified state from case delivery, recovery, operations, and release console.</p>
+    </div>
+    <span class="status-pill {{ 'completed' if payload.summary.blocker_count == 0 else 'failed' }}">
+      {{ payload.summary.blocker_count }} blocker(s)
+    </span>
+  </div>
+  <table class="data-table">
+    <thead><tr><th>Area</th><th>Status</th><th>Next action</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Case delivery</td>
+        <td>{{ payload.case_delivery.status }}</td>
+        <td>{{ payload.case_delivery.next_action }}</td>
+      </tr>
+      <tr>
+        <td>Recovery chain</td>
+        <td>{{ payload.recovery_chain.status }}</td>
+        <td>{{ payload.recovery_chain.next_action }}</td>
+      </tr>
+      <tr>
+        <td>Operations</td>
+        <td>{{ payload.operations.state }}</td>
+        <td>{{ payload.operations.next_action }}</td>
+      </tr>
+      <tr>
+        <td>Release console</td>
+        <td>{{ payload.release_console.status }}</td>
+        <td>{{ payload.release_console.evaluation.next_action if payload.release_console.evaluation else 'n/a' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <h2>Active Blockers</h2>
+      <p class="muted">Consolidated operator blockers from every workflow source.</p>
+    </div>
+  </div>
+  {% if payload.blockers %}
+  <table class="data-table">
+    <thead><tr><th>Source</th><th>Key</th><th>Detail</th></tr></thead>
+    <tbody>
+    {% for blocker in payload.blockers %}
+      <tr>
+        <td>{{ blocker.source }}</td>
+        <td><code>{{ blocker.key }}</code></td>
+        <td>{{ blocker.detail }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No active workflow blockers.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Operator Links</h2>
+  <table class="data-table">
+    <tbody>
+      <tr><td>Case delivery workspace</td><td><a href="{{ payload.case_delivery.href }}">Open workspace</a></td></tr>
+      <tr><td>Operator release console</td><td><a href="{{ payload.release_console.href }}">Open release console</a></td></tr>
+      <tr><td>Dashboard API</td><td><code>/api/v1/operator/workflow-dashboard/{{ payload.case_id }}</code></td></tr>
+    </tbody>
+  </table>
+</section>
+{% endblock %}
