@@ -18,6 +18,10 @@ from .persistent_decision_supervisor_queue_v19_3 import (
     assign_persistent_decision_reviewer,
     build_persistent_decision_supervisor_queue,
 )
+from .reviewer_work_queue_v19_5 import (
+    build_reviewer_work_queue,
+    update_assigned_decision_review_state,
+)
 
 
 def _login_required() -> bool:
@@ -100,11 +104,46 @@ def register_case_intelligence_review_routes_v18(app):
             payload=_supervisor_queue(),
         )
 
+    @app.get("/case-intelligence-review/my-assignments")
+    def case_intelligence_reviewer_work_queue_get_v19_5():
+        if not _login_required():
+            return redirect(url_for("dashboard.login"))
+        return render_template(
+            "reviewer_work_queue_v19_5.html",
+            title="Reviewer Work Queue",
+            payload=build_reviewer_work_queue(_operator()),
+        )
+
     @app.get("/api/v1/case-intelligence-review/supervisor-queue")
     def api_case_intelligence_supervisor_queue_get_v19_3():
         if not _login_required():
             return jsonify({"error": "login required"}), 401
         return jsonify(_supervisor_queue())
+
+    @app.get("/api/v1/case-intelligence-review/my-assignments")
+    def api_case_intelligence_reviewer_work_queue_get_v19_5():
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        return jsonify(build_reviewer_work_queue(_operator()))
+
+    @app.post(
+        "/api/v1/case-intelligence-review/my-assignments/<case_id>/decisions/<int:decision_record_id>/review-state"
+    )
+    def api_case_intelligence_reviewer_work_state_post_v19_5(
+        case_id: str, decision_record_id: int
+    ):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        request_payload = _payload()
+        result = update_assigned_decision_review_state(
+            case_id,
+            decision_record_id,
+            str(request_payload.get("review_state") or ""),
+            reviewer=_operator(),
+            note=str(request_payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get("status") == "recorded" else 422
 
     @app.post(
         "/api/v1/case-intelligence-review/supervisor-queue/<case_id>/decisions/<int:decision_record_id>/assignment"
