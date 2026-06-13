@@ -32,8 +32,11 @@ def _free_port() -> int:
 
 
 def _build_app(database_path: Path):
-    os.environ["SOCMINT_DATABASE_URL"] = f"sqlite:///{database_path}"
+    data_dir = database_path.parent
+    os.environ["DATABASE_URL"] = f"sqlite:///{database_path}"
+    os.environ["SOCMINT_DATA_DIR"] = str(data_dir)
     os.environ["SOCMINT_SECRET_KEY"] = "v17-7-browser-e2e-secret-key-2026"
+    os.environ["SOCMINT_AUTO_CREATE_DB"] = "true"
 
     from src.socmint.case_delivery_workspace_routes_v15 import (
         register_case_delivery_workspace_routes_v15,
