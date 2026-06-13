@@ -127,10 +127,13 @@ def test_v19_4_blocks_missing_reviewer_wrong_case_and_completed_decision(
 
 def test_v19_4_assignment_route_requires_login(tmp_path, monkeypatch):
     client = _app(tmp_path, monkeypatch).test_client()
+    with client.session_transaction() as sess:
+        sess["_csrf_token"] = "test-csrf"
     response = client.post(
         "/api/v1/case-intelligence-review/supervisor-queue/case-alpha/"
         "decisions/1/assignment",
         json={"assigned_reviewer": "reviewer"},
+        headers={"X-CSRF-Token": "test-csrf"},
     )
     assert response.status_code == 401
 
@@ -167,9 +170,11 @@ def test_v19_4_ui_script_release_note_and_no_migration(tmp_path, monkeypatch):
     client = _app(tmp_path, monkeypatch).test_client()
     with client.session_transaction() as sess:
         sess["user"] = "supervisor"
+        sess["_csrf_token"] = "test-csrf"
     client.post(
         "/api/v1/case-intelligence-review/case-alpha/decisions",
         json={"decision": "approve_review", "note": "ready"},
+        headers={"X-CSRF-Token": "test-csrf"},
     )
 
     response = client.get("/case-intelligence-review/supervisor-queue")
