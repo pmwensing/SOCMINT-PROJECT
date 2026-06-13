@@ -44,8 +44,9 @@ def _free_port() -> int:
 
 def _build_app(database_path: Path):
     os.environ["SOCMINT_DATABASE_URL"] = f"sqlite:///{database_path}"
+    os.environ["SOCMINT_SECRET_KEY"] = "v17-7-browser-e2e-secret-key-2026"
     app = create_app()
-    app.config.update(TESTING=True, SECRET_KEY="v17-7-browser-e2e-secret")
+    app.config.update(TESTING=True)
     register_operator_release_console_routes_v14(app)
     register_case_delivery_workspace_routes_v15(app)
     register_unified_operator_workflow_dashboard_routes_v17_1(app)
