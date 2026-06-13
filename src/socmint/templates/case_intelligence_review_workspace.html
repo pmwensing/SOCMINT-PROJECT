@@ -67,22 +67,57 @@
   <div class="section-header">
     <div>
       <h2>Persistent Decision History</h2>
-      <p class="muted">Durable case decisions from the existing audit trail. These records remain available after the login session ends.</p>
+      <p class="muted">Durable case decisions from the audit trail. Filters and review annotations never modify the original decision records.</p>
     </div>
-    <div>
-      <span id="persistent-decision-count" class="status-pill">{{ payload.persistent_decision_history.entry_count or 0 }} record(s)</span>
-      <button id="refresh-persistent-decision-history" type="button">Refresh durable history</button>
-    </div>
+    <span id="persistent-decision-count" class="status-pill">{{ payload.persistent_decision_history.total_entries or 0 }} matching record(s)</span>
   </div>
+
+  <div class="grid cards-4">
+    <article class="card">
+      <label for="persistent-filter-actor">Actor</label>
+      <input id="persistent-filter-actor" type="text" value="{{ payload.persistent_decision_history.filters.actor or '' }}" placeholder="analyst">
+    </article>
+    <article class="card">
+      <label for="persistent-filter-decision">Decision</label>
+      <select id="persistent-filter-decision"><option value="">All decisions</option>{% for item in payload.decision_options %}<option value="{{ item }}" {% if payload.persistent_decision_history.filters.decision == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select>
+    </article>
+    <article class="card">
+      <label for="persistent-filter-date-from">From date</label>
+      <input id="persistent-filter-date-from" type="date" value="{{ payload.persistent_decision_history.filters.date_from or '' }}">
+      <label for="persistent-filter-date-to">To date</label>
+      <input id="persistent-filter-date-to" type="date" value="{{ payload.persistent_decision_history.filters.date_to or '' }}">
+    </article>
+    <article class="card">
+      <label for="persistent-filter-review-state">Review state</label>
+      <select id="persistent-filter-review-state"><option value="">All states</option>{% for item in payload.persistent_decision_history.review_states %}<option value="{{ item }}" {% if payload.persistent_decision_history.filters.review_state == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select>
+      <label for="persistent-page-size">Rows per page</label>
+      <select id="persistent-page-size">{% for size in [10, 25, 50, 100] %}<option value="{{ size }}" {% if payload.persistent_decision_history.pagination.page_size == size %}selected{% endif %}>{{ size }}</option>{% endfor %}</select>
+    </article>
+  </div>
+  <div>
+    <button id="apply-persistent-decision-filters" type="button">Apply filters</button>
+    <button id="clear-persistent-decision-filters" type="button">Clear filters</button>
+    <button id="refresh-persistent-decision-history" type="button">Refresh durable history</button>
+  </div>
+
   <table class="data-table" {% if not payload.persistent_decision_history.entries %}hidden{% endif %}>
-    <thead><tr><th>Actor</th><th>Decision</th><th>Note</th><th>Source timestamp</th><th>Persisted timestamp</th></tr></thead>
+    <thead><tr><th>Actor</th><th>Decision</th><th>Note</th><th>Source timestamp</th><th>Persisted timestamp</th><th>Review state</th><th>Review control</th></tr></thead>
     <tbody id="persistent-decision-history-body">
     {% for item in payload.persistent_decision_history.entries %}
-      <tr><td>{{ item.actor }}</td><td>{{ item.decision }}</td><td>{{ item.note or '—' }}</td><td>{{ item.source_recorded_at or '—' }}</td><td>{{ item.persisted_at or '—' }}</td></tr>
+      <tr data-decision-record-id="{{ item.decision_record_id }}">
+        <td>{{ item.actor }}</td><td>{{ item.decision }}</td><td>{{ item.note or '—' }}</td><td>{{ item.source_recorded_at or '—' }}</td><td>{{ item.persisted_at or '—' }}</td>
+        <td>{{ item.review_state }}{% if item.reviewed_by %}<br><small>{{ item.reviewed_by }} · {{ item.reviewed_at }}</small>{% endif %}</td>
+        <td><select class="persistent-review-state">{% for state in payload.persistent_decision_history.review_states %}<option value="{{ state }}" {% if item.review_state == state %}selected{% endif %}>{{ state }}</option>{% endfor %}</select><input class="persistent-review-note" type="text" value="{{ item.review_note or '' }}" placeholder="Review note"><button type="button" class="save-persistent-review-state">Save</button></td>
+      </tr>
     {% endfor %}
     </tbody>
   </table>
-  <p id="persistent-decision-history-empty" {% if payload.persistent_decision_history.entries %}hidden{% endif %}>No durable analyst decisions have been recorded for this case.</p>
+  <p id="persistent-decision-history-empty" {% if payload.persistent_decision_history.entries %}hidden{% endif %}>No durable decisions match the selected filters.</p>
+  <div class="section-header">
+    <button id="persistent-page-previous" type="button" {% if not payload.persistent_decision_history.pagination.has_previous %}disabled{% endif %}>Previous</button>
+    <span id="persistent-page-status">Page {{ payload.persistent_decision_history.pagination.page }} of {{ payload.persistent_decision_history.pagination.page_count or 0 }}</span>
+    <button id="persistent-page-next" type="button" {% if not payload.persistent_decision_history.pagination.has_next %}disabled{% endif %}>Next</button>
+  </div>
 </section>
 
 <section class="panel" id="review-history">
