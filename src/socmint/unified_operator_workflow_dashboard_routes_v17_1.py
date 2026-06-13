@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import jsonify, redirect, render_template, request, session, url_for
 
 from .operator_workflow_action_launcher_v17_2 import launch_operator_workflow_action
+from .operator_workflow_action_receipt_v17_3 import attach_operator_workflow_action_receipt
 from .unified_operator_workflow_dashboard_v17_1 import build_unified_operator_workflow_dashboard
 
 
@@ -62,10 +63,21 @@ def register_unified_operator_workflow_dashboard_routes_v17_1(app):
     def api_operator_workflow_action_launcher_post_v17_2(case_id: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
+        request_payload = _request_payload()
         result = launch_operator_workflow_action(
             case_id,
-            _request_payload(),
+            request_payload,
             routes=list(app.url_map.iter_rules()),
+        )
+        result = attach_operator_workflow_action_receipt(
+            case_id,
+            result,
+            operator=str(session.get("user") or "unknown"),
+            recorded_at=(
+                str(request_payload.get("recorded_at"))
+                if request_payload.get("recorded_at")
+                else None
+            ),
         )
         if result.get("status") == "launched":
             status_code = 200
