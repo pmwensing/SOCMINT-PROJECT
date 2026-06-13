@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added the v17.7 Product Review Checkpoint and Browser-Level E2E Validation with
+  operator-workflow module/asset/route/release audits, duplicate-route and
+  migration checks, plus a real Selenium dashboard validation runner and JSON
+  evidence report.
 - Added the v17.6 Operator Workflow Dashboard UX Hardening with in-page action
   feedback, confirmation/error banners, busy/loading states, automatic history
   refresh, safer dispatch disabling, and clearer operator guidance.
