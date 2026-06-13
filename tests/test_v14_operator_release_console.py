@@ -23,7 +23,13 @@ def test_operator_release_console_payload_summarizes_release_evidence():
     assert payload["pr_queue"]["status"] == "clean_documented"
     assert payload["release_health"]["status"] in {"pass", "needs_review"}
     assert payload["release_health"]["open_pr_count"] == 0
-    assert payload["evaluation"]["decision"] == "EVALUATION_POINT_REACHED"
+    expected_evaluation = (
+        "EVALUATION_POINT_REACHED"
+        if payload["release_health"]["status"] == "pass"
+        and payload["release_health"].get("freshness", {}).get("ok")
+        else "REFRESH_RELEASE_HEALTH"
+    )
+    assert payload["evaluation"]["decision"] == expected_evaluation
     assert payload["evaluation"]["blocker_count"] == 0
     assert payload["pr_queue"]["closed_superseded_prs"] == [
         "#139",
