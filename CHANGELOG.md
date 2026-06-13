@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v17.3 Operator Action Receipt / Audit Trail with canonical action
+  receipts for launched, confirmation-required, and blocked dashboard actions,
+  including operator, confirmation state, target, result, timestamp, and hashes.
 - Added the v17.2 Operator Workflow Action Launcher with safe navigation controls,
   explicit confirmation gates for release-health refresh and delivery dispatch,
   dispatch-readiness enforcement, and operator-reviewed action plans.
