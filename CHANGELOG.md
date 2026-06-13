@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Added the v18.7 Product Review and Browser E2E Checkpoint with required-artifact,
+  route, release-note, and migration checks plus a real Chromium validation runner.
+- Added the v18.6 Case Review Session History with capped case-filtered analyst
+  decisions stored only in the authenticated Flask session.
+- Added the v18.5 Analyst Decision Actions for approve, follow-up, hold-delivery,
+  and return-to-analyst outcomes with explicit browser confirmation.
+- Added the v18.4 Timeline and Contradiction Review with chronological events,
+  contradiction status, severity, and unresolved-review counts.
+- Added the v18.3 Identity and Entity Resolution Panel with confidence thresholds,
+  candidate/unresolved flags, and links to existing entity intelligence services.
+- Added the v18.2 Evidence and Claim Review Panel with linked evidence counts,
+  unsupported claim detection, broken reference checks, and ledger navigation.
+- Added the v18.1 Case Intelligence Summary Cards for evidence, claims, identities,
+  entities, timeline events, contradictions, dossier readiness, and export readiness.
+- Added the v18.0 Case Intelligence Review Workspace as an authenticated case-level
+  composition UI/API over existing SOCMINT intelligence and review services.
 - Added the v17.7 Product Review Checkpoint and Browser-Level E2E Validation with
   operator-workflow module/asset/route/release audits, duplicate-route and
   migration checks, plus a real Selenium dashboard validation runner and JSON
