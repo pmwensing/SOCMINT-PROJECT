@@ -15,6 +15,7 @@ from .persistent_case_review_decisions_v19_0 import (
     set_persistent_decision_review_state,
 )
 from .persistent_decision_supervisor_queue_v19_3 import (
+    assign_persistent_decision_reviewer,
     build_persistent_decision_supervisor_queue,
 )
 
@@ -104,6 +105,26 @@ def register_case_intelligence_review_routes_v18(app):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
         return jsonify(_supervisor_queue())
+
+    @app.post(
+        "/api/v1/case-intelligence-review/supervisor-queue/<case_id>/decisions/<int:decision_record_id>/assignment"
+    )
+    def api_case_intelligence_supervisor_assignment_post_v19_4(
+        case_id: str, decision_record_id: int
+    ):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        request_payload = _payload()
+        result = assign_persistent_decision_reviewer(
+            case_id,
+            decision_record_id,
+            str(request_payload.get("assigned_reviewer") or ""),
+            actor=_operator(),
+            note=str(request_payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        result["supervisor_queue"] = build_persistent_decision_supervisor_queue()
+        return jsonify(result), 200 if result.get("status") == "recorded" else 422
 
     @app.get("/api/v1/case-intelligence-review/<case_id>")
     def api_case_intelligence_review_get_v18(case_id: str):
