@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+from .operator_workflow_action_launcher_v17_2 import launch_operator_workflow_action
 from .unified_operator_workflow_dashboard_v17_1 import build_unified_operator_workflow_dashboard
 
 
@@ -10,8 +11,10 @@ def _login_required() -> bool:
 
 
 def _request_payload() -> dict:
-    payload = request.get_json(silent=True) or {}
-    return payload if isinstance(payload, dict) else {}
+    payload = request.get_json(silent=True)
+    if isinstance(payload, dict):
+        return payload
+    return request.form.to_dict() if request.form else {}
 
 
 def register_unified_operator_workflow_dashboard_routes_v17_1(app):
@@ -54,5 +57,22 @@ def register_unified_operator_workflow_dashboard_routes_v17_1(app):
                 routes=list(app.url_map.iter_rules()),
             )
         )
+
+    @app.post("/api/v1/operator/workflow-dashboard/<case_id>/actions")
+    def api_operator_workflow_action_launcher_post_v17_2(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        result = launch_operator_workflow_action(
+            case_id,
+            _request_payload(),
+            routes=list(app.url_map.iter_rules()),
+        )
+        if result.get("status") == "launched":
+            status_code = 200
+        elif result.get("status") == "confirmation_required":
+            status_code = 409
+        else:
+            status_code = 422
+        return jsonify(result), status_code
 
     return app
