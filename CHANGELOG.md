@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v17.2 Operator Workflow Action Launcher with safe navigation controls,
+  explicit confirmation gates for release-health refresh and delivery dispatch,
+  dispatch-readiness enforcement, and operator-reviewed action plans.
 - Added the v17.1 Unified Operator Workflow Dashboard with a combined
   case-delivery, recovery-chain, operations, release-health, blocker, and
   recommended-action payload plus authenticated API and operator UI routes.
