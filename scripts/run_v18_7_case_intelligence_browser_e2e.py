@@ -31,7 +31,10 @@ def _port() -> int:
 def _app(db: Path):
     os.environ["DATABASE_URL"] = f"sqlite:///{db}"
     os.environ["SOCMINT_DATA_DIR"] = str(db.parent)
-    os.environ["SOCMINT_SECRET_KEY"] = "v18-browser-e2e-secret-key-2026"
+    os.environ["SOCMINT_SECRET_KEY"] = (
+        "v18-browser-e2e-test-secret-key-2026-"
+        "7f82b74d4cb54a42a5d69dd6f8f51a93"
+    )
     os.environ["SOCMINT_AUTO_CREATE_DB"] = "true"
     from src.socmint.case_intelligence_review_routes_v18 import register_case_intelligence_review_routes_v18
     from src.socmint.dashboard import create_app
