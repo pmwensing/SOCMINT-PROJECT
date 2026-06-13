@@ -4,6 +4,10 @@ from flask import jsonify, redirect, render_template, request, session, url_for
 
 from .operator_workflow_action_launcher_v17_2 import launch_operator_workflow_action
 from .operator_workflow_action_receipt_v17_3 import attach_operator_workflow_action_receipt
+from .operator_workflow_action_receipt_verification_v17_4 import (
+    verify_operator_workflow_action_receipt,
+    verify_operator_workflow_action_receipt_from_request,
+)
 from .unified_operator_workflow_dashboard_v17_1 import build_unified_operator_workflow_dashboard
 
 
@@ -64,6 +68,7 @@ def register_unified_operator_workflow_dashboard_routes_v17_1(app):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
         request_payload = _request_payload()
+        operator = str(session.get("user") or "unknown")
         result = launch_operator_workflow_action(
             case_id,
             request_payload,
@@ -72,12 +77,18 @@ def register_unified_operator_workflow_dashboard_routes_v17_1(app):
         result = attach_operator_workflow_action_receipt(
             case_id,
             result,
-            operator=str(session.get("user") or "unknown"),
+            operator=operator,
             recorded_at=(
                 str(request_payload.get("recorded_at"))
                 if request_payload.get("recorded_at")
                 else None
             ),
+        )
+        result["action_receipt_verification"] = verify_operator_workflow_action_receipt(
+            result.get("action_receipt"),
+            result,
+            expected_operator=operator,
+            expected_case_id=case_id,
         )
         if result.get("status") == "launched":
             status_code = 200
@@ -86,5 +97,16 @@ def register_unified_operator_workflow_dashboard_routes_v17_1(app):
         else:
             status_code = 422
         return jsonify(result), status_code
+
+    @app.post("/api/v1/operator/workflow-dashboard/<case_id>/actions/verify")
+    def api_operator_workflow_action_receipt_verify_post_v17_4(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        result = verify_operator_workflow_action_receipt_from_request(
+            case_id,
+            _request_payload(),
+            expected_operator=str(session.get("user") or "unknown"),
+        )
+        return jsonify(result), 200 if result.get("status") == "verified" else 409
 
     return app
