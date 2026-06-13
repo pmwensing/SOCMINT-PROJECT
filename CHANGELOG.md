@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v17.6 Operator Workflow Dashboard UX Hardening with in-page action
+  feedback, confirmation/error banners, busy/loading states, automatic history
+  refresh, safer dispatch disabling, and clearer operator guidance.
 - Added the v17.5 Operator Action History / Session Timeline with capped,
   operator/case-filtered Flask-session history, receipt-verification summaries,
   a read-only history API, and a readable dashboard timeline.
