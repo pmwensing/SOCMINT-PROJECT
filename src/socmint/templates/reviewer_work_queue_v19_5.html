@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-reviewer-work-queue data-csrf-token="{{ session.get('_csrf_token', '') }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Reviewer Work Queue / My Assignments</h1><p>Current assignments for {{ payload.reviewer }}.</p></div>
+    <span class="status-pill">{{ payload.entry_count }} assigned</span>
+  </div>
+  <div id="reviewer-work-queue-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
+</section>
+
+<section class="panel">
+  <h2>Assignment Summary</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Unreviewed</h3><p class="metric">{{ payload.counts.unreviewed }}</p></article>
+    <article class="card"><h3>Needs follow-up</h3><p class="metric">{{ payload.counts.needs_follow_up }}</p></article>
+    <article class="card"><h3>Reviewed</h3><p class="metric">{{ payload.counts.reviewed }}</p></article>
+    <article class="card"><h3>Accepted</h3><p class="metric">{{ payload.counts.accepted }}</p></article>
+  </div>
+  <p><strong>Oldest assignment age:</strong> {% if payload.oldest_assignment_age_hours is not none %}{{ payload.oldest_assignment_age_hours }} hours{% else %}None{% endif %}</p>
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>My Assignments</h2><p class="muted">Review-state updates create separate audit annotations and never modify the source decision.</p></div><button id="refresh-reviewer-work-queue" type="button">Refresh queue</button></div>
+  {% if payload.entries %}
+  <table class="data-table">
+    <thead><tr><th>Case</th><th>Decision</th><th>Age</th><th>Review state</th><th>Assignment note</th><th>Workspace</th><th>Review action</th></tr></thead>
+    <tbody id="reviewer-work-queue-body">
+      {% for item in payload.entries %}
+      <tr data-case-id="{{ item.case_id }}" data-decision-record-id="{{ item.decision_record_id }}">
+        <td>{{ item.case_id }}</td>
+        <td>{{ item.decision }}</td>
+        <td>{% if item.age_hours is not none %}{{ item.age_hours }} hours{% else %}—{% endif %}</td>
+        <td class="reviewer-state-value">{{ item.review_state }}</td>
+        <td>{{ item.assignment_note or '—' }}</td>
+        <td><a href="{{ item.case_workspace_href }}">Open case workspace</a></td>
+        <td>
+          <select class="reviewer-state-select">
+            {% for state in payload.allowed_review_states %}<option value="{{ state }}" {% if item.review_state == state %}selected{% endif %}>{{ state }}</option>{% endfor %}
+          </select>
+          <input class="reviewer-state-note" type="text" value="{{ item.review_note or '' }}" placeholder="Review note">
+          <button type="button" class="save-reviewer-state">Save review state</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p id="reviewer-work-queue-empty">No decisions are currently assigned to you.</p>{% endif %}
+</section>
+</div>
+<script src="{{ url_for('static', filename='reviewer_work_queue_v19_5.js') }}" defer></script>
+{% endblock %}
