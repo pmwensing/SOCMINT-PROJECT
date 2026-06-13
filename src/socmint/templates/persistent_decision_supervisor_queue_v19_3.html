@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="page-header">
+    <div>
+      <h1>Persistent Decision Supervisor Queue</h1>
+      <p>Cross-case review of durable analyst decisions and latest review annotations.</p>
+    </div>
+    <span class="status-pill">{{ payload.total_outstanding }} outstanding</span>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Review Summary</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Unreviewed</h3><p class="metric">{{ payload.counts.unreviewed }}</p></article>
+    <article class="card"><h3>Needs follow-up</h3><p class="metric">{{ payload.counts.needs_follow_up }}</p></article>
+    <article class="card"><h3>Reviewed</h3><p class="metric">{{ payload.counts.reviewed }}</p></article>
+    <article class="card"><h3>Accepted</h3><p class="metric">{{ payload.counts.accepted }}</p></article>
+  </div>
+  <p><strong>Oldest outstanding age:</strong> {% if payload.oldest_outstanding_age_hours is not none %}{{ payload.oldest_outstanding_age_hours }} hours{% else %}None{% endif %}</p>
+  <p><strong>Assigned reviewers:</strong> {{ payload.assigned_reviewers|join(', ') or 'None' }}</p>
+</section>
+
+<section class="panel">
+  <h2>Queue Filters</h2>
+  <form method="get">
+    <label for="queue-case-id">Case ID</label>
+    <input id="queue-case-id" name="case_id" value="{{ payload.filters.case_id or '' }}">
+    <label for="queue-review-state">Review state</label>
+    <select id="queue-review-state" name="review_state">
+      <option value="">All states</option>
+      {% for state in payload.review_states %}<option value="{{ state }}" {% if payload.filters.review_state == state %}selected{% endif %}>{{ state }}</option>{% endfor %}
+    </select>
+    <label for="queue-assigned-reviewer">Assigned reviewer</label>
+    <select id="queue-assigned-reviewer" name="assigned_reviewer">
+      <option value="">All reviewers</option>
+      {% for reviewer in payload.assigned_reviewers %}<option value="{{ reviewer }}" {% if payload.filters.assigned_reviewer == reviewer %}selected{% endif %}>{{ reviewer }}</option>{% endfor %}
+    </select>
+    <button type="submit">Apply filters</button>
+    <a href="{{ url_for('case_intelligence_supervisor_queue_get_v19_3') }}">Clear</a>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Case-Level Summary</h2>
+  {% if payload.case_summaries %}
+  <table class="data-table">
+    <thead><tr><th>Case</th><th>Total</th><th>Unreviewed</th><th>Needs follow-up</th><th>Reviewed</th><th>Accepted</th><th>Outstanding</th><th>Workspace</th></tr></thead>
+    <tbody>
+      {% for item in payload.case_summaries %}
+      <tr><td>{{ item.case_id }}</td><td>{{ item.total }}</td><td>{{ item.unreviewed }}</td><td>{{ item.needs_follow_up }}</td><td>{{ item.reviewed }}</td><td>{{ item.accepted }}</td><td>{{ item.outstanding }}</td><td><a href="{{ item.case_workspace_href }}">Open case workspace</a></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p>No persistent case decisions are available.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Supervisor Queue</h2>
+  {% if payload.entries %}
+  <table class="data-table">
+    <thead><tr><th>Case</th><th>Decision</th><th>Original actor</th><th>Review state</th><th>Assigned reviewer</th><th>Age</th><th>Review note</th><th>Workspace</th></tr></thead>
+    <tbody>
+      {% for item in payload.entries %}
+      <tr>
+        <td>{{ item.case_id }}</td>
+        <td>{{ item.decision }}</td>
+        <td>{{ item.actor }}</td>
+        <td>{{ item.review_state }}</td>
+        <td>{{ item.assigned_reviewer or 'Unassigned' }}</td>
+        <td>{% if item.age_hours is not none %}{{ item.age_hours }} hours{% else %}—{% endif %}</td>
+        <td>{{ item.review_note or '—' }}</td>
+        <td><a href="{{ item.case_workspace_href }}">Open case workspace</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p>No decisions match the selected supervisor filters.</p>{% endif %}
+</section>
+{% endblock %}
