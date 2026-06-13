@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import socket
 import sys
 import tempfile
@@ -16,7 +17,9 @@ if str(ROOT) not in sys.path:
 
 from selenium import webdriver  # noqa: E402
 from selenium.common.exceptions import WebDriverException  # noqa: E402
+from selenium.webdriver.chrome.service import Service as ChromeService  # noqa: E402
 from selenium.webdriver.common.by import By  # noqa: E402
+from selenium.webdriver.firefox.service import Service as FirefoxService  # noqa: E402
 from selenium.webdriver.support import expected_conditions as EC  # noqa: E402
 from selenium.webdriver.support.ui import WebDriverWait  # noqa: E402
 from werkzeug.serving import make_server  # noqa: E402
@@ -61,13 +64,24 @@ def _driver(name: str):
     if name == "firefox":
         options = webdriver.FirefoxOptions()
         options.add_argument("-headless")
-        return webdriver.Firefox(options=options)
+        firefox_binary = shutil.which("firefox-esr") or shutil.which("firefox")
+        if firefox_binary:
+            options.binary_location = firefox_binary
+        geckodriver = shutil.which("geckodriver")
+        service = FirefoxService(executable_path=geckodriver) if geckodriver else None
+        return webdriver.Firefox(options=options, service=service)
+
     options = webdriver.ChromeOptions()
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1440,1200")
-    return webdriver.Chrome(options=options)
+    chromium_binary = shutil.which("chromium") or shutil.which("google-chrome")
+    if chromium_binary:
+        options.binary_location = chromium_binary
+    chromedriver = shutil.which("chromedriver")
+    service = ChromeService(executable_path=chromedriver) if chromedriver else None
+    return webdriver.Chrome(options=options, service=service)
 
 
 def _session_cookie(app, user: str = "operator") -> str:
