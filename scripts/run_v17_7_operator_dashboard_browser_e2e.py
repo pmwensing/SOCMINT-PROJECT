@@ -21,17 +21,6 @@ from selenium.webdriver.support import expected_conditions as EC  # noqa: E402
 from selenium.webdriver.support.ui import WebDriverWait  # noqa: E402
 from werkzeug.serving import make_server  # noqa: E402
 
-from src.socmint.case_delivery_workspace_routes_v15 import (  # noqa: E402
-    register_case_delivery_workspace_routes_v15,
-)
-from src.socmint.dashboard import create_app  # noqa: E402
-from src.socmint.operator_release_console_routes_v14 import (  # noqa: E402
-    register_operator_release_console_routes_v14,
-)
-from src.socmint.unified_operator_workflow_dashboard_routes_v17_1 import (  # noqa: E402
-    register_unified_operator_workflow_dashboard_routes_v17_1,
-)
-
 
 SCHEMA = "socmint.operator_workflow_browser_e2e.v17_7"
 
@@ -45,6 +34,18 @@ def _free_port() -> int:
 def _build_app(database_path: Path):
     os.environ["SOCMINT_DATABASE_URL"] = f"sqlite:///{database_path}"
     os.environ["SOCMINT_SECRET_KEY"] = "v17-7-browser-e2e-secret-key-2026"
+
+    from src.socmint.case_delivery_workspace_routes_v15 import (
+        register_case_delivery_workspace_routes_v15,
+    )
+    from src.socmint.dashboard import create_app
+    from src.socmint.operator_release_console_routes_v14 import (
+        register_operator_release_console_routes_v14,
+    )
+    from src.socmint.unified_operator_workflow_dashboard_routes_v17_1 import (
+        register_unified_operator_workflow_dashboard_routes_v17_1,
+    )
+
     app = create_app()
     app.config.update(TESTING=True)
     register_operator_release_console_routes_v14(app)
