@@ -135,7 +135,7 @@ def test_v19_1_client_script_refreshes_persistent_history():
     assert "renderPersistentHistory" in script
     assert "refreshPersistentHistory" in script
     assert "decisions/persistent" in script
-    assert "persistent_decision_history" in script
+    assert "persistentQuery" in script
     assert "Decision recorded and persisted" in script
 
 
