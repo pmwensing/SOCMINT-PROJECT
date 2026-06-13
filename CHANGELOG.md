@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v17.5 Operator Action History / Session Timeline with capped,
+  operator/case-filtered Flask-session history, receipt-verification summaries,
+  a read-only history API, and a readable dashboard timeline.
 - Added the v17.4 Operator Action Receipt Verification layer with canonical
   receipt hash/id checks, timestamp validation, authenticated operator and case
   consistency, action-result matching, target integrity checks, and a dedicated API.
