@@ -13,6 +13,9 @@ from .operator_workflow_action_receipt_verification_v17_4 import (
     verify_operator_workflow_action_receipt,
     verify_operator_workflow_action_receipt_from_request,
 )
+from .operator_workflow_product_review_checkpoint_v17_7 import (
+    build_operator_workflow_product_review_checkpoint,
+)
 from .unified_operator_workflow_dashboard_v17_1 import build_unified_operator_workflow_dashboard
 
 
@@ -86,6 +89,15 @@ def register_unified_operator_workflow_dashboard_routes_v17_1(app):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
         return jsonify(_dashboard_payload(app, case_id, _request_payload()))
+
+    @app.get("/api/v1/operator/workflow-dashboard/product-review-checkpoint")
+    def api_operator_workflow_product_review_checkpoint_get_v17_7():
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        result = build_operator_workflow_product_review_checkpoint(
+            routes=list(app.url_map.iter_rules())
+        )
+        return jsonify(result), 200 if result.get("ready") else 409
 
     @app.get("/api/v1/operator/workflow-dashboard/<case_id>/actions/history")
     def api_operator_action_session_timeline_get_v17_5(case_id: str):
