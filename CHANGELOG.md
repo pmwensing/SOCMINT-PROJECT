@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added v19.0 Persistent Case Review Decisions by reusing the existing
+  `audit_logs` table for durable, case-scoped analyst decisions, actor attribution,
+  notes, timestamps, source IP capture, and authenticated history retrieval.
 - Added the v18.7 Product Review and Browser E2E Checkpoint with required-artifact,
   route, release-note, and migration checks plus a real Chromium validation runner.
 - Added the v18.6 Case Review Session History with capped case-filtered analyst
