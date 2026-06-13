@@ -1,6 +1,6 @@
 # v19.3 Persistent Decision Review Summary / Supervisor Queue
 
-Adds a read-only cross-case queue for durable analyst decisions.
+Adds a read-only cross-case supervisor view for durable analyst decisions.
 
 The queue shows:
 
