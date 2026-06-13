@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
+<div
+  data-operator-workflow-dashboard
+  data-case-id="{{ payload.case_id }}"
+  data-csrf-token="{{ session.get('_csrf_token', '') }}"
+>
 <section class="panel">
   <div class="page-header">
     <div>
@@ -8,6 +13,7 @@
     </div>
     <div class="status-pill {{ 'completed' if payload.status == 'ready' else 'failed' }}">{{ payload.status }}</div>
   </div>
+  <div id="operator-action-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
   <div class="grid cards-4">
     <article class="card"><h2>Case Delivery</h2><p class="metric">{{ payload.case_delivery.decision or 'unknown' }}</p><p>{{ payload.case_delivery.status or 'unknown' }}</p></article>
     <article class="card"><h2>Recovery Chain</h2><p class="metric">{{ 'closed' if payload.recovery_chain.closed else 'blocked' }}</p><p>{{ payload.recovery_chain.stage_count or 0 }} stages</p></article>
@@ -24,30 +30,58 @@
   <article class="card">
     <h3>{{ payload.recommended_action.label }}</h3>
     <p><code>{{ payload.recommended_action.key }}</code></p>
-    <p><a href="{{ payload.recommended_action.href }}">Open action target</a></p>
+    <p class="muted">Review the workflow state below before launching any confirmed action.</p>
   </article>
 </section>
 
 <section class="panel">
-  <div class="section-header"><div><h2>Operator Action Launcher</h2><p class="muted">Navigation actions open immediately. Refresh and dispatch require explicit confirmation.</p></div></div>
+  <div class="section-header">
+    <div>
+      <h2>Operator Action Launcher</h2>
+      <p class="muted">Safe navigation actions open immediately. Refresh and dispatch require confirmation and produce an auditable receipt.</p>
+    </div>
+  </div>
   <div class="grid cards-4">
-    <article class="card"><h3>Case workspace</h3><p><a href="/case-delivery?case_id={{ payload.case_id }}">Open case delivery</a></p></article>
-    <article class="card"><h3>Release console</h3><p><a href="/operator/release-console">Open release console</a></p></article>
-    <article class="card"><h3>Review blockers</h3><p><a href="#active-blockers">Review active blockers</a></p></article>
+    <article class="card">
+      <h3>Case workspace</h3>
+      <p>Review delivery readiness, approval, and blockers.</p>
+      <button type="button" data-workflow-action data-action="open_case_delivery">Open case delivery</button>
+    </article>
+    <article class="card">
+      <h3>Release console</h3>
+      <p>Review release evidence and current health.</p>
+      <button type="button" data-workflow-action data-action="open_release_console">Open release console</button>
+    </article>
+    <article class="card">
+      <h3>Review blockers</h3>
+      <p>Jump to the consolidated blocker table.</p>
+      <button type="button" data-workflow-action data-action="review_blockers">Review active blockers</button>
+    </article>
     <article class="card">
       <h3>Confirmed actions</h3>
-      <form method="post" action="/api/v1/operator/workflow-dashboard/{{ payload.case_id }}/actions" onsubmit="return confirm('Refresh release health now?');">
-        <input type="hidden" name="action" value="refresh_release_health">
-        <input type="hidden" name="confirmed" value="true">
-        <input type="hidden" name="_csrf_token" value="{{ session.get('_csrf_token', '') }}">
-        <button type="submit">Refresh release health</button>
-      </form>
-      <form method="post" action="/api/v1/operator/workflow-dashboard/{{ payload.case_id }}/actions" onsubmit="return confirm('Dispatch delivery operations for this case?');">
-        <input type="hidden" name="action" value="dispatch_delivery_operations">
-        <input type="hidden" name="confirmed" value="true">
-        <input type="hidden" name="_csrf_token" value="{{ session.get('_csrf_token', '') }}">
-        <button type="submit">Dispatch operations</button>
-      </form>
+      <p class="muted">These controls create confirmed action plans; they do not silently mutate delivery state.</p>
+      <button
+        type="button"
+        data-workflow-action
+        data-action="refresh_release_health"
+        data-requires-confirmation="true"
+        data-confirm-message="Refresh operator release health now?"
+      >Refresh release health</button>
+      <button
+        type="button"
+        data-workflow-action
+        data-action="dispatch_delivery_operations"
+        data-requires-confirmation="true"
+        data-confirm-message="Create a confirmed delivery-operations dispatch plan for this case?"
+        {% if not (payload.summary.case_delivery_ready and payload.summary.recovery_chain_closed and payload.summary.operations_dispatchable) %}
+        disabled
+        data-permanently-disabled="true"
+        title="Dispatch is disabled until case delivery, recovery closure, and operations readiness all pass."
+        {% endif %}
+      >Dispatch operations</button>
+      {% if not (payload.summary.case_delivery_ready and payload.summary.recovery_chain_closed and payload.summary.operations_dispatchable) %}
+      <p class="muted">Dispatch is disabled until all readiness checks pass.</p>
+      {% endif %}
     </article>
   </div>
 </section>
@@ -56,20 +90,23 @@
   <div class="section-header">
     <div>
       <h2>Operator Action History</h2>
-      <p class="muted">Recent action receipts and verification results stored only in this login session.</p>
+      <p class="muted">Recent receipts and verification results stored only in this login session.</p>
     </div>
-    <span class="status-pill">{{ payload.action_history.entry_count or 0 }} event(s)</span>
+    <div>
+      <span id="operator-action-history-count" class="status-pill">{{ payload.action_history.entry_count or 0 }} event(s)</span>
+      <button id="refresh-action-history" type="button">Refresh history</button>
+    </div>
   </div>
-  {% if payload.action_history.entries %}
+  <p id="operator-action-history-loading" class="muted" aria-live="polite">Loading action history…</p>
   <div class="grid cards-4">
     <article class="card"><h3>Verified</h3><p class="metric">{{ payload.action_history.verified_count }}</p></article>
     <article class="card"><h3>Blocked</h3><p class="metric">{{ payload.action_history.blocked_count }}</p></article>
     <article class="card"><h3>Awaiting confirmation</h3><p class="metric">{{ payload.action_history.confirmation_required_count }}</p></article>
     <article class="card"><h3>Storage</h3><p class="metric">Session</p><p>No database persistence</p></article>
   </div>
-  <table class="data-table">
+  <table class="data-table" {% if not payload.action_history.entries %}hidden{% endif %}>
     <thead><tr><th>Time</th><th>Action</th><th>Result</th><th>Verification</th><th>Target</th><th>Receipt</th></tr></thead>
-    <tbody>
+    <tbody id="operator-action-history-body">
     {% for entry in payload.action_history.entries %}
       <tr>
         <td>{{ entry.recorded_at or 'unknown' }}</td>
@@ -82,9 +119,7 @@
     {% endfor %}
     </tbody>
   </table>
-  {% else %}
-  <p>No operator actions have been recorded in this session.</p>
-  {% endif %}
+  <p id="operator-action-history-empty" {% if payload.action_history.entries %}hidden{% endif %}>No operator actions have been recorded in this session. Launch an action above to create the first receipt.</p>
 </section>
 
 <section class="panel">
@@ -103,14 +138,16 @@
   <table class="data-table"><thead><tr><th>Source</th><th>Key</th><th>Detail</th></tr></thead><tbody>
   {% for blocker in payload.blockers %}<tr><td>{{ blocker.source }}</td><td><code>{{ blocker.key }}</code></td><td>{{ blocker.detail }}</td></tr>{% endfor %}
   </tbody></table>
-  {% else %}<p>No active workflow blockers.</p>{% endif %}
+  {% else %}<p>No active workflow blockers. Confirm the recommended action before continuing.</p>{% endif %}
 </section>
 
-<section class="panel"><h2>Operator Links</h2><table class="data-table"><tbody>
+<section class="panel"><h2>Operator Guidance</h2><table class="data-table"><tbody>
   <tr><td>Case delivery workspace</td><td><a href="{{ payload.case_delivery.href }}">Open workspace</a></td></tr>
   <tr><td>Operator release console</td><td><a href="{{ payload.release_console.href }}">Open release console</a></td></tr>
   <tr><td>Dashboard API</td><td><code>/api/v1/operator/workflow-dashboard/{{ payload.case_id }}</code></td></tr>
   <tr><td>Action launcher API</td><td><code>/api/v1/operator/workflow-dashboard/{{ payload.case_id }}/actions</code></td></tr>
   <tr><td>Action history API</td><td><code>/api/v1/operator/workflow-dashboard/{{ payload.case_id }}/actions/history</code></td></tr>
 </tbody></table></section>
+</div>
+<script src="{{ url_for('static', filename='operator_workflow_dashboard_v17_6.js') }}" defer></script>
 {% endblock %}
