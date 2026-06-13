@@ -55,7 +55,7 @@
 
 <section class="panel">
   <h2>Analyst Decision</h2>
-  <p class="muted">Decisions are recorded in this login session only and do not mutate delivery state.</p>
+  <p class="muted">Validated decisions are stored in the durable audit trail and also appear temporarily in this login session. They do not automatically mutate delivery state.</p>
   <label for="review-decision">Decision</label>
   <select id="review-decision">{% for item in payload.decision_options %}<option value="{{ item }}">{{ item }}</option>{% endfor %}</select>
   <label for="review-note">Note</label>
@@ -63,12 +63,34 @@
   <button id="record-review-decision" type="button">Record decision</button>
 </section>
 
+<section class="panel" id="persistent-decision-history">
+  <div class="section-header">
+    <div>
+      <h2>Persistent Decision History</h2>
+      <p class="muted">Durable case decisions from the existing audit trail. These records remain available after the login session ends.</p>
+    </div>
+    <div>
+      <span id="persistent-decision-count" class="status-pill">{{ payload.persistent_decision_history.entry_count or 0 }} record(s)</span>
+      <button id="refresh-persistent-decision-history" type="button">Refresh durable history</button>
+    </div>
+  </div>
+  <table class="data-table" {% if not payload.persistent_decision_history.entries %}hidden{% endif %}>
+    <thead><tr><th>Actor</th><th>Decision</th><th>Note</th><th>Source timestamp</th><th>Persisted timestamp</th></tr></thead>
+    <tbody id="persistent-decision-history-body">
+    {% for item in payload.persistent_decision_history.entries %}
+      <tr><td>{{ item.actor }}</td><td>{{ item.decision }}</td><td>{{ item.note or '—' }}</td><td>{{ item.source_recorded_at or '—' }}</td><td>{{ item.persisted_at or '—' }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p id="persistent-decision-history-empty" {% if payload.persistent_decision_history.entries %}hidden{% endif %}>No durable analyst decisions have been recorded for this case.</p>
+</section>
+
 <section class="panel" id="review-history">
-  <div class="section-header"><div><h2>Case Review Session History</h2><p class="muted">Session-only analyst decisions for this case.</p></div><button id="refresh-review-history" type="button">Refresh history</button></div>
+  <div class="section-header"><div><h2>Case Review Session History</h2><p class="muted">Temporary decisions visible only in this authenticated browser session.</p></div><button id="refresh-review-history" type="button">Refresh session history</button></div>
   <table class="data-table" {% if not payload.review_history.entries %}hidden{% endif %}><thead><tr><th>Time</th><th>Operator</th><th>Decision</th><th>Note</th></tr></thead><tbody id="case-review-history-body">
   {% for item in payload.review_history.entries %}<tr><td>{{ item.recorded_at }}</td><td>{{ item.operator }}</td><td>{{ item.decision }}</td><td>{{ item.note or '—' }}</td></tr>{% endfor %}
   </tbody></table>
-  <p id="case-review-history-empty" {% if payload.review_history.entries %}hidden{% endif %}>No analyst decisions have been recorded in this session.</p>
+  <p id="case-review-history-empty" {% if payload.review_history.entries %}hidden{% endif %}>No temporary analyst decisions have been recorded in this session.</p>
 </section>
 </div>
 <script src="{{ url_for('static', filename='case_intelligence_review_v18.js') }}" defer></script>
