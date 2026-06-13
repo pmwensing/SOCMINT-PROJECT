@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-case-intelligence-review data-case-id="{{ payload.case_id }}" data-csrf-token="{{ session.get('_csrf_token', '') }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Case Intelligence Review Workspace</h1><p>{{ payload.case.title or payload.case_id }}</p></div>
+    <span class="status-pill {{ 'completed' if payload.status == 'ready_for_analyst_decision' else 'failed' }}">{{ payload.status }}</span>
+  </div>
+  <div id="case-review-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
+</section>
+
+<section class="panel">
+  <h2>Case Intelligence Summary</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Evidence</h3><p class="metric">{{ payload.summary.evidence_count }}</p></article>
+    <article class="card"><h3>Claims</h3><p class="metric">{{ payload.summary.claim_count }}</p><p>{{ payload.summary.unresolved_claim_count }} unresolved</p></article>
+    <article class="card"><h3>Identity / Entity</h3><p class="metric">{{ payload.summary.identity_count + payload.summary.entity_count }}</p><p>{{ payload.summary.low_confidence_resolution_count }} low confidence</p></article>
+    <article class="card"><h3>Timeline</h3><p class="metric">{{ payload.summary.timeline_event_count }}</p><p>{{ payload.summary.contradiction_count }} contradiction(s)</p></article>
+  </div>
+</section>
+
+<section class="panel" id="evidence-claims">
+  <div class="section-header"><div><h2>Evidence and Claim Review</h2><p class="muted">Claims, provenance links, unsupported items, and broken evidence references.</p></div><a href="{{ payload.evidence_claim_review.specialist_href }}">Open claim-evidence ledger</a></div>
+  {% if payload.evidence_claim_review.claims %}
+  <table class="data-table"><thead><tr><th>Claim</th><th>Status</th><th>Linked evidence</th><th>Missing links</th></tr></thead><tbody>
+  {% for item in payload.evidence_claim_review.claims %}<tr><td>{{ item.text or item.claim or item.id }}</td><td>{{ item.status or 'unreviewed' }}</td><td>{{ item.linked_evidence_count }}</td><td>{{ item.missing_evidence_ids|join(', ') or '—' }}</td></tr>{% endfor %}
+  </tbody></table>
+  {% else %}<p>No claim records were supplied for this review payload.</p>{% endif %}
+</section>
+
+<section class="panel" id="identity-entities">
+  <div class="section-header"><div><h2>Identity and Entity Resolution</h2><p class="muted">Candidates below 0.70 confidence or unresolved status require analyst review.</p></div><a href="{{ payload.identity_entity_review.specialist_href }}">Open entity intelligence</a></div>
+  {% set candidates = payload.identity_entity_review.identities + payload.identity_entity_review.entities %}
+  {% if candidates %}
+  <table class="data-table"><thead><tr><th>Name</th><th>Type</th><th>Confidence</th><th>Status</th></tr></thead><tbody>
+  {% for item in candidates %}<tr><td>{{ item.name or item.label or item.id }}</td><td>{{ item.type or 'candidate' }}</td><td>{{ item.confidence or 0 }}</td><td>{{ 'review required' if item.review_required else (item.status or 'resolved') }}</td></tr>{% endfor %}
+  </tbody></table>
+  {% else %}<p>No identity or entity candidates were supplied.</p>{% endif %}
+</section>
+
+<section class="panel" id="timeline-contradictions">
+  <h2>Timeline and Contradiction Review</h2>
+  {% if payload.timeline_contradiction_review.events %}
+  <table class="data-table"><thead><tr><th>Time</th><th>Event</th><th>Source</th></tr></thead><tbody>
+  {% for item in payload.timeline_contradiction_review.events %}<tr><td>{{ item.occurred_at or item.timestamp or 'unknown' }}</td><td>{{ item.title or item.event or item.description }}</td><td>{{ item.source or 'unknown' }}</td></tr>{% endfor %}
+  </tbody></table>
+  {% else %}<p>No timeline events were supplied.</p>{% endif %}
+  <h3>Contradictions</h3>
+  {% if payload.timeline_contradiction_review.contradictions %}
+  <table class="data-table"><thead><tr><th>Issue</th><th>Status</th><th>Severity</th></tr></thead><tbody>
+  {% for item in payload.timeline_contradiction_review.contradictions %}<tr><td>{{ item.summary or item.description or item.id }}</td><td>{{ item.status or 'open' }}</td><td>{{ item.severity or 'review' }}</td></tr>{% endfor %}
+  </tbody></table>
+  {% else %}<p>No contradictions were supplied.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Analyst Decision</h2>
+  <p class="muted">Decisions are recorded in this login session only and do not mutate delivery state.</p>
+  <label for="review-decision">Decision</label>
+  <select id="review-decision">{% for item in payload.decision_options %}<option value="{{ item }}">{{ item }}</option>{% endfor %}</select>
+  <label for="review-note">Note</label>
+  <textarea id="review-note" rows="3"></textarea>
+  <button id="record-review-decision" type="button">Record decision</button>
+</section>
+
+<section class="panel" id="review-history">
+  <div class="section-header"><div><h2>Case Review Session History</h2><p class="muted">Session-only analyst decisions for this case.</p></div><button id="refresh-review-history" type="button">Refresh history</button></div>
+  <table class="data-table" {% if not payload.review_history.entries %}hidden{% endif %}><thead><tr><th>Time</th><th>Operator</th><th>Decision</th><th>Note</th></tr></thead><tbody id="case-review-history-body">
+  {% for item in payload.review_history.entries %}<tr><td>{{ item.recorded_at }}</td><td>{{ item.operator }}</td><td>{{ item.decision }}</td><td>{{ item.note or '—' }}</td></tr>{% endfor %}
+  </tbody></table>
+  <p id="case-review-history-empty" {% if payload.review_history.entries %}hidden{% endif %}>No analyst decisions have been recorded in this session.</p>
+</section>
+</div>
+<script src="{{ url_for('static', filename='case_intelligence_review_v18.js') }}" defer></script>
+{% endblock %}
