@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the v17.1 Unified Operator Workflow Dashboard with a combined
+  case-delivery, recovery-chain, operations, release-health, blocker, and
+  recommended-action payload plus authenticated API and operator UI routes.
 - Added the v17.0 Product Readiness / Operator Workflow Integration snapshot with
   case-delivery UX, normal operations, operator release console alignment,
   v16.18 recovery-chain closure, duplicate product route, documentation, and
