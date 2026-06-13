@@ -12,6 +12,7 @@ from .case_intelligence_review_workspace_v18 import (
 from .persistent_case_review_decisions_v19_0 import (
     list_persistent_case_review_decisions,
     persist_case_review_decision,
+    set_persistent_decision_review_state,
 )
 
 
@@ -35,6 +36,26 @@ def _history() -> list[dict]:
     return value if isinstance(value, list) else []
 
 
+def _positive_int(value: str | None, default: int) -> int:
+    try:
+        return max(1, int(value or default))
+    except (TypeError, ValueError):
+        return default
+
+
+def _persistent_history(case_id: str) -> dict:
+    return list_persistent_case_review_decisions(
+        case_id,
+        actor=request.args.get("actor") or None,
+        decision=request.args.get("decision") or None,
+        date_from=request.args.get("date_from") or None,
+        date_to=request.args.get("date_to") or None,
+        review_state=request.args.get("review_state") or None,
+        page=_positive_int(request.args.get("page"), 1),
+        page_size=_positive_int(request.args.get("page_size"), 25),
+    )
+
+
 def _workspace(case_id: str, payload: dict | None = None) -> dict:
     workspace = build_case_intelligence_review_workspace(
         case_id,
@@ -42,9 +63,7 @@ def _workspace(case_id: str, payload: dict | None = None) -> dict:
         history=_history(),
         operator=_operator(),
     )
-    workspace["persistent_decision_history"] = list_persistent_case_review_decisions(
-        case_id
-    )
+    workspace["persistent_decision_history"] = _persistent_history(case_id)
     return workspace
 
 
@@ -95,9 +114,14 @@ def register_case_intelligence_review_routes_v18(app):
             )
         session[SESSION_KEY] = append_case_review_history(_history(), result)
         session.modified = True
-        result["review_history"] = _workspace(case_id)["review_history"]
-        result["persistent_decision_history"] = (
-            list_persistent_case_review_decisions(case_id)
+        result["review_history"] = build_case_intelligence_review_workspace(
+            case_id,
+            {},
+            history=_history(),
+            operator=_operator(),
+        )["review_history"]
+        result["persistent_decision_history"] = list_persistent_case_review_decisions(
+            case_id
         )
         return jsonify(result), 200 if result.get("status") == "recorded" else 422
 
@@ -105,13 +129,42 @@ def register_case_intelligence_review_routes_v18(app):
     def api_case_intelligence_review_history_get_v18_6(case_id: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
-        return jsonify(_workspace(case_id)["review_history"])
+        return jsonify(
+            build_case_intelligence_review_workspace(
+                case_id,
+                {},
+                history=_history(),
+                operator=_operator(),
+            )["review_history"]
+        )
 
     @app.get("/api/v1/case-intelligence-review/<case_id>/decisions/persistent")
     def api_persistent_case_review_decisions_get_v19_0(case_id: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
-        return jsonify(list_persistent_case_review_decisions(case_id))
+        return jsonify(_persistent_history(case_id))
+
+    @app.post(
+        "/api/v1/case-intelligence-review/<case_id>/decisions/<int:decision_record_id>/review-state"
+    )
+    def api_persistent_case_review_state_post_v19_2(
+        case_id: str, decision_record_id: int
+    ):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        request_payload = _payload()
+        result = set_persistent_decision_review_state(
+            case_id,
+            decision_record_id,
+            str(request_payload.get("review_state") or ""),
+            actor=_operator(),
+            note=str(request_payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        result["persistent_decision_history"] = list_persistent_case_review_decisions(
+            case_id
+        )
+        return jsonify(result), 200 if result.get("status") == "recorded" else 422
 
     @app.get("/api/v1/case-intelligence-review/product-review-checkpoint")
     def api_case_intelligence_product_review_checkpoint_get_v18_7():
