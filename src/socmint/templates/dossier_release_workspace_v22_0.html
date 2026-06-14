@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-dossier-release-workspace data-case-id="{{ payload.case_id }}" data-csrf-token="{{ session.get('_csrf_token', '') }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Dossier Release Workspace</h1><p>{{ payload.case_id }}</p></div>
+    <span class="status-pill {{ 'completed' if payload.release_ready else 'failed' }}">{{ payload.status }}</span>
+  </div>
+  <div id="release-workspace-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
+</section>
+
+<section class="panel">
+  <h2>Approved Export Package</h2>
+  {% if payload.export_package %}
+  <div class="grid cards-4">
+    <article class="card"><h3>Package</h3><p><small>{{ payload.export_package.export_package_id }}</small></p></article>
+    <article class="card"><h3>Export record</h3><p>{{ payload.export_package.export_record_id }}</p></article>
+    <article class="card"><h3>Approval</h3><p>{{ payload.approval_state.approval_id }}</p></article>
+    <article class="card"><h3>Integrity</h3><p>{{ payload.integrity_state|length }} hashes present</p></article>
+  </div>
+  <p><strong>Package SHA-256:</strong> <small>{{ payload.export_package.export_package_sha256 }}</small></p>
+  {% else %}<p>No generated v21.6 export package is available.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Release Configuration</h2>
+  <label for="release-recipient">Authorized recipient</label>
+  <select id="release-recipient">
+    <option value="">Select recipient</option>
+    {% for recipient in payload.recipient_catalog %}
+    <option value="{{ recipient.recipient_id }}" {% if payload.selected_recipient and payload.selected_recipient.recipient_id == recipient.recipient_id %}selected{% endif %}>{{ recipient.display_name }}{% if recipient.organization %} · {{ recipient.organization }}{% endif %}</option>
+    {% endfor %}
+  </select>
+
+  <label for="release-channel">Delivery channel</label>
+  <select id="release-channel">
+    <option value="">Select channel</option>
+    {% for channel in payload.available_channels %}
+    <option value="{{ channel }}" {% if payload.selected_channel == channel %}selected{% endif %}>{{ channel.replace('_', ' ')|title }}</option>
+    {% endfor %}
+  </select>
+
+  <button id="preview-release-readiness" type="button">Preview release readiness</button>
+  <p class="muted">This workspace does not transmit or dispatch the dossier.</p>
+</section>
+
+<section class="panel">
+  <h2>Release Readiness</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Package ready</h3><p>{{ 'Yes' if payload.package_ready else 'No' }}</p></article>
+    <article class="card"><h3>Selection ready</h3><p>{{ 'Yes' if payload.selection_ready else 'No' }}</p></article>
+    <article class="card"><h3>Transmission</h3><p>{{ 'Performed' if payload.transmission_performed else 'Not performed' }}</p></article>
+    <article class="card"><h3>Blockers</h3><p class="metric">{{ payload.blocker_count }}</p></article>
+  </div>
+  {% if payload.blockers %}
+  <table class="data-table"><thead><tr><th>Blocker</th><th>Details</th></tr></thead><tbody>{% for blocker in payload.blockers %}<tr><td>{{ blocker.key }}</td><td>{{ blocker.missing|join(', ') if blocker.missing else '—' }}</td></tr>{% endfor %}</tbody></table>
+  {% else %}<p>No release-readiness blockers remain.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Connected Delivery Workspace</h2>
+  <p><a id="open-case-delivery-workspace" href="{{ payload.case_delivery_workspace.href }}">Open Case Delivery Workspace</a></p>
+  <pre id="release-handoff-context">{{ payload.case_delivery_workspace.handoff_context|tojson(indent=2) }}</pre>
+  <pre id="release-preview-output"></pre>
+</section>
+</div>
+<script src="{{ url_for('static', filename='dossier_release_workspace_v22_0.js') }}" defer></script>
+{% endblock %}
