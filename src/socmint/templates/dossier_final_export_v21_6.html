@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-dossier-final-export data-case-id="{{ payload.case_id }}" data-subject-id="{{ payload.subject_id or '' }}" data-csrf-token="{{ session.get('_csrf_token', '') }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Final Export Package Generation</h1><p>{{ payload.case_id }}{% if payload.subject_id %} · subject {{ payload.subject_id }}{% endif %}</p></div>
+    <span class="status-pill {{ 'completed' if payload.status == 'ready' else 'failed' }}">{{ payload.status }}</span>
+  </div>
+  <div id="final-export-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
+</section>
+
+{% if payload.status != 'ready' %}
+<section class="panel"><h2>Export Blocked</h2><ul>{% for blocker in payload.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>{% if payload.approval_record %}<p><strong>Latest decision:</strong> {{ payload.approval_record.result_status }} by {{ payload.approval_record.reviewer }}</p>{% endif %}</section>
+{% else %}
+<section class="panel">
+  <div class="section-header"><div><h2>Export Readiness</h2><p class="muted">Deterministic package built from the approved dossier, citation catalog, source manifest, and approval record.</p></div><button id="generate-final-export" type="button">Generate final export package</button></div>
+  <div class="grid cards-4">
+    <article class="card"><h3>Package ID</h3><p><small>{{ payload.export_package_id }}</small></p></article>
+    <article class="card"><h3>Sections</h3><p class="metric">{{ payload.dossier_content.section_count }}</p></article>
+    <article class="card"><h3>Citations</h3><p class="metric">{{ payload.citation_catalog|length }}</p></article>
+    <article class="card"><h3>Approval</h3><p>{{ payload.approval_record.approval_id }}</p></article>
+  </div>
+  <p><strong>Package SHA-256:</strong> <small>{{ payload.export_package_sha256 }}</small></p>
+</section>
+
+<section class="panel"><h2>Integrity Manifest</h2><table class="data-table"><tbody>{% for key, value in payload.integrity.items() %}<tr><th>{{ key }}</th><td><small>{{ value }}</small></td></tr>{% endfor %}</tbody></table></section>
+<section class="panel"><h2>Source Manifest</h2><table class="data-table"><tbody>{% for key, value in payload.source_manifest.items() %}<tr><th>{{ key }}</th><td>{{ value }}</td></tr>{% endfor %}</tbody></table></section>
+<section class="panel"><h2>Approval Record</h2><table class="data-table"><tbody>{% for key, value in payload.approval_record.items() %}<tr><th>{{ key }}</th><td>{{ value }}</td></tr>{% endfor %}</tbody></table></section>
+<section class="panel"><h2>Citation Catalog</h2>{% if payload.citation_catalog %}<table class="data-table"><thead><tr><th>Label</th><th>Claim</th><th>Source</th><th>Evidence</th></tr></thead><tbody>{% for citation in payload.citation_catalog %}<tr><td>[{{ citation.label }}]</td><td>{{ citation.claim_id }} · {{ citation.claim_value }}</td><td>{{ citation.source }}</td><td>{{ citation.evidence_refs|join(', ') or '—' }}</td></tr>{% endfor %}</tbody></table>{% else %}<p>No citations.</p>{% endif %}</section>
+<section class="panel"><h2>Dossier Content</h2>{% for section in payload.dossier_content.sections %}<article class="card"><h3>{{ section.position }}. {{ section.title }}</h3><p>{{ section.citation_ready_narrative }}</p>{% for finding in section.findings %}<p>{{ finding.citation_ready_text }}</p>{% endfor %}</article>{% endfor %}</section>
+{% if payload.latest_export %}<section class="panel"><h2>Latest Generated Export</h2><p>{{ payload.latest_export.export_package_id }} · {{ payload.latest_export.exported_by }} · {{ payload.latest_export.exported_at }}</p></section>{% endif %}
+{% endif %}
+
+<section class="panel"><p><a href="/dossier-assembly/{{ payload.case_id }}/supervisor-approval{% if payload.subject_id %}?subject_id={{ payload.subject_id }}{% endif %}">Return to supervisor approval</a></p><pre id="final-export-output"></pre></section>
+</div>
+<script src="{{ url_for('static', filename='dossier_final_export_v21_6.js') }}" defer></script>
+{% endblock %}
