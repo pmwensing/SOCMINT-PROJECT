@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-dossier-citation-workspace data-case-id="{{ payload.case_id }}" data-subject-id="{{ payload.subject_id or '' }}" data-csrf-token="{{ session.get('_csrf_token', '') }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Source and Evidence Citation Mapping</h1><p>{{ payload.case_id }}{% if payload.subject_id %} · subject {{ payload.subject_id }}{% endif %}</p></div>
+    <span class="status-pill {{ 'completed' if payload.status == 'citation_ready' else 'failed' }}">{{ payload.status }}</span>
+  </div>
+  <div id="citation-mapping-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
+</section>
+
+{% if payload.status == 'blocked' %}
+<section class="panel">
+  <h2>Citation Mapping Blocked</h2>
+  <ul>{% for blocker in payload.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>
+  <p><a href="/dossier-assembly/{{ payload.case_id }}">Return to dossier assembly</a></p>
+</section>
+{% else %}
+<section class="panel">
+  <div class="section-header">
+    <div><h2>Mapping Summary</h2><p class="muted">Deterministic citation mapping over the current draft and claim/evidence ledger.</p></div>
+    <button id="save-citation-snapshot" type="button">Save citation snapshot</button>
+  </div>
+  <div class="grid cards-4">
+    <article class="card"><h3>Citations</h3><p class="metric">{{ payload.citation_count }}</p></article>
+    <article class="card"><h3>Unresolved</h3><p class="metric">{{ payload.unresolved_count }}</p></article>
+    <article class="card"><h3>Draft</h3><p><small>{{ payload.draft_id }}</small></p></article>
+    <article class="card"><h3>Mapping</h3><p><small>{{ payload.mapping_id }}</small></p></article>
+  </div>
+  <p><strong>Mapping SHA-256:</strong> <small>{{ payload.mapping_sha256 }}</small></p>
+  {% if payload.latest_snapshot %}<p><strong>Latest snapshot:</strong> {{ payload.latest_snapshot.snapshot_by }} · {{ payload.latest_snapshot.snapshot_at }} · record {{ payload.latest_snapshot.snapshot_record_id }}</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Unresolved Citations</h2>
+  {% if payload.unresolved %}
+  <table class="data-table"><thead><tr><th>Type</th><th>Section</th><th>Finding</th><th>Reference</th></tr></thead><tbody>{% for item in payload.unresolved %}<tr><td>{{ item.key }}</td><td>{{ item.section_id }}</td><td>{{ item.finding_id }}</td><td>{{ item.reference }}</td></tr>{% endfor %}</tbody></table>
+  {% else %}<p>No unresolved claim or evidence references.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Citation-Ready Dossier Content</h2>
+  {% for section in payload.sections %}
+  <article class="card">
+    <h3>{{ section.position }}. {{ section.title }}</h3>
+    <p><strong>Narrative:</strong> {{ section.citation_ready_narrative or 'No narrative.' }}</p>
+    <p><strong>Citation status:</strong> {{ 'Complete' if section.citations_complete else 'Unresolved references remain' }}</p>
+    {% if section.findings %}
+    <table class="data-table"><thead><tr><th>Finding</th><th>Citations</th><th>Unresolved claims</th><th>Unresolved evidence</th></tr></thead><tbody>{% for finding in section.findings %}<tr><td>{{ finding.citation_ready_text }}</td><td>{{ finding.citation_labels|join(', ') or '—' }}</td><td>{{ finding.unresolved_claim_ids|join(', ') or '—' }}</td><td>{{ finding.unresolved_evidence_ids|join(', ') or '—' }}</td></tr>{% endfor %}</tbody></table>
+    {% endif %}
+  </article>
+  {% endfor %}
+</section>
+
+<section class="panel">
+  <h2>Citation Catalog</h2>
+  {% if payload.citation_catalog %}
+  <table class="data-table"><thead><tr><th>Label</th><th>Claim</th><th>Source</th><th>Evidence</th><th>Artifacts</th></tr></thead><tbody>{% for citation in payload.citation_catalog %}<tr><td>[{{ citation.label }}]</td><td>{{ citation.claim_id }} · {{ citation.claim_value }}</td><td>{{ citation.source }}</td><td>{{ citation.evidence_refs|join(', ') or '—' }}</td><td>{% for artifact in citation.artifact_links %}{{ artifact.path or artifact.artifact_id }}{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>{% endfor %}</tbody></table>
+  {% else %}<p>No ledger citations are available.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <p><a href="/dossier-assembly/{{ payload.case_id }}{% if payload.subject_id %}?subject_id={{ payload.subject_id }}{% endif %}">Return to dossier assembly</a></p>
+  <pre id="citation-snapshot-output"></pre>
+</section>
+{% endif %}
+</div>
+<script src="{{ url_for('static', filename='dossier_citation_mapping_v21_3.js') }}" defer></script>
+{% endblock %}
