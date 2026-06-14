@@ -22,6 +22,9 @@ from .dossier_product_review_routes_v21_7 import (
 from .dossier_quality_review_routes_v21_4 import (
     register_dossier_quality_review_routes_v21_4,
 )
+from .dossier_release_history_routes_v22_6 import (
+    register_dossier_release_history_routes_v22_6,
+)
 from .dossier_release_workspace_routes_v22_0 import (
     register_dossier_release_workspace_routes_v22_0,
 )
@@ -153,4 +156,5 @@ def register_dossier_assembly_routes_v21_0(app):
     register_dossier_final_export_routes_v21_6(app)
     register_dossier_product_review_routes_v21_7(app)
     register_dossier_release_workspace_routes_v22_0(app)
+    register_dossier_release_history_routes_v22_6(app)
     return app
