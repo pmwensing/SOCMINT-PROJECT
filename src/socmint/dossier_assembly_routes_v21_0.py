@@ -2,9 +2,13 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
-from .dossier_assembly_workspace_v21_0 import (
-    build_dossier_assembly_workspace,
-    save_dossier_arrangement,
+from .dossier_assembly_import_workspace_v21_1 import (
+    build_dossier_assembly_workspace_v21_1,
+    save_verified_dossier_arrangement,
+)
+from .dossier_package_import_v21_1 import (
+    import_dossier_package,
+    inspect_dossier_package_import,
 )
 
 
@@ -41,7 +45,7 @@ def register_dossier_assembly_routes_v21_0(app):
         return render_template(
             "dossier_assembly_workspace_v21_0.html",
             title="Dossier Assembly Workspace",
-            payload=build_dossier_assembly_workspace(
+            payload=build_dossier_assembly_workspace_v21_1(
                 case_id,
                 subject_id=_subject_id(),
             ),
@@ -52,17 +56,35 @@ def register_dossier_assembly_routes_v21_0(app):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
         return jsonify(
-            build_dossier_assembly_workspace(
+            build_dossier_assembly_workspace_v21_1(
                 case_id,
                 subject_id=_subject_id(),
             )
         )
 
+    @app.get("/api/v1/dossier-assembly/<case_id>/package-import")
+    def api_dossier_package_import_get_v21_1(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        return jsonify(inspect_dossier_package_import(case_id))
+
+    @app.post("/api/v1/dossier-assembly/<case_id>/package-import")
+    def api_dossier_package_import_post_v21_1(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        result = import_dossier_package(
+            case_id,
+            actor=_actor(),
+            ip_address=request.remote_addr,
+        )
+        status_code = 200 if result.get("status") in {"imported", "duplicate"} else 422
+        return jsonify(result), status_code
+
     @app.post("/api/v1/dossier-assembly/<case_id>/arrangement")
     def api_dossier_assembly_arrangement_post_v21_0(case_id: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
-        result = save_dossier_arrangement(
+        result = save_verified_dossier_arrangement(
             case_id,
             _payload(),
             actor=_actor(),
