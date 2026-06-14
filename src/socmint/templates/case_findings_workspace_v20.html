@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-case-findings-workspace data-case-id="{{ payload.case_id }}" data-csrf-token="{{ session.get('_csrf_token', '') }}">
+<section class="panel">
+  <div class="page-header"><div><h1>Case Findings Workspace</h1><p>{{ payload.case_id }}</p></div><span class="status-pill">{{ payload.findings|length }} finding(s)</span></div>
+  <div id="case-findings-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
+</section>
+<section class="panel">
+  <h2>Propose Finding from Reviewed Claims</h2>
+  <label for="finding-text">Finding</label><textarea id="finding-text" rows="4"></textarea>
+  <label for="finding-confidence">Confidence</label><select id="finding-confidence">{% for item in payload.confidence_options %}<option value="{{ item }}">{{ item }}</option>{% endfor %}</select>
+  <label for="finding-claim-ids">Reviewed claim IDs</label><input id="finding-claim-ids" placeholder="claim-1, claim-2">
+  <label for="finding-evidence-ids">Evidence IDs</label><input id="finding-evidence-ids" placeholder="evidence-1">
+  <label for="finding-entity-ids">Entity IDs</label><input id="finding-entity-ids">
+  <label for="finding-timeline-refs">Timeline references</label><input id="finding-timeline-refs">
+  <label for="finding-note">Analyst note</label><input id="finding-note">
+  <button id="propose-case-finding" type="button">Promote reviewed claims to finding</button>
+</section>
+<section class="panel">
+  <h2>Finding Summary</h2>
+  <div class="grid cards-4">
+    {% for state in ['proposed','approved','revision_required','rejected'] %}<article class="card"><h3>{{ state }}</h3><p class="metric">{{ payload.counts[state] }}</p></article>{% endfor %}
+  </div>
+</section>
+<section class="panel">
+  <div class="section-header"><div><h2>Case Findings</h2><p class="muted">Every lifecycle action is an immutable audit event.</p></div><button id="refresh-case-findings" type="button">Refresh findings</button></div>
+  <table class="data-table" {% if not payload.findings %}hidden{% endif %}><thead><tr><th>Finding</th><th>Confidence</th><th>Provenance</th><th>Status</th><th>Supervisor / Revision Action</th></tr></thead><tbody id="case-findings-body">
+  {% for item in payload.findings %}<tr data-finding-id="{{ item.finding_id }}"><td>{{ item.text }}</td><td>{{ item.confidence }}</td><td>Claims: {{ item.provenance.claim_ids|join(', ') }}<br>Evidence: {{ item.provenance.evidence_ids|join(', ') }}<br><small>{{ item.provenance_sha256 }}</small></td><td class="finding-status">{{ item.status }}</td><td>{% if item.status in ['proposed','revision_required'] %}<select class="finding-decision"><option value="approve">approve</option><option value="return_to_analyst">return to analyst</option><option value="reject">reject</option></select><input class="finding-decision-note" placeholder="Decision note"><button type="button" class="save-finding-decision">Record decision</button>{% elif item.status in ['rejected','revision_required'] %}<button type="button" class="revise-finding">Revise</button>{% else %}{{ item.supervisor_note or '—' }}{% endif %}</td></tr>{% endfor %}
+  </tbody></table>
+  <p id="case-findings-empty" {% if payload.findings %}hidden{% endif %}>No findings have been proposed.</p>
+</section>
+<section class="panel">
+  <h2>Dossier Promotion</h2><p>Only approved findings enter the deterministic dossier promotion package.</p><button id="preview-dossier-package" type="button">Preview package</button><button id="promote-dossier-package" type="button">Promote approved findings</button><pre id="dossier-package-output"></pre>
+</section>
+<section class="panel"><h2>Finding History and Audit</h2><p>{{ payload.history|length }} finding lifecycle(s) recorded.</p><a href="/case-intelligence-review/{{ payload.case_id }}">Return to case intelligence review</a></section>
+</div>
+<script src="{{ url_for('static', filename='case_findings_v20.js') }}" defer></script>
+{% endblock %}
