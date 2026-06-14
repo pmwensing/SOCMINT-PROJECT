@@ -18,20 +18,27 @@
 </section>
 <section class="panel">
   <h2>Finding Summary</h2>
-  <div class="grid cards-4">
-    {% for state in ['proposed','approved','revision_required','rejected'] %}<article class="card"><h3>{{ state }}</h3><p class="metric">{{ payload.counts[state] }}</p></article>{% endfor %}
-  </div>
+  <div class="grid cards-4">{% for state in ['proposed','approved','revision_required','rejected'] %}<article class="card"><h3>{{ state }}</h3><p class="metric">{{ payload.counts[state] }}</p></article>{% endfor %}</div>
 </section>
 <section class="panel">
   <div class="section-header"><div><h2>Case Findings</h2><p class="muted">Every lifecycle action is an immutable audit event.</p></div><button id="refresh-case-findings" type="button">Refresh findings</button></div>
   <table class="data-table" {% if not payload.findings %}hidden{% endif %}><thead><tr><th>Finding</th><th>Confidence</th><th>Provenance</th><th>Status</th><th>Supervisor / Revision Action</th></tr></thead><tbody id="case-findings-body">
-  {% for item in payload.findings %}<tr data-finding-id="{{ item.finding_id }}"><td>{{ item.text }}</td><td>{{ item.confidence }}</td><td>Claims: {{ item.provenance.claim_ids|join(', ') }}<br>Evidence: {{ item.provenance.evidence_ids|join(', ') }}<br><small>{{ item.provenance_sha256 }}</small></td><td class="finding-status">{{ item.status }}</td><td>{% if item.status in ['proposed','revision_required'] %}<select class="finding-decision"><option value="approve">approve</option><option value="return_to_analyst">return to analyst</option><option value="reject">reject</option></select><input class="finding-decision-note" placeholder="Decision note"><button type="button" class="save-finding-decision">Record decision</button>{% elif item.status in ['rejected','revision_required'] %}<button type="button" class="revise-finding">Revise</button>{% else %}{{ item.supervisor_note or '—' }}{% endif %}</td></tr>{% endfor %}
+  {% for item in payload.findings %}
+  <tr data-finding-id="{{ item.finding_id }}">
+    <td>{{ item.text }}</td><td>{{ item.confidence }}</td><td>Claims: {{ item.provenance.claim_ids|join(', ') }}<br>Evidence: {{ item.provenance.evidence_ids|join(', ') }}<br><small>{{ item.provenance_sha256 }}</small></td><td class="finding-status">{{ item.status }}</td>
+    <td>
+      {% if item.status == 'proposed' %}
+      <select class="finding-decision"><option value="approve">approve</option><option value="return_to_analyst">return to analyst</option><option value="reject">reject</option></select><input class="finding-decision-note" placeholder="Decision note"><button type="button" class="save-finding-decision">Record decision</button>
+      {% elif item.status in ['revision_required','rejected'] %}
+      <textarea class="revised-finding-text" rows="3">{{ item.text }}</textarea><select class="revised-finding-confidence">{% for confidence in payload.confidence_options %}<option value="{{ confidence }}" {% if confidence == item.confidence %}selected{% endif %}>{{ confidence }}</option>{% endfor %}</select><input class="revised-finding-note" placeholder="Revision note"><button type="button" class="revise-finding">Submit revision</button>
+      {% else %}{{ item.supervisor_note or '—' }}{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
   </tbody></table>
   <p id="case-findings-empty" {% if payload.findings %}hidden{% endif %}>No findings have been proposed.</p>
 </section>
-<section class="panel">
-  <h2>Dossier Promotion</h2><p>Only approved findings enter the deterministic dossier promotion package.</p><button id="preview-dossier-package" type="button">Preview package</button><button id="promote-dossier-package" type="button">Promote approved findings</button><pre id="dossier-package-output"></pre>
-</section>
+<section class="panel"><h2>Dossier Promotion</h2><p>Only approved findings enter the deterministic dossier promotion package.</p><button id="preview-dossier-package" type="button">Preview package</button><button id="promote-dossier-package" type="button">Promote approved findings</button><pre id="dossier-package-output"></pre></section>
 <section class="panel"><h2>Finding History and Audit</h2><p>{{ payload.history|length }} finding lifecycle(s) recorded.</p><a href="/case-intelligence-review/{{ payload.case_id }}">Return to case intelligence review</a></section>
 </div>
 <script src="{{ url_for('static', filename='case_findings_v20.js') }}" defer></script>
