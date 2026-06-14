@@ -3,6 +3,7 @@
   const root = document.querySelector("[data-dossier-release-workspace]");
   const previewButton = document.getElementById("preview-release-readiness");
   const authorizeButton = document.getElementById("authorize-release-selection");
+  const acknowledgeButton = document.getElementById("acknowledge-release-preview");
   if (!root || !previewButton) return;
 
   const selection = () => ({
@@ -78,6 +79,44 @@
     } catch (error) {
       show("error", error.message);
       authorizeButton.disabled = false;
+    }
+  });
+
+  acknowledgeButton?.addEventListener("click", async () => {
+    const output = document.getElementById("release-package-preview-output");
+    acknowledgeButton.disabled = true;
+    try {
+      const response = await fetch(
+        "/api/v1/dossier-release/" + root.dataset.caseId +
+        "/package-preview/acknowledge",
+        {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": root.dataset.csrfToken || "",
+          },
+          body: JSON.stringify({
+            acknowledged: document.getElementById("release-preview-acknowledged").checked,
+            note: document.getElementById("release-preview-note").value,
+          }),
+        }
+      );
+      const payload = await response.json();
+      output.textContent = JSON.stringify(payload, null, 2);
+      if (!response.ok) {
+        throw new Error(payload.blockers?.[0]?.key || "release preview acknowledgement blocked");
+      }
+      show(
+        payload.release_ready ? "success" : "warning",
+        payload.release_ready
+          ? "Release package preview acknowledged and ready."
+          : "Preview recorded with unresolved redaction or sensitivity blockers."
+      );
+      window.location.reload();
+    } catch (error) {
+      show("error", error.message);
+      acknowledgeButton.disabled = false;
     }
   });
 })();
