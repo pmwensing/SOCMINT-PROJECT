@@ -10,6 +10,10 @@ from .dossier_package_import_v21_1 import (
     import_dossier_package,
     inspect_dossier_package_import,
 )
+from .dossier_section_builder_v21_2 import (
+    build_dossier_section_draft,
+    save_dossier_draft_snapshot,
+)
 
 
 def _login_required() -> bool:
@@ -42,25 +46,33 @@ def register_dossier_assembly_routes_v21_0(app):
     def dossier_assembly_workspace_get_v21_0(case_id: str):
         if not _login_required():
             return redirect(url_for("dashboard.login"))
+        payload = build_dossier_assembly_workspace_v21_1(
+            case_id,
+            subject_id=_subject_id(),
+        )
+        payload["draft"] = build_dossier_section_draft(
+            case_id,
+            subject_id=_subject_id(),
+        )
         return render_template(
             "dossier_assembly_workspace_v21_0.html",
             title="Dossier Assembly Workspace",
-            payload=build_dossier_assembly_workspace_v21_1(
-                case_id,
-                subject_id=_subject_id(),
-            ),
+            payload=payload,
         )
 
     @app.get("/api/v1/dossier-assembly/<case_id>")
     def api_dossier_assembly_workspace_get_v21_0(case_id: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
-        return jsonify(
-            build_dossier_assembly_workspace_v21_1(
-                case_id,
-                subject_id=_subject_id(),
-            )
+        payload = build_dossier_assembly_workspace_v21_1(
+            case_id,
+            subject_id=_subject_id(),
         )
+        payload["draft"] = build_dossier_section_draft(
+            case_id,
+            subject_id=_subject_id(),
+        )
+        return jsonify(payload)
 
     @app.get("/api/v1/dossier-assembly/<case_id>/package-import")
     def api_dossier_package_import_get_v21_1(case_id: str):
@@ -88,6 +100,31 @@ def register_dossier_assembly_routes_v21_0(app):
             case_id,
             _payload(),
             actor=_actor(),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get("status") == "saved" else 422
+
+    @app.get("/api/v1/dossier-assembly/<case_id>/draft")
+    def api_dossier_section_draft_get_v21_2(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        return jsonify(
+            build_dossier_section_draft(
+                case_id,
+                subject_id=_subject_id(),
+            )
+        )
+
+    @app.post("/api/v1/dossier-assembly/<case_id>/draft-snapshot")
+    def api_dossier_section_draft_snapshot_post_v21_2(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        payload = _payload()
+        result = save_dossier_draft_snapshot(
+            case_id,
+            actor=_actor(),
+            subject_id=_subject_id(),
+            finding_order=payload.get("finding_order"),
             ip_address=request.remote_addr,
         )
         return jsonify(result), 200 if result.get("status") == "saved" else 422
