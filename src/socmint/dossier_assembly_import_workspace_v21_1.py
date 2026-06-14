@@ -37,6 +37,9 @@ def build_dossier_assembly_workspace_v21_1(
         links["dossier_quality_completeness_review"] = (
             f"/dossier-assembly/{case_id}/quality-review?subject_id={subject_id}"
         )
+        links["supervisor_dossier_approval"] = (
+            f"/dossier-assembly/{case_id}/supervisor-approval?subject_id={subject_id}"
+        )
     return workspace
 
 
