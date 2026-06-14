@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-dossier-release-history data-case-id="{{ payload.case_id }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Release and Delivery History</h1><p>{{ payload.case_id }}</p></div>
+    <span class="status-pill {{ 'completed' if payload.closure_ready else 'failed' }}">{{ payload.status }}</span>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Case Closure Summary</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Current outcome</h3><p>{{ payload.current_release_outcome }}</p></article>
+    <article class="card"><h3>Timeline events</h3><p class="metric">{{ payload.timeline_event_count }}</p></article>
+    <article class="card"><h3>Unresolved actions</h3><p class="metric">{{ payload.unresolved_action_count }}</p></article>
+    <article class="card"><h3>Closure ready</h3><p>{{ 'Yes' if payload.closure_ready else 'No' }}</p></article>
+  </div>
+  {% if payload.unresolved_actions %}
+  <ul>{% for item in payload.unresolved_actions %}<li>{{ item.key }}</li>{% endfor %}</ul>
+  {% else %}<p>No unresolved release or delivery actions remain.</p>{% endif %}
+  <pre id="closure-summary-output">{{ payload.closure_summary|tojson(indent=2) }}</pre>
+</section>
+
+<section class="panel">
+  <h2>Consolidated Timeline</h2>
+  {% if payload.timeline %}
+  <table class="data-table">
+    <thead><tr><th>Time</th><th>Event</th><th>Actor</th><th>Outcome</th><th>Identifiers</th></tr></thead>
+    <tbody>
+    {% for event in payload.timeline %}
+      <tr>
+        <td>{{ event.recorded_at }}</td>
+        <td>{{ event.event_type.replace('_', ' ')|title }}</td>
+        <td>{{ event.actor }}</td>
+        <td>{{ event.details.status or event.details.delivery_result or event.details.dispatch_result or 'recorded' }}</td>
+        <td><small>{{ event.details.authorization_id or event.details.preview_id or event.details.distribution_id or event.details.delivery_receipt_id or event.details.acknowledgement_id or event.details.failed_delivery_review_id or event.details.recall_request_id or event.details.reissue_authorization_id or event.event_id }}</small></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p>No release or delivery history has been recorded.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <p><a href="/dossier-release/{{ payload.case_id }}">Return to Dossier Release Workspace</a></p>
+  <p class="muted">This summary reads existing immutable events and does not mutate authorization, preview, dispatch, receipt, acknowledgement, recall, or reissue records.</p>
+</section>
+</div>
+{% endblock %}
