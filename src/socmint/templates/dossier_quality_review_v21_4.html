@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-dossier-quality-review data-case-id="{{ payload.case_id }}" data-subject-id="{{ payload.subject_id or '' }}" data-csrf-token="{{ session.get('_csrf_token', '') }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Dossier Quality and Completeness Review</h1><p>{{ payload.case_id }}{% if payload.subject_id %} · subject {{ payload.subject_id }}{% endif %}</p></div>
+    <span class="status-pill {{ 'completed' if payload.ready else 'failed' }}">{{ payload.status }}</span>
+  </div>
+  <div id="quality-review-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
+</section>
+
+{% if payload.status == 'blocked' %}
+<section class="panel"><h2>Review Blocked</h2><ul>{% for blocker in payload.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul></section>
+{% else %}
+<section class="panel">
+  <div class="section-header"><div><h2>Readiness Summary</h2><p class="muted">Combined section, citation, narrative, provenance, and source review.</p></div><button id="save-quality-review-snapshot" type="button">Save review snapshot</button></div>
+  <div class="grid cards-4">
+    <article class="card"><h3>Ready sections</h3><p class="metric">{{ payload.ready_section_count }}/{{ payload.section_count }}</p></article>
+    <article class="card"><h3>Narrative coverage</h3><p class="metric">{{ payload.narrative_coverage_percent }}%</p></article>
+    <article class="card"><h3>Provenance quality</h3><p class="metric">{{ payload.provenance_quality_percent }}%</p></article>
+    <article class="card"><h3>Source readiness</h3><p class="metric">{{ payload.source_readiness_percent }}%</p></article>
+  </div>
+  <p><strong>Blockers:</strong> {{ payload.blocker_count }} · <strong>Unresolved citations:</strong> {{ payload.unresolved_citation_count }}</p>
+  <p><strong>Review ID:</strong> <small>{{ payload.review_id }}</small></p>
+  <p><strong>Review SHA-256:</strong> <small>{{ payload.review_sha256 }}</small></p>
+  {% if payload.latest_snapshot %}<p><strong>Latest snapshot:</strong> {{ payload.latest_snapshot.snapshot_by }} · {{ payload.latest_snapshot.snapshot_at }} · record {{ payload.latest_snapshot.snapshot_record_id }}</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Explicit Blockers</h2>
+  {% if payload.blockers %}
+  <table class="data-table"><thead><tr><th>Blocker</th><th>Section</th><th>Finding</th><th>Missing / reference</th></tr></thead><tbody>{% for blocker in payload.blockers %}<tr><td>{{ blocker.key }}</td><td>{{ blocker.section_id or '—' }}</td><td>{{ blocker.finding_id or '—' }}</td><td>{{ blocker.missing|join(', ') if blocker.missing else blocker.reference or '—' }}</td></tr>{% endfor %}</tbody></table>
+  {% else %}<p>No quality blockers remain.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Section Review</h2>
+  <table class="data-table"><thead><tr><th>Section</th><th>Narrative</th><th>Completeness</th><th>Citations</th><th>Findings</th><th>Ready</th></tr></thead><tbody>{% for section in payload.section_reviews %}<tr><td>{{ section.position }}. {{ section.title }}</td><td>{{ 'Covered' if section.narrative_covered else 'Missing' }}</td><td>{{ section.section_completeness.score }}%</td><td>{{ 'Complete' if section.citations_complete else 'Unresolved' }}</td><td>{{ section.finding_count }}</td><td>{{ 'Yes' if section.ready else 'No' }}</td></tr>{% endfor %}</tbody></table>
+</section>
+
+<section class="panel">
+  <h2>Finding Provenance and Source Readiness</h2>
+  {% for section in payload.section_reviews %}
+  <article class="card"><h3>{{ section.title }}</h3>
+    {% if section.finding_reviews %}<table class="data-table"><thead><tr><th>Finding</th><th>Provenance score</th><th>Missing</th><th>Source ready</th><th>Citations</th></tr></thead><tbody>{% for finding in section.finding_reviews %}<tr><td>{{ finding.finding_id }}</td><td>{{ finding.provenance_quality.score }}%</td><td>{{ finding.provenance_quality.missing|join(', ') or '—' }}</td><td>{{ 'Yes' if finding.source_ready else 'No' }}</td><td>{{ finding.citation_labels|join(', ') or '—' }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section class="panel"><p><a href="/dossier-assembly/{{ payload.case_id }}{% if payload.subject_id %}?subject_id={{ payload.subject_id }}{% endif %}">Return to dossier assembly</a></p><pre id="quality-review-output"></pre></section>
+</div>
+<script src="{{ url_for('static', filename='dossier_quality_review_v21_4.js') }}" defer></script>
+{% endblock %}
