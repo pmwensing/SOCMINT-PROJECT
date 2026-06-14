@@ -6,6 +6,11 @@ from .dossier_release_authorization_v22_1 import (
     authorize_dossier_release,
     latest_release_authorization,
 )
+from .dossier_release_preview_v22_2 import (
+    acknowledge_release_package_preview,
+    build_release_package_preview,
+    latest_release_preview,
+)
 from .dossier_release_workspace_v22_0 import build_dossier_release_workspace
 
 
@@ -36,6 +41,8 @@ def register_dossier_release_workspace_routes_v22_0(app):
             selected_channel=channel,
         )
         payload["latest_authorization"] = latest_release_authorization(case_id)
+        payload["release_package_preview"] = build_release_package_preview(case_id)
+        payload["latest_release_preview"] = latest_release_preview(case_id)
         return render_template(
             "dossier_release_workspace_v22_0.html",
             title="Dossier Release Workspace",
@@ -53,6 +60,8 @@ def register_dossier_release_workspace_routes_v22_0(app):
             selected_channel=channel,
         )
         payload["latest_authorization"] = latest_release_authorization(case_id)
+        payload["release_package_preview"] = build_release_package_preview(case_id)
+        payload["latest_release_preview"] = latest_release_preview(case_id)
         return jsonify(payload)
 
     @app.post("/api/v1/dossier-release/<case_id>/preview")
@@ -82,5 +91,27 @@ def register_dossier_release_workspace_routes_v22_0(app):
             ip_address=request.remote_addr,
         )
         return jsonify(result), 200 if result.get("status") == "authorized" else 422
+
+    @app.get("/api/v1/dossier-release/<case_id>/package-preview")
+    def api_dossier_release_package_preview_get_v22_2(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        return jsonify(build_release_package_preview(case_id))
+
+    @app.post("/api/v1/dossier-release/<case_id>/package-preview/acknowledge")
+    def api_dossier_release_package_preview_ack_post_v22_2(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        payload = request.get_json(silent=True) or {}
+        result = acknowledge_release_package_preview(
+            case_id,
+            acknowledged=payload.get("acknowledged") is True,
+            operator=str(session.get("user") or "unknown"),
+            note=str(payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get("status") in {
+            "acknowledged_ready", "acknowledged_with_blockers"
+        } else 422
 
     return app
