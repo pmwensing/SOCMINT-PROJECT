@@ -40,27 +40,16 @@ def save_verified_dossier_arrangement(
     ip_address: str | None = None,
 ) -> dict[str, Any]:
     package_import = inspect_dossier_package_import(case_id)
-    if not package_import["can_arrange"]:
-        return {
-            "status": "blocked",
-            "blockers": package_import["blockers"]
-            or [
-                {
-                    "key": (
-                        "package_import_stale"
-                        if package_import["package_stale"]
-                        else "package_import_required"
-                    )
-                }
-            ],
-            "package_import": package_import,
-            "next_action": package_import["next_action"],
-        }
     result = save_dossier_arrangement(
         case_id,
         payload,
         actor=actor,
         ip_address=ip_address,
     )
-    result["package_import"] = inspect_dossier_package_import(case_id)
+    result["package_import"] = package_import
+    result["import_warning"] = (
+        None
+        if package_import["can_arrange"]
+        else "legacy_api_save_without_current_package_import"
+    )
     return result
