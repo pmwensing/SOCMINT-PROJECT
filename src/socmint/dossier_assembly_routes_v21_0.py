@@ -16,6 +16,9 @@ from .dossier_package_import_v21_1 import (
     import_dossier_package,
     inspect_dossier_package_import,
 )
+from .dossier_product_review_routes_v21_7 import (
+    register_dossier_product_review_routes_v21_7,
+)
 from .dossier_quality_review_routes_v21_4 import (
     register_dossier_quality_review_routes_v21_4,
 )
@@ -145,4 +148,5 @@ def register_dossier_assembly_routes_v21_0(app):
     register_dossier_quality_review_routes_v21_4(app)
     register_dossier_supervisor_approval_routes_v21_5(app)
     register_dossier_final_export_routes_v21_6(app)
+    register_dossier_product_review_routes_v21_7(app)
     return app
