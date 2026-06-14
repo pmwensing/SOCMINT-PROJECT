@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+from .dossier_delivery_receipt_v22_4 import (
+    build_delivery_receipt_state,
+    record_delivery_receipt,
+    record_recipient_acknowledgement,
+)
 from .dossier_release_authorization_v22_1 import (
     authorize_dossier_release,
     latest_release_authorization,
@@ -48,6 +53,7 @@ def register_dossier_release_workspace_routes_v22_0(app):
         payload["release_package_preview"] = build_release_package_preview(case_id)
         payload["latest_release_preview"] = latest_release_preview(case_id)
         payload["secure_distribution"] = build_secure_distribution_readiness(case_id)
+        payload["delivery_receipt_state"] = build_delivery_receipt_state(case_id)
         return render_template(
             "dossier_release_workspace_v22_0.html",
             title="Dossier Release Workspace",
@@ -68,6 +74,7 @@ def register_dossier_release_workspace_routes_v22_0(app):
         payload["release_package_preview"] = build_release_package_preview(case_id)
         payload["latest_release_preview"] = latest_release_preview(case_id)
         payload["secure_distribution"] = build_secure_distribution_readiness(case_id)
+        payload["delivery_receipt_state"] = build_delivery_receipt_state(case_id)
         return jsonify(payload)
 
     @app.post("/api/v1/dossier-release/<case_id>/preview")
@@ -140,5 +147,48 @@ def register_dossier_release_workspace_routes_v22_0(app):
             ip_address=request.remote_addr,
         )
         return jsonify(result), 200 if result.get("status") == "dispatch_recorded" else 422
+
+    @app.get("/api/v1/dossier-release/<case_id>/delivery-state")
+    def api_dossier_delivery_state_get_v22_4(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        result = build_delivery_receipt_state(case_id)
+        return jsonify(result), 200 if result.get("status") != "blocked" else 422
+
+    @app.post("/api/v1/dossier-release/<case_id>/delivery-receipt")
+    def api_dossier_delivery_receipt_post_v22_4(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        payload = request.get_json(silent=True) or {}
+        result = record_delivery_receipt(
+            case_id,
+            delivery_result=str(payload.get("delivery_result") or ""),
+            recorder=str(session.get("user") or "unknown"),
+            provider_message_id=str(payload.get("provider_message_id") or ""),
+            transport_status=str(payload.get("transport_status") or ""),
+            failure_code=str(payload.get("failure_code") or ""),
+            failure_detail=str(payload.get("failure_detail") or ""),
+            delivered_at=str(payload.get("delivered_at") or ""),
+            note=str(payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get("status") == "delivery_recorded" else 422
+
+    @app.post("/api/v1/dossier-release/<case_id>/recipient-acknowledgement")
+    def api_dossier_recipient_ack_post_v22_4(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        payload = request.get_json(silent=True) or {}
+        result = record_recipient_acknowledgement(
+            case_id,
+            acknowledged=payload.get("acknowledged") is True,
+            recorder=str(session.get("user") or "unknown"),
+            recipient_name=str(payload.get("recipient_name") or ""),
+            acknowledgement_method=str(payload.get("acknowledgement_method") or ""),
+            acknowledged_at=str(payload.get("acknowledged_at") or ""),
+            note=str(payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get("status") == "acknowledgement_recorded" else 422
 
     return app
