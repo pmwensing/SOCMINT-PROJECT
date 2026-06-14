@@ -27,19 +27,10 @@
   <label for="release-recipient">Authorized recipient</label>
   <select id="release-recipient">
     <option value="">Select recipient</option>
-    {% for recipient in payload.recipient_catalog %}
-    <option value="{{ recipient.recipient_id }}" {% if payload.selected_recipient and payload.selected_recipient.recipient_id == recipient.recipient_id %}selected{% endif %}>{{ recipient.display_name }}{% if recipient.organization %} · {{ recipient.organization }}{% endif %}</option>
-    {% endfor %}
+    {% for recipient in payload.recipient_catalog %}<option value="{{ recipient.recipient_id }}">{{ recipient.display_name }}{% if recipient.organization %} · {{ recipient.organization }}{% endif %}</option>{% endfor %}
   </select>
-
   <label for="release-channel">Delivery channel</label>
-  <select id="release-channel">
-    <option value="">Select channel</option>
-    {% for channel in payload.available_channels %}
-    <option value="{{ channel }}" {% if payload.selected_channel == channel %}selected{% endif %}>{{ channel.replace('_', ' ')|title }}</option>
-    {% endfor %}
-  </select>
-
+  <select id="release-channel"><option value="">Select channel</option>{% for channel in payload.available_channels %}<option value="{{ channel }}">{{ channel.replace('_', ' ')|title }}</option>{% endfor %}</select>
   <button id="preview-release-readiness" type="button">Preview release readiness</button>
   <p class="muted">This workspace does not transmit or dispatch the dossier.</p>
 </section>
@@ -47,31 +38,36 @@
 <section class="panel">
   <h2>Recipient and Delivery Authorization</h2>
   <label for="release-authorization-note">Authorization note</label>
-  <textarea id="release-authorization-note" rows="4" placeholder="Record the purpose, limits, or delivery instructions..."></textarea>
+  <textarea id="release-authorization-note" rows="4"></textarea>
   <label><input id="release-authorization-confirmed" type="checkbox"> I explicitly confirm this recipient and delivery channel.</label>
   <button id="authorize-release-selection" type="button">Authorize recipient and channel</button>
-  <p class="muted">Authorization creates an immutable decision record but does not transmit the dossier.</p>
-  {% if payload.latest_authorization %}
-  <article class="card">
-    <h3>Latest Authorization</h3>
-    <p><strong>{{ payload.latest_authorization.recipient_display_name }}</strong> via {{ payload.latest_authorization.delivery_channel }}</p>
-    <p>{{ payload.latest_authorization.authorizer }} · {{ payload.latest_authorization.authorized_at }}</p>
-    <p><small>{{ payload.latest_authorization.authorization_id }}</small></p>
-  </article>
-  {% endif %}
+  {% if payload.latest_authorization %}<p><strong>Latest:</strong> {{ payload.latest_authorization.recipient_display_name }} via {{ payload.latest_authorization.delivery_channel }} · {{ payload.latest_authorization.authorizer }}</p>{% endif %}
+</section>
+
+{% set preview = payload.release_package_preview %}
+<section class="panel">
+  <h2>Release Package Preview and Redaction Check</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Sections</h3><p class="metric">{{ preview.section_count }}</p></article>
+    <article class="card"><h3>Attachments</h3><p class="metric">{{ preview.attachment_count }}</p></article>
+    <article class="card"><h3>Restricted sections</h3><p class="metric">{{ preview.restricted_section_count }}</p></article>
+    <article class="card"><h3>Preview blockers</h3><p class="metric">{{ preview.blocker_count }}</p></article>
+  </div>
+  {% if preview.included_sections %}<table class="data-table"><thead><tr><th>Section</th><th>Classification</th><th>Redaction</th><th>Findings</th></tr></thead><tbody>{% for section in preview.included_sections %}<tr><td>{{ section.title }}</td><td>{{ section.classification }}</td><td>{{ 'Required' if section.redaction_required else 'Not required' }}</td><td>{{ section.finding_count }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+  {% if preview.included_attachments %}<table class="data-table"><thead><tr><th>Attachment</th><th>Media type</th><th>Classification</th><th>Redaction</th></tr></thead><tbody>{% for item in preview.included_attachments %}<tr><td>{{ item.path or item.attachment_id }}</td><td>{{ item.media_type }}</td><td>{{ item.classification }}</td><td>{{ 'Required' if item.redaction_required else 'Not required' }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+  {% if preview.blockers %}<ul>{% for blocker in preview.blockers %}<li>{{ blocker.key }}{% if blocker.section_id %}: {{ blocker.section_id }}{% endif %}{% if blocker.attachment_id %}: {{ blocker.attachment_id }}{% endif %}</li>{% endfor %}</ul>{% endif %}
+  <label for="release-preview-note">Preview note</label>
+  <textarea id="release-preview-note" rows="4"></textarea>
+  <label><input id="release-preview-acknowledged" type="checkbox"> I acknowledge the exact material, classifications, and blockers shown above.</label>
+  <button id="acknowledge-release-preview" type="button">Record release preview</button>
+  <p class="muted">Acknowledgement records the review only. It does not transmit the dossier.</p>
+  {% if payload.latest_release_preview %}<p><strong>Latest preview:</strong> {{ payload.latest_release_preview.status }} · {{ payload.latest_release_preview.acknowledged_by }} · {{ payload.latest_release_preview.acknowledged_at }}</p>{% endif %}
 </section>
 
 <section class="panel">
   <h2>Release Readiness</h2>
-  <div class="grid cards-4">
-    <article class="card"><h3>Package ready</h3><p>{{ 'Yes' if payload.package_ready else 'No' }}</p></article>
-    <article class="card"><h3>Selection ready</h3><p>{{ 'Yes' if payload.selection_ready else 'No' }}</p></article>
-    <article class="card"><h3>Transmission</h3><p>{{ 'Performed' if payload.transmission_performed else 'Not performed' }}</p></article>
-    <article class="card"><h3>Blockers</h3><p class="metric">{{ payload.blocker_count }}</p></article>
-  </div>
-  {% if payload.blockers %}
-  <table class="data-table"><thead><tr><th>Blocker</th><th>Details</th></tr></thead><tbody>{% for blocker in payload.blockers %}<tr><td>{{ blocker.key }}</td><td>{{ blocker.missing|join(', ') if blocker.missing else '—' }}</td></tr>{% endfor %}</tbody></table>
-  {% else %}<p>No release-readiness blockers remain.</p>{% endif %}
+  <p>Package ready: {{ 'Yes' if payload.package_ready else 'No' }} · Selection ready: {{ 'Yes' if payload.selection_ready else 'No' }} · Transmission: Not performed</p>
+  {% if payload.blockers %}<ul>{% for blocker in payload.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>{% endif %}
 </section>
 
 <section class="panel">
@@ -80,6 +76,7 @@
   <pre id="release-handoff-context">{{ payload.case_delivery_workspace.handoff_context|tojson(indent=2) }}</pre>
   <pre id="release-preview-output"></pre>
   <pre id="release-authorization-output"></pre>
+  <pre id="release-package-preview-output"></pre>
 </section>
 </div>
 <script src="{{ url_for('static', filename='dossier_release_workspace_v22_0.js') }}" defer></script>
