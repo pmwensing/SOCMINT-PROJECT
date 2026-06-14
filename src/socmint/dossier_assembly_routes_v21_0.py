@@ -22,6 +22,9 @@ from .dossier_product_review_routes_v21_7 import (
 from .dossier_quality_review_routes_v21_4 import (
     register_dossier_quality_review_routes_v21_4,
 )
+from .dossier_release_workspace_routes_v22_0 import (
+    register_dossier_release_workspace_routes_v22_0,
+)
 from .dossier_section_builder_v21_2 import (
     build_dossier_section_draft,
     save_dossier_draft_snapshot,
@@ -149,4 +152,5 @@ def register_dossier_assembly_routes_v21_0(app):
     register_dossier_supervisor_approval_routes_v21_5(app)
     register_dossier_final_export_routes_v21_6(app)
     register_dossier_product_review_routes_v21_7(app)
+    register_dossier_release_workspace_routes_v22_0(app)
     return app
