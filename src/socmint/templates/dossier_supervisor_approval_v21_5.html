@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-dossier-supervisor-approval data-case-id="{{ payload.case_id }}" data-subject-id="{{ payload.subject_id or '' }}" data-csrf-token="{{ session.get('_csrf_token', '') }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Supervisor Dossier Approval</h1><p>{{ payload.case_id }}{% if payload.subject_id %} · subject {{ payload.subject_id }}{% endif %}</p></div>
+    <span class="status-pill {{ 'completed' if payload.review_ready else 'failed' }}">{{ 'ready for approval' if payload.review_ready else payload.status }}</span>
+  </div>
+  <div id="supervisor-approval-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
+</section>
+
+{% if payload.status == 'blocked' %}
+<section class="panel"><h2>Approval Blocked</h2><ul>{% for blocker in payload.quality_review.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul></section>
+{% else %}
+<section class="panel">
+  <h2>Source Quality Review</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Review status</h3><p>{{ payload.quality_review.status }}</p></article>
+    <article class="card"><h3>Ready</h3><p>{{ 'Yes' if payload.review_ready else 'No' }}</p></article>
+    <article class="card"><h3>Blockers</h3><p class="metric">{{ payload.quality_review.blocker_count }}</p></article>
+    <article class="card"><h3>Ready sections</h3><p class="metric">{{ payload.quality_review.ready_section_count }}/{{ payload.quality_review.section_count }}</p></article>
+  </div>
+  <p><strong>Review ID:</strong> <small>{{ payload.quality_review.review_id }}</small></p>
+  <p><strong>Review SHA-256:</strong> <small>{{ payload.quality_review.review_sha256 }}</small></p>
+</section>
+
+<section class="panel">
+  <h2>Supervisor Decision</h2>
+  <label for="supervisor-decision">Decision</label>
+  <select id="supervisor-decision">
+    <option value="approve" {% if not payload.can_approve %}disabled{% endif %}>approve</option>
+    <option value="return">return</option>
+    <option value="hold">hold</option>
+  </select>
+  <label for="supervisor-decision-note">Decision note</label>
+  <textarea id="supervisor-decision-note" rows="4" placeholder="Record the reason or instructions..."></textarea>
+  <button id="save-supervisor-decision" type="button">Record supervisor decision</button>
+  {% if not payload.can_approve %}<p class="flash warning">Approval requires an explicit ready quality review. Return and hold remain available.</p>{% endif %}
+</section>
+
+{% if payload.latest_decision %}
+<section class="panel">
+  <h2>Latest Decision</h2>
+  <p><strong>{{ payload.latest_decision.result_status }}</strong> by {{ payload.latest_decision.reviewer }} at {{ payload.latest_decision.decided_at }}</p>
+  <p>{{ payload.latest_decision.note or 'No note.' }}</p>
+  <p><strong>Source review:</strong> {{ payload.latest_decision.source_review_id }}</p>
+  <p><strong>Export preparation:</strong> {{ payload.latest_decision.export_preparation.status }}</p>
+</section>
+{% endif %}
+{% endif %}
+
+<section class="panel"><p><a href="/dossier-assembly/{{ payload.case_id }}/quality-review{% if payload.subject_id %}?subject_id={{ payload.subject_id }}{% endif %}">Return to quality review</a></p><pre id="supervisor-approval-output"></pre></section>
+</div>
+<script src="{{ url_for('static', filename='dossier_supervisor_approval_v21_5.js') }}" defer></script>
+{% endblock %}
