@@ -40,6 +40,9 @@ def build_dossier_assembly_workspace_v21_1(
         links["supervisor_dossier_approval"] = (
             f"/dossier-assembly/{case_id}/supervisor-approval?subject_id={subject_id}"
         )
+        links["final_export_package_generation"] = (
+            f"/dossier-assembly/{case_id}/final-export?subject_id={subject_id}"
+        )
     return workspace
 
 
