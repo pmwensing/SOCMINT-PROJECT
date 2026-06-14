@@ -13,7 +13,7 @@ The import surface shows:
 
 The service records a separate immutable `case_dossier_package_import` audit event. The event captures the package id, manifest hash, finding count, verified import snapshot hash, and importing operator.
 
-Duplicate-import protection prevents a second audit event for the same package identity and manifest. When the current package differs from the latest imported identity, the workspace marks the import as stale and offers import of the newer package.
+duplicate-import protection prevents a second audit event for the same package identity and manifest. When the current package differs from the latest imported identity, the workspace marks the import as stale and offers import of the newer package.
 
 Routes:
 
