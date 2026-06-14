@@ -54,7 +54,7 @@
   <label for="delivery-reissue-reason">Reissue reason</label><textarea id="delivery-reissue-reason" rows="2"></textarea>
   <label for="delivery-reissue-note">Reissue note</label><textarea id="delivery-reissue-note" rows="2"></textarea>
   <button id="authorize-delivery-reissue" type="button" {% if not recovery.reissue_available %}disabled{% endif %}>Authorize reissue</button>
-  <p class="muted">All reviews, recalls, and reissues are separate immutable records. Original dispatch, receipt, and acknowledgement events remain unchanged.</p>
+  <p class="muted">All reviews, recalls, and reissues are separate immutable records; original dispatch, receipt, and acknowledgement events remain unchanged.</p>
 </section>
 
 <section class="panel"><h2>Connected Delivery Workspace</h2><p><a id="open-case-delivery-workspace" href="{{ payload.case_delivery_workspace.href }}">Open Case Delivery Workspace</a></p><pre id="release-handoff-context">{{ payload.case_delivery_workspace.handoff_context|tojson(indent=2) }}</pre><pre id="release-preview-output"></pre><pre id="release-authorization-output"></pre><pre id="release-package-preview-output"></pre><pre id="secure-distribution-output"></pre><pre id="delivery-receipt-output"></pre><pre id="recipient-acknowledgement-output"></pre><pre id="failed-delivery-review-output"></pre><pre id="delivery-recall-output"></pre><pre id="delivery-reissue-output"></pre></section>
