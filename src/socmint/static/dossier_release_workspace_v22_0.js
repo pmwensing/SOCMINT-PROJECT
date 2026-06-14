@@ -7,6 +7,9 @@
   const dispatchButton = document.getElementById("dispatch-secure-distribution");
   const receiptButton = document.getElementById("record-delivery-receipt");
   const recipientAckButton = document.getElementById("record-recipient-acknowledgement");
+  const failureReviewButton = document.getElementById("record-failed-delivery-review");
+  const recallButton = document.getElementById("request-delivery-recall");
+  const reissueButton = document.getElementById("authorize-delivery-reissue");
   if (!root || !previewButton) return;
 
   const post = async (path, body) => {
@@ -123,5 +126,54 @@
       show("success", "Recipient acknowledgement recorded.");
       window.location.reload();
     } catch (error) { show("error", error.message); recipientAckButton.disabled = false; }
+  });
+
+  failureReviewButton?.addEventListener("click", async () => {
+    failureReviewButton.disabled = true;
+    try {
+      const {response, payload} = await post("/failed-delivery-review", {
+        confirmed: document.getElementById("failed-delivery-review-confirmed").checked,
+        root_cause: document.getElementById("failed-delivery-root-cause").value,
+        resolution_plan: document.getElementById("failed-delivery-resolution-plan").value,
+        note: document.getElementById("failed-delivery-review-note").value,
+      });
+      document.getElementById("failed-delivery-review-output").textContent = JSON.stringify(payload, null, 2);
+      if (!response.ok) throw new Error(payload.blockers?.[0]?.key || "failed delivery review blocked");
+      show("success", "Failed delivery review recorded.");
+      window.location.reload();
+    } catch (error) { show("error", error.message); failureReviewButton.disabled = false; }
+  });
+
+  recallButton?.addEventListener("click", async () => {
+    recallButton.disabled = true;
+    try {
+      const {response, payload} = await post("/recall", {
+        confirmed: document.getElementById("delivery-recall-confirmed").checked,
+        reason: document.getElementById("delivery-recall-reason").value,
+        scope: document.getElementById("delivery-recall-scope").value,
+        note: document.getElementById("delivery-recall-note").value,
+      });
+      document.getElementById("delivery-recall-output").textContent = JSON.stringify(payload, null, 2);
+      if (!response.ok) throw new Error(payload.blockers?.[0]?.key || "recall request blocked");
+      show("success", "Recall request recorded.");
+      window.location.reload();
+    } catch (error) { show("error", error.message); recallButton.disabled = false; }
+  });
+
+  reissueButton?.addEventListener("click", async () => {
+    reissueButton.disabled = true;
+    try {
+      const {response, payload} = await post("/reissue-authorization", {
+        confirmed: document.getElementById("delivery-reissue-confirmed").checked,
+        target_recipient_id: document.getElementById("delivery-reissue-recipient").value,
+        target_delivery_channel: document.getElementById("delivery-reissue-channel").value,
+        reason: document.getElementById("delivery-reissue-reason").value,
+        note: document.getElementById("delivery-reissue-note").value,
+      });
+      document.getElementById("delivery-reissue-output").textContent = JSON.stringify(payload, null, 2);
+      if (!response.ok) throw new Error(payload.blockers?.[0]?.key || "reissue authorization blocked");
+      show("success", "Reissue authorization recorded.");
+      window.location.reload();
+    } catch (error) { show("error", error.message); reissueButton.disabled = false; }
   });
 })();
