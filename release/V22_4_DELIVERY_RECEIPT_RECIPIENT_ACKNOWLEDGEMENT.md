@@ -2,7 +2,7 @@
 
 Consumes the latest recorded v22.3 distribution result and stores delivery success or failure metadata as a separate immutable delivery receipt.
 
-Recipient acknowledgement is recorded separately from the delivery receipt and may only reference a successful delivered receipt.
+The product records recipient acknowledgement separately from the delivery receipt and permits acknowledgement only for a successful delivered receipt.
 
 The workspace shows delivery state, receipt metadata, outstanding acknowledgement status, and completion state while preserving the original dispatch record unchanged.
 
