@@ -4,6 +4,7 @@
   const previewButton = document.getElementById("preview-release-readiness");
   const authorizeButton = document.getElementById("authorize-release-selection");
   const acknowledgeButton = document.getElementById("acknowledge-release-preview");
+  const dispatchButton = document.getElementById("dispatch-secure-distribution");
   if (!root || !previewButton) return;
 
   const selection = () => ({
@@ -117,6 +118,38 @@
     } catch (error) {
       show("error", error.message);
       acknowledgeButton.disabled = false;
+    }
+  });
+
+  dispatchButton?.addEventListener("click", async () => {
+    const output = document.getElementById("secure-distribution-output");
+    dispatchButton.disabled = true;
+    try {
+      const response = await fetch(
+        "/api/v1/dossier-release/" + root.dataset.caseId + "/dispatch",
+        {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": root.dataset.csrfToken || "",
+          },
+          body: JSON.stringify({
+            confirmed: document.getElementById("secure-distribution-confirmed").checked,
+            note: document.getElementById("secure-distribution-note").value,
+          }),
+        }
+      );
+      const payload = await response.json();
+      output.textContent = JSON.stringify(payload, null, 2);
+      if (!response.ok) {
+        throw new Error(payload.blockers?.[0]?.key || "secure distribution blocked");
+      }
+      show("success", "Secure distribution request recorded through Case Delivery.");
+      window.location.reload();
+    } catch (error) {
+      show("error", error.message);
+      dispatchButton.disabled = false;
     }
   });
 })();
