@@ -10,6 +10,27 @@
 </section>
 
 <section class="panel">
+  <div class="section-header">
+    <div><h2>Approved Findings Package Import</h2><p class="muted">Verify and import the current v20 package before arranging dossier sections.</p></div>
+    <button id="import-findings-package" type="button" {% if not payload.package_import.can_import %}disabled{% endif %}>Import current package</button>
+  </div>
+  <div class="grid cards-4">
+    <article class="card"><h3>Package ID</h3><p>{{ payload.source_identity.package_id or 'not available' }}</p></article>
+    <article class="card"><h3>Manifest verification</h3><p>{{ 'Verified' if payload.manifest_verified else 'Failed' }}</p></article>
+    <article class="card"><h3>Import status</h3><p id="package-import-status">{{ payload.package_import.status }}</p></article>
+    <article class="card"><h3>Freshness</h3><p>{{ 'Stale' if payload.package_stale else 'Current' if payload.duplicate_import else 'Not imported' }}</p></article>
+  </div>
+  <p><strong>Declared manifest:</strong> <small>{{ payload.source_identity.manifest_sha256 or '—' }}</small></p>
+  <p><strong>Computed manifest:</strong> <small>{{ payload.package_import.computed_manifest_sha256 }}</small></p>
+  {% if payload.package_import.latest_import %}
+  <p><strong>Last import:</strong> {{ payload.package_import.latest_import.imported_by }} · {{ payload.package_import.latest_import.imported_at }} · record {{ payload.package_import.latest_import.import_record_id }}</p>
+  {% endif %}
+  {% if payload.package_import.blockers %}
+  <ul>{% for blocker in payload.package_import.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>
+  {% endif %}
+</section>
+
+<section class="panel">
   <h2>Source Package</h2>
   <div class="grid cards-4">
     <article class="card"><h3>Package</h3><p>{{ payload.source_package.package_id or 'not available' }}</p></article>
@@ -35,7 +56,8 @@
 </section>
 
 <section class="panel">
-  <div class="section-header"><div><h2>Dossier Structure</h2><p class="muted">Arrange findings and write section narratives. Saving creates a new immutable arrangement event only.</p></div><button id="save-dossier-arrangement" type="button">Save arrangement</button></div>
+  <div class="section-header"><div><h2>Dossier Structure</h2><p class="muted">Arrange findings and write section narratives. Saving creates a new immutable arrangement event only.</p></div><button id="save-dossier-arrangement" type="button" {% if not payload.can_arrange %}disabled{% endif %}>Save arrangement</button></div>
+  {% if not payload.can_arrange %}<p class="flash warning">Import the verified current findings package before saving an arrangement.</p>{% endif %}
   <div id="dossier-sections">
   {% for section in payload.sections %}
     <article class="card dossier-section" data-section-id="{{ section.section_id }}">
