@@ -1,0 +1,66 @@
+from __future__ import annotations
+
+from typing import Any
+
+from .dossier_assembly_workspace_v21_0 import (
+    build_dossier_assembly_workspace,
+    save_dossier_arrangement,
+)
+from .dossier_package_import_v21_1 import inspect_dossier_package_import
+
+
+def build_dossier_assembly_workspace_v21_1(
+    case_id: str,
+    *,
+    subject_id: int | None = None,
+) -> dict[str, Any]:
+    workspace = build_dossier_assembly_workspace(case_id, subject_id=subject_id)
+    package_import = inspect_dossier_package_import(case_id)
+    workspace["version"] = "v21.1.0"
+    workspace["package_import"] = package_import
+    workspace["source_identity"] = package_import["source_identity"]
+    workspace["manifest_verified"] = package_import["manifest_verified"]
+    workspace["package_stale"] = package_import["package_stale"]
+    workspace["duplicate_import"] = package_import["duplicate_import"]
+    workspace["can_arrange"] = package_import["can_arrange"]
+    workspace["status"] = (
+        "ready_for_arrangement"
+        if package_import["can_arrange"]
+        else package_import["status"]
+    )
+    workspace["next_action"] = package_import["next_action"]
+    return workspace
+
+
+def save_verified_dossier_arrangement(
+    case_id: str,
+    payload: dict[str, Any],
+    *,
+    actor: str,
+    ip_address: str | None = None,
+) -> dict[str, Any]:
+    package_import = inspect_dossier_package_import(case_id)
+    if not package_import["can_arrange"]:
+        return {
+            "status": "blocked",
+            "blockers": package_import["blockers"]
+            or [
+                {
+                    "key": (
+                        "package_import_stale"
+                        if package_import["package_stale"]
+                        else "package_import_required"
+                    )
+                }
+            ],
+            "package_import": package_import,
+            "next_action": package_import["next_action"],
+        }
+    result = save_dossier_arrangement(
+        case_id,
+        payload,
+        actor=actor,
+        ip_address=ip_address,
+    )
+    result["package_import"] = inspect_dossier_package_import(case_id)
+    return result
