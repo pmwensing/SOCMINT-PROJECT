@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-dossier-assembly-workspace data-case-id="{{ payload.case_id }}" data-csrf-token="{{ session.get('_csrf_token', '') }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Dossier Assembly Workspace</h1><p>{{ payload.case_id }}</p></div>
+    <span class="status-pill {{ 'completed' if payload.status == 'ready_for_arrangement' else 'failed' }}">{{ payload.status }}</span>
+  </div>
+  <div id="dossier-assembly-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
+</section>
+
+<section class="panel">
+  <h2>Source Package</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Package</h3><p>{{ payload.source_package.package_id or 'not available' }}</p></article>
+    <article class="card"><h3>Findings</h3><p class="metric">{{ payload.finding_count }}</p></article>
+    <article class="card"><h3>Manifest</h3><p><small>{{ payload.source_package.manifest_sha256 }}</small></p></article>
+    <article class="card"><h3>Source records</h3><p>{{ 'Immutable' if payload.source_package_immutable and payload.source_findings_immutable else 'Check required' }}</p></article>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Assembly Gaps</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Missing narrative</h3><p class="metric">{{ payload.gap_summary.missing_narrative }}</p></article>
+    <article class="card"><h3>Missing evidence</h3><p class="metric">{{ payload.gap_summary.missing_evidence }}</p></article>
+    <article class="card"><h3>Missing citation</h3><p class="metric">{{ payload.gap_summary.missing_citation }}</p></article>
+    <article class="card"><h3>Missing source</h3><p class="metric">{{ payload.gap_summary.missing_source }}</p></article>
+  </div>
+  {% if payload.gaps %}
+  <table class="data-table"><thead><tr><th>Gap</th><th>Section</th><th>Finding</th><th>Detail</th></tr></thead><tbody>
+    {% for gap in payload.gaps %}<tr><td>{{ gap.key }}</td><td>{{ gap.section_id }}</td><td>{{ gap.finding_id or '—' }}</td><td>{{ gap.detail or 'Review source package.' }}</td></tr>{% endfor %}
+  </tbody></table>
+  {% else %}<p>No current assembly gaps.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <div class="section-header"><div><h2>Dossier Structure</h2><p class="muted">Arrange findings and write section narratives. Saving creates a new immutable arrangement event only.</p></div><button id="save-dossier-arrangement" type="button">Save arrangement</button></div>
+  <div id="dossier-sections">
+  {% for section in payload.sections %}
+    <article class="card dossier-section" data-section-id="{{ section.section_id }}">
+      <div class="section-header"><h3>{{ section.title }}</h3><label>Position <input class="section-position" type="number" min="1" value="{{ section.position }}"></label></div>
+      <label>Narrative</label><textarea class="section-narrative" rows="4" placeholder="Write the section narrative...">{{ section.narrative }}</textarea>
+      {% if section.findings %}
+      <table class="data-table"><thead><tr><th>Finding</th><th>Confidence</th><th>Current section</th><th>Move to</th></tr></thead><tbody>
+        {% for finding in section.findings %}
+        <tr data-finding-id="{{ finding.finding_id }}"><td>{{ finding.text }}</td><td>{{ finding.confidence }}</td><td>{{ section.title }}</td><td><select class="finding-section-select">{% for target in payload.sections %}<option value="{{ target.section_id }}" {% if target.section_id == section.section_id %}selected{% endif %}>{{ target.title }}</option>{% endfor %}</select></td></tr>
+        {% endfor %}
+      </tbody></table>
+      {% else %}<p class="muted">No findings assigned.</p>{% endif %}
+    </article>
+  {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Connected Product Surfaces</h2>
+  <ul>
+    {% for name, href in payload.integration_links.items() %}<li><a href="{{ href }}">{{ name.replace('_', ' ').title() }}</a></li>{% endfor %}
+  </ul>
+  {% if not payload.subject_id %}<p class="muted">Add <code>?subject_id=&lt;id&gt;</code> to expose subject-level readiness, ledger, export-manifest, and ultimate-dossier links.</p>{% endif %}
+</section>
+</div>
+<script src="{{ url_for('static', filename='dossier_assembly_v21_0.js') }}" defer></script>
+{% endblock %}
