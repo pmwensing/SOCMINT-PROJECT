@@ -22,12 +22,8 @@
   </div>
   <p><strong>Declared manifest:</strong> <small>{{ payload.source_identity.manifest_sha256 or '—' }}</small></p>
   <p><strong>Computed manifest:</strong> <small>{{ payload.package_import.computed_manifest_sha256 }}</small></p>
-  {% if payload.package_import.latest_import %}
-  <p><strong>Last import:</strong> {{ payload.package_import.latest_import.imported_by }} · {{ payload.package_import.latest_import.imported_at }} · record {{ payload.package_import.latest_import.import_record_id }}</p>
-  {% endif %}
-  {% if payload.package_import.blockers %}
-  <ul>{% for blocker in payload.package_import.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>
-  {% endif %}
+  {% if payload.package_import.latest_import %}<p><strong>Last import:</strong> {{ payload.package_import.latest_import.imported_by }} · {{ payload.package_import.latest_import.imported_at }} · record {{ payload.package_import.latest_import.import_record_id }}</p>{% endif %}
+  {% if payload.package_import.blockers %}<ul>{% for blocker in payload.package_import.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>{% endif %}
 </section>
 
 <section class="panel">
@@ -48,11 +44,7 @@
     <article class="card"><h3>Missing citation</h3><p class="metric">{{ payload.gap_summary.missing_citation }}</p></article>
     <article class="card"><h3>Missing source</h3><p class="metric">{{ payload.gap_summary.missing_source }}</p></article>
   </div>
-  {% if payload.gaps %}
-  <table class="data-table"><thead><tr><th>Gap</th><th>Section</th><th>Finding</th><th>Detail</th></tr></thead><tbody>
-    {% for gap in payload.gaps %}<tr><td>{{ gap.key }}</td><td>{{ gap.section_id }}</td><td>{{ gap.finding_id or '—' }}</td><td>{{ gap.detail or 'Review source package.' }}</td></tr>{% endfor %}
-  </tbody></table>
-  {% else %}<p>No current assembly gaps.</p>{% endif %}
+  {% if payload.gaps %}<table class="data-table"><thead><tr><th>Gap</th><th>Section</th><th>Finding</th><th>Detail</th></tr></thead><tbody>{% for gap in payload.gaps %}<tr><td>{{ gap.key }}</td><td>{{ gap.section_id }}</td><td>{{ gap.finding_id or '—' }}</td><td>{{ gap.detail or 'Review source package.' }}</td></tr>{% endfor %}</tbody></table>{% else %}<p>No current assembly gaps.</p>{% endif %}
 </section>
 
 <section class="panel">
@@ -64,9 +56,9 @@
       <div class="section-header"><h3>{{ section.title }}</h3><label>Position <input class="section-position" type="number" min="1" value="{{ section.position }}"></label></div>
       <label>Narrative</label><textarea class="section-narrative" rows="4" placeholder="Write the section narrative...">{{ section.narrative }}</textarea>
       {% if section.findings %}
-      <table class="data-table"><thead><tr><th>Finding</th><th>Confidence</th><th>Current section</th><th>Move to</th></tr></thead><tbody>
+      <table class="data-table"><thead><tr><th>Finding</th><th>Confidence</th><th>Current section</th><th>Move to</th><th>Order</th></tr></thead><tbody>
         {% for finding in section.findings %}
-        <tr data-finding-id="{{ finding.finding_id }}"><td>{{ finding.text }}</td><td>{{ finding.confidence }}</td><td>{{ section.title }}</td><td><select class="finding-section-select">{% for target in payload.sections %}<option value="{{ target.section_id }}" {% if target.section_id == section.section_id %}selected{% endif %}>{{ target.title }}</option>{% endfor %}</select></td></tr>
+        <tr data-finding-id="{{ finding.finding_id }}"><td>{{ finding.text }}</td><td>{{ finding.confidence }}</td><td>{{ section.title }}</td><td><select class="finding-section-select">{% for target in payload.sections %}<option value="{{ target.section_id }}" {% if target.section_id == section.section_id %}selected{% endif %}>{{ target.title }}</option>{% endfor %}</select></td><td><input class="finding-position" type="number" min="1" value="{{ loop.index }}"></td></tr>
         {% endfor %}
       </tbody></table>
       {% else %}<p class="muted">No findings assigned.</p>{% endif %}
@@ -76,10 +68,26 @@
 </section>
 
 <section class="panel">
+  <div class="section-header"><div><h2>Dossier Section Draft</h2><p class="muted">Build a deterministic draft from the saved arrangement without changing the imported package or arrangement history.</p></div><div><button id="refresh-dossier-draft" type="button">Build draft</button><button id="save-dossier-draft-snapshot" type="button" {% if payload.draft.status == 'blocked' %}disabled{% endif %}>Save draft snapshot</button></div></div>
+  {% if payload.draft.status == 'blocked' %}
+  <p class="flash warning">{{ payload.draft.blockers[0].key }}</p>
+  {% else %}
+  <div class="grid cards-4">
+    <article class="card"><h3>Draft status</h3><p id="dossier-draft-status">{{ payload.draft.status }}</p></article>
+    <article class="card"><h3>Completeness</h3><p class="metric">{{ payload.draft.completeness_percent }}%</p></article>
+    <article class="card"><h3>Complete sections</h3><p class="metric">{{ payload.draft.complete_section_count }}/{{ payload.draft.substantive_section_count }}</p></article>
+    <article class="card"><h3>Draft ID</h3><p><small>{{ payload.draft.draft_id }}</small></p></article>
+  </div>
+  <p><strong>Draft SHA-256:</strong> <small>{{ payload.draft.draft_sha256 }}</small></p>
+  <table class="data-table"><thead><tr><th>Section</th><th>Findings</th><th>Score</th><th>Complete</th><th>Missing</th></tr></thead><tbody>{% for section in payload.draft.sections %}<tr><td>{{ section.position }}. {{ section.title }}</td><td>{{ section.finding_count }}</td><td>{{ section.completeness.score }}%</td><td>{{ 'Yes' if section.completeness.complete else 'No' }}</td><td>{{ section.completeness.missing|join(', ') or '—' }}</td></tr>{% endfor %}</tbody></table>
+  {% if payload.draft.latest_snapshot %}<p><strong>Latest snapshot:</strong> {{ payload.draft.latest_snapshot.snapshot_by }} · {{ payload.draft.latest_snapshot.snapshot_at }} · record {{ payload.draft.latest_snapshot.snapshot_record_id }}</p>{% endif %}
+  {% endif %}
+  <pre id="dossier-draft-output"></pre>
+</section>
+
+<section class="panel">
   <h2>Connected Product Surfaces</h2>
-  <ul>
-    {% for name, href in payload.integration_links.items() %}<li><a href="{{ href }}">{{ name.replace('_', ' ').title() }}</a></li>{% endfor %}
-  </ul>
+  <ul>{% for name, href in payload.integration_links.items() %}<li><a href="{{ href }}">{{ name.replace('_', ' ').title() }}</a></li>{% endfor %}</ul>
   {% if not payload.subject_id %}<p class="muted">Add <code>?subject_id=&lt;id&gt;</code> to expose subject-level readiness, ledger, export-manifest, and ultimate-dossier links.</p>{% endif %}
 </section>
 </div>
