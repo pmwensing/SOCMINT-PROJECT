@@ -9,113 +9,55 @@
   <div id="release-workspace-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
 </section>
 
-<section class="panel">
-  <h2>Approved Export Package</h2>
-  {% if payload.export_package %}
-  <div class="grid cards-4">
-    <article class="card"><h3>Package</h3><p><small>{{ payload.export_package.export_package_id }}</small></p></article>
-    <article class="card"><h3>Export record</h3><p>{{ payload.export_package.export_record_id }}</p></article>
-    <article class="card"><h3>Approval</h3><p>{{ payload.approval_state.approval_id }}</p></article>
-    <article class="card"><h3>Integrity</h3><p>{{ payload.integrity_state|length }} hashes present</p></article>
-  </div>
-  <p><strong>Package SHA-256:</strong> <small>{{ payload.export_package.export_package_sha256 }}</small></p>
-  {% else %}<p>No generated v21.6 export package is available.</p>{% endif %}
-</section>
+<section class="panel"><h2>Approved Export Package</h2>{% if payload.export_package %}<div class="grid cards-4"><article class="card"><h3>Package</h3><p><small>{{ payload.export_package.export_package_id }}</small></p></article><article class="card"><h3>Export record</h3><p>{{ payload.export_package.export_record_id }}</p></article><article class="card"><h3>Approval</h3><p>{{ payload.approval_state.approval_id }}</p></article><article class="card"><h3>Integrity</h3><p>{{ payload.integrity_state|length }} hashes present</p></article></div><p><strong>Package SHA-256:</strong> <small>{{ payload.export_package.export_package_sha256 }}</small></p>{% else %}<p>No generated v21.6 export package is available.</p>{% endif %}</section>
 
-<section class="panel">
-  <h2>Release Configuration</h2>
-  <label for="release-recipient">Authorized recipient</label>
-  <select id="release-recipient"><option value="">Select recipient</option>{% for recipient in payload.recipient_catalog %}<option value="{{ recipient.recipient_id }}">{{ recipient.display_name }}{% if recipient.organization %} · {{ recipient.organization }}{% endif %}</option>{% endfor %}</select>
-  <label for="release-channel">Delivery channel</label>
-  <select id="release-channel"><option value="">Select channel</option>{% for channel in payload.available_channels %}<option value="{{ channel }}">{{ channel.replace('_', ' ')|title }}</option>{% endfor %}</select>
-  <button id="preview-release-readiness" type="button">Preview release readiness</button>
-  <p class="muted">This workspace does not transmit or dispatch the dossier.</p>
-</section>
+<section class="panel"><h2>Release Configuration</h2><label for="release-recipient">Authorized recipient</label><select id="release-recipient"><option value="">Select recipient</option>{% for recipient in payload.recipient_catalog %}<option value="{{ recipient.recipient_id }}">{{ recipient.display_name }}{% if recipient.organization %} · {{ recipient.organization }}{% endif %}</option>{% endfor %}</select><label for="release-channel">Delivery channel</label><select id="release-channel"><option value="">Select channel</option>{% for channel in payload.available_channels %}<option value="{{ channel }}">{{ channel.replace('_', ' ')|title }}</option>{% endfor %}</select><button id="preview-release-readiness" type="button">Preview release readiness</button><p class="muted">This workspace does not transmit or dispatch the dossier.</p></section>
 
-<section class="panel">
-  <h2>Recipient and Delivery Authorization</h2>
-  <label for="release-authorization-note">Authorization note</label>
-  <textarea id="release-authorization-note" rows="4"></textarea>
-  <label><input id="release-authorization-confirmed" type="checkbox"> I explicitly confirm this recipient and delivery channel.</label>
-  <button id="authorize-release-selection" type="button">Authorize recipient and channel</button>
-  {% if payload.latest_authorization %}<p><strong>Latest:</strong> {{ payload.latest_authorization.recipient_display_name }} via {{ payload.latest_authorization.delivery_channel }} · {{ payload.latest_authorization.authorizer }}</p>{% endif %}
-</section>
+<section class="panel"><h2>Recipient and Delivery Authorization</h2><label for="release-authorization-note">Authorization note</label><textarea id="release-authorization-note" rows="4"></textarea><label><input id="release-authorization-confirmed" type="checkbox"> I explicitly confirm this recipient and delivery channel.</label><button id="authorize-release-selection" type="button">Authorize recipient and channel</button>{% if payload.latest_authorization %}<p><strong>Latest:</strong> {{ payload.latest_authorization.recipient_display_name }} via {{ payload.latest_authorization.delivery_channel }} · {{ payload.latest_authorization.authorizer }}</p>{% endif %}</section>
 
 {% set preview = payload.release_package_preview %}
-<section class="panel">
-  <h2>Release Package Preview and Redaction Check</h2>
-  <div class="grid cards-4">
-    <article class="card"><h3>Sections</h3><p class="metric">{{ preview.section_count }}</p></article>
-    <article class="card"><h3>Attachments</h3><p class="metric">{{ preview.attachment_count }}</p></article>
-    <article class="card"><h3>Restricted sections</h3><p class="metric">{{ preview.restricted_section_count }}</p></article>
-    <article class="card"><h3>Preview blockers</h3><p class="metric">{{ preview.blocker_count }}</p></article>
-  </div>
-  {% if preview.included_sections %}<table class="data-table"><thead><tr><th>Section</th><th>Classification</th><th>Redaction</th><th>Findings</th></tr></thead><tbody>{% for section in preview.included_sections %}<tr><td>{{ section.title }}</td><td>{{ section.classification }}</td><td>{{ 'Required' if section.redaction_required else 'Not required' }}</td><td>{{ section.finding_count }}</td></tr>{% endfor %}</tbody></table>{% endif %}
-  {% if preview.included_attachments %}<table class="data-table"><thead><tr><th>Attachment</th><th>Media type</th><th>Classification</th><th>Redaction</th></tr></thead><tbody>{% for item in preview.included_attachments %}<tr><td>{{ item.path or item.attachment_id }}</td><td>{{ item.media_type }}</td><td>{{ item.classification }}</td><td>{{ 'Required' if item.redaction_required else 'Not required' }}</td></tr>{% endfor %}</tbody></table>{% endif %}
-  {% if preview.blockers %}<ul>{% for blocker in preview.blockers %}<li>{{ blocker.key }}{% if blocker.section_id %}: {{ blocker.section_id }}{% endif %}{% if blocker.attachment_id %}: {{ blocker.attachment_id }}{% endif %}</li>{% endfor %}</ul>{% endif %}
-  <label for="release-preview-note">Preview note</label>
-  <textarea id="release-preview-note" rows="4"></textarea>
-  <label><input id="release-preview-acknowledged" type="checkbox"> I acknowledge the exact material, classifications, and blockers shown above.</label>
-  <button id="acknowledge-release-preview" type="button">Record release preview</button>
-  <p class="muted">Acknowledgement records the review only. It does not transmit the dossier.</p>
-</section>
+<section class="panel"><h2>Release Package Preview and Redaction Check</h2><div class="grid cards-4"><article class="card"><h3>Sections</h3><p class="metric">{{ preview.section_count }}</p></article><article class="card"><h3>Attachments</h3><p class="metric">{{ preview.attachment_count }}</p></article><article class="card"><h3>Restricted sections</h3><p class="metric">{{ preview.restricted_section_count }}</p></article><article class="card"><h3>Preview blockers</h3><p class="metric">{{ preview.blocker_count }}</p></article></div>{% if preview.included_sections %}<table class="data-table"><thead><tr><th>Section</th><th>Classification</th><th>Redaction</th><th>Findings</th></tr></thead><tbody>{% for section in preview.included_sections %}<tr><td>{{ section.title }}</td><td>{{ section.classification }}</td><td>{{ 'Required' if section.redaction_required else 'Not required' }}</td><td>{{ section.finding_count }}</td></tr>{% endfor %}</tbody></table>{% endif %}{% if preview.included_attachments %}<table class="data-table"><thead><tr><th>Attachment</th><th>Media type</th><th>Classification</th><th>Redaction</th></tr></thead><tbody>{% for item in preview.included_attachments %}<tr><td>{{ item.path or item.attachment_id }}</td><td>{{ item.media_type }}</td><td>{{ item.classification }}</td><td>{{ 'Required' if item.redaction_required else 'Not required' }}</td></tr>{% endfor %}</tbody></table>{% endif %}<label for="release-preview-note">Preview note</label><textarea id="release-preview-note" rows="4"></textarea><label><input id="release-preview-acknowledged" type="checkbox"> I acknowledge the exact material, classifications, and blockers shown above.</label><button id="acknowledge-release-preview" type="button">Record release preview</button><p class="muted">Acknowledgement records the review only. It does not transmit the dossier.</p></section>
 
 {% set distribution = payload.secure_distribution %}
-<section class="panel">
-  <h2>Secure Distribution Action</h2>
-  <p><strong>Status:</strong> {{ distribution.status }} · <strong>Blockers:</strong> {{ distribution.blocker_count }}</p>
-  {% if distribution.blockers %}<ul>{% for blocker in distribution.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>{% endif %}
-  <label for="secure-distribution-note">Dispatch note</label>
-  <textarea id="secure-distribution-note" rows="4" placeholder="Record the final dispatch purpose or instructions..."></textarea>
-  <label><input id="secure-distribution-confirmed" type="checkbox"> I explicitly confirm final dispatch through the existing case-delivery execution path.</label>
-  <button id="dispatch-secure-distribution" type="button" {% if not distribution.ready %}disabled{% endif %}>Dispatch through Case Delivery</button>
-  <p class="muted">Nothing is dispatched without this final confirmation. The existing case-delivery operations engine records the result.</p>
-  {% if distribution.latest_distribution %}<p><strong>Latest distribution:</strong> {{ distribution.latest_distribution.status }} · {{ distribution.latest_distribution.operator }} · {{ distribution.latest_distribution.recorded_at }}</p>{% endif %}
-</section>
+<section class="panel"><h2>Secure Distribution Action</h2><p><strong>Status:</strong> {{ distribution.status }} · <strong>Blockers:</strong> {{ distribution.blocker_count }}</p>{% if distribution.blockers %}<ul>{% for blocker in distribution.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>{% endif %}<label for="secure-distribution-note">Dispatch note</label><textarea id="secure-distribution-note" rows="4"></textarea><label><input id="secure-distribution-confirmed" type="checkbox"> I explicitly confirm final dispatch through the existing case-delivery execution path.</label><button id="dispatch-secure-distribution" type="button" {% if not distribution.ready %}disabled{% endif %}>Dispatch through Case Delivery</button><p class="muted">Nothing is dispatched without this final confirmation.</p></section>
 
 {% set delivery = payload.delivery_receipt_state %}
+<section class="panel"><h2>Delivery Receipt and Recipient Acknowledgement</h2><div class="grid cards-4"><article class="card"><h3>Delivery succeeded</h3><p>{{ 'Yes' if delivery.delivery_succeeded else 'No' }}</p></article><article class="card"><h3>Acknowledgement received</h3><p>{{ 'Yes' if delivery.acknowledgement_received else 'No' }}</p></article><article class="card"><h3>Acknowledgement outstanding</h3><p>{{ 'Yes' if delivery.acknowledgement_outstanding else 'No' }}</p></article><article class="card"><h3>State</h3><p>{{ delivery.next_action }}</p></article></div><h3>Record Delivery Outcome</h3><label for="delivery-result">Delivery result</label><select id="delivery-result"><option value="delivered">Delivered</option><option value="failed">Failed</option></select><label for="provider-message-id">Provider message ID</label><input id="provider-message-id" type="text"><label for="transport-status">Transport status</label><input id="transport-status" type="text"><label for="delivered-at">Delivered at</label><input id="delivered-at" type="text"><label for="delivery-failure-code">Failure code</label><input id="delivery-failure-code" type="text"><label for="delivery-failure-detail">Failure detail</label><textarea id="delivery-failure-detail" rows="2"></textarea><label for="delivery-receipt-note">Receipt note</label><textarea id="delivery-receipt-note" rows="3"></textarea><button id="record-delivery-receipt" type="button">Record delivery receipt</button><h3>Record Recipient Acknowledgement</h3><label><input id="recipient-acknowledged" type="checkbox"> Recipient acknowledgement was received.</label><label for="recipient-ack-name">Recipient name</label><input id="recipient-ack-name" type="text"><label for="recipient-ack-method">Acknowledgement method</label><input id="recipient-ack-method" type="text"><label for="recipient-ack-at">Acknowledged at</label><input id="recipient-ack-at" type="text"><label for="recipient-ack-note">Acknowledgement note</label><textarea id="recipient-ack-note" rows="3"></textarea><button id="record-recipient-acknowledgement" type="button" {% if not delivery.delivery_succeeded %}disabled{% endif %}>Record recipient acknowledgement</button><p class="muted">Delivery and acknowledgement are separate immutable records. The original dispatch record is never changed.</p></section>
+
+{% set recovery = payload.delivery_recovery_state %}
 <section class="panel">
-  <h2>Delivery Receipt and Recipient Acknowledgement</h2>
+  <h2>Failed Delivery, Recall, and Reissue Controls</h2>
   <div class="grid cards-4">
-    <article class="card"><h3>Delivery succeeded</h3><p>{{ 'Yes' if delivery.delivery_succeeded else 'No' }}</p></article>
-    <article class="card"><h3>Acknowledgement received</h3><p>{{ 'Yes' if delivery.acknowledgement_received else 'No' }}</p></article>
-    <article class="card"><h3>Acknowledgement outstanding</h3><p>{{ 'Yes' if delivery.acknowledgement_outstanding else 'No' }}</p></article>
-    <article class="card"><h3>State</h3><p>{{ delivery.next_action }}</p></article>
+    <article class="card"><h3>Failed delivery review</h3><p>{{ 'Required' if recovery.failed_delivery_review_required else 'Not required' }}</p></article>
+    <article class="card"><h3>Recall available</h3><p>{{ 'Yes' if recovery.recall_available else 'No' }}</p></article>
+    <article class="card"><h3>Reissue available</h3><p>{{ 'Yes' if recovery.reissue_available else 'No' }}</p></article>
+    <article class="card"><h3>Next action</h3><p>{{ recovery.next_action }}</p></article>
   </div>
-  <h3>Record Delivery Outcome</h3>
-  <label for="delivery-result">Delivery result</label>
-  <select id="delivery-result"><option value="delivered">Delivered</option><option value="failed">Failed</option></select>
-  <label for="provider-message-id">Provider message ID</label><input id="provider-message-id" type="text">
-  <label for="transport-status">Transport status</label><input id="transport-status" type="text">
-  <label for="delivered-at">Delivered at</label><input id="delivered-at" type="text" placeholder="ISO-8601 timestamp">
-  <label for="delivery-failure-code">Failure code</label><input id="delivery-failure-code" type="text">
-  <label for="delivery-failure-detail">Failure detail</label><textarea id="delivery-failure-detail" rows="2"></textarea>
-  <label for="delivery-receipt-note">Receipt note</label><textarea id="delivery-receipt-note" rows="3"></textarea>
-  <button id="record-delivery-receipt" type="button">Record delivery receipt</button>
+  <h3>Failed Delivery Review</h3>
+  <label><input id="failed-delivery-review-confirmed" type="checkbox"> I confirm this failed-delivery review.</label>
+  <label for="failed-delivery-root-cause">Root cause</label><textarea id="failed-delivery-root-cause" rows="2"></textarea>
+  <label for="failed-delivery-resolution-plan">Resolution plan</label><textarea id="failed-delivery-resolution-plan" rows="2"></textarea>
+  <label for="failed-delivery-review-note">Review note</label><textarea id="failed-delivery-review-note" rows="2"></textarea>
+  <button id="record-failed-delivery-review" type="button" {% if not recovery.delivery_failed %}disabled{% endif %}>Record failed-delivery review</button>
 
-  <h3>Record Recipient Acknowledgement</h3>
-  <label><input id="recipient-acknowledged" type="checkbox"> Recipient acknowledgement was received.</label>
-  <label for="recipient-ack-name">Recipient name</label><input id="recipient-ack-name" type="text">
-  <label for="recipient-ack-method">Acknowledgement method</label><input id="recipient-ack-method" type="text">
-  <label for="recipient-ack-at">Acknowledged at</label><input id="recipient-ack-at" type="text" placeholder="ISO-8601 timestamp">
-  <label for="recipient-ack-note">Acknowledgement note</label><textarea id="recipient-ack-note" rows="3"></textarea>
-  <button id="record-recipient-acknowledgement" type="button" {% if not delivery.delivery_succeeded %}disabled{% endif %}>Record recipient acknowledgement</button>
-  <p class="muted">Delivery and acknowledgement are separate immutable records. The original dispatch record is never changed.</p>
-  {% if delivery.latest_delivery_receipt %}<p><strong>Latest receipt:</strong> {{ delivery.latest_delivery_receipt.delivery_result }} · {{ delivery.latest_delivery_receipt.recorded_by }} · {{ delivery.latest_delivery_receipt.recorded_at }}</p>{% endif %}
-  {% if delivery.latest_recipient_acknowledgement %}<p><strong>Latest acknowledgement:</strong> {{ delivery.latest_recipient_acknowledgement.recipient_name }} · {{ delivery.latest_recipient_acknowledgement.recorded_at }}</p>{% endif %}
+  <h3>Recall Request</h3>
+  <label><input id="delivery-recall-confirmed" type="checkbox"> I explicitly confirm this recall request.</label>
+  <label for="delivery-recall-reason">Recall reason</label><textarea id="delivery-recall-reason" rows="2"></textarea>
+  <label for="delivery-recall-scope">Recall scope</label><select id="delivery-recall-scope"><option value="recipient_access">Recipient access</option><option value="all_available_copies">All available copies</option></select>
+  <label for="delivery-recall-note">Recall note</label><textarea id="delivery-recall-note" rows="2"></textarea>
+  <button id="request-delivery-recall" type="button" {% if not recovery.recall_available %}disabled{% endif %}>Request recall</button>
+
+  <h3>Reissue Authorization</h3>
+  <label><input id="delivery-reissue-confirmed" type="checkbox"> I explicitly confirm this reissue authorization.</label>
+  <label for="delivery-reissue-recipient">Target recipient ID</label><input id="delivery-reissue-recipient" type="text">
+  <label for="delivery-reissue-channel">Target delivery channel</label><input id="delivery-reissue-channel" type="text">
+  <label for="delivery-reissue-reason">Reissue reason</label><textarea id="delivery-reissue-reason" rows="2"></textarea>
+  <label for="delivery-reissue-note">Reissue note</label><textarea id="delivery-reissue-note" rows="2"></textarea>
+  <button id="authorize-delivery-reissue" type="button" {% if not recovery.reissue_available %}disabled{% endif %}>Authorize reissue</button>
+  <p class="muted">All reviews, recalls, and reissues are separate immutable records. Original dispatch, receipt, and acknowledgement events remain unchanged.</p>
 </section>
 
-<section class="panel">
-  <h2>Connected Delivery Workspace</h2>
-  <p><a id="open-case-delivery-workspace" href="{{ payload.case_delivery_workspace.href }}">Open Case Delivery Workspace</a></p>
-  <pre id="release-handoff-context">{{ payload.case_delivery_workspace.handoff_context|tojson(indent=2) }}</pre>
-  <pre id="release-preview-output"></pre>
-  <pre id="release-authorization-output"></pre>
-  <pre id="release-package-preview-output"></pre>
-  <pre id="secure-distribution-output"></pre>
-  <pre id="delivery-receipt-output"></pre>
-  <pre id="recipient-acknowledgement-output"></pre>
-</section>
+<section class="panel"><h2>Connected Delivery Workspace</h2><p><a id="open-case-delivery-workspace" href="{{ payload.case_delivery_workspace.href }}">Open Case Delivery Workspace</a></p><pre id="release-handoff-context">{{ payload.case_delivery_workspace.handoff_context|tojson(indent=2) }}</pre><pre id="release-preview-output"></pre><pre id="release-authorization-output"></pre><pre id="release-package-preview-output"></pre><pre id="secure-distribution-output"></pre><pre id="delivery-receipt-output"></pre><pre id="recipient-acknowledgement-output"></pre><pre id="failed-delivery-review-output"></pre><pre id="delivery-recall-output"></pre><pre id="delivery-reissue-output"></pre></section>
 </div>
 <script src="{{ url_for('static', filename='dossier_release_workspace_v22_0.js') }}" defer></script>
 {% endblock %}
