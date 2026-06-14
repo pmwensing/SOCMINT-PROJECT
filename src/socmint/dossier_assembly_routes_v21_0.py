@@ -13,6 +13,9 @@ from .dossier_package_import_v21_1 import (
     import_dossier_package,
     inspect_dossier_package_import,
 )
+from .dossier_quality_review_routes_v21_4 import (
+    register_dossier_quality_review_routes_v21_4,
+)
 from .dossier_section_builder_v21_2 import (
     build_dossier_section_draft,
     save_dossier_draft_snapshot,
@@ -133,4 +136,5 @@ def register_dossier_assembly_routes_v21_0(app):
         return jsonify(result), 200 if result.get("status") == "saved" else 422
 
     register_dossier_citation_mapping_routes_v21_3(app)
+    register_dossier_quality_review_routes_v21_4(app)
     return app
