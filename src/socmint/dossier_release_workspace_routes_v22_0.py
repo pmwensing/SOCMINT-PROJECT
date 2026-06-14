@@ -7,6 +7,12 @@ from .dossier_delivery_receipt_v22_4 import (
     record_delivery_receipt,
     record_recipient_acknowledgement,
 )
+from .dossier_delivery_recovery_controls_v22_5 import (
+    authorize_reissue,
+    build_delivery_recovery_state,
+    request_recall,
+    review_failed_delivery,
+)
 from .dossier_release_authorization_v22_1 import (
     authorize_dossier_release,
     latest_release_authorization,
@@ -54,6 +60,7 @@ def register_dossier_release_workspace_routes_v22_0(app):
         payload["latest_release_preview"] = latest_release_preview(case_id)
         payload["secure_distribution"] = build_secure_distribution_readiness(case_id)
         payload["delivery_receipt_state"] = build_delivery_receipt_state(case_id)
+        payload["delivery_recovery_state"] = build_delivery_recovery_state(case_id)
         return render_template(
             "dossier_release_workspace_v22_0.html",
             title="Dossier Release Workspace",
@@ -75,6 +82,7 @@ def register_dossier_release_workspace_routes_v22_0(app):
         payload["latest_release_preview"] = latest_release_preview(case_id)
         payload["secure_distribution"] = build_secure_distribution_readiness(case_id)
         payload["delivery_receipt_state"] = build_delivery_receipt_state(case_id)
+        payload["delivery_recovery_state"] = build_delivery_recovery_state(case_id)
         return jsonify(payload)
 
     @app.post("/api/v1/dossier-release/<case_id>/preview")
@@ -190,5 +198,60 @@ def register_dossier_release_workspace_routes_v22_0(app):
             ip_address=request.remote_addr,
         )
         return jsonify(result), 200 if result.get("status") == "acknowledgement_recorded" else 422
+
+    @app.get("/api/v1/dossier-release/<case_id>/delivery-recovery")
+    def api_dossier_delivery_recovery_get_v22_5(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        return jsonify(build_delivery_recovery_state(case_id))
+
+    @app.post("/api/v1/dossier-release/<case_id>/failed-delivery-review")
+    def api_dossier_failed_delivery_review_post_v22_5(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        payload = request.get_json(silent=True) or {}
+        result = review_failed_delivery(
+            case_id,
+            confirmed=payload.get("confirmed") is True,
+            reviewer=str(session.get("user") or "unknown"),
+            root_cause=str(payload.get("root_cause") or ""),
+            resolution_plan=str(payload.get("resolution_plan") or ""),
+            note=str(payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get("status") == "failed_delivery_review_recorded" else 422
+
+    @app.post("/api/v1/dossier-release/<case_id>/recall")
+    def api_dossier_recall_post_v22_5(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        payload = request.get_json(silent=True) or {}
+        result = request_recall(
+            case_id,
+            confirmed=payload.get("confirmed") is True,
+            requester=str(session.get("user") or "unknown"),
+            reason=str(payload.get("reason") or ""),
+            scope=str(payload.get("scope") or "recipient_access"),
+            note=str(payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get("status") == "recall_requested" else 422
+
+    @app.post("/api/v1/dossier-release/<case_id>/reissue-authorization")
+    def api_dossier_reissue_authorization_post_v22_5(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        payload = request.get_json(silent=True) or {}
+        result = authorize_reissue(
+            case_id,
+            confirmed=payload.get("confirmed") is True,
+            authorizer=str(session.get("user") or "unknown"),
+            target_recipient_id=str(payload.get("target_recipient_id") or ""),
+            target_delivery_channel=str(payload.get("target_delivery_channel") or ""),
+            reason=str(payload.get("reason") or ""),
+            note=str(payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get("status") == "reissue_authorized" else 422
 
     return app
