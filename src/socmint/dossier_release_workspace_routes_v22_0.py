@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+from .dossier_release_authorization_v22_1 import (
+    authorize_dossier_release,
+    latest_release_authorization,
+)
 from .dossier_release_workspace_v22_0 import build_dossier_release_workspace
 
 
@@ -26,14 +30,16 @@ def register_dossier_release_workspace_routes_v22_0(app):
         if not _login_required():
             return redirect(url_for("dashboard.login"))
         recipient_id, channel = _selection()
+        payload = build_dossier_release_workspace(
+            case_id,
+            selected_recipient_id=recipient_id,
+            selected_channel=channel,
+        )
+        payload["latest_authorization"] = latest_release_authorization(case_id)
         return render_template(
             "dossier_release_workspace_v22_0.html",
             title="Dossier Release Workspace",
-            payload=build_dossier_release_workspace(
-                case_id,
-                selected_recipient_id=recipient_id,
-                selected_channel=channel,
-            ),
+            payload=payload,
         )
 
     @app.get("/api/v1/dossier-release/<case_id>")
@@ -41,11 +47,13 @@ def register_dossier_release_workspace_routes_v22_0(app):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
         recipient_id, channel = _selection()
-        return jsonify(build_dossier_release_workspace(
+        payload = build_dossier_release_workspace(
             case_id,
             selected_recipient_id=recipient_id,
             selected_channel=channel,
-        ))
+        )
+        payload["latest_authorization"] = latest_release_authorization(case_id)
+        return jsonify(payload)
 
     @app.post("/api/v1/dossier-release/<case_id>/preview")
     def api_dossier_release_preview_post_v22_0(case_id: str):
@@ -58,5 +66,21 @@ def register_dossier_release_workspace_routes_v22_0(app):
             selected_channel=channel,
         )
         return jsonify(result), 200 if result.get("release_ready") else 422
+
+    @app.post("/api/v1/dossier-release/<case_id>/authorize")
+    def api_dossier_release_authorize_post_v22_1(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        payload = request.get_json(silent=True) or {}
+        result = authorize_dossier_release(
+            case_id,
+            recipient_id=str(payload.get("recipient_id") or ""),
+            delivery_channel=str(payload.get("delivery_channel") or ""),
+            confirmed=payload.get("confirmed") is True,
+            authorizer=str(session.get("user") or "unknown"),
+            note=str(payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get("status") == "authorized" else 422
 
     return app
