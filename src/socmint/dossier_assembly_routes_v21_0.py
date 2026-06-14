@@ -6,6 +6,9 @@ from .dossier_assembly_import_workspace_v21_1 import (
     build_dossier_assembly_workspace_v21_1,
     save_verified_dossier_arrangement,
 )
+from .dossier_citation_mapping_routes_v21_3 import (
+    register_dossier_citation_mapping_routes_v21_3,
+)
 from .dossier_package_import_v21_1 import (
     import_dossier_package,
     inspect_dossier_package_import,
@@ -129,4 +132,5 @@ def register_dossier_assembly_routes_v21_0(app):
         )
         return jsonify(result), 200 if result.get("status") == "saved" else 422
 
+    register_dossier_citation_mapping_routes_v21_3(app)
     return app
