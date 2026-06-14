@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="page-header">
+    <div>
+      <h1>Reviewer Queue Completion / Handoff Summary</h1>
+      <p>Supervisor view of reviewer completion, outstanding work, follow-up items, throughput, and handoff readiness.</p>
+    </div>
+    <span class="status-pill {{ 'completed' if payload.handoff_ready else 'failed' }}">{{ payload.status }}</span>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Completion Summary</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Completed</h3><p class="metric">{{ payload.completed_count }}</p></article>
+    <article class="card"><h3>Outstanding</h3><p class="metric">{{ payload.outstanding_count }}</p></article>
+    <article class="card"><h3>Follow-up</h3><p class="metric">{{ payload.follow_up_count }}</p></article>
+    <article class="card"><h3>Handoff Ready</h3><p class="metric">{{ 'Yes' if payload.handoff_ready else 'No' }}</p></article>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Filters</h2>
+  <form method="get">
+    <label for="handoff-reviewer">Reviewer</label>
+    <input id="handoff-reviewer" name="reviewer" value="{{ payload.filters.reviewer or '' }}">
+    <label for="handoff-case-id">Case ID</label>
+    <input id="handoff-case-id" name="case_id" value="{{ payload.filters.case_id or '' }}">
+    <button type="submit">Apply filters</button>
+    <a href="{{ url_for('reviewer_queue_handoff_summary_get_v19_6') }}">Clear</a>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Reviewer Throughput</h2>
+  {% if payload.reviewer_summaries %}
+  <table class="data-table">
+    <thead><tr><th>Reviewer</th><th>Assigned</th><th>Completed</th><th>Outstanding</th><th>Follow-up</th><th>Accepted</th><th>Reviewed</th><th>Completion rate</th><th>Handoff ready</th></tr></thead>
+    <tbody>
+      {% for item in payload.reviewer_summaries %}
+      <tr><td>{{ item.reviewer }}</td><td>{{ item.assigned }}</td><td>{{ item.completed }}</td><td>{{ item.outstanding }}</td><td>{{ item.follow_up }}</td><td>{{ item.accepted }}</td><td>{{ item.reviewed }}</td><td>{{ item.completion_rate }}%</td><td>{{ 'Yes' if item.handoff_ready else 'No' }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p>No reviewer assignments are available.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Case Handoff Readiness</h2>
+  {% if payload.case_summaries %}
+  <table class="data-table">
+    <thead><tr><th>Case</th><th>Total</th><th>Completed</th><th>Outstanding</th><th>Follow-up</th><th>Reviewers</th><th>Handoff ready</th><th>Workspace</th></tr></thead>
+    <tbody>
+      {% for item in payload.case_summaries %}
+      <tr><td>{{ item.case_id }}</td><td>{{ item.total }}</td><td>{{ item.completed }}</td><td>{{ item.outstanding }}</td><td>{{ item.follow_up }}</td><td>{{ item.reviewers|join(', ') }}</td><td>{{ 'Yes' if item.handoff_ready else 'No' }}</td><td><a href="{{ item.case_workspace_href }}">Open case workspace</a></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p>No case handoff data is available.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Outstanding and Follow-up Work</h2>
+  {% set open_items = payload.outstanding_items + payload.follow_up_items %}
+  {% if open_items %}
+  <table class="data-table">
+    <thead><tr><th>Case</th><th>Reviewer</th><th>Decision</th><th>State</th><th>Age</th><th>Assignment note</th><th>Workspace</th></tr></thead>
+    <tbody>
+      {% for item in open_items %}
+      <tr><td>{{ item.case_id }}</td><td>{{ item.assigned_reviewer or 'Unassigned' }}</td><td>{{ item.decision }}</td><td>{{ item.review_state }}</td><td>{{ item.age_hours or 0 }} hours</td><td>{{ item.assignment_note or '—' }}</td><td><a href="{{ item.case_workspace_href }}">Open case workspace</a></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p>No outstanding or follow-up reviewer work remains.</p>{% endif %}
+</section>
+{% endblock %}
