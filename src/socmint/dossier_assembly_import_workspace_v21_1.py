@@ -30,9 +30,13 @@ def build_dossier_assembly_workspace_v21_1(
     )
     workspace["next_action"] = package_import["next_action"]
     if subject_id is not None:
-        workspace.setdefault("integration_links", {})[
-            "source_evidence_citation_mapping"
-        ] = f"/dossier-assembly/{case_id}/citations?subject_id={subject_id}"
+        links = workspace.setdefault("integration_links", {})
+        links["source_evidence_citation_mapping"] = (
+            f"/dossier-assembly/{case_id}/citations?subject_id={subject_id}"
+        )
+        links["dossier_quality_completeness_review"] = (
+            f"/dossier-assembly/{case_id}/quality-review?subject_id={subject_id}"
+        )
     return workspace
 
 
