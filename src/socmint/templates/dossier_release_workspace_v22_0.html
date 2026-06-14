@@ -45,6 +45,23 @@
 </section>
 
 <section class="panel">
+  <h2>Recipient and Delivery Authorization</h2>
+  <label for="release-authorization-note">Authorization note</label>
+  <textarea id="release-authorization-note" rows="4" placeholder="Record the purpose, limits, or delivery instructions..."></textarea>
+  <label><input id="release-authorization-confirmed" type="checkbox"> I explicitly confirm this recipient and delivery channel.</label>
+  <button id="authorize-release-selection" type="button">Authorize recipient and channel</button>
+  <p class="muted">Authorization creates an immutable decision record but does not transmit the dossier.</p>
+  {% if payload.latest_authorization %}
+  <article class="card">
+    <h3>Latest Authorization</h3>
+    <p><strong>{{ payload.latest_authorization.recipient_display_name }}</strong> via {{ payload.latest_authorization.delivery_channel }}</p>
+    <p>{{ payload.latest_authorization.authorizer }} · {{ payload.latest_authorization.authorized_at }}</p>
+    <p><small>{{ payload.latest_authorization.authorization_id }}</small></p>
+  </article>
+  {% endif %}
+</section>
+
+<section class="panel">
   <h2>Release Readiness</h2>
   <div class="grid cards-4">
     <article class="card"><h3>Package ready</h3><p>{{ 'Yes' if payload.package_ready else 'No' }}</p></article>
@@ -62,6 +79,7 @@
   <p><a id="open-case-delivery-workspace" href="{{ payload.case_delivery_workspace.href }}">Open Case Delivery Workspace</a></p>
   <pre id="release-handoff-context">{{ payload.case_delivery_workspace.handoff_context|tojson(indent=2) }}</pre>
   <pre id="release-preview-output"></pre>
+  <pre id="release-authorization-output"></pre>
 </section>
 </div>
 <script src="{{ url_for('static', filename='dossier_release_workspace_v22_0.js') }}" defer></script>
