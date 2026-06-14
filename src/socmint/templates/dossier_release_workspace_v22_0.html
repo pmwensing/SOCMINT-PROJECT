@@ -73,6 +73,38 @@
   {% if distribution.latest_distribution %}<p><strong>Latest distribution:</strong> {{ distribution.latest_distribution.status }} · {{ distribution.latest_distribution.operator }} · {{ distribution.latest_distribution.recorded_at }}</p>{% endif %}
 </section>
 
+{% set delivery = payload.delivery_receipt_state %}
+<section class="panel">
+  <h2>Delivery Receipt and Recipient Acknowledgement</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Delivery succeeded</h3><p>{{ 'Yes' if delivery.delivery_succeeded else 'No' }}</p></article>
+    <article class="card"><h3>Acknowledgement received</h3><p>{{ 'Yes' if delivery.acknowledgement_received else 'No' }}</p></article>
+    <article class="card"><h3>Acknowledgement outstanding</h3><p>{{ 'Yes' if delivery.acknowledgement_outstanding else 'No' }}</p></article>
+    <article class="card"><h3>State</h3><p>{{ delivery.next_action }}</p></article>
+  </div>
+  <h3>Record Delivery Outcome</h3>
+  <label for="delivery-result">Delivery result</label>
+  <select id="delivery-result"><option value="delivered">Delivered</option><option value="failed">Failed</option></select>
+  <label for="provider-message-id">Provider message ID</label><input id="provider-message-id" type="text">
+  <label for="transport-status">Transport status</label><input id="transport-status" type="text">
+  <label for="delivered-at">Delivered at</label><input id="delivered-at" type="text" placeholder="ISO-8601 timestamp">
+  <label for="delivery-failure-code">Failure code</label><input id="delivery-failure-code" type="text">
+  <label for="delivery-failure-detail">Failure detail</label><textarea id="delivery-failure-detail" rows="2"></textarea>
+  <label for="delivery-receipt-note">Receipt note</label><textarea id="delivery-receipt-note" rows="3"></textarea>
+  <button id="record-delivery-receipt" type="button">Record delivery receipt</button>
+
+  <h3>Record Recipient Acknowledgement</h3>
+  <label><input id="recipient-acknowledged" type="checkbox"> Recipient acknowledgement was received.</label>
+  <label for="recipient-ack-name">Recipient name</label><input id="recipient-ack-name" type="text">
+  <label for="recipient-ack-method">Acknowledgement method</label><input id="recipient-ack-method" type="text">
+  <label for="recipient-ack-at">Acknowledged at</label><input id="recipient-ack-at" type="text" placeholder="ISO-8601 timestamp">
+  <label for="recipient-ack-note">Acknowledgement note</label><textarea id="recipient-ack-note" rows="3"></textarea>
+  <button id="record-recipient-acknowledgement" type="button" {% if not delivery.delivery_succeeded %}disabled{% endif %}>Record recipient acknowledgement</button>
+  <p class="muted">Delivery and acknowledgement are separate immutable records. The original dispatch record is never changed.</p>
+  {% if delivery.latest_delivery_receipt %}<p><strong>Latest receipt:</strong> {{ delivery.latest_delivery_receipt.delivery_result }} · {{ delivery.latest_delivery_receipt.recorded_by }} · {{ delivery.latest_delivery_receipt.recorded_at }}</p>{% endif %}
+  {% if delivery.latest_recipient_acknowledgement %}<p><strong>Latest acknowledgement:</strong> {{ delivery.latest_recipient_acknowledgement.recipient_name }} · {{ delivery.latest_recipient_acknowledgement.recorded_at }}</p>{% endif %}
+</section>
+
 <section class="panel">
   <h2>Connected Delivery Workspace</h2>
   <p><a id="open-case-delivery-workspace" href="{{ payload.case_delivery_workspace.href }}">Open Case Delivery Workspace</a></p>
@@ -81,6 +113,8 @@
   <pre id="release-authorization-output"></pre>
   <pre id="release-package-preview-output"></pre>
   <pre id="secure-distribution-output"></pre>
+  <pre id="delivery-receipt-output"></pre>
+  <pre id="recipient-acknowledgement-output"></pre>
 </section>
 </div>
 <script src="{{ url_for('static', filename='dossier_release_workspace_v22_0.js') }}" defer></script>
