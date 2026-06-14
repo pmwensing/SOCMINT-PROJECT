@@ -163,15 +163,17 @@ def import_dossier_package(
         session.add(row)
         session.commit()
         session.refresh(row)
+        import_record_id = row.id
+        imported_at = row.created_at.isoformat() if row.created_at else None
     finally:
         session.close()
 
     return {
         **event,
         "status": "imported",
-        "import_record_id": row.id,
+        "import_record_id": import_record_id,
         "imported_by": actor,
-        "imported_at": row.created_at.isoformat() if row.created_at else None,
+        "imported_at": imported_at,
         "duplicate_import": False,
         "package_stale": False,
         "next_action": "arrange_dossier_sections",
