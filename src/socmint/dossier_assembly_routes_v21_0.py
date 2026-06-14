@@ -9,6 +9,9 @@ from .dossier_assembly_import_workspace_v21_1 import (
 from .dossier_citation_mapping_routes_v21_3 import (
     register_dossier_citation_mapping_routes_v21_3,
 )
+from .dossier_final_export_routes_v21_6 import (
+    register_dossier_final_export_routes_v21_6,
+)
 from .dossier_package_import_v21_1 import (
     import_dossier_package,
     inspect_dossier_package_import,
@@ -141,4 +144,5 @@ def register_dossier_assembly_routes_v21_0(app):
     register_dossier_citation_mapping_routes_v21_3(app)
     register_dossier_quality_review_routes_v21_4(app)
     register_dossier_supervisor_approval_routes_v21_5(app)
+    register_dossier_final_export_routes_v21_6(app)
     return app
