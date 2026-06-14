@@ -25,10 +25,7 @@
 <section class="panel">
   <h2>Release Configuration</h2>
   <label for="release-recipient">Authorized recipient</label>
-  <select id="release-recipient">
-    <option value="">Select recipient</option>
-    {% for recipient in payload.recipient_catalog %}<option value="{{ recipient.recipient_id }}">{{ recipient.display_name }}{% if recipient.organization %} · {{ recipient.organization }}{% endif %}</option>{% endfor %}
-  </select>
+  <select id="release-recipient"><option value="">Select recipient</option>{% for recipient in payload.recipient_catalog %}<option value="{{ recipient.recipient_id }}">{{ recipient.display_name }}{% if recipient.organization %} · {{ recipient.organization }}{% endif %}</option>{% endfor %}</select>
   <label for="release-channel">Delivery channel</label>
   <select id="release-channel"><option value="">Select channel</option>{% for channel in payload.available_channels %}<option value="{{ channel }}">{{ channel.replace('_', ' ')|title }}</option>{% endfor %}</select>
   <button id="preview-release-readiness" type="button">Preview release readiness</button>
@@ -61,13 +58,19 @@
   <label><input id="release-preview-acknowledged" type="checkbox"> I acknowledge the exact material, classifications, and blockers shown above.</label>
   <button id="acknowledge-release-preview" type="button">Record release preview</button>
   <p class="muted">Acknowledgement records the review only. It does not transmit the dossier.</p>
-  {% if payload.latest_release_preview %}<p><strong>Latest preview:</strong> {{ payload.latest_release_preview.status }} · {{ payload.latest_release_preview.acknowledged_by }} · {{ payload.latest_release_preview.acknowledged_at }}</p>{% endif %}
 </section>
 
+{% set distribution = payload.secure_distribution %}
 <section class="panel">
-  <h2>Release Readiness</h2>
-  <p>Package ready: {{ 'Yes' if payload.package_ready else 'No' }} · Selection ready: {{ 'Yes' if payload.selection_ready else 'No' }} · Transmission: Not performed</p>
-  {% if payload.blockers %}<ul>{% for blocker in payload.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>{% endif %}
+  <h2>Secure Distribution Action</h2>
+  <p><strong>Status:</strong> {{ distribution.status }} · <strong>Blockers:</strong> {{ distribution.blocker_count }}</p>
+  {% if distribution.blockers %}<ul>{% for blocker in distribution.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>{% endif %}
+  <label for="secure-distribution-note">Dispatch note</label>
+  <textarea id="secure-distribution-note" rows="4" placeholder="Record the final dispatch purpose or instructions..."></textarea>
+  <label><input id="secure-distribution-confirmed" type="checkbox"> I explicitly confirm final dispatch through the existing case-delivery execution path.</label>
+  <button id="dispatch-secure-distribution" type="button" {% if not distribution.ready %}disabled{% endif %}>Dispatch through Case Delivery</button>
+  <p class="muted">Nothing is dispatched without this final confirmation. The existing case-delivery operations engine records the result.</p>
+  {% if distribution.latest_distribution %}<p><strong>Latest distribution:</strong> {{ distribution.latest_distribution.status }} · {{ distribution.latest_distribution.operator }} · {{ distribution.latest_distribution.recorded_at }}</p>{% endif %}
 </section>
 
 <section class="panel">
@@ -77,6 +80,7 @@
   <pre id="release-preview-output"></pre>
   <pre id="release-authorization-output"></pre>
   <pre id="release-package-preview-output"></pre>
+  <pre id="secure-distribution-output"></pre>
 </section>
 </div>
 <script src="{{ url_for('static', filename='dossier_release_workspace_v22_0.js') }}" defer></script>
