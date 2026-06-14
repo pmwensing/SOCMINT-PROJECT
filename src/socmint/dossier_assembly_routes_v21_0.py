@@ -20,6 +20,9 @@ from .dossier_section_builder_v21_2 import (
     build_dossier_section_draft,
     save_dossier_draft_snapshot,
 )
+from .dossier_supervisor_approval_routes_v21_5 import (
+    register_dossier_supervisor_approval_routes_v21_5,
+)
 
 
 def _login_required() -> bool:
@@ -137,4 +140,5 @@ def register_dossier_assembly_routes_v21_0(app):
 
     register_dossier_citation_mapping_routes_v21_3(app)
     register_dossier_quality_review_routes_v21_4(app)
+    register_dossier_supervisor_approval_routes_v21_5(app)
     return app
