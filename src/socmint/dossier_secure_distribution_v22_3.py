@@ -46,7 +46,10 @@ def _blockers(
     if preview is None:
         blockers.append({"key": "acknowledged_release_preview_required"})
         return blockers
-    if preview.get("status") != "acknowledged_ready" or preview.get("release_ready") is not True:
+    if (
+        preview.get("operator_acknowledged") is not True
+        or preview.get("release_ready") is not True
+    ):
         blockers.append({"key": "acknowledged_ready_preview_required"})
     if authorization:
         if preview.get("authorization_id") != authorization.get("authorization_id"):
