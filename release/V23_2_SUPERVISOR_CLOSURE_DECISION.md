@@ -2,7 +2,7 @@
 
 Adds an immutable supervisor closure decision bound to the latest readiness review.
 
-The latest readiness review must be `ready` and explicitly marked ready for a supervisor closure decision. The supervisor may record `close`, `hold`, or `return` with explicit confirmation and an optional note.
+The latest readiness review must be `ready` and explicitly marked ready for a supervisor closure decision. The supervisor may record close, hold, or return with explicit confirmation and an optional note.
 
 The decision stores supervisor identity, timestamp, decision, note, the readiness-review ID and hash, readiness-review record ID, reviewer identity and timestamp, source closure summary, source SHA-256, closure-decision ID, and closure-decision SHA-256.
 
