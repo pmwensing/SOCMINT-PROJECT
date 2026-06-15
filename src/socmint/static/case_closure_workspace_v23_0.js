@@ -3,6 +3,7 @@
   const root = document.querySelector("[data-case-closure-workspace]");
   const readinessButton = document.getElementById("record-closure-readiness-review");
   const decisionButton = document.getElementById("record-supervisor-closure-decision");
+  const retentionButton = document.getElementById("record-retention-assignment");
   if (!root) return;
 
   const show = (kind, message) => {
@@ -61,6 +62,24 @@
     } catch (error) {
       show("error", error.message);
       decisionButton.disabled = false;
+    }
+  });
+
+  retentionButton?.addEventListener("click", async () => {
+    retentionButton.disabled = true;
+    try {
+      const {response, payload} = await post("/retention-assignment", {
+        policy_id: document.getElementById("retention-policy-id").value,
+        confirmed: document.getElementById("retention-assignment-confirmed").checked,
+        note: document.getElementById("retention-assignment-note").value,
+      });
+      document.getElementById("retention-assignment-output").textContent = JSON.stringify(payload, null, 2);
+      if (!response.ok) throw new Error(payload.blockers?.[0]?.key || "retention assignment blocked");
+      show("success", "Retention policy assignment recorded.");
+      window.location.reload();
+    } catch (error) {
+      show("error", error.message);
+      retentionButton.disabled = false;
     }
   });
 })();
