@@ -57,7 +57,15 @@ def test_v23_1_route_and_ui(tmp_path, monkeypatch):
     })
 
     client = _app(tmp_path, monkeypatch).test_client()
-    assert client.post("/api/v1/case-closure/case-alpha/readiness-review", json={}).status_code == 401
+    with client.session_transaction() as sess:
+        sess["_csrf_token"] = "test-csrf"
+    unauthenticated = client.post(
+        "/api/v1/case-closure/case-alpha/readiness-review",
+        json={},
+        headers={"X-CSRF-Token": "test-csrf"},
+    )
+    assert unauthenticated.status_code == 401
+
     with client.session_transaction() as sess:
         sess["user"] = "supervisor"
         sess["_csrf_token"] = "test-csrf"
