@@ -66,6 +66,7 @@
 <section class="panel">
   <h2>Blocked Cases</h2>
   {% if payload.blocked_cases %}<table class="data-table"><thead><tr><th>Case</th><th>Stage</th><th>Blockers</th><th>Latest action</th></tr></thead><tbody>{% for case in payload.blocked_cases %}<tr><td>{{ case.case_id }}</td><td>{{ case.stage }}</td><td>{% for blocker in case.blockers %}{{ blocker.key }}{% if not loop.last %}, {% endif %}{% endfor %}</td><td>{{ case.latest_action }}</td></tr>{% endfor %}</tbody></table>{% else %}<p>No blocked cases are currently visible.</p>{% endif %}
+  <p class="muted">v24.0 is read-only. Status normalization, workload monitoring, overdue queues, escalation, metrics, and portfolio audit are added in v24.1–v24.6.</p>
   <p class="muted">v24.1 normalizes stage status without modifying any case event.</p>
 </section>
 
