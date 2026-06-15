@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-case-closure-workspace data-case-id="{{ payload.case_id }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Case Closure Workspace</h1><p>{{ payload.case_id }}</p></div>
+    <span class="status-pill {{ 'completed' if payload.closure_eligible else 'failed' }}">{{ payload.status }}</span>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Closure Readiness</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Release outcome</h3><p>{{ payload.current_release_outcome }}</p></article>
+    <article class="card"><h3>Closure eligible</h3><p>{{ 'Yes' if payload.closure_eligible else 'No' }}</p></article>
+    <article class="card"><h3>Archive ready</h3><p>{{ 'Yes' if payload.archive_ready else 'No' }}</p></article>
+    <article class="card"><h3>Blockers</h3><p class="metric">{{ payload.blocker_count }}</p></article>
+  </div>
+  {% if payload.blockers %}
+  <ul>{% for blocker in payload.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>
+  {% else %}<p>No closure blockers remain.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Delivery and Recovery State</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Delivery failed</h3><p>{{ 'Yes' if payload.delivery_recovery_state.delivery_failed else 'No' }}</p></article>
+    <article class="card"><h3>Delivery succeeded</h3><p>{{ 'Yes' if payload.delivery_recovery_state.delivery_succeeded else 'No' }}</p></article>
+    <article class="card"><h3>Acknowledgement</h3><p>{{ 'Received' if payload.delivery_recovery_state.acknowledgement_received else 'Outstanding' }}</p></article>
+    <article class="card"><h3>Recovery action</h3><p>{{ payload.delivery_recovery_state.next_action }}</p></article>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Proposed Retention Policy</h2>
+  {% if payload.proposed_retention_policy %}
+  <p><strong>{{ payload.proposed_retention_policy.display_name }}</strong></p>
+  <p>{{ payload.proposed_retention_policy.description }}</p>
+  <p><strong>Archive class:</strong> {{ payload.proposed_retention_policy.archive_class }}</p>
+  <p><strong>Retention period:</strong> {% if payload.proposed_retention_policy.retention_years is none %}Indefinite{% else %}{{ payload.proposed_retention_policy.retention_years }} years{% endif %}</p>
+  {% else %}<p>No retention policy is available.</p>{% endif %}
+  <table class="data-table">
+    <thead><tr><th>Policy</th><th>Period</th><th>Archive class</th></tr></thead>
+    <tbody>{% for policy in payload.retention_policies %}<tr><td>{{ policy.display_name }}</td><td>{% if policy.retention_years is none %}Indefinite{% else %}{{ policy.retention_years }} years{% endif %}</td><td>{{ policy.archive_class }}</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Supervisor Actions</h2>
+  <table class="data-table">
+    <thead><tr><th>Action</th><th>Version</th><th>Available</th></tr></thead>
+    <tbody>{% for action in payload.supervisor_actions %}<tr><td>{{ action.action.replace('_', ' ')|title }}</td><td>{{ action.version }}</td><td>{{ 'Yes' if action.available else 'No' }}</td></tr>{% endfor %}</tbody>
+  </table>
+  <p class="muted">v23.0 is read-oriented. It does not create a closure decision, retention assignment, archive package, or reopen authorization.</p>
+</section>
+
+<section class="panel">
+  <h2>Connected Case Surfaces</h2>
+  <p><a href="{{ payload.links.release_workspace }}">Dossier Release Workspace</a></p>
+  <p><a href="{{ payload.links.release_history }}">Release and Delivery History</a></p>
+  <p><a href="{{ payload.links.case_delivery_workspace }}">Case Delivery Workspace</a></p>
+  <pre id="case-closure-summary">{{ payload.release_history.closure_summary|tojson(indent=2) }}</pre>
+</section>
+</div>
+{% endblock %}
