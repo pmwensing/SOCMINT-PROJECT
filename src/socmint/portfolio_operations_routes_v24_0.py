@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, session, url_for
 
+from .portfolio_blocked_overdue_queue_v24_3 import build_blocked_overdue_case_queue
 from .portfolio_case_stage_overview_v24_1 import build_case_status_stage_overview
 from .portfolio_operations_dashboard_v24_0 import build_portfolio_operations_dashboard
 from .portfolio_workload_monitoring_v24_2 import build_workload_assignment_monitoring
@@ -15,6 +16,7 @@ def register_portfolio_operations_routes_v24_0(app):
         payload = build_portfolio_operations_dashboard()
         payload["stage_overview"] = build_case_status_stage_overview()
         payload["workload_monitoring"] = build_workload_assignment_monitoring()
+        payload["blocked_overdue_queue"] = build_blocked_overdue_case_queue()
         return render_template(
             "portfolio_operations_dashboard_v24_0.html",
             title="Portfolio Operations Dashboard",
@@ -28,6 +30,7 @@ def register_portfolio_operations_routes_v24_0(app):
         payload = build_portfolio_operations_dashboard()
         payload["stage_overview"] = build_case_status_stage_overview()
         payload["workload_monitoring"] = build_workload_assignment_monitoring()
+        payload["blocked_overdue_queue"] = build_blocked_overdue_case_queue()
         return jsonify(payload)
 
     @app.get("/api/v1/portfolio-operations/stage-overview")
@@ -41,5 +44,11 @@ def register_portfolio_operations_routes_v24_0(app):
         if not session.get("user"):
             return jsonify({"error": "login required"}), 401
         return jsonify(build_workload_assignment_monitoring())
+
+    @app.get("/api/v1/portfolio-operations/blocked-overdue")
+    def api_portfolio_blocked_overdue_get_v24_3():
+        if not session.get("user"):
+            return jsonify({"error": "login required"}), 401
+        return jsonify(build_blocked_overdue_case_queue())
 
     return app
