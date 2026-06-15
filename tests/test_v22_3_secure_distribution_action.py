@@ -93,3 +93,4 @@ def test_v22_3_invokes_existing_operations_and_records_result(tmp_path, monkeypa
     assert result["authorization_mutated"] is False
     assert result["preview_mutated"] is False
     assert latest["distribution_record_id"] == result["distribution_record_id"]
+    assert latest["status"] == "dispatch_recorded"
