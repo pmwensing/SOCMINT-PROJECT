@@ -1,77 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
 <div data-case-closure-workspace data-case-id="{{ payload.case_id }}" data-csrf-token="{{ session.get('_csrf_token', '') }}">
-<section class="panel">
-  <div class="page-header">
-    <div><h1>Case Closure Workspace</h1><p>{{ payload.case_id }}</p></div>
-    <span class="status-pill {{ 'completed' if payload.closure_eligible else 'failed' }}">{{ payload.status }}</span>
-  </div>
-  <div id="case-closure-feedback" class="flash info" role="status" tabindex="-1" hidden></div>
-</section>
-
-<section class="panel">
-  <h2>Closure Readiness</h2>
-  <div class="grid cards-4">
-    <article class="card"><h3>Release outcome</h3><p>{{ payload.current_release_outcome }}</p></article>
-    <article class="card"><h3>Closure eligible</h3><p>{{ 'Yes' if payload.closure_eligible else 'No' }}</p></article>
-    <article class="card"><h3>Archive ready</h3><p>{{ 'Yes' if payload.archive_ready else 'No' }}</p></article>
-    <article class="card"><h3>Blockers</h3><p class="metric">{{ payload.blocker_count }}</p></article>
-  </div>
-  {% if payload.blockers %}<ul>{% for blocker in payload.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>{% else %}<p>No closure blockers remain.</p>{% endif %}
-</section>
-
-<section class="panel">
-  <h2>Closure Readiness Review</h2>
-  <label for="closure-readiness-decision">Review decision</label>
-  <select id="closure-readiness-decision"><option value="ready">Ready for supervisor closure decision</option><option value="not_ready">Not ready</option></select>
-  <label for="closure-readiness-note">Reviewer note</label>
-  <textarea id="closure-readiness-note" rows="4"></textarea>
-  <label><input id="closure-readiness-confirmed" type="checkbox"> I explicitly confirm this closure-readiness review.</label>
-  <button id="record-closure-readiness-review" type="button">Record readiness review</button>
-  {% if payload.latest_readiness_review %}
-  <p><strong>Latest review:</strong> {{ payload.latest_readiness_review.decision }} · {{ payload.latest_readiness_review.reviewed_by }} · {{ payload.latest_readiness_review.reviewed_at }}</p>
-  <p><strong>Review ID:</strong> <small>{{ payload.latest_readiness_review.review_id }}</small></p>
-  {% else %}<p>No closure-readiness review has been recorded.</p>{% endif %}
-  <pre id="closure-readiness-review-output"></pre>
-  <p class="muted">The review is immutable and does not close the case, assign retention, or generate an archive package.</p>
-</section>
-
-<section class="panel">
-  <h2>Supervisor Closure Decision</h2>
-  <label for="supervisor-closure-decision">Decision</label>
-  <select id="supervisor-closure-decision"><option value="close">Close case</option><option value="hold">Hold closure</option><option value="return">Return for further review</option></select>
-  <label for="supervisor-closure-note">Supervisor note</label>
-  <textarea id="supervisor-closure-note" rows="4"></textarea>
-  <label><input id="supervisor-closure-confirmed" type="checkbox"> I explicitly confirm this supervisor closure decision.</label>
-  <button id="record-supervisor-closure-decision" type="button" {% if not payload.latest_readiness_review or payload.latest_readiness_review.decision != 'ready' %}disabled{% endif %}>Record closure decision</button>
-  {% if payload.latest_closure_decision %}
-  <p><strong>Latest decision:</strong> {{ payload.latest_closure_decision.decision }} · {{ payload.latest_closure_decision.decided_by }} · {{ payload.latest_closure_decision.decided_at }}</p>
-  <p><strong>Closure decision ID:</strong> <small>{{ payload.latest_closure_decision.closure_decision_id }}</small></p>
-  {% else %}<p>No supervisor closure decision has been recorded.</p>{% endif %}
-  <pre id="supervisor-closure-decision-output"></pre>
-  <p class="muted">This immutable decision does not assign retention or generate an archive package.</p>
-</section>
-
-<section class="panel">
-  <h2>Delivery and Recovery State</h2>
-  <div class="grid cards-4">
-    <article class="card"><h3>Delivery failed</h3><p>{{ 'Yes' if payload.delivery_recovery_state.delivery_failed else 'No' }}</p></article>
-    <article class="card"><h3>Delivery succeeded</h3><p>{{ 'Yes' if payload.delivery_recovery_state.delivery_succeeded else 'No' }}</p></article>
-    <article class="card"><h3>Acknowledgement</h3><p>{{ 'Received' if payload.delivery_recovery_state.acknowledgement_received else 'Outstanding' }}</p></article>
-    <article class="card"><h3>Recovery action</h3><p>{{ payload.delivery_recovery_state.next_action }}</p></article>
-  </div>
-</section>
-
-<section class="panel">
-  <h2>Proposed Retention Policy</h2>
-  {% if payload.proposed_retention_policy %}
-  <p><strong>{{ payload.proposed_retention_policy.display_name }}</strong></p><p>{{ payload.proposed_retention_policy.description }}</p><p><strong>Archive class:</strong> {{ payload.proposed_retention_policy.archive_class }}</p><p><strong>Retention period:</strong> {% if payload.proposed_retention_policy.retention_years is none %}Indefinite{% else %}{{ payload.proposed_retention_policy.retention_years }} years{% endif %}</p>
-  {% else %}<p>No retention policy is available.</p>{% endif %}
-  <table class="data-table"><thead><tr><th>Policy</th><th>Period</th><th>Archive class</th></tr></thead><tbody>{% for policy in payload.retention_policies %}<tr><td>{{ policy.display_name }}</td><td>{% if policy.retention_years is none %}Indefinite{% else %}{{ policy.retention_years }} years{% endif %}</td><td>{{ policy.archive_class }}</td></tr>{% endfor %}</tbody></table>
-</section>
-
-<section class="panel"><h2>Supervisor Actions</h2><table class="data-table"><thead><tr><th>Action</th><th>Version</th><th>Available</th></tr></thead><tbody>{% for action in payload.supervisor_actions %}<tr><td>{{ action.action.replace('_', ' ')|title }}</td><td>{{ action.version }}</td><td>{{ 'Yes' if action.available else 'No' }}</td></tr>{% endfor %}</tbody></table><p class="muted">v23.2 records only the immutable supervisor decision; retention assignment and archive generation remain separate later actions.</p><p class="muted">v23.0 does not create a closure decision, retention assignment, archive package, or reopen authorization.</p></section>
-
+<section class="panel"><div class="page-header"><div><h1>Case Closure Workspace</h1><p>{{ payload.case_id }}</p></div><span class="status-pill {{ 'completed' if payload.closure_eligible else 'failed' }}">{{ payload.status }}</span></div><div id="case-closure-feedback" class="flash info" role="status" tabindex="-1" hidden></div></section>
+<section class="panel"><h2>Closure Readiness</h2><div class="grid cards-4"><article class="card"><h3>Release outcome</h3><p>{{ payload.current_release_outcome }}</p></article><article class="card"><h3>Closure eligible</h3><p>{{ 'Yes' if payload.closure_eligible else 'No' }}</p></article><article class="card"><h3>Archive ready</h3><p>{{ 'Yes' if payload.archive_ready else 'No' }}</p></article><article class="card"><h3>Blockers</h3><p class="metric">{{ payload.blocker_count }}</p></article></div>{% if payload.blockers %}<ul>{% for blocker in payload.blockers %}<li>{{ blocker.key }}</li>{% endfor %}</ul>{% else %}<p>No closure blockers remain.</p>{% endif %}</section>
+<section class="panel"><h2>Closure Readiness Review</h2><label for="closure-readiness-decision">Review decision</label><select id="closure-readiness-decision"><option value="ready">Ready for supervisor closure decision</option><option value="not_ready">Not ready</option></select><label for="closure-readiness-note">Reviewer note</label><textarea id="closure-readiness-note" rows="4"></textarea><label><input id="closure-readiness-confirmed" type="checkbox"> I explicitly confirm this closure-readiness review.</label><button id="record-closure-readiness-review" type="button">Record readiness review</button>{% if payload.latest_readiness_review %}<p><strong>Latest review:</strong> {{ payload.latest_readiness_review.decision }} · {{ payload.latest_readiness_review.reviewed_by }} · {{ payload.latest_readiness_review.reviewed_at }}</p><p><strong>Review ID:</strong> <small>{{ payload.latest_readiness_review.review_id }}</small></p>{% else %}<p>No closure-readiness review has been recorded.</p>{% endif %}<pre id="closure-readiness-review-output"></pre><p class="muted">The review is immutable and does not close the case, assign retention, or generate an archive package.</p></section>
+<section class="panel"><h2>Supervisor Closure Decision</h2><label for="supervisor-closure-decision">Decision</label><select id="supervisor-closure-decision"><option value="close">Close case</option><option value="hold">Hold closure</option><option value="return">Return for further review</option></select><label for="supervisor-closure-note">Supervisor note</label><textarea id="supervisor-closure-note" rows="4"></textarea><label><input id="supervisor-closure-confirmed" type="checkbox"> I explicitly confirm this supervisor closure decision.</label><button id="record-supervisor-closure-decision" type="button" {% if not payload.latest_readiness_review or payload.latest_readiness_review.decision != 'ready' %}disabled{% endif %}>Record closure decision</button>{% if payload.latest_closure_decision %}<p><strong>Latest decision:</strong> {{ payload.latest_closure_decision.decision }} · {{ payload.latest_closure_decision.decided_by }} · {{ payload.latest_closure_decision.decided_at }}</p><p><strong>Closure decision ID:</strong> <small>{{ payload.latest_closure_decision.closure_decision_id }}</small></p>{% else %}<p>No supervisor closure decision has been recorded.</p>{% endif %}<pre id="supervisor-closure-decision-output"></pre><p class="muted">This immutable decision does not assign retention or generate an archive package.</p></section>
+<section class="panel"><h2>Delivery and Recovery State</h2><div class="grid cards-4"><article class="card"><h3>Delivery failed</h3><p>{{ 'Yes' if payload.delivery_recovery_state.delivery_failed else 'No' }}</p></article><article class="card"><h3>Delivery succeeded</h3><p>{{ 'Yes' if payload.delivery_recovery_state.delivery_succeeded else 'No' }}</p></article><article class="card"><h3>Acknowledgement</h3><p>{{ 'Received' if payload.delivery_recovery_state.acknowledgement_received else 'Outstanding' }}</p></article><article class="card"><h3>Recovery action</h3><p>{{ payload.delivery_recovery_state.next_action }}</p></article></div></section>
+<section class="panel"><h2>Proposed Retention Policy</h2>{% if payload.proposed_retention_policy %}<p><strong>{{ payload.proposed_retention_policy.display_name }}</strong></p><p>{{ payload.proposed_retention_policy.description }}</p><p><strong>Archive class:</strong> {{ payload.proposed_retention_policy.archive_class }}</p><p><strong>Retention period:</strong> {% if payload.proposed_retention_policy.retention_years is none %}Indefinite{% else %}{{ payload.proposed_retention_policy.retention_years }} years{% endif %}</p>{% else %}<p>No retention policy is available.</p>{% endif %}<table class="data-table"><thead><tr><th>Policy</th><th>Period</th><th>Archive class</th></tr></thead><tbody>{% for policy in payload.retention_policies %}<tr><td>{{ policy.display_name }}</td><td>{% if policy.retention_years is none %}Indefinite{% else %}{{ policy.retention_years }} years{% endif %}</td><td>{{ policy.archive_class }}</td></tr>{% endfor %}</tbody></table></section>
+<section class="panel"><h2>Retention Policy Assignment</h2><label for="retention-policy-id">Retention policy</label><select id="retention-policy-id">{% for policy in payload.retention_policies %}<option value="{{ policy.policy_id }}">{{ policy.display_name }}</option>{% endfor %}</select><label for="retention-assignment-note">Assignment note</label><textarea id="retention-assignment-note" rows="4"></textarea><label><input id="retention-assignment-confirmed" type="checkbox"> I explicitly confirm this retention-policy assignment.</label><button id="record-retention-assignment" type="button" {% if not payload.latest_closure_decision or payload.latest_closure_decision.decision != 'close' %}disabled{% endif %}>Assign retention policy</button>{% if payload.latest_retention_assignment %}<p><strong>Latest assignment:</strong> {{ payload.latest_retention_assignment.policy.display_name }} · {{ payload.latest_retention_assignment.assigned_by }} · {{ payload.latest_retention_assignment.assigned_at }}</p><p><strong>Disposition:</strong> {{ payload.latest_retention_assignment.disposition.disposition }}{% if payload.latest_retention_assignment.disposition.retention_expires_at %} · expires {{ payload.latest_retention_assignment.disposition.retention_expires_at }}{% endif %}</p><p><strong>Assignment ID:</strong> <small>{{ payload.latest_retention_assignment.retention_assignment_id }}</small></p>{% else %}<p>No retention policy has been assigned.</p>{% endif %}<pre id="retention-assignment-output"></pre><p class="muted">The assignment is immutable and does not generate the archive package.</p></section>
+<section class="panel"><h2>Supervisor Actions</h2><table class="data-table"><thead><tr><th>Action</th><th>Version</th><th>Available</th></tr></thead><tbody>{% for action in payload.supervisor_actions %}<tr><td>{{ action.action.replace('_', ' ')|title }}</td><td>{{ action.version }}</td><td>{{ 'Yes' if action.available else 'No' }}</td></tr>{% endfor %}</tbody></table><p class="muted">v23.3 records only the immutable retention assignment; archive generation remains a separate v23.4 action.</p><p class="muted">v23.0 does not create a closure decision, retention assignment, archive package, or reopen authorization.</p></section>
 <section class="panel"><h2>Connected Case Surfaces</h2><p><a href="{{ payload.links.release_workspace }}">Dossier Release Workspace</a></p><p><a href="{{ payload.links.release_history }}">Release and Delivery History</a></p><p><a href="{{ payload.links.case_delivery_workspace }}">Case Delivery Workspace</a></p><pre id="case-closure-summary">{{ payload.release_history.closure_summary|tojson(indent=2) }}</pre></section>
 </div>
 <script src="{{ url_for('static', filename='case_closure_workspace_v23_0.js') }}" defer></script>
