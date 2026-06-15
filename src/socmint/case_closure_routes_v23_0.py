@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+from .case_archive_package_v23_4 import (
+    generate_case_archive_package,
+    latest_case_archive_package,
+)
 from .case_closure_decision_v23_2 import (
     latest_supervisor_closure_decision,
     record_supervisor_closure_decision,
@@ -26,6 +30,7 @@ def _workspace(case_id: str) -> dict:
     payload["latest_readiness_review"] = latest_closure_readiness_review(case_id)
     payload["latest_closure_decision"] = latest_supervisor_closure_decision(case_id)
     payload["latest_retention_assignment"] = latest_retention_assignment(case_id)
+    payload["latest_archive_package"] = latest_case_archive_package(case_id)
     return payload
 
 
@@ -91,5 +96,16 @@ def register_case_closure_routes_v23_0(app):
             ip_address=request.remote_addr,
         )
         return jsonify(result), 200 if result.get("status") == "retention_assignment_recorded" else 422
+
+    @app.post("/api/v1/case-closure/<case_id>/archive-package")
+    def api_case_archive_package_post_v23_4(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        result = generate_case_archive_package(
+            case_id,
+            actor=str(session.get("user") or "unknown"),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get("status") == "archive_package_generated" else 422
 
     return app
