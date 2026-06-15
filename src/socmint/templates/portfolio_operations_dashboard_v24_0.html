@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-portfolio-operations-dashboard>
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Portfolio Operations Dashboard</h1><p>Manager view across active, blocked, delivered, closed, archived, reopened, and unstarted cases.</p></div>
+    <span class="status-pill completed">{{ payload.status }}</span>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Portfolio Summary</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Total cases</h3><p class="metric">{{ payload.counts.total }}</p></article>
+    <article class="card"><h3>Active</h3><p class="metric">{{ payload.counts.active }}</p></article>
+    <article class="card"><h3>Blocked</h3><p class="metric">{{ payload.counts.blocked }}</p></article>
+    <article class="card"><h3>Delivered</h3><p class="metric">{{ payload.counts.delivered }}</p></article>
+    <article class="card"><h3>Closed</h3><p class="metric">{{ payload.counts.closed }}</p></article>
+    <article class="card"><h3>Archived</h3><p class="metric">{{ payload.counts.archived }}</p></article>
+    <article class="card"><h3>Reopened</h3><p class="metric">{{ payload.counts.reopened }}</p></article>
+    <article class="card"><h3>Unstarted</h3><p class="metric">{{ payload.counts.unstarted }}</p></article>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Case Operations</h2>
+  <table class="data-table">
+    <thead><tr><th>Case</th><th>Stage</th><th>Status</th><th>Latest activity</th><th>Actor</th><th>Open</th></tr></thead>
+    <tbody>
+      {% for case in payload.cases %}
+      <tr>
+        <td>{{ case.case_id }}</td>
+        <td>{{ case.stage.replace('_', ' ')|title }}</td>
+        <td>{{ case.status }}</td>
+        <td>{{ case.latest_activity_at or 'No activity' }}</td>
+        <td>{{ case.latest_actor or '—' }}</td>
+        <td>
+          <a href="{{ case.links.case_review }}">Review</a> ·
+          <a href="{{ case.links.dossier_assembly }}">Dossier</a> ·
+          <a href="{{ case.links.release_workspace }}">Release</a> ·
+          <a href="{{ case.links.closure_workspace }}">Closure</a> ·
+          <a href="{{ case.links.closure_history }}">History</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No portfolio cases are available.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Blocked Cases</h2>
+  {% if payload.blocked_cases %}
+  <table class="data-table">
+    <thead><tr><th>Case</th><th>Stage</th><th>Blockers</th><th>Latest action</th></tr></thead>
+    <tbody>{% for case in payload.blocked_cases %}<tr><td>{{ case.case_id }}</td><td>{{ case.stage }}</td><td>{% for blocker in case.blockers %}{{ blocker.key }}{% if not loop.last %}, {% endif %}{% endfor %}</td><td>{{ case.latest_action }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% else %}<p>No blocked cases are currently visible.</p>{% endif %}
+  <p class="muted">v24.0 is read-only. Status normalization, workload monitoring, overdue queues, escalation, metrics, and portfolio audit are added in v24.1–v24.6.</p>
+</section>
+
+<section class="panel"><pre id="portfolio-operations-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
