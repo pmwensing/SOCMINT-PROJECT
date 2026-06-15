@@ -4,6 +4,7 @@
   const readinessButton = document.getElementById("record-closure-readiness-review");
   const decisionButton = document.getElementById("record-supervisor-closure-decision");
   const retentionButton = document.getElementById("record-retention-assignment");
+  const archiveButton = document.getElementById("generate-case-archive-package");
   if (!root) return;
 
   const show = (kind, message) => {
@@ -13,7 +14,7 @@
     feedback.textContent = message;
   };
 
-  const post = async (path, body) => {
+  const post = async (path, body = {}) => {
     const response = await fetch(
       `/api/v1/case-closure/${root.dataset.caseId}${path}`,
       {
@@ -80,6 +81,20 @@
     } catch (error) {
       show("error", error.message);
       retentionButton.disabled = false;
+    }
+  });
+
+  archiveButton?.addEventListener("click", async () => {
+    archiveButton.disabled = true;
+    try {
+      const {response, payload} = await post("/archive-package");
+      document.getElementById("case-archive-package-output").textContent = JSON.stringify(payload, null, 2);
+      if (!response.ok) throw new Error(payload.blockers?.[0]?.key || "archive package generation blocked");
+      show("success", "Case archive package generated.");
+      window.location.reload();
+    } catch (error) {
+      show("error", error.message);
+      archiveButton.disabled = false;
     }
   });
 })();
