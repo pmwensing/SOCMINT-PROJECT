@@ -59,25 +59,10 @@ def create_reopen_request(
     ip_address: str | None = None,
 ) -> dict[str, Any]:
     if confirmed is not True:
-        return {
-            "schema": REQUEST_SCHEMA,
-            "version": VERSION,
-            "case_id": case_id,
-            "status": "blocked",
-            "blockers": [{"key": "explicit_reopen_request_confirmation_required"}],
-            "source_records_mutated": False,
-        }
+        return {"schema": REQUEST_SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": [{"key": "explicit_reopen_request_confirmation_required"}], "source_records_mutated": False}
     normalized_reason = str(reason or "").strip()
     if not normalized_reason:
-        return {
-            "schema": REQUEST_SCHEMA,
-            "version": VERSION,
-            "case_id": case_id,
-            "status": "blocked",
-            "blockers": [{"key": "reopen_reason_required"}],
-            "source_records_mutated": False,
-        }
-
+        return {"schema": REQUEST_SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": [{"key": "reopen_reason_required"}], "source_records_mutated": False}
     archive, closure = _source(case_id)
     blockers = []
     if archive is None:
@@ -85,15 +70,7 @@ def create_reopen_request(
     if closure is None or closure.get("decision") != "close":
         blockers.append({"key": "closed_supervisor_decision_required"})
     if blockers:
-        return {
-            "schema": REQUEST_SCHEMA,
-            "version": VERSION,
-            "case_id": case_id,
-            "status": "blocked",
-            "blockers": blockers,
-            "source_records_mutated": False,
-        }
-
+        return {"schema": REQUEST_SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": blockers, "source_records_mutated": False}
     source = {
         "archive_package_id": archive.get("archive_package_id"),
         "archive_package_sha256": archive.get("archive_package_sha256"),
@@ -102,13 +79,7 @@ def create_reopen_request(
         "closure_decision_sha256": closure.get("closure_decision_sha256"),
         "closure_decision_record_id": closure.get("decision_record_id"),
     }
-    content = {
-        "case_id": case_id,
-        "reason": normalized_reason,
-        "note": str(note or "").strip(),
-        "source": source,
-        "source_sha256": _sha(source),
-    }
+    content = {"case_id": case_id, "reason": normalized_reason, "note": str(note or "").strip(), "source": source, "source_sha256": _sha(source)}
     request_sha256 = _sha(content)
     event = {
         "schema": REQUEST_SCHEMA,
@@ -122,17 +93,10 @@ def create_reopen_request(
         "closed_case_mutated": False,
         "archive_package_mutated": False,
     }
-
     _ensure_storage()
     session = database.Session()
     try:
-        row = database.AuditLog(
-            actor=requester,
-            action=REQUEST_ACTION,
-            target_value=case_id,
-            ip_address=ip_address,
-            details=_canonical(event),
-        )
+        row = database.AuditLog(actor=requester, action=REQUEST_ACTION, target_value=case_id, ip_address=ip_address, details=_canonical(event))
         session.add(row)
         session.commit()
         session.refresh(row)
@@ -140,12 +104,67 @@ def create_reopen_request(
         recorded_at = row.created_at.isoformat() if row.created_at else None
     finally:
         session.close()
+    return {**event, "status": "reopen_request_recorded", "request_record_id": record_id, "requested_by": requester, "requested_at": recorded_at, "next_action": "supervisor_reopen_authorization"}
 
-    return {
-        **event,
-        "status": "reopen_request_recorded",
-        "request_record_id": record_id,
-        "requested_by": requester,
-        "requested_at": recorded_at,
-        "next_action": "supervisor_reopen_authorization",
+
+def authorize_reopen_request(
+    case_id: str,
+    *,
+    decision: str,
+    confirmed: bool,
+    supervisor: str,
+    note: str = "",
+    ip_address: str | None = None,
+) -> dict[str, Any]:
+    normalized = str(decision or "").strip().lower()
+    if confirmed is not True:
+        return {"schema": AUTH_SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": [{"key": "explicit_reopen_authorization_confirmation_required"}], "source_records_mutated": False}
+    if normalized not in ALLOWED_AUTH_DECISIONS:
+        return {"schema": AUTH_SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": [{"key": "invalid_reopen_authorization_decision"}], "source_records_mutated": False}
+    request_event = latest_reopen_request(case_id)
+    archive, closure = _source(case_id)
+    blockers = []
+    if request_event is None:
+        blockers.append({"key": "reopen_request_required"})
+    if archive is None:
+        blockers.append({"key": "archive_package_required"})
+    if closure is None or closure.get("decision") != "close":
+        blockers.append({"key": "closed_supervisor_decision_required"})
+    if blockers:
+        return {"schema": AUTH_SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": blockers, "source_records_mutated": False}
+    source = {
+        "reopen_request_id": request_event.get("reopen_request_id"),
+        "reopen_request_sha256": request_event.get("reopen_request_sha256"),
+        "reopen_request_record_id": request_event.get("record_id") or request_event.get("request_record_id"),
+        "archive_package_id": archive.get("archive_package_id"),
+        "archive_package_sha256": archive.get("archive_package_sha256"),
+        "closure_decision_id": closure.get("closure_decision_id"),
+        "closure_decision_sha256": closure.get("closure_decision_sha256"),
     }
+    content = {"case_id": case_id, "decision": normalized, "note": str(note or "").strip(), "source": source, "source_sha256": _sha(source)}
+    auth_sha256 = _sha(content)
+    event = {
+        "schema": AUTH_SCHEMA,
+        "version": VERSION,
+        **content,
+        "reopen_authorization_id": f"reopen-authorization-{auth_sha256[:24]}",
+        "reopen_authorization_sha256": auth_sha256,
+        "case_reopen_authorized": normalized == "authorize",
+        "case_reopened": normalized == "authorize",
+        "source_records_mutated": False,
+        "reopen_request_mutated": False,
+        "closed_case_mutated_before_authorization": False,
+        "archive_package_mutated": False,
+    }
+    _ensure_storage()
+    session = database.Session()
+    try:
+        row = database.AuditLog(actor=supervisor, action=AUTH_ACTION, target_value=case_id, ip_address=ip_address, details=_canonical(event))
+        session.add(row)
+        session.commit()
+        session.refresh(row)
+        record_id = row.id
+        recorded_at = row.created_at.isoformat() if row.created_at else None
+    finally:
+        session.close()
+    return {**event, "status": "reopen_authorization_recorded", "authorization_record_id": record_id, "authorized_by": supervisor, "authorized_at": recorded_at, "next_action": "resume_case_operations" if normalized == "authorize" else "keep_case_closed"}
