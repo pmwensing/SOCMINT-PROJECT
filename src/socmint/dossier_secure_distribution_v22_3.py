@@ -26,8 +26,15 @@ def latest_secure_distribution(case_id: str) -> dict[str, Any] | None:
         )
         if row is None:
             return None
+        details = _json_details(row)
+        if "status" not in details:
+            details["status"] = (
+                "dispatch_recorded"
+                if details.get("dispatch_result") == "accepted"
+                else "dispatch_blocked"
+            )
         return {
-            **_json_details(row),
+            **details,
             "distribution_record_id": row.id,
             "operator": row.actor,
             "recorded_at": row.created_at.isoformat() if row.created_at else None,
