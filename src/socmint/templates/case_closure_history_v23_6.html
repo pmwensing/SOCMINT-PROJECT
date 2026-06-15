@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-case-closure-history data-case-id="{{ payload.case_id }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Closure and Archive History</h1><p>{{ payload.case_id }}</p></div>
+    <span class="status-pill {{ 'completed' if payload.status == 'complete' else 'failed' }}">{{ payload.status }}</span>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Current Lifecycle State</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Closure state</h3><p>{{ payload.current_closure_state }}</p></article>
+    <article class="card"><h3>Archive state</h3><p>{{ payload.current_archive_state }}</p></article>
+    <article class="card"><h3>Reopen status</h3><p>{{ payload.reopen_status }}</p></article>
+    <article class="card"><h3>Unresolved actions</h3><p class="metric">{{ payload.unresolved_action_count }}</p></article>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Retention Disposition</h2>
+  {% if payload.retention_disposition %}
+  <dl>
+    <dt>Disposition</dt><dd>{{ payload.retention_disposition.disposition }}</dd>
+    <dt>Archive class</dt><dd>{{ payload.retention_disposition.archive_class }}</dd>
+    <dt>Retention years</dt><dd>{{ payload.retention_disposition.retention_years }}</dd>
+    <dt>Expires</dt><dd>{{ payload.retention_disposition.retention_expires_at or 'Not applicable' }}</dd>
+    <dt>Legal hold</dt><dd>{{ 'Yes' if payload.retention_disposition.legal_hold else 'No' }}</dd>
+  </dl>
+  {% else %}<p>No retention disposition has been recorded.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Unresolved Actions</h2>
+  {% if payload.unresolved_actions %}
+  <ul>{% for action in payload.unresolved_actions %}<li>{{ action.key }}</li>{% endfor %}</ul>
+  {% else %}<p>No unresolved closure or archive actions remain.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Ordered Case Timeline</h2>
+  <table class="data-table">
+    <thead><tr><th>Time</th><th>Event</th><th>Actor</th><th>Decision / ID</th></tr></thead>
+    <tbody>
+      {% for event in payload.timeline %}
+      <tr>
+        <td>{{ event.occurred_at }}</td>
+        <td>{{ event.event_type.replace('_', ' ')|title }}</td>
+        <td>{{ event.actor }}</td>
+        <td>
+          {{ event.details.decision
+             or event.details.review_id
+             or event.details.closure_decision_id
+             or event.details.retention_assignment_id
+             or event.details.archive_package_id
+             or event.details.reopen_request_id
+             or event.details.reopen_authorization_id
+             or '' }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p><strong>Total events:</strong> {{ payload.event_count }}</p>
+  <p class="muted">This history view is read-only and does not create or alter readiness, closure, retention, archive, or reopen records.</p>
+</section>
+
+<section class="panel">
+  <p><a href="/case-closure/{{ payload.case_id }}">Back to Case Closure Workspace</a></p>
+  <pre id="closure-history-json">{{ payload|tojson(indent=2) }}</pre>
+</section>
+</div>
+{% endblock %}
