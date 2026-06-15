@@ -5,6 +5,8 @@
   const decisionButton = document.getElementById("record-supervisor-closure-decision");
   const retentionButton = document.getElementById("record-retention-assignment");
   const archiveButton = document.getElementById("generate-case-archive-package");
+  const reopenRequestButton = document.getElementById("record-reopen-request");
+  const reopenAuthorizationButton = document.getElementById("record-reopen-authorization");
   if (!root) return;
 
   const show = (kind, message) => {
@@ -95,6 +97,40 @@
     } catch (error) {
       show("error", error.message);
       archiveButton.disabled = false;
+    }
+  });
+
+  reopenRequestButton?.addEventListener("click", async () => {
+    reopenRequestButton.disabled = true;
+    try {
+      const {response, payload} = await post("/reopen-request", {
+        reason: document.getElementById("reopen-request-reason").value,
+        confirmed: document.getElementById("reopen-request-confirmed").checked,
+        note: document.getElementById("reopen-request-note").value,
+      });
+      document.getElementById("reopen-request-output").textContent = JSON.stringify(payload, null, 2);
+      if (!response.ok) throw new Error(payload.blockers?.[0]?.key || "reopen request blocked");
+      show("success", "Reopen request recorded.");
+    } catch (error) {
+      show("error", error.message);
+      reopenRequestButton.disabled = false;
+    }
+  });
+
+  reopenAuthorizationButton?.addEventListener("click", async () => {
+    reopenAuthorizationButton.disabled = true;
+    try {
+      const {response, payload} = await post("/reopen-authorization", {
+        decision: document.getElementById("reopen-authorization-decision").value,
+        confirmed: document.getElementById("reopen-authorization-confirmed").checked,
+        note: document.getElementById("reopen-authorization-note").value,
+      });
+      document.getElementById("reopen-authorization-output").textContent = JSON.stringify(payload, null, 2);
+      if (!response.ok) throw new Error(payload.blockers?.[0]?.key || "reopen authorization blocked");
+      show("success", "Reopen authorization decision recorded.");
+    } catch (error) {
+      show("error", error.message);
+      reopenAuthorizationButton.disabled = false;
     }
   });
 })();
