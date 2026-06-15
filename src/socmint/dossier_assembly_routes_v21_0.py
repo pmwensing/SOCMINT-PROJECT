@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import jsonify, redirect, render_template, request, session, url_for
 
 from .case_closure_routes_v23_0 import register_case_closure_routes_v23_0
+from .case_reopen_routes_v23_5 import register_case_reopen_routes_v23_5
 from .dossier_assembly_import_workspace_v21_1 import (
     build_dossier_assembly_workspace_v21_1,
     save_verified_dossier_arrangement,
@@ -163,4 +164,5 @@ def register_dossier_assembly_routes_v21_0(app):
     register_dossier_release_history_routes_v22_6(app)
     register_dossier_release_product_review_routes_v22_7(app)
     register_case_closure_routes_v23_0(app)
+    register_case_reopen_routes_v23_5(app)
     return app
