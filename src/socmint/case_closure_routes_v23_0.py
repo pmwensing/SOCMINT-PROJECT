@@ -11,6 +11,10 @@ from .case_closure_readiness_review_v23_1 import (
     review_case_closure_readiness,
 )
 from .case_closure_workspace_v23_0 import build_case_closure_workspace
+from .case_retention_assignment_v23_3 import (
+    assign_retention_policy,
+    latest_retention_assignment,
+)
 
 
 def _login_required() -> bool:
@@ -21,6 +25,7 @@ def _workspace(case_id: str) -> dict:
     payload = build_case_closure_workspace(case_id)
     payload["latest_readiness_review"] = latest_closure_readiness_review(case_id)
     payload["latest_closure_decision"] = latest_supervisor_closure_decision(case_id)
+    payload["latest_retention_assignment"] = latest_retention_assignment(case_id)
     return payload
 
 
@@ -71,5 +76,20 @@ def register_case_closure_routes_v23_0(app):
             ip_address=request.remote_addr,
         )
         return jsonify(result), 200 if result.get("status") == "closure_decision_recorded" else 422
+
+    @app.post("/api/v1/case-closure/<case_id>/retention-assignment")
+    def api_case_retention_assignment_post_v23_3(case_id: str):
+        if not _login_required():
+            return jsonify({"error": "login required"}), 401
+        payload = request.get_json(silent=True) or {}
+        result = assign_retention_policy(
+            case_id,
+            policy_id=str(payload.get("policy_id") or ""),
+            confirmed=payload.get("confirmed") is True,
+            assigner=str(session.get("user") or "unknown"),
+            note=str(payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get("status") == "retention_assignment_recorded" else 422
 
     return app
