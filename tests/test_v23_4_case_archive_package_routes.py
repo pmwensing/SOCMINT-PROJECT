@@ -39,7 +39,14 @@ def test_v23_4_route_and_ui(tmp_path, monkeypatch):
     monkeypatch.setattr(routes, "build_case_closure_workspace", lambda case_id: _workspace())
     monkeypatch.setattr(routes, "latest_closure_readiness_review", lambda case_id: {"decision": "ready", "review_id": "review-1"})
     monkeypatch.setattr(routes, "latest_supervisor_closure_decision", lambda case_id: {"decision": "close", "closure_decision_id": "decision-1"})
-    monkeypatch.setattr(routes, "latest_retention_assignment", lambda case_id: {"ready_for_archive_package": True, "retention_assignment_id": "retention-1"})
+    monkeypatch.setattr(routes, "latest_retention_assignment", lambda case_id: {
+        "ready_for_archive_package": True,
+        "retention_assignment_id": "retention-1",
+        "policy": {"display_name": "Standard case retention"},
+        "disposition": {"disposition": "retain_until_expiration", "retention_expires_at": "2033-06-14T21:20:00"},
+        "assigned_by": "archive-supervisor",
+        "assigned_at": "2026-06-14T22:00:00",
+    })
     monkeypatch.setattr(routes, "latest_case_archive_package", lambda case_id: {
         "archive_package_id": "case-archive-1",
         "archive_package_sha256": "archive-hash",
