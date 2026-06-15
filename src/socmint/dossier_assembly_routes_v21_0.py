@@ -46,6 +46,9 @@ from .dossier_section_builder_v21_2 import (
 from .dossier_supervisor_approval_routes_v21_5 import (
     register_dossier_supervisor_approval_routes_v21_5,
 )
+from .portfolio_operations_routes_v24_0 import (
+    register_portfolio_operations_routes_v24_0,
+)
 
 
 def _login_required() -> bool:
@@ -173,4 +176,5 @@ def register_dossier_assembly_routes_v21_0(app):
     register_case_reopen_routes_v23_5(app)
     register_case_closure_history_routes_v23_6(app)
     register_case_closure_product_review_routes_v23_7(app)
+    register_portfolio_operations_routes_v24_0(app)
     return app
