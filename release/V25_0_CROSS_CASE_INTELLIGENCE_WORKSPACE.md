@@ -14,7 +14,7 @@ Every correlation preserves case-level provenance:
 - source timestamp
 - provenance SHA-256
 
-Access controls are applied before correlation. When the session supplies `allowed_case_ids`, only those cases and their occurrences may contribute to results. An empty or invalid case-access scope exposes no case data. Without an explicit case list, the workspace uses all cases otherwise visible to the authenticated session.
+The access controls are applied before correlation. When the session supplies `allowed_case_ids`, only those cases and their occurrences may contribute to results. An empty or invalid case-access scope exposes no case data. Without an explicit case list, the workspace uses all cases otherwise visible to the authenticated session.
 
 Candidate categories:
 
