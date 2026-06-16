@@ -49,6 +49,9 @@ from .dossier_supervisor_approval_routes_v21_5 import (
 from .portfolio_operations_routes_v24_0 import (
     register_portfolio_operations_routes_v24_0,
 )
+from .portfolio_supervisor_escalation_routes_v24_4 import (
+    register_portfolio_supervisor_escalation_routes_v24_4,
+)
 
 
 def _login_required() -> bool:
@@ -177,4 +180,5 @@ def register_dossier_assembly_routes_v21_0(app):
     register_case_closure_history_routes_v23_6(app)
     register_case_closure_product_review_routes_v23_7(app)
     register_portfolio_operations_routes_v24_0(app)
+    register_portfolio_supervisor_escalation_routes_v24_4(app)
     return app
