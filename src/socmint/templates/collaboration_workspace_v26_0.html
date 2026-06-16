@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-collaboration-workspace>
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Collaboration Workspace</h1><p>Read-only team operations overview for {{ payload.user_identity }}.</p></div>
+    <span class="status-pill {{ 'completed' if payload.status == 'ready' else 'attention' }}">{{ payload.status }}</span>
+  </div>
+</section>
+<section class="panel">
+  <h2>Workspace Summary</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Participating Cases</h3><p class="metric">{{ payload.counts.participating_cases }}</p></article>
+    <article class="card"><h3>Active Collaborators</h3><p class="metric">{{ payload.counts.active_collaborators }}</p></article>
+    <article class="card"><h3>Pending Requests</h3><p class="metric">{{ payload.counts.pending_requests }}</p></article>
+    <article class="card"><h3>Pending Handoffs</h3><p class="metric">{{ payload.counts.pending_handoffs }}</p></article>
+    <article class="card"><h3>Unread Updates</h3><p class="metric">{{ payload.counts.unread_updates }}</p></article>
+    <article class="card"><h3>Review Requests</h3><p class="metric">{{ payload.counts.unresolved_review_requests }}</p></article>
+    <article class="card"><h3>Blocked Items</h3><p class="metric">{{ payload.counts.blocked_collaboration_items }}</p></article>
+    <article class="card"><h3>Unresolved Actions</h3><p class="metric">{{ payload.counts.unresolved_collaboration_actions }}</p></article>
+  </div>
+  <p><strong>Access scope:</strong> {{ payload.access_scope.mode }}{% if payload.access_scope.allowed_case_ids %} · {{ payload.access_scope.allowed_case_ids|join(', ') }}{% endif %}</p>
+  <p><strong>Workspace hash:</strong> <small>{{ payload.workspace_sha256 }}</small></p>
+</section>
+<section class="panel">
+  <h2>Participating Cases</h2>
+  <table class="data-table"><thead><tr><th>Case</th><th>Roles</th><th>Stage</th><th>Status</th><th>Collaborators</th><th>Links</th></tr></thead><tbody>
+  {% for item in payload.participating_cases %}<tr><td>{{ item.case_id }}</td><td>{{ item.assigned_roles|join(', ') }}</td><td>{{ item.stage or '—' }}</td><td>{{ item.status or '—' }}</td><td>{{ item.active_collaborators|join(', ') if item.active_collaborators else '—' }}</td><td><a href="{{ item.links.case }}">Case</a> · <a href="{{ item.links.evidence }}">Evidence</a> · <a href="{{ item.links.review }}">Review</a> · <a href="{{ item.links.closure }}">Closure</a> · <a href="{{ item.links.archive }}">Archive</a> · <a href="{{ item.links.cross_case }}">Cross-case</a></td></tr>{% else %}<tr><td colspan="6">No participating cases are visible.</td></tr>{% endfor %}
+  </tbody></table>
+</section>
+<section class="panel"><h2>Active Collaborators</h2><table class="data-table"><thead><tr><th>User</th><th>Shared Cases</th><th>Count</th></tr></thead><tbody>{% for item in payload.active_collaborators %}<tr><td>{{ item.user_identity }}</td><td>{{ item.case_ids|join(', ') }}</td><td>{{ item.shared_case_count }}</td></tr>{% else %}<tr><td colspan="3">No active collaborators.</td></tr>{% endfor %}</tbody></table></section>
+<section class="panel"><h2>Pending Requests and Handoffs</h2><pre>{{ payload.pending_requests|tojson(indent=2) }}</pre><pre>{{ payload.pending_handoffs|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Unread Mentions or Updates</h2><pre>{{ payload.unread_updates|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Unresolved Review Requests</h2><pre>{{ payload.unresolved_review_requests|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Blocked Collaboration Items</h2><pre>{{ payload.blocked_collaboration_items|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Unresolved Collaboration Actions</h2><pre>{{ payload.unresolved_collaboration_actions|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">v26.0 is read-only. It creates no collaboration record, mutates no source record, and a mention never grants access.</p></section>
+<section class="panel"><pre id="collaboration-workspace-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
