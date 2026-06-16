@@ -48,6 +48,8 @@ def register_case_team_role_assignment_routes_v26_1(app):
     def api_case_team_assignment_post_v26_1(case_id: str):
         if not session.get("user"):
             return jsonify({"error": "login required"}), 401
+        if not _can_access(case_id):
+            return jsonify({"error": "case access required"}), 403
         payload = request.get_json(silent=True) or {}
         result = assign_case_team_role(
             case_id,
@@ -67,6 +69,8 @@ def register_case_team_role_assignment_routes_v26_1(app):
     def api_case_team_revocation_post_v26_1(case_id: str, assignment_id: str):
         if not session.get("user"):
             return jsonify({"error": "login required"}), 401
+        if not _can_access(case_id):
+            return jsonify({"error": "case access required"}), 403
         payload = request.get_json(silent=True) or {}
         result = revoke_case_team_role(
             case_id,
