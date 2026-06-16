@@ -52,6 +52,17 @@ def _record(case_id: str, actor: str, action: str, event: dict[str, Any], ip_add
         session.close()
 
 
+def _record_mentions(case_id: str, note_id: str, note_sha256: str, actor: str, mentions: list[str], visibility: str, priority: str, note_record_id: int, source_state_sha256: str, ip_address: str | None) -> list[dict[str, Any]]:
+    result = []
+    for user in mentions:
+        core = {"case_id": case_id, "event_type": "mention", "collaboration_note_id": note_id, "collaboration_note_sha256": note_sha256, "mentioned_user": user, "mentioned_by": actor, "visibility": visibility, "priority": priority, "status": "unread", "note_action_record_id": note_record_id, "source_case_state_sha256": source_state_sha256}
+        digest = _sha(core)
+        event = {"schema": SCHEMA, "version": VERSION, **core, "mention_id": f"collaboration-mention-{digest[:24]}", "mention_sha256": digest, "access_granted_by_mention": False, "case_access_scope_changed": False, "source_records_mutated": False}
+        record_id, recorded_at = _record(case_id, actor, MENTION_ACTION, event, ip_address)
+        result.append({**event, "action_record_id": record_id, "recorded_at": recorded_at})
+    return result
+
+
 def create_note(case_id: str, *, author: str, body: str, target_type: str, target_id: str | None, mentioned_users: list[str] | None, visibility: str, priority: str, confirmed: bool, acknowledgement_required: bool = False, allowed_case_ids: set[str] | None = None, ip_address: str | None = None) -> dict[str, Any]:
     if allowed_case_ids is not None and case_id not in allowed_case_ids: return blocked(case_id, "case_access_required")
     if confirmed is not True: return blocked(case_id, "explicit_collaboration_note_confirmation_required")
@@ -70,13 +81,7 @@ def create_note(case_id: str, *, author: str, body: str, target_type: str, targe
     note_id = f"collaboration-note-{digest[:24]}"
     event = {"schema": SCHEMA, "version": VERSION, **core, "collaboration_note_id": note_id, "collaboration_note_sha256": digest, "collaboration_event_id": f"collaboration-event-{digest[:24]}", "collaboration_event_sha256": digest, "note_status": "active", "source_records_mutated": False, "prior_notes_mutated": False, "case_access_scope_changed": False, "access_granted_by_mention": False}
     record_id, recorded_at = _record(case_id, author, NOTE_ACTION, event, ip_address)
-    mention_events = []
-    for user in mentions:
-        mention_core = {"case_id": case_id, "event_type": "mention", "collaboration_note_id": note_id, "collaboration_note_sha256": digest, "mentioned_user": user, "mentioned_by": author, "visibility": visibility, "priority": priority, "status": "unread", "note_action_record_id": record_id, "source_case_state_sha256": core["source_case_state_sha256"]}
-        mention_digest = _sha(mention_core)
-        mention = {"schema": SCHEMA, "version": VERSION, **mention_core, "mention_id": f"collaboration-mention-{mention_digest[:24]}", "mention_sha256": mention_digest, "access_granted_by_mention": False, "case_access_scope_changed": False, "source_records_mutated": False}
-        mention_id, mention_at = _record(case_id, author, MENTION_ACTION, mention, ip_address)
-        mention_events.append({**mention, "action_record_id": mention_id, "recorded_at": mention_at})
+    mention_events = _record_mentions(case_id, note_id, digest, author, mentions, visibility, priority, record_id, core["source_case_state_sha256"], ip_address)
     return {**event, "status": "collaboration_note_recorded", "action_record_id": record_id, "recorded_by": author, "recorded_at": recorded_at, "mention_events": mention_events, "mention_count": len(mention_events), "next_action": "review_collaboration_notes"}
 
 
@@ -94,15 +99,18 @@ def correct_note(case_id: str, note_id: str, *, author: str, body: str, reason: 
     binding = {"collaboration_note_id": note_id, "collaboration_note_sha256": previous_note.get("collaboration_note_sha256"), "action_record_id": previous_note.get("action_record_id"), "author": previous_note.get("author")}
     core = {"case_id": case_id, "event_type": "correction", "author": author, "body": body, "target_type": previous_note.get("target_type"), "target_id": previous_note.get("target_id"), "mentioned_users": mentions, "visibility": previous_note.get("visibility"), "priority": previous_note.get("priority"), "acknowledgement_required": previous_note.get("acknowledgement_required", False), "reason": reason, "supersedes_note_id": note_id, "supersedes_note_sha256": previous_note.get("collaboration_note_sha256"), "previous_note_binding": binding, "previous_note_binding_sha256": _sha(binding), "source_case_state": source, "source_case_state_sha256": _sha(source)}
     digest = _sha(core)
-    event = {"schema": SCHEMA, "version": VERSION, **core, "collaboration_note_id": f"collaboration-note-{digest[:24]}", "collaboration_note_sha256": digest, "collaboration_event_id": f"collaboration-correction-{digest[:24]}", "collaboration_event_sha256": digest, "note_status": "active", "source_records_mutated": False, "superseded_note_mutated": False, "case_access_scope_changed": False, "access_granted_by_mention": False}
+    corrected_id = f"collaboration-note-{digest[:24]}"
+    event = {"schema": SCHEMA, "version": VERSION, **core, "collaboration_note_id": corrected_id, "collaboration_note_sha256": digest, "collaboration_event_id": f"collaboration-correction-{digest[:24]}", "collaboration_event_sha256": digest, "note_status": "active", "source_records_mutated": False, "superseded_note_mutated": False, "case_access_scope_changed": False, "access_granted_by_mention": False}
     record_id, recorded_at = _record(case_id, author, CORRECTION_ACTION, event, ip_address)
-    return {**event, "status": "collaboration_note_correction_recorded", "action_record_id": record_id, "recorded_by": author, "recorded_at": recorded_at, "next_action": "review_collaboration_notes"}
+    mention_events = _record_mentions(case_id, corrected_id, digest, author, mentions, str(event.get("visibility") or "case_team"), str(event.get("priority") or "normal"), record_id, core["source_case_state_sha256"], ip_address)
+    return {**event, "status": "collaboration_note_correction_recorded", "action_record_id": record_id, "recorded_by": author, "recorded_at": recorded_at, "mention_events": mention_events, "mention_count": len(mention_events), "next_action": "review_collaboration_notes"}
 
 
 def acknowledge_note(case_id: str, note_id: str, *, acknowledged_by: str, response: str | None, note: dict[str, Any], confirmed: bool, allowed_case_ids: set[str] | None = None, ip_address: str | None = None) -> dict[str, Any]:
     if allowed_case_ids is not None and case_id not in allowed_case_ids: return blocked(case_id, "case_access_required")
     if confirmed is not True: return blocked(case_id, "explicit_collaboration_note_acknowledgement_required")
     if note.get("collaboration_note_id") != note_id: return blocked(case_id, "collaboration_note_required")
+    if note.get("note_status") != "active": return blocked(case_id, "active_collaboration_note_required")
     binding = {"collaboration_note_id": note_id, "collaboration_note_sha256": note.get("collaboration_note_sha256"), "action_record_id": note.get("action_record_id"), "author": note.get("author")}
     core = {"case_id": case_id, "event_type": "acknowledgement", "collaboration_note_id": note_id, "collaboration_note_sha256": note.get("collaboration_note_sha256"), "acknowledged_by": acknowledged_by, "response": str(response or "").strip() or None, "note_binding": binding, "note_binding_sha256": _sha(binding)}
     digest = _sha(core)
@@ -114,6 +122,7 @@ def acknowledge_note(case_id: str, note_id: str, *, acknowledged_by: str, respon
 def mark_note_read(case_id: str, note_id: str, *, reader: str, note: dict[str, Any], allowed_case_ids: set[str] | None = None, ip_address: str | None = None) -> dict[str, Any]:
     if allowed_case_ids is not None and case_id not in allowed_case_ids: return blocked(case_id, "case_access_required")
     if note.get("collaboration_note_id") != note_id: return blocked(case_id, "collaboration_note_required")
+    if note.get("note_status") != "active": return blocked(case_id, "active_collaboration_note_required")
     core = {"case_id": case_id, "event_type": "read", "collaboration_note_id": note_id, "collaboration_note_sha256": note.get("collaboration_note_sha256"), "reader": reader, "status": "read"}
     digest = _sha(core)
     event = {"schema": SCHEMA, "version": VERSION, **core, "read_event_id": f"collaboration-read-{digest[:24]}", "collaboration_event_sha256": digest, "source_records_mutated": False, "note_event_mutated": False, "case_access_scope_changed": False}
