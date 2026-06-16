@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, session, url_for
 
+from .case_team_role_assignment_routes_v26_1 import (
+    register_case_team_role_assignment_routes_v26_1,
+)
 from .collaboration_workspace_v26_0 import build_collaboration_workspace
 
 
@@ -39,4 +42,5 @@ def register_collaboration_routes_v26_0(app):
             )
         )
 
+    register_case_team_role_assignment_routes_v26_1(app)
     return app
