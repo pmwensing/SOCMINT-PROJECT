@@ -13,7 +13,6 @@ from .portfolio_workload_monitoring_v24_2 import build_workload_assignment_monit
 
 SCHEMA = "socmint.team_workload_collaboration_queue.v26_5"
 VERSION = "v26.5.0"
-TERMINAL_STATES = {"declined", "completed", "cancelled", "resolved", "resolution"}
 
 
 def _parse(value: Any) -> dt.datetime | None:
@@ -71,29 +70,38 @@ def build_team_workload_collaboration_queue(
     visible = None if allowed_case_ids is None else set(allowed_case_ids)
 
     participating_cases = list(workspace.get("participating_cases") or [])
-    participating_ids = {str(item.get("case_id")) for item in participating_cases if item.get("case_id")}
+    participating_ids = {
+        str(item.get("case_id"))
+        for item in participating_cases
+        if item.get("case_id")
+    }
     workload_entries = [
         item
         for item in workload_payload.get("entries") or []
-        if item.get("case_id") and (visible is None or str(item.get("case_id")) in visible)
+        if item.get("case_id")
+        and (visible is None or str(item.get("case_id")) in visible)
     ]
-    case_ids = sorted(participating_ids | {str(item.get("case_id")) for item in workload_entries})
+    case_ids = sorted(
+        participating_ids | {str(item.get("case_id")) for item in workload_entries}
+    )
 
-    teams = team_by_case or {case_id: current_case_team(case_id) for case_id in case_ids}
+    teams = team_by_case or {
+        case_id: current_case_team(case_id) for case_id in case_ids
+    }
     responses = response_by_case or {
-        case_id: build_collaboration_response_workspace(case_id) for case_id in case_ids
+        case_id: build_collaboration_response_workspace(case_id)
+        for case_id in case_ids
     }
     events = collaboration_events if collaboration_events is not None else _collaboration_events()
     events = [
         event
         for event in events
-        if event.get("case_id") and (visible is None or str(event.get("case_id")) in visible)
+        if event.get("case_id")
+        and (visible is None or str(event.get("case_id")) in visible)
     ]
 
     my_assigned_cases = [
-        item
-        for item in participating_cases
-        if item.get("assigned_roles")
+        item for item in participating_cases if item.get("assigned_roles")
     ]
     pending_requests = list(workspace.get("pending_requests") or [])
     pending_handoffs = list(workspace.get("pending_handoffs") or [])
@@ -101,9 +109,14 @@ def build_team_workload_collaboration_queue(
 
     awaiting_acknowledgement = [
         item
-        for item in pending_requests + pending_handoffs
+        for item in pending_requests
         if str(item.get("status") or "") == "requested"
-        or str(item.get("status") or "") == "pending"
+        and str(item.get("requested_from") or "") == user
+    ] + [
+        item
+        for item in pending_handoffs
+        if str(item.get("status") or "") == "pending"
+        and str(item.get("handoff_to") or "") == user
     ]
     delegated_by_me = [
         item
@@ -118,38 +131,60 @@ def build_team_workload_collaboration_queue(
     overdue_items = []
     for item in pending_requests + pending_handoffs:
         if _overdue(item.get("due_at"), now_value):
-            overdue_items.append({
-                **item,
-                "overdue": True,
-                "overdue_hours": _age_hours(item.get("due_at"), now_value),
-                "links": item.get("links") or _links(str(item.get("case_id"))),
-            })
+            overdue_items.append(
+                {
+                    **item,
+                    "overdue": True,
+                    "overdue_hours": _age_hours(item.get("due_at"), now_value),
+                    "links": item.get("links")
+                    or _links(str(item.get("case_id"))),
+                }
+            )
 
     unassigned_work = []
     for item in workload_entries:
         reviewer = str(item.get("assigned_reviewer") or "").strip()
         if item.get("outstanding") and not reviewer:
             case_id = str(item.get("case_id"))
-            unassigned_work.append({
-                "case_id": case_id,
-                "review_state": item.get("review_state"),
-                "assignment_age_hours": item.get("assignment_age_hours"),
-                "decision_record_id": item.get("decision_record_id"),
-                "links": _links(case_id),
-            })
+            unassigned_work.append(
+                {
+                    "case_id": case_id,
+                    "review_state": item.get("review_state"),
+                    "assignment_age_hours": item.get("assignment_age_hours"),
+                    "decision_record_id": item.get("decision_record_id"),
+                    "links": _links(case_id),
+                }
+            )
 
     supervisor_escalations = []
+    response_activity = []
     for case_id, payload in responses.items():
         for item in payload.get("unresolved_responses") or []:
             if item.get("response_type") == "escalation":
-                supervisor_escalations.append({
-                    **item,
+                supervisor_escalations.append(
+                    {**item, "case_id": case_id, "links": _links(case_id)}
+                )
+        for item in payload.get("history") or []:
+            response_activity.append(
+                {
                     "case_id": case_id,
-                    "links": _links(case_id),
-                })
+                    "action": item.get("source_action")
+                    or "case_collaboration_response_recorded",
+                    "actor": item.get("recorded_by")
+                    or item.get("responding_user"),
+                    "occurred_at": item.get("recorded_at"),
+                    "record_id": item.get("action_record_id"),
+                }
+            )
 
     load_by_user: dict[str, dict[str, Any]] = defaultdict(
-        lambda: {"case_ids": set(), "roles": set(), "open_requests": 0, "open_handoffs": 0, "unread_updates": 0}
+        lambda: {
+            "case_ids": set(),
+            "roles": set(),
+            "open_requests": 0,
+            "open_handoffs": 0,
+            "unread_updates": 0,
+        }
     )
     for case_id, assignments in teams.items():
         for assignment in assignments:
@@ -159,7 +194,9 @@ def build_team_workload_collaboration_queue(
             if not member:
                 continue
             load_by_user[member]["case_ids"].add(case_id)
-            load_by_user[member]["roles"].add(str(assignment.get("role") or "participant"))
+            load_by_user[member]["roles"].add(
+                str(assignment.get("role") or "participant")
+            )
     for item in pending_requests:
         member = str(item.get("requested_from") or "").strip()
         if member:
@@ -168,33 +205,43 @@ def build_team_workload_collaboration_queue(
         member = str(item.get("handoff_to") or "").strip()
         if member:
             load_by_user[member]["open_handoffs"] += 1
-    for item in unread_updates:
-        member = user
-        if member:
-            load_by_user[member]["unread_updates"] += 1
+    if user and unread_updates:
+        load_by_user[user]["unread_updates"] += len(unread_updates)
 
     collaboration_load_by_user = []
     for member, load in sorted(load_by_user.items()):
-        total = len(load["case_ids"]) + load["open_requests"] + load["open_handoffs"] + load["unread_updates"]
-        collaboration_load_by_user.append({
-            "user_identity": member,
-            "active_case_count": len(load["case_ids"]),
-            "case_ids": sorted(load["case_ids"]),
-            "roles": sorted(load["roles"]),
-            "open_requests": load["open_requests"],
-            "open_handoffs": load["open_handoffs"],
-            "unread_updates": load["unread_updates"],
-            "total_collaboration_load": total,
-        })
+        total = (
+            len(load["case_ids"])
+            + load["open_requests"]
+            + load["open_handoffs"]
+            + load["unread_updates"]
+        )
+        collaboration_load_by_user.append(
+            {
+                "user_identity": member,
+                "active_case_count": len(load["case_ids"]),
+                "case_ids": sorted(load["case_ids"]),
+                "roles": sorted(load["roles"]),
+                "open_requests": load["open_requests"],
+                "open_handoffs": load["open_handoffs"],
+                "unread_updates": load["unread_updates"],
+                "total_collaboration_load": total,
+            }
+        )
 
-    load_values = [item["total_collaboration_load"] for item in collaboration_load_by_user]
+    load_values = [
+        item["total_collaboration_load"]
+        for item in collaboration_load_by_user
+    ]
     average_load = round(mean(load_values), 2) if load_values else 0.0
     workload_imbalance = [
         item
         for item in collaboration_load_by_user
-        if average_load and item["total_collaboration_load"] > average_load * 1.5
+        if average_load
+        and item["total_collaboration_load"] > average_load * 1.5
     ]
 
+    activity = events + response_activity
     recent_activity = [
         {
             "case_id": event.get("case_id"),
@@ -205,7 +252,11 @@ def build_team_workload_collaboration_queue(
             "record_id": event.get("record_id"),
             "links": _links(str(event.get("case_id"))),
         }
-        for event in sorted(events, key=lambda item: str(item.get("occurred_at") or ""), reverse=True)[:50]
+        for event in sorted(
+            activity,
+            key=lambda item: str(item.get("occurred_at") or ""),
+            reverse=True,
+        )[:50]
     ]
 
     counts = {
@@ -238,11 +289,17 @@ def build_team_workload_collaboration_queue(
     return {
         "schema": SCHEMA,
         "version": VERSION,
-        "status": "attention_required" if overdue_items or unassigned_work or supervisor_escalations else "ready",
+        "status": "attention_required"
+        if overdue_items or unassigned_work or supervisor_escalations
+        else "ready",
         "generated_at": now_value.isoformat(),
         "access_scope": {
-            "mode": "restricted" if allowed_case_ids is not None else "all_visible_cases",
-            "allowed_case_ids": sorted(allowed_case_ids) if allowed_case_ids is not None else None,
+            "mode": "restricted"
+            if allowed_case_ids is not None
+            else "all_visible_cases",
+            "allowed_case_ids": sorted(allowed_case_ids)
+            if allowed_case_ids is not None
+            else None,
         },
         **core,
         "counts": counts,
