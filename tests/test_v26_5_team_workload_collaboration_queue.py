@@ -64,9 +64,10 @@ def test_v26_5_aggregates_my_work_overdue_escalations_and_load():
                     "response_type": "escalation",
                     "responding_user": "supervisor",
                 }
-            ]
+            ],
+            "history": [],
         },
-        "case-b": {"unresolved_responses": []},
+        "case-b": {"unresolved_responses": [], "history": []},
     }
     events = [
         {
@@ -93,7 +94,7 @@ def test_v26_5_aggregates_my_work_overdue_escalations_and_load():
     assert result["counts"] == {
         "my_assigned_cases": 2,
         "pending_requests": 1,
-        "awaiting_acknowledgement": 1,
+        "awaiting_acknowledgement": 0,
         "delegated_by_me": 1,
         "pending_handoffs": 1,
         "overdue_items": 1,
