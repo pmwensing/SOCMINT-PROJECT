@@ -8,6 +8,9 @@ from .case_team_role_assignment_routes_v26_1 import (
 from .collaboration_notes_routes_v26_2 import (
     register_collaboration_notes_routes_v26_2,
 )
+from .collaboration_requests_handoffs_routes_v26_3 import (
+    register_collaboration_requests_handoffs_routes_v26_3,
+)
 from .collaboration_workspace_v26_0 import build_collaboration_workspace
 
 
@@ -47,4 +50,5 @@ def register_collaboration_routes_v26_0(app):
 
     register_case_team_role_assignment_routes_v26_1(app)
     register_collaboration_notes_routes_v26_2(app)
+    register_collaboration_requests_handoffs_routes_v26_3(app)
     return app
