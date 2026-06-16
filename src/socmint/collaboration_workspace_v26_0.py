@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import defaultdict
 from typing import Any
 
 from . import database
@@ -11,10 +11,7 @@ from .portfolio_workload_monitoring_v24_2 import build_workload_assignment_monit
 SCHEMA = "socmint.collaboration_workspace.v26_0"
 VERSION = "v26.0.0"
 
-TEAM_ACTIONS = {
-    "case_team_role_assignment",
-    "case_team_role_revocation",
-}
+TEAM_ACTIONS = {"case_team_role_assignment", "case_team_role_revocation"}
 REQUEST_ACTIONS = {
     "case_collaboration_request_created",
     "case_collaboration_request_acknowledged",
@@ -38,7 +35,6 @@ UPDATE_ACTIONS = {
     "case_collaboration_update_read",
 }
 OPEN_STATES = {"requested", "pending", "acknowledged", "accepted", "overdue"}
-TERMINAL_STATES = {"declined", "completed", "cancelled", "resolved"}
 
 
 def _collaboration_events() -> list[dict[str, Any]]:
@@ -84,7 +80,11 @@ def _latest_by_key(
             continue
         details = event.get("details") or {}
         key = next(
-            (str(details.get(name) or "").strip() for name in key_names if details.get(name)),
+            (
+                str(details.get(name) or "").strip()
+                for name in key_names
+                if details.get(name)
+            ),
             "",
         )
         if key:
@@ -120,18 +120,21 @@ def build_collaboration_workspace(
     events = [
         event
         for event in events
-        if event.get("case_id") and _visible(str(event["case_id"]), allowed_case_ids)
+        if event.get("case_id")
+        and _visible(str(event["case_id"]), allowed_case_ids)
     ]
 
     portfolio_cases = {
         str(item.get("case_id")): item
         for item in portfolio_payload.get("cases") or []
-        if item.get("case_id") and _visible(str(item.get("case_id")), allowed_case_ids)
+        if item.get("case_id")
+        and _visible(str(item.get("case_id")), allowed_case_ids)
     }
     workload_entries = [
         item
         for item in workload_payload.get("entries") or []
-        if item.get("case_id") and _visible(str(item.get("case_id")), allowed_case_ids)
+        if item.get("case_id")
+        and _visible(str(item.get("case_id")), allowed_case_ids)
     ]
 
     roles_by_case: dict[str, set[str]] = defaultdict(set)
@@ -164,9 +167,13 @@ def build_collaboration_workspace(
     for event in latest_team.values():
         details = event.get("details") or {}
         case_id = str(event.get("case_id"))
-        member = str(details.get("user_identity") or details.get("member") or "").strip()
+        member = str(
+            details.get("user_identity") or details.get("member") or ""
+        ).strip()
         role = str(details.get("role") or "participant").strip()
-        status = str(details.get("assignment_status") or details.get("status") or "active").lower()
+        status = str(
+            details.get("assignment_status") or details.get("status") or "active"
+        ).lower()
         if member and status not in {"revoked", "inactive", "expired"}:
             collaborators_by_case[case_id].add(member)
             if member == user:
@@ -179,16 +186,32 @@ def build_collaboration_workspace(
         actor = str(event.get("actor") or "").strip()
         requested_by = str(details.get("requested_by") or "").strip()
         requested_from = str(details.get("requested_from") or "").strip()
-        assigned_to = str(details.get("assigned_to") or details.get("handoff_to") or "").strip()
-        mentioned = {str(value).strip() for value in details.get("mentioned_users") or [] if str(value).strip()}
-        for collaborator in {actor, requested_by, requested_from, assigned_to} | mentioned:
+        assigned_to = str(
+            details.get("assigned_to") or details.get("handoff_to") or ""
+        ).strip()
+        mentioned = {
+            str(value).strip()
+            for value in details.get("mentioned_users") or []
+            if str(value).strip()
+        }
+        for collaborator in {
+            actor,
+            requested_by,
+            requested_from,
+            assigned_to,
+        } | mentioned:
             if collaborator:
                 collaborators_by_case[case_id].add(collaborator)
         if user in {actor, requested_by, requested_from, assigned_to} or user in mentioned:
             roles_by_case[case_id].add("participant")
             participation_reasons[case_id].add("collaboration_event")
 
-    participating_case_ids = sorted(set(roles_by_case) & set(portfolio_cases | {str(item.get("case_id")) for item in workload_entries}))
+    available_case_ids = (
+        set(portfolio_cases)
+        | {str(item.get("case_id")) for item in workload_entries}
+        | {str(event.get("case_id")) for event in events}
+    )
+    participating_case_ids = sorted(set(roles_by_case) & available_case_ids)
 
     latest_requests = _latest_by_key(
         events,
@@ -198,23 +221,29 @@ def build_collaboration_workspace(
     pending_requests = []
     for request_id, event in latest_requests.items():
         details = event.get("details") or {}
-        status = str(details.get("status") or details.get("request_status") or "requested").lower()
+        status = str(
+            details.get("status") or details.get("request_status") or "requested"
+        ).lower()
         requested_from = str(details.get("requested_from") or "").strip()
-        requested_by = str(details.get("requested_by") or event.get("actor") or "").strip()
+        requested_by = str(
+            details.get("requested_by") or event.get("actor") or ""
+        ).strip()
         if status in OPEN_STATES and user in {requested_from, requested_by}:
-            pending_requests.append({
-                "collaboration_request_id": request_id,
-                "case_id": event.get("case_id"),
-                "request_type": details.get("request_type"),
-                "status": status,
-                "priority": details.get("priority"),
-                "requested_by": requested_by,
-                "requested_from": requested_from,
-                "due_at": details.get("due_at"),
-                "source_record_id": event.get("record_id"),
-                "source_action": event.get("action"),
-                "links": _case_links(str(event.get("case_id"))),
-            })
+            pending_requests.append(
+                {
+                    "collaboration_request_id": request_id,
+                    "case_id": event.get("case_id"),
+                    "request_type": details.get("request_type"),
+                    "status": status,
+                    "priority": details.get("priority"),
+                    "requested_by": requested_by,
+                    "requested_from": requested_from,
+                    "due_at": details.get("due_at"),
+                    "source_record_id": event.get("record_id"),
+                    "source_action": event.get("action"),
+                    "links": _case_links(str(event.get("case_id"))),
+                }
+            )
 
     latest_handoffs = _latest_by_key(
         events,
@@ -224,22 +253,33 @@ def build_collaboration_workspace(
     pending_handoffs = []
     for handoff_id, event in latest_handoffs.items():
         details = event.get("details") or {}
-        status = str(details.get("status") or details.get("handoff_status") or "pending").lower()
-        from_user = str(details.get("handoff_from") or details.get("requested_by") or event.get("actor") or "").strip()
-        to_user = str(details.get("handoff_to") or details.get("assigned_to") or "").strip()
+        status = str(
+            details.get("status") or details.get("handoff_status") or "pending"
+        ).lower()
+        from_user = str(
+            details.get("handoff_from")
+            or details.get("requested_by")
+            or event.get("actor")
+            or ""
+        ).strip()
+        to_user = str(
+            details.get("handoff_to") or details.get("assigned_to") or ""
+        ).strip()
         if status in OPEN_STATES and user in {from_user, to_user}:
-            pending_handoffs.append({
-                "collaboration_handoff_id": handoff_id,
-                "case_id": event.get("case_id"),
-                "handoff_type": details.get("handoff_type"),
-                "status": status,
-                "handoff_from": from_user,
-                "handoff_to": to_user,
-                "due_at": details.get("due_at"),
-                "source_record_id": event.get("record_id"),
-                "source_action": event.get("action"),
-                "links": _case_links(str(event.get("case_id"))),
-            })
+            pending_handoffs.append(
+                {
+                    "collaboration_handoff_id": handoff_id,
+                    "case_id": event.get("case_id"),
+                    "handoff_type": details.get("handoff_type"),
+                    "status": status,
+                    "handoff_from": from_user,
+                    "handoff_to": to_user,
+                    "due_at": details.get("due_at"),
+                    "source_record_id": event.get("record_id"),
+                    "source_action": event.get("action"),
+                    "links": _case_links(str(event.get("case_id"))),
+                }
+            )
 
     unread_updates = []
     latest_updates = _latest_by_key(
@@ -249,21 +289,35 @@ def build_collaboration_workspace(
     )
     for update_id, event in latest_updates.items():
         details = event.get("details") or {}
-        mentioned = {str(value).strip() for value in details.get("mentioned_users") or [] if str(value).strip()}
-        recipients = {str(value).strip() for value in details.get("recipients") or [] if str(value).strip()}
-        read_by = {str(value).strip() for value in details.get("read_by") or [] if str(value).strip()}
+        mentioned = {
+            str(value).strip()
+            for value in details.get("mentioned_users") or []
+            if str(value).strip()
+        }
+        recipients = {
+            str(value).strip()
+            for value in details.get("recipients") or []
+            if str(value).strip()
+        }
+        read_by = {
+            str(value).strip()
+            for value in details.get("read_by") or []
+            if str(value).strip()
+        }
         status = str(details.get("status") or "unread").lower()
         if user in mentioned | recipients and user not in read_by and status != "read":
-            unread_updates.append({
-                "collaboration_update_id": update_id,
-                "case_id": event.get("case_id"),
-                "update_type": details.get("update_type") or event.get("action"),
-                "author": event.get("actor"),
-                "priority": details.get("priority"),
-                "occurred_at": event.get("occurred_at"),
-                "source_record_id": event.get("record_id"),
-                "links": _case_links(str(event.get("case_id"))),
-            })
+            unread_updates.append(
+                {
+                    "collaboration_update_id": update_id,
+                    "case_id": event.get("case_id"),
+                    "update_type": details.get("update_type") or event.get("action"),
+                    "author": event.get("actor"),
+                    "priority": details.get("priority"),
+                    "occurred_at": event.get("occurred_at"),
+                    "source_record_id": event.get("record_id"),
+                    "links": _case_links(str(event.get("case_id"))),
+                }
+            )
 
     unresolved_review_requests = [
         {
@@ -276,7 +330,8 @@ def build_collaboration_workspace(
         }
         for item in workload_entries
         if item.get("outstanding")
-        and user in {
+        and user
+        in {
             str(item.get("assigned_reviewer") or "").strip(),
             str(item.get("assigned_by") or "").strip(),
             str(item.get("actor") or "").strip(),
@@ -287,18 +342,22 @@ def build_collaboration_workspace(
     for case_id in participating_case_ids:
         item = portfolio_cases.get(case_id, {"case_id": case_id})
         blockers = list(item.get("blockers") or [])
-        participating_cases.append({
-            "case_id": case_id,
-            "assigned_roles": sorted(roles_by_case[case_id]),
-            "participation_reasons": sorted(participation_reasons[case_id]),
-            "stage": item.get("stage"),
-            "status": item.get("status"),
-            "blocked": bool(item.get("blocked")),
-            "blockers": blockers,
-            "active_collaborators": sorted(collaborators_by_case[case_id] - {user}),
-            "latest_activity_at": item.get("latest_activity_at"),
-            "links": _case_links(case_id),
-        })
+        participating_cases.append(
+            {
+                "case_id": case_id,
+                "assigned_roles": sorted(roles_by_case[case_id]),
+                "participation_reasons": sorted(participation_reasons[case_id]),
+                "stage": item.get("stage"),
+                "status": item.get("status"),
+                "blocked": bool(item.get("blocked")),
+                "blockers": blockers,
+                "active_collaborators": sorted(
+                    collaborators_by_case[case_id] - {user}
+                ),
+                "latest_activity_at": item.get("latest_activity_at"),
+                "links": _case_links(case_id),
+            }
+        )
 
     active_collaborators = [
         {
@@ -314,12 +373,14 @@ def build_collaboration_workspace(
                 if collaborator in collaborators_by_case[case_id]
             ),
         }
-        for collaborator in sorted({
-            value
-            for case_id in participating_case_ids
-            for value in collaborators_by_case[case_id]
-            if value and value != user
-        })
+        for collaborator in sorted(
+            {
+                value
+                for case_id in participating_case_ids
+                for value in collaborators_by_case[case_id]
+                if value and value != user
+            }
+        )
     ]
 
     blocked_items = [
@@ -335,7 +396,12 @@ def build_collaboration_workspace(
     blocked_items.extend(
         {
             "case_id": item.get("case_id"),
-            "blockers": [{"key": "outstanding_review_request", "review_state": item.get("review_state")}],
+            "blockers": [
+                {
+                    "key": "outstanding_review_request",
+                    "review_state": item.get("review_state"),
+                }
+            ],
             "assigned_roles": sorted(roles_by_case[str(item.get("case_id"))]),
             "links": _case_links(str(item.get("case_id"))),
         }
@@ -345,19 +411,35 @@ def build_collaboration_workspace(
 
     unresolved_actions = []
     unresolved_actions.extend(
-        {"key": "respond_to_collaboration_request", "case_id": item["case_id"], "record_id": item["source_record_id"]}
+        {
+            "key": "respond_to_collaboration_request",
+            "case_id": item["case_id"],
+            "record_id": item["source_record_id"],
+        }
         for item in pending_requests
     )
     unresolved_actions.extend(
-        {"key": "complete_or_decline_handoff", "case_id": item["case_id"], "record_id": item["source_record_id"]}
+        {
+            "key": "complete_or_decline_handoff",
+            "case_id": item["case_id"],
+            "record_id": item["source_record_id"],
+        }
         for item in pending_handoffs
     )
     unresolved_actions.extend(
-        {"key": "review_unread_update", "case_id": item["case_id"], "record_id": item["source_record_id"]}
+        {
+            "key": "review_unread_update",
+            "case_id": item["case_id"],
+            "record_id": item["source_record_id"],
+        }
         for item in unread_updates
     )
     unresolved_actions.extend(
-        {"key": "resolve_review_request", "case_id": item["case_id"], "record_id": item["decision_record_id"]}
+        {
+            "key": "resolve_review_request",
+            "case_id": item["case_id"],
+            "record_id": item["decision_record_id"],
+        }
         for item in unresolved_review_requests
     )
     unresolved_actions.extend(
@@ -394,7 +476,9 @@ def build_collaboration_workspace(
         "user_identity": user,
         "access_scope": {
             "mode": "restricted" if allowed_case_ids is not None else "all_visible_cases",
-            "allowed_case_ids": sorted(allowed_case_ids) if allowed_case_ids is not None else None,
+            "allowed_case_ids": sorted(allowed_case_ids)
+            if allowed_case_ids is not None
+            else None,
         },
         **core,
         "counts": counts,
