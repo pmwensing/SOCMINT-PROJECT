@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-confirmed-link-registry data-csrf-token="{{ session.get('_csrf_token', '') }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Confirmed Cross-Case Link Registry</h1><p>Immutable links created only from accepted analyst correlation decisions.</p></div>
+    <span class="status-pill completed">{{ payload.status }}</span>
+  </div>
+  <div id="confirmed-link-feedback" class="flash info" hidden></div>
+</section>
+<section class="panel">
+  <h2>Registry Summary</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Confirmed links</h3><p class="metric">{{ payload.confirmed_link_count }}</p></article>
+    <article class="card"><h3>Accepted pending</h3><p class="metric">{{ payload.accepted_pending_count }}</p></article>
+    <article class="card"><h3>Accepted reviews</h3><p class="metric">{{ payload.review_disposition_counts.get('accept', 0) }}</p></article>
+    <article class="card"><h3>Rejected / deferred / split</h3><p class="metric">{{ payload.review_disposition_counts.get('reject', 0) + payload.review_disposition_counts.get('defer', 0) + payload.review_disposition_counts.get('split', 0) }}</p></article>
+  </div>
+  <p><strong>Access scope:</strong> {{ payload.access_scope.mode }}</p>
+  <p><a href="/cross-case-intelligence">Back to Cross-Case Intelligence Workspace</a></p>
+</section>
+<section class="panel">
+  <h2>Accepted Decisions Pending Registration</h2>
+  {% for item in payload.accepted_pending_registration %}
+  <article class="card" data-pending-confirmed-link="{{ item.correlation_id }}">
+    <h3>{{ item.correlation_id }}</h3>
+    <p><strong>Category:</strong> {{ item.category }} · <strong>Match:</strong> {{ item.match_value }} · <strong>Cases:</strong> {{ item.case_ids|join(', ') }}</p>
+    <p><strong>Accepted by:</strong> {{ item.reviewer }} · <strong>Reason:</strong> {{ item.reason }}</p>
+    <p><strong>Decision ID:</strong> {{ item.review_decision_id }}</p>
+    <label>Registry note <textarea data-field="note" rows="3"></textarea></label>
+    <label><input data-field="confirmed" type="checkbox"> I explicitly confirm registration of this accepted cross-case link.</label>
+    <p><button data-action="register-confirmed-link" type="button">Register Confirmed Link</button></p>
+    <pre data-output></pre>
+  </article>
+  {% else %}<p>No accepted decisions are waiting for registry materialization.</p>{% endfor %}
+</section>
+<section class="panel">
+  <h2>Confirmed Links</h2>
+  <table class="data-table">
+    <thead><tr><th>Link</th><th>Category</th><th>Value</th><th>Cases</th><th>Accepted decision</th><th>Occurrences</th><th>Registered</th></tr></thead>
+    <tbody>
+      {% for link in payload.confirmed_links %}
+      <tr>
+        <td>{{ link.confirmed_link_id }}</td>
+        <td>{{ link.category }}</td>
+        <td>{{ link.display_values|join(' / ') }}</td>
+        <td>{{ link.case_ids|join(', ') }}</td>
+        <td>{{ link.accepted_review_decision_id }}<br><small>{{ link.accepted_review_decision_sha256 }}</small></td>
+        <td>{{ link.source_occurrence_count }}<br><small>{{ link.source_occurrences_sha256 }}</small></td>
+        <td>{{ link.registered_by }} · {{ link.registered_at }}</td>
+      </tr>
+      {% else %}<tr><td colspan="7">No confirmed links have been registered.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+<section class="panel">
+  <h2>Review Disposition History</h2>
+  <table class="data-table"><thead><tr><th>Decision</th><th>Count</th></tr></thead><tbody>{% for decision, count in payload.review_disposition_counts.items() %}<tr><td>{{ decision|title }}</td><td>{{ count }}</td></tr>{% else %}<tr><td colspan="2">No review decisions are available.</td></tr>{% endfor %}</tbody></table>
+  <p class="muted">Rejected, deferred, and split decisions remain in immutable review history. Unreviewed candidates are never materialized. Registry viewing creates no link record.</p>
+</section>
+<section class="panel"><pre id="confirmed-link-registry-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+<script src="{{ url_for('static', filename='cross_case_confirmed_link_registry_v25_2.js') }}" defer></script>
+{% endblock %}
