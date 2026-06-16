@@ -64,7 +64,6 @@ def register_confirmed_cross_case_link(
 ) -> dict[str, Any]:
     if confirmed is not True:
         return _blocked(correlation_id, "explicit_confirmed_link_registration_required")
-
     actor = str(registered_by or "").strip()
     if not actor:
         return _blocked(correlation_id, "confirmed_link_registrar_identity_required")
@@ -75,9 +74,9 @@ def register_confirmed_cross_case_link(
     if review.get("decision") != "accept":
         return _blocked(correlation_id, "latest_correlation_review_must_be_accept")
 
-    review_decision_id = str(review.get("review_decision_id") or "").strip()
-    review_decision_sha256 = str(review.get("review_decision_sha256") or "").strip()
-    if not review_decision_id or not review_decision_sha256:
+    review_id = str(review.get("review_decision_id") or "").strip()
+    review_sha = str(review.get("review_decision_sha256") or "").strip()
+    if not review_id or not review_sha:
         return _blocked(correlation_id, "accepted_review_binding_incomplete")
 
     candidate = review.get("candidate_snapshot") or {}
@@ -88,13 +87,9 @@ def register_confirmed_cross_case_link(
     if allowed_case_ids is not None and any(case_id not in allowed_case_ids for case_id in case_ids):
         return _blocked(correlation_id, "confirmed_link_case_access_required")
 
-    existing = _existing_for_review(review_decision_id)
+    existing = _existing_for_review(review_id)
     if existing is not None:
-        return {
-            **existing,
-            "status": "confirmed_link_already_registered",
-            "duplicate": True,
-        }
+        return {**existing, "status": "confirmed_link_already_registered", "duplicate": True}
 
     occurrence_snapshot = sorted(
         occurrences,
@@ -104,10 +99,9 @@ def register_confirmed_cross_case_link(
             value.get("field_path") or "",
         ),
     )
-    occurrence_snapshot_sha256 = _sha(occurrence_snapshot)
-    accepted_review_snapshot = {
-        "review_decision_id": review_decision_id,
-        "review_decision_sha256": review_decision_sha256,
+    accepted_review = {
+        "review_decision_id": review_id,
+        "review_decision_sha256": review_sha,
         "action_record_id": review.get("action_record_id"),
         "recorded_at": review.get("recorded_at"),
         "reviewer": review.get("reviewer"),
@@ -124,19 +118,19 @@ def register_confirmed_cross_case_link(
         "case_count": len(case_ids),
         "source_occurrences": occurrence_snapshot,
         "source_occurrence_count": len(occurrence_snapshot),
-        "source_occurrences_sha256": occurrence_snapshot_sha256,
-        "accepted_review": accepted_review_snapshot,
-        "accepted_review_decision_id": review_decision_id,
-        "accepted_review_decision_sha256": review_decision_sha256,
+        "source_occurrences_sha256": _sha(occurrence_snapshot),
+        "accepted_review": accepted_review,
+        "accepted_review_decision_id": review_id,
+        "accepted_review_decision_sha256": review_sha,
         "note": str(note or "").strip(),
     }
-    link_sha256 = _sha(content)
+    link_sha = _sha(content)
     event = {
         "schema": SCHEMA,
         "version": VERSION,
         **content,
-        "confirmed_link_id": f"confirmed-cross-case-link-{link_sha256[:24]}",
-        "confirmed_link_sha256": link_sha256,
+        "confirmed_link_id": f"confirmed-cross-case-link-{link_sha[:24]}",
+        "confirmed_link_sha256": link_sha,
         "link_status": "confirmed",
         "source_occurrences_preserved": True,
         "source_records_mutated": False,
@@ -217,27 +211,33 @@ def _all_review_histories() -> dict[str, list[dict[str, Any]]]:
     return {correlation_id: correlation_review_history(correlation_id) for correlation_id in correlation_ids}
 
 
+def _review_visible(review: dict[str, Any], allowed_case_ids: set[str] | None) -> bool:
+    if allowed_case_ids is None:
+        return True
+    candidate = review.get("candidate_snapshot") or {}
+    case_ids = {str(value) for value in candidate.get("case_ids") or []}
+    return bool(case_ids) and all(case_id in allowed_case_ids for case_id in case_ids)
+
+
 def build_confirmed_link_registry_workspace(
     *, allowed_case_ids: set[str] | None = None
 ) -> dict[str, Any]:
     links = confirmed_link_registry(allowed_case_ids=allowed_case_ids)
-    all_histories = _all_review_histories()
     visible_histories: dict[str, list[dict[str, Any]]] = {}
-    disposition_counts: Counter[str] = Counter()
+    dispositions: Counter[str] = Counter()
     accepted_pending = []
     registered_review_ids = {link.get("accepted_review_decision_id") for link in links}
 
-    for correlation_id, history in all_histories.items():
-        if not history:
+    for correlation_id, history in _all_review_histories().items():
+        visible = [review for review in history if _review_visible(review, allowed_case_ids)]
+        if not visible:
             continue
-        latest = history[-1]
+        visible_histories[correlation_id] = visible
+        for review in visible:
+            dispositions[str(review.get("decision") or "unknown")] += 1
+        latest = visible[-1]
         candidate = latest.get("candidate_snapshot") or {}
-        case_ids = {str(value) for value in candidate.get("case_ids") or []}
-        if allowed_case_ids is not None and any(case_id not in allowed_case_ids for case_id in case_ids):
-            continue
-        visible_histories[correlation_id] = history
-        for review in history:
-            disposition_counts[str(review.get("decision") or "unknown")] += 1
+        case_ids = sorted({str(value) for value in candidate.get("case_ids") or []})
         if latest.get("decision") == "accept" and latest.get("review_decision_id") not in registered_review_ids:
             accepted_pending.append({
                 "correlation_id": correlation_id,
@@ -245,11 +245,14 @@ def build_confirmed_link_registry_workspace(
                 "review_decision_sha256": latest.get("review_decision_sha256"),
                 "reviewer": latest.get("reviewer"),
                 "reason": latest.get("reason"),
-                "case_ids": sorted(case_ids),
+                "case_ids": case_ids,
                 "category": candidate.get("category"),
                 "match_value": candidate.get("match_value"),
             })
 
+    accepted_pending.sort(
+        key=lambda item: (item["correlation_id"], item.get("review_decision_id") or "")
+    )
     return {
         "schema": SCHEMA,
         "version": VERSION,
@@ -260,11 +263,9 @@ def build_confirmed_link_registry_workspace(
         },
         "confirmed_links": links,
         "confirmed_link_count": len(links),
-        "accepted_pending_registration": sorted(
-            accepted_pending, key=lambda item: (item["correlation_id"], item.get("review_decision_id") or "")
-        ),
+        "accepted_pending_registration": accepted_pending,
         "accepted_pending_count": len(accepted_pending),
-        "review_disposition_counts": dict(sorted(disposition_counts.items())),
+        "review_disposition_counts": dict(sorted(dispositions.items())),
         "review_histories": visible_histories,
         "unreviewed_candidates_materialized": False,
         "rejected_deferred_split_history_retained": True,
