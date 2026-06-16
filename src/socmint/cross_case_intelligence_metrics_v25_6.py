@@ -201,12 +201,30 @@ def build_cross_case_intelligence_metrics(
             "archive_records": counts.get("archive_records", 0),
         })
 
-    review_coverage = _percent(len(reviewed_candidate_ids & candidate_ids), len(candidate_ids))
-    confirmation_conversion = _percent(len(confirmed_link_ids), len(candidate_ids))
-    accepted_materialization = _percent(len(confirmed_link_ids), latest_accepted)
-    occurrence_coverage = min(100.0, _percent(confirmed_occurrences, candidate_occurrences))
-    cross_case_reach = _percent(len(confirmed_case_ids), visible_cases)
-    graph_support = min(100.0, round((edge_count / max(1, node_count)) * 25.0, 2))
+    review_coverage = min(
+        100.0,
+        _percent(len(reviewed_candidate_ids & candidate_ids), len(candidate_ids)),
+    )
+    confirmation_conversion = min(
+        100.0,
+        _percent(len(confirmed_link_ids), len(candidate_ids)),
+    )
+    accepted_materialization = min(
+        100.0,
+        _percent(len(confirmed_link_ids), accepted_reviews),
+    )
+    occurrence_coverage = min(
+        100.0,
+        _percent(confirmed_occurrences, candidate_occurrences),
+    )
+    cross_case_reach = min(
+        100.0,
+        _percent(len(confirmed_case_ids), visible_cases),
+    )
+    graph_support = min(
+        100.0,
+        round((edge_count / max(1, node_count)) * 25.0, 2),
+    )
 
     confidence_components = {
         "review_coverage_percent": review_coverage,
