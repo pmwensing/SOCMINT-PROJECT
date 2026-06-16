@@ -111,6 +111,22 @@ def _check(report: dict, key: str, ok: bool, detail: str = "") -> None:
     report["checks"].append({"key": key, "ok": bool(ok), "detail": detail})
 
 
+def _post_json(driver, url: str, payload: dict) -> dict:
+    return driver.execute_async_script(
+        """
+        const done = arguments[arguments.length - 1];
+        fetch(arguments[0], {
+          method: 'POST', credentials: 'same-origin',
+          headers: {'Content-Type': 'application/json', 'X-CSRF-Token': 'v25-e2e-csrf'},
+          body: JSON.stringify(arguments[1])
+        }).then(async response => done({status: response.status, body: await response.json()}))
+          .catch(error => done({status: 0, body: {error: String(error)}}));
+        """,
+        url,
+        payload,
+    )
+
+
 def run() -> dict:
     report = {"schema": "socmint.cross_case_browser_e2e.v25_7", "version": "v25.7.0", "status": "running", "checks": []}
     temp = Path(tempfile.mkdtemp(prefix="socmint-v25-e2e-"))
@@ -132,6 +148,20 @@ def run() -> dict:
         wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-cross-case-intelligence-workspace]")))
         _check(report, "candidate_discovery", "entity-42" in driver.page_source)
         _check(report, "review_controls", "Record Decision" in driver.page_source)
+
+        review_result = _post_json(
+            driver,
+            base + f"/api/v1/cross-case-intelligence/{CORRELATION_ID}/review",
+            {"category": "entity", "decision": "accept", "reason": "E2E accepted correlation.", "confirmed": True},
+        )
+        _check(report, "review_decision_post", review_result.get("status") == 200 and review_result.get("body", {}).get("decision") == "accept", json.dumps(review_result, sort_keys=True))
+
+        link_result = _post_json(
+            driver,
+            base + f"/api/v1/cross-case-intelligence/{CORRELATION_ID}/confirmed-link",
+            {"confirmed": True, "note": "E2E confirmed-link registration."},
+        )
+        _check(report, "confirmed_link_post", link_result.get("status") == 200 and link_result.get("body", {}).get("confirmed_link_id") == LINK_ID, json.dumps(link_result, sort_keys=True))
 
         driver.get(base + "/cross-case-intelligence/confirmed-links")
         wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-confirmed-link-registry]")))
