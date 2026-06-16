@@ -7,6 +7,7 @@ from .portfolio_case_stage_overview_v24_1 import build_case_status_stage_overvie
 from .portfolio_history_audit_v24_6 import build_portfolio_history_audit
 from .portfolio_operational_metrics_v24_5 import build_operational_metrics
 from .portfolio_operations_dashboard_v24_0 import build_portfolio_operations_dashboard
+from .portfolio_product_review_v24_7 import build_portfolio_product_review
 from .portfolio_supervisor_escalation_v24_4 import (
     acknowledge_escalation,
     build_escalation_control_state,
@@ -91,6 +92,13 @@ def register_portfolio_operations_routes_v24_0(app):
         if not session.get("user"):
             return jsonify({"error": "login required"}), 401
         return jsonify(build_operational_metrics())
+
+    @app.get("/api/v1/portfolio-operations/product-review-checkpoint")
+    def api_portfolio_product_review_checkpoint_get_v24_7():
+        if not session.get("user"):
+            return jsonify({"error": "login required"}), 401
+        result = build_portfolio_product_review(routes=list(app.url_map.iter_rules()))
+        return jsonify(result), 200 if result.get("ready") else 422
 
     def actor() -> str:
         return str(session.get("user") or "unknown")
