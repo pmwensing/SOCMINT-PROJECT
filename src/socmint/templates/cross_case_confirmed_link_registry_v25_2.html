@@ -37,7 +37,7 @@
 <section class="panel">
   <h2>Confirmed Links</h2>
   <table class="data-table">
-    <thead><tr><th>Link</th><th>Category</th><th>Value</th><th>Cases</th><th>Accepted decision</th><th>Occurrences</th><th>Registered</th></tr></thead>
+    <thead><tr><th>Link</th><th>Category</th><th>Value</th><th>Cases</th><th>Accepted decision</th><th>Occurrences</th><th>Registered</th><th>Impact</th></tr></thead>
     <tbody>
       {% for link in payload.confirmed_links %}
       <tr>
@@ -48,8 +48,9 @@
         <td>{{ link.accepted_review_decision_id }}<br><small>{{ link.accepted_review_decision_sha256 }}</small></td>
         <td>{{ link.source_occurrence_count }}<br><small>{{ link.source_occurrences_sha256 }}</small></td>
         <td>{{ link.registered_by }} · {{ link.registered_at }}</td>
+        <td><a href="/cross-case-intelligence/confirmed-links/{{ link.confirmed_link_id }}/impact">Analyze impact</a></td>
       </tr>
-      {% else %}<tr><td colspan="7">No confirmed links have been registered.</td></tr>{% endfor %}
+      {% else %}<tr><td colspan="8">No confirmed links have been registered.</td></tr>{% endfor %}
     </tbody>
   </table>
 </section>
