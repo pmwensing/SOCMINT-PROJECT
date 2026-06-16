@@ -15,6 +15,9 @@ from .collaboration_responses_resolution_routes_v26_4 import (
     register_collaboration_responses_resolution_routes_v26_4,
 )
 from .collaboration_workspace_v26_0 import build_collaboration_workspace
+from .team_workload_collaboration_queue_routes_v26_5 import (
+    register_team_workload_collaboration_queue_routes_v26_5,
+)
 
 
 def _allowed_case_ids() -> set[str] | None:
@@ -55,4 +58,5 @@ def register_collaboration_routes_v26_0(app):
     register_collaboration_notes_routes_v26_2(app)
     register_collaboration_requests_handoffs_routes_v26_3(app)
     register_collaboration_responses_resolution_routes_v26_4(app)
+    register_team_workload_collaboration_queue_routes_v26_5(app)
     return app
