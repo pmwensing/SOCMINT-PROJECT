@@ -221,21 +221,23 @@ def build_confirmed_link_registry_workspace(
     *, allowed_case_ids: set[str] | None = None
 ) -> dict[str, Any]:
     links = confirmed_link_registry(allowed_case_ids=allowed_case_ids)
-    review_histories = _all_review_histories()
+    all_histories = _all_review_histories()
+    visible_histories: dict[str, list[dict[str, Any]]] = {}
     disposition_counts: Counter[str] = Counter()
     accepted_pending = []
     registered_review_ids = {link.get("accepted_review_decision_id") for link in links}
 
-    for correlation_id, history in review_histories.items():
+    for correlation_id, history in all_histories.items():
         if not history:
             continue
-        for review in history:
-            disposition_counts[str(review.get("decision") or "unknown")] += 1
         latest = history[-1]
         candidate = latest.get("candidate_snapshot") or {}
         case_ids = {str(value) for value in candidate.get("case_ids") or []}
         if allowed_case_ids is not None and any(case_id not in allowed_case_ids for case_id in case_ids):
             continue
+        visible_histories[correlation_id] = history
+        for review in history:
+            disposition_counts[str(review.get("decision") or "unknown")] += 1
         if latest.get("decision") == "accept" and latest.get("review_decision_id") not in registered_review_ids:
             accepted_pending.append({
                 "correlation_id": correlation_id,
@@ -263,7 +265,7 @@ def build_confirmed_link_registry_workspace(
         ),
         "accepted_pending_count": len(accepted_pending),
         "review_disposition_counts": dict(sorted(disposition_counts.items())),
-        "review_histories": review_histories,
+        "review_histories": visible_histories,
         "unreviewed_candidates_materialized": False,
         "rejected_deferred_split_history_retained": True,
         "source_records_mutated": False,
