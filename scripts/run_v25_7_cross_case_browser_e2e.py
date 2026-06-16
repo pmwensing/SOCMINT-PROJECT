@@ -141,7 +141,18 @@ def run() -> dict:
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--window-size=1440,1200")
-        driver = webdriver.Chrome(service=ChromeService(), options=options)
+        chromium = (
+            os.environ.get("SOCMINT_CHROME_BINARY")
+            or shutil.which("chromium")
+            or shutil.which("chromium-browser")
+            or shutil.which("google-chrome")
+            or shutil.which("google-chrome-stable")
+        )
+        if chromium:
+            options.binary_location = chromium
+        driver_path = os.environ.get("SOCMINT_CHROMEDRIVER") or shutil.which("chromedriver")
+        service = ChromeService(driver_path) if driver_path else None
+        driver = webdriver.Chrome(service=service, options=options)
         wait = WebDriverWait(driver, 15)
         base = f"http://127.0.0.1:{port}"
         driver.get(base + "/_v25_e2e_login")
