@@ -13,6 +13,9 @@ from .cross_case_correlation_review_v25_1 import (
 from .cross_case_intelligence_workspace_v25_0 import (
     build_cross_case_intelligence_workspace,
 )
+from .cross_case_relationship_graph_v25_3 import (
+    build_cross_case_relationship_graph,
+)
 
 
 def _allowed_case_ids() -> set[str] | None:
@@ -135,5 +138,27 @@ def register_cross_case_intelligence_routes_v25_0(app):
             "confirmed_link_already_registered",
         }
         return jsonify(result), 200 if ok else 422
+
+    @app.get("/cross-case-intelligence/graph")
+    def cross_case_relationship_graph_get_v25_3():
+        if not session.get("user"):
+            return redirect(url_for("dashboard.login"))
+        return render_template(
+            "cross_case_relationship_graph_v25_3.html",
+            title="Cross-Case Relationship Graph",
+            payload=build_cross_case_relationship_graph(
+                allowed_case_ids=_allowed_case_ids()
+            ),
+        )
+
+    @app.get("/api/v1/cross-case-intelligence/graph")
+    def api_cross_case_relationship_graph_get_v25_3():
+        if not session.get("user"):
+            return jsonify({"error": "login required"}), 401
+        return jsonify(
+            build_cross_case_relationship_graph(
+                allowed_case_ids=_allowed_case_ids()
+            )
+        )
 
     return app
