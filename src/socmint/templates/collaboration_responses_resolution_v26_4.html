@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-collaboration-responses data-case-id="{{ payload.case_id }}" data-csrf-token="{{ session.get('_csrf_token','') }}">
+<section class="panel"><div class="page-header"><div><h1>Acknowledgements, Responses, and Resolution</h1><p>Append-only response workflow for {{ payload.case_id }}.</p></div><span class="status-pill {{ 'completed' if payload.status == 'ready' else 'attention' }}">{{ payload.status }}</span></div><div id="v26-4-feedback" class="flash info" hidden></div></section>
+<section class="panel"><h2>Record Response</h2><div class="grid cards-2"><label>Target type <select id="v26-4-target-type">{% for x in payload.target_types %}<option value="{{ x }}">{{ x|title }}</option>{% endfor %}</select></label><label>Target ID <input id="v26-4-target-id"></label><label>Response type <select id="v26-4-response-type">{% for x in payload.response_types %}<option value="{{ x }}">{{ x.replace('_',' ')|title }}</option>{% endfor %}</select></label><label>Resolution code <input id="v26-4-resolution-code"></label></div><label>Reason <textarea id="v26-4-reason"></textarea></label><label>Unresolved reason <textarea id="v26-4-unresolved-reason"></textarea></label><label><input id="v26-4-confirmed" type="checkbox"> Confirm immutable response event.</label><p><button id="v26-4-record-response" type="button">Record Response</button></p><pre id="v26-4-output"></pre></section>
+<section class="panel"><h2>Latest Response State</h2><pre>{{ payload.latest_responses|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Unresolved Responses</h2><pre>{{ payload.unresolved_responses|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>History</h2><pre>{{ payload.history|tojson(indent=2) }}</pre></section>
+<section class="panel"><p><a href="/cases/{{ payload.case_id }}/collaboration-requests">Requests and Handoffs</a> · <a href="/cases/{{ payload.case_id }}/collaboration-notes">Notes and Mentions</a> · <a href="/collaboration">Collaboration Workspace</a></p><p class="muted">Every response is append-only. Acknowledgement does not equal completion, and resolution never rewrites the source item.</p></section>
+</div><script src="{{ url_for('static',filename='collaboration_responses_resolution_v26_4.js') }}" defer></script>
+{% endblock %}
