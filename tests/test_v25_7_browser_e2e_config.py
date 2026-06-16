@@ -27,3 +27,16 @@ def test_v25_7_browser_e2e_uses_valid_secret_length():
 
     assert values
     assert all(isinstance(value, str) and len(value) >= 32 for value in values)
+
+
+def test_v25_7_browser_e2e_discovers_local_chromium_and_driver():
+    source = Path("scripts/run_v25_7_cross_case_browser_e2e.py").read_text(encoding="utf-8")
+
+    assert 'SOCMINT_CHROME_BINARY' in source
+    assert 'SOCMINT_CHROMEDRIVER' in source
+    assert 'shutil.which("chromium")' in source
+    assert 'shutil.which("chromium-browser")' in source
+    assert 'shutil.which("google-chrome")' in source
+    assert 'shutil.which("chromedriver")' in source
+    assert 'options.binary_location = chromium' in source
+    assert 'ChromeService(driver_path) if driver_path else None' in source
