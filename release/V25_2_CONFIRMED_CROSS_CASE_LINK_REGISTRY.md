@@ -1,6 +1,6 @@
 # v25.2 Confirmed Cross-Case Link Registry
 
-Creates a separate immutable registry from only accepted analyst decisions.
+Creates a separate immutable link registry from only accepted analyst decisions.
 
 A link can be registered only when the latest v25.1 decision is `accept`. Unreviewed candidates and latest decisions of `reject`, `defer`, or `split` cannot be registered.
 
