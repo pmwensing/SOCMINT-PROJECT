@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-cross-case-intelligence-product-review>
+<section class="panel"><div class="page-header"><div><h1>Cross-Case Intelligence Product Review</h1><p>v25.7 validates the complete cross-case journey before v26 begins.</p></div><span class="status-pill {{ 'completed' if payload.ready else 'failed' }}">{{ payload.status }}</span></div></section>
+<section class="panel"><h2>Checkpoint Summary</h2><div class="grid cards-4"><article class="card"><h3>Ready</h3><p class="metric">{{ payload.ready }}</p></article><article class="card"><h3>Journey steps</h3><p class="metric">{{ payload.journey_step_count }}</p></article><article class="card"><h3>Blockers</h3><p class="metric">{{ payload.blocker_count }}</p></article><article class="card"><h3>Version</h3><p class="metric">{{ payload.version }}</p></article></div><p><strong>Next action:</strong> {{ payload.next_action }}</p></section>
+<section class="panel"><h2>Full Browser Journey</h2><table class="data-table"><thead><tr><th>Step</th><th>Route</th></tr></thead><tbody>{% for item in payload.journey %}<tr><td>{{ item.step.replace('_',' ')|title }}</td><td>{{ item.route }}</td></tr>{% endfor %}</tbody></table></section>
+<section class="panel"><h2>Modules, Assets, and Release Notes</h2><pre>{{ payload.module_checks|tojson(indent=2) }}</pre><pre>{{ payload.asset_checks|tojson(indent=2) }}</pre><pre>{{ payload.release_note_checks|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Routes</h2><pre>{{ payload.route_checks|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">This checkpoint is read-only. It creates no checkpoint record, mutates no source record, and closes v25 only after the standalone browser E2E report passes.</p></section>
+<section class="panel"><pre id="cross-case-product-review-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
