@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-case-team-role-assignment data-case-id="{{ payload.case_id }}" data-csrf-token="{{ session.get('_csrf_token', '') }}">
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Case Team and Role Assignment</h1><p>Append-only team membership and role management for {{ payload.case_id }}.</p></div>
+    <span class="status-pill completed">{{ payload.status }}</span>
+  </div>
+  <div id="case-team-feedback" class="flash info" hidden></div>
+</section>
+<section class="panel">
+  <h2>Assign Team Role</h2>
+  <div class="grid cards-2">
+    <label>Team member <input id="case-team-user" type="text" autocomplete="off"></label>
+    <label>Role <select id="case-team-role">{% for role in payload.role_catalog %}<option value="{{ role }}">{{ role.replace('_', ' ')|title }}</option>{% endfor %}</select></label>
+    <label>Effective from <input id="case-team-effective-from" type="datetime-local"></label>
+    <label>Effective until <input id="case-team-effective-until" type="datetime-local"></label>
+  </div>
+  <label>Reason <textarea id="case-team-reason" rows="3"></textarea></label>
+  <label><input id="case-team-confirmed" type="checkbox"> I explicitly confirm this append-only case-team assignment.</label>
+  <p><button id="record-case-team-assignment" type="button">Record Assignment</button></p>
+  <pre id="case-team-assignment-output"></pre>
+</section>
+<section class="panel">
+  <h2>Current Assignments</h2>
+  <table class="data-table"><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Effective</th><th>Assignment</th><th>Action</th></tr></thead><tbody>
+  {% for item in payload.current_assignments %}
+  <tr data-assignment-id="{{ item.case_team_assignment_id }}">
+    <td>{{ item.user_identity }}</td><td>{{ item.role }}</td><td>{{ item.assignment_status }}</td><td>{{ item.effective_from or '—' }} → {{ item.effective_until or 'open' }}</td><td>{{ item.case_team_assignment_id }}<br><small>{{ item.case_team_event_sha256 }}</small></td>
+    <td>{% if item.assignment_status == 'active' %}<button type="button" data-action="revoke-case-team-role" data-assignment-id="{{ item.case_team_assignment_id }}">Revoke</button>{% else %}—{% endif %}</td>
+  </tr>
+  {% else %}<tr><td colspan="6">No team assignments have been recorded.</td></tr>{% endfor %}
+  </tbody></table>
+</section>
+<section class="panel">
+  <h2>Assignment History</h2>
+  <table class="data-table"><thead><tr><th>Time</th><th>Event</th><th>User</th><th>Role</th><th>Actor</th><th>Reason</th><th>Source binding</th></tr></thead><tbody>
+  {% for item in payload.history %}<tr><td>{{ item.recorded_at }}</td><td>{{ item.event_type }}</td><td>{{ item.user_identity }}</td><td>{{ item.role }}</td><td>{{ item.recorded_by }}</td><td>{{ item.reason }}</td><td><small>{{ item.source_case_state_sha256 }}</small></td></tr>{% else %}<tr><td colspan="7">No assignment history.</td></tr>{% endfor %}
+  </tbody></table>
+</section>
+<section class="panel"><p><a href="/collaboration">Back to Collaboration Workspace</a></p><p class="muted">Assignments and revocations are immutable audit events. They do not rewrite prior events or automatically grant or remove underlying case access.</p></section>
+<section class="panel"><pre id="case-team-workspace-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+<script src="{{ url_for('static', filename='case_team_role_assignment_v26_1.js') }}" defer></script>
+{% endblock %}
