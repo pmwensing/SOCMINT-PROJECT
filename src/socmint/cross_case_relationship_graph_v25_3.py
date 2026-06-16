@@ -23,7 +23,13 @@ def _node_id(node_type: str, value: str) -> str:
     return f"{node_type}-{_sha({'type': node_type, 'value': value})[:24]}"
 
 
-def _edge_id(edge_type: str, source: str, target: str, link_id: str, occurrence_hash: str | None = None) -> str:
+def _edge_id(
+    edge_type: str,
+    source: str,
+    target: str,
+    link_id: str,
+    occurrence_hash: str | None = None,
+) -> str:
     return f"edge-{_sha({'type': edge_type, 'source': source, 'target': target, 'link': link_id, 'occurrence': occurrence_hash})[:24]}"
 
 
@@ -49,6 +55,7 @@ def build_cross_case_relationship_graph(
 
     nodes: dict[str, dict[str, Any]] = {}
     edges: dict[str, dict[str, Any]] = {}
+    projected_link_ids: set[str] = set()
 
     def add_node(
         node_type: str,
@@ -59,6 +66,7 @@ def build_cross_case_relationship_graph(
         occurrences: list[dict[str, Any]],
     ) -> str:
         node_id = _node_id(node_type, value)
+        access_scope = link.get("accepted_review", {}).get("workspace_access_scope")
         provenance = {
             "confirmed_link_id": link.get("confirmed_link_id"),
             "confirmed_link_sha256": link.get("confirmed_link_sha256"),
@@ -68,6 +76,11 @@ def build_cross_case_relationship_graph(
             "registered_at": link.get("registered_at"),
             "registered_by": link.get("registered_by"),
             "source_occurrences_sha256": link.get("source_occurrences_sha256"),
+            "access_scope": access_scope,
+        }
+        review_binding = {
+            "decision_id": link.get("accepted_review_decision_id"),
+            "decision_sha256": link.get("accepted_review_decision_sha256"),
         }
         existing = nodes.get(node_id)
         if existing is None:
@@ -77,24 +90,32 @@ def build_cross_case_relationship_graph(
                 "value": value,
                 "label": label,
                 "confirmed_link_ids": [link.get("confirmed_link_id")],
-                "review_bindings": [{
-                    "decision_id": link.get("accepted_review_decision_id"),
-                    "decision_sha256": link.get("accepted_review_decision_sha256"),
-                }],
+                "review_bindings": [review_binding],
+                "access_scopes": [access_scope],
                 "source_occurrences": occurrences,
                 "provenance": [provenance],
             }
             content["node_sha256"] = _sha(content)
             nodes[node_id] = content
         else:
-            existing["confirmed_link_ids"] = sorted(set(existing["confirmed_link_ids"] + [link.get("confirmed_link_id")]))
-            existing["review_bindings"] = _merge_unique(existing["review_bindings"], [{
-                "decision_id": link.get("accepted_review_decision_id"),
-                "decision_sha256": link.get("accepted_review_decision_sha256"),
-            }])
-            existing["source_occurrences"] = _merge_unique(existing["source_occurrences"], occurrences)
-            existing["provenance"] = _merge_unique(existing["provenance"], [provenance])
-            recalculated = {key: value for key, value in existing.items() if key != "node_sha256"}
+            existing["confirmed_link_ids"] = sorted(
+                set(existing["confirmed_link_ids"] + [link.get("confirmed_link_id")])
+            )
+            existing["review_bindings"] = _merge_unique(
+                existing["review_bindings"], [review_binding]
+            )
+            existing["access_scopes"] = _merge_unique(
+                existing["access_scopes"], [access_scope]
+            )
+            existing["source_occurrences"] = _merge_unique(
+                existing["source_occurrences"], occurrences
+            )
+            existing["provenance"] = _merge_unique(
+                existing["provenance"], [provenance]
+            )
+            recalculated = {
+                key: item for key, item in existing.items() if key != "node_sha256"
+            }
             existing["node_sha256"] = _sha(recalculated)
         return node_id
 
@@ -107,7 +128,13 @@ def build_cross_case_relationship_graph(
         occurrences: list[dict[str, Any]],
         occurrence_hash: str | None = None,
     ) -> None:
-        edge_id = _edge_id(edge_type, source, target, str(link.get("confirmed_link_id")), occurrence_hash)
+        edge_id = _edge_id(
+            edge_type,
+            source,
+            target,
+            str(link.get("confirmed_link_id")),
+            occurrence_hash,
+        )
         content = {
             "edge_id": edge_id,
             "edge_type": edge_type,
@@ -119,25 +146,47 @@ def build_cross_case_relationship_graph(
             "accepted_review_decision_sha256": link.get("accepted_review_decision_sha256"),
             "source_occurrences": occurrences,
             "source_occurrences_sha256": _sha(occurrences),
-            "access_scope": link.get("accepted_review", {}).get("workspace_access_scope"),
+            "access_scope": link.get("accepted_review", {}).get(
+                "workspace_access_scope"
+            ),
             "provenance": {
                 "registry_record_id": link.get("registry_record_id"),
                 "registered_at": link.get("registered_at"),
                 "registered_by": link.get("registered_by"),
-                "source_occurrences_sha256": link.get("source_occurrences_sha256"),
+                "source_occurrences_sha256": link.get(
+                    "source_occurrences_sha256"
+                ),
             },
         }
         content["edge_sha256"] = _sha(content)
         edges[edge_id] = content
 
     for link in confirmed_links:
-        case_ids = sorted({str(value) for value in link.get("case_ids") or [] if str(value)})
-        if allowed_case_ids is not None and any(case_id not in allowed_case_ids for case_id in case_ids):
+        case_ids = sorted(
+            {str(value) for value in link.get("case_ids") or [] if str(value)}
+        )
+        if allowed_case_ids is not None and any(
+            case_id not in allowed_case_ids for case_id in case_ids
+        ):
             continue
+
+        link_id = str(link.get("confirmed_link_id") or "").strip()
+        if not link_id:
+            continue
+        projected_link_ids.add(link_id)
+
         category = str(link.get("category") or "").strip().lower()
-        graph_type = category if category in {"entity", "identifier", "infrastructure", "evidence"} else "temporal"
-        value = str(link.get("match_value") or link.get("confirmed_link_id") or "unknown")
-        label = " / ".join(str(item) for item in link.get("display_values") or [value])
+        graph_type = (
+            category
+            if category in {"entity", "identifier", "infrastructure", "evidence"}
+            else "temporal"
+        )
+        value = str(
+            link.get("match_value") or link.get("confirmed_link_id") or "unknown"
+        )
+        label = " / ".join(
+            str(item) for item in link.get("display_values") or [value]
+        )
         occurrences = list(link.get("source_occurrences") or [])
 
         value_node = add_node(
@@ -189,7 +238,9 @@ def build_cross_case_relationship_graph(
                     link=link,
                     occurrences=[occurrence],
                 )
-                occurrence_hash = str(occurrence.get("provenance_sha256") or _sha(occurrence))
+                occurrence_hash = str(
+                    occurrence.get("provenance_sha256") or _sha(occurrence)
+                )
                 add_edge(
                     "case_observed_at",
                     case_node,
@@ -207,15 +258,26 @@ def build_cross_case_relationship_graph(
                     occurrence_hash=occurrence_hash,
                 )
 
-    node_list = sorted(nodes.values(), key=lambda item: (item["node_type"], item["label"], item["node_id"]))
-    edge_list = sorted(edges.values(), key=lambda item: (item["edge_type"], item["source"], item["target"], item["edge_id"]))
+    node_list = sorted(
+        nodes.values(),
+        key=lambda item: (item["node_type"], item["label"], item["node_id"]),
+    )
+    edge_list = sorted(
+        edges.values(),
+        key=lambda item: (
+            item["edge_type"],
+            item["source"],
+            item["target"],
+            item["edge_id"],
+        ),
+    )
     node_counts = Counter(item["node_type"] for item in node_list)
     edge_counts = Counter(item["edge_type"] for item in edge_list)
 
     graph_core = {
         "nodes": node_list,
         "edges": edge_list,
-        "confirmed_link_ids": sorted({str(link.get("confirmed_link_id")) for link in confirmed_links if link.get("confirmed_link_id")}),
+        "confirmed_link_ids": sorted(projected_link_ids),
     }
 
     return {
@@ -223,8 +285,12 @@ def build_cross_case_relationship_graph(
         "version": VERSION,
         "status": "ready",
         "access_scope": {
-            "mode": "restricted" if allowed_case_ids is not None else "all_visible_cases",
-            "allowed_case_ids": sorted(allowed_case_ids) if allowed_case_ids is not None else None,
+            "mode": "restricted"
+            if allowed_case_ids is not None
+            else "all_visible_cases",
+            "allowed_case_ids": sorted(allowed_case_ids)
+            if allowed_case_ids is not None
+            else None,
         },
         "graph": graph_core,
         "graph_sha256": _sha(graph_core),
@@ -238,6 +304,7 @@ def build_cross_case_relationship_graph(
         "node_types": sorted(NODE_TYPES),
         "source_occurrences_preserved": True,
         "review_bindings_preserved": True,
+        "access_scope_preserved": True,
         "provenance_preserved": True,
         "source_records_mutated": False,
         "graph_record_created": False,
