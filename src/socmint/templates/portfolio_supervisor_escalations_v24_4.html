@@ -3,7 +3,7 @@
 <div data-portfolio-escalations data-csrf-token="{{ session.get('_csrf_token', '') }}">
 <section class="panel"><div class="page-header"><div><h1>Supervisor Escalation Controls</h1><p>Actions for blocked and overdue cases.</p></div><span class="status-pill {{ 'failed' if payload.status == 'attention_required' else 'completed' }}">{{ payload.status }}</span></div><div id="portfolio-escalation-feedback" class="flash info" hidden></div></section>
 <section class="panel"><p><a href="/portfolio-operations">Back to Portfolio Operations Dashboard</a></p></section>
-{% for item in payload.items %}
+{% for item in payload['items'] %}
 <section class="panel" data-escalation-case="{{ item.case_id }}">
 <h2>{{ item.case_id }} · {{ item.severity|title }}</h2>
 <p><strong>Stage:</strong> {{ item.current_stage }} · <strong>Stage age:</strong> {{ item.stage_age_hours or '—' }} h · <strong>Assignment age:</strong> {{ item.assignment_age_hours or '—' }} h</p>
