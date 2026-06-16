@@ -10,6 +10,7 @@ from .case_closure_product_review_routes_v23_7 import (
 )
 from .case_closure_routes_v23_0 import register_case_closure_routes_v23_0
 from .case_reopen_routes_v23_5 import register_case_reopen_routes_v23_5
+from .collaboration_routes_v26_0 import register_collaboration_routes_v26_0
 from .cross_case_intelligence_routes_v25_0 import (
     register_cross_case_intelligence_routes_v25_0,
 )
@@ -185,4 +186,5 @@ def register_dossier_assembly_routes_v21_0(app):
     register_portfolio_operations_routes_v24_0(app)
     register_portfolio_supervisor_escalation_routes_v24_4(app)
     register_cross_case_intelligence_routes_v25_0(app)
+    register_collaboration_routes_v26_0(app)
     return app
