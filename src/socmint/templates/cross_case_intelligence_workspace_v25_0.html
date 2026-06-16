@@ -12,7 +12,7 @@
   <h2>Access Scope</h2>
   <p><strong>Mode:</strong> {{ payload.access_scope.mode }} · <strong>Visible cases:</strong> {{ payload.counts.visible_cases }} · <strong>Minimum cases:</strong> {{ payload.minimum_case_count }}</p>
   <p><strong>Visible case IDs:</strong> {{ payload.access_scope.visible_case_ids|join(', ') if payload.access_scope.visible_case_ids else 'None' }}</p>
-  <p><a href="{{ payload.links.portfolio_operations }}">Portfolio Operations</a> · <a href="{{ payload.links.portfolio_history }}">Portfolio History</a></p>
+  <p><a href="{{ payload.links.portfolio_operations }}">Portfolio Operations</a> · <a href="{{ payload.links.portfolio_history }}">Portfolio History</a> · <a href="/cross-case-intelligence/confirmed-links">Confirmed Link Registry</a></p>
 </section>
 <section class="panel">
   <h2>Correlation Summary</h2>
