@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-cross-case-intelligence-workspace>
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Cross-Case Intelligence Workspace</h1><p>Candidate correlations across entities, identifiers, infrastructure, evidence, timelines, and repeated patterns.</p></div>
+    <span class="status-pill completed">{{ payload.status }}</span>
+  </div>
+</section>
+<section class="panel">
+  <h2>Access Scope</h2>
+  <p><strong>Mode:</strong> {{ payload.access_scope.mode }} · <strong>Visible cases:</strong> {{ payload.counts.visible_cases }} · <strong>Minimum cases:</strong> {{ payload.minimum_case_count }}</p>
+  <p><strong>Visible case IDs:</strong> {{ payload.access_scope.visible_case_ids|join(', ') if payload.access_scope.visible_case_ids else 'None' }}</p>
+  <p><a href="{{ payload.links.portfolio_operations }}">Portfolio Operations</a> · <a href="{{ payload.links.portfolio_history }}">Portfolio History</a></p>
+</section>
+<section class="panel">
+  <h2>Correlation Summary</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Entities</h3><p class="metric">{{ payload.counts.entity_correlations }}</p></article>
+    <article class="card"><h3>Identifiers</h3><p class="metric">{{ payload.counts.identifier_correlations }}</p></article>
+    <article class="card"><h3>Infrastructure</h3><p class="metric">{{ payload.counts.infrastructure_correlations }}</p></article>
+    <article class="card"><h3>Evidence</h3><p class="metric">{{ payload.counts.evidence_correlations }}</p></article>
+    <article class="card"><h3>Timelines</h3><p class="metric">{{ payload.counts.timeline_correlations }}</p></article>
+    <article class="card"><h3>Repeated patterns</h3><p class="metric">{{ payload.counts.repeated_patterns }}</p></article>
+    <article class="card"><h3>Source records</h3><p class="metric">{{ payload.counts.source_records }}</p></article>
+  </div>
+</section>
+{% for section, items in payload.correlations.items() %}
+<section class="panel">
+  <h2>{{ section.replace('_', ' ')|title }}</h2>
+  <table class="data-table">
+    <thead><tr><th>Candidate</th><th>Cases</th><th>Occurrences</th><th>Provenance</th></tr></thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.display_values|join(' / ') }}</td>
+        <td>{{ item.case_ids|join(', ') }}</td>
+        <td>{{ item.occurrence_count }}</td>
+        <td>
+          {% for occurrence in item.occurrences %}
+          <div><strong>{{ occurrence.case_id }}</strong> · record {{ occurrence.record_id }} · {{ occurrence.source_action }} · {{ occurrence.field_path }} · {{ occurrence.actor or 'unknown' }} · {{ occurrence.occurred_at or 'unknown time' }}</div>
+          {% endfor %}
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="4">No cross-case {{ section.replace('_', ' ') }} candidates meet the current threshold.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endfor %}
+<section class="panel">
+  <h2>Repeated Patterns</h2>
+  <table class="data-table"><thead><tr><th>Type</th><th>Pattern</th><th>Cases</th><th>Occurrences</th></tr></thead><tbody>{% for item in payload.repeated_patterns %}<tr><td>{{ item.pattern_type }}</td><td>{{ item.pattern }}</td><td>{{ item.case_ids|join(', ') }}</td><td>{{ item.occurrence_count if item.occurrence_count is defined else item.case_count }}</td></tr>{% else %}<tr><td colspan="4">No repeated patterns meet the current threshold.</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="panel"><p class="muted">All correlations are candidates requiring human review. No candidate is treated as a confirmed identity or evidentiary fact. Case-level provenance and session access scope are preserved.</p></section>
+<section class="panel"><pre id="cross-case-intelligence-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
