@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-cross-case-relationship-graph>
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Cross-Case Relationship Graph</h1><p>Read-only projection of confirmed links across cases, entities, identifiers, infrastructure, evidence, and temporal relationships.</p></div>
+    <span class="status-pill completed">{{ payload.status }}</span>
+  </div>
+</section>
+<section class="panel">
+  <h2>Graph Summary</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Confirmed links</h3><p class="metric">{{ payload.counts.confirmed_links }}</p></article>
+    <article class="card"><h3>Nodes</h3><p class="metric">{{ payload.counts.nodes }}</p></article>
+    <article class="card"><h3>Edges</h3><p class="metric">{{ payload.counts.edges }}</p></article>
+    <article class="card"><h3>Graph hash</h3><p><small>{{ payload.graph_sha256 }}</small></p></article>
+  </div>
+  <p><strong>Access scope:</strong> {{ payload.access_scope.mode }}{% if payload.access_scope.allowed_case_ids %} · {{ payload.access_scope.allowed_case_ids|join(', ') }}{% endif %}</p>
+  <p><a href="/cross-case-intelligence">Candidate Workspace</a> · <a href="/cross-case-intelligence/confirmed-links">Confirmed Link Registry</a></p>
+</section>
+<section class="panel">
+  <h2>Relationship Graph</h2>
+  <div id="cross-case-relationship-graph-canvas" style="min-height: 560px; overflow:auto; border:1px solid var(--border-color, #555); border-radius:8px;"></div>
+  <p class="muted">Select a node or edge to inspect its confirmed-link binding, source occurrences, review decision, access scope, and provenance.</p>
+  <pre id="cross-case-relationship-selection">Select a node or edge.</pre>
+</section>
+<section class="panel">
+  <h2>Nodes by Type</h2>
+  <table class="data-table"><thead><tr><th>Type</th><th>Count</th></tr></thead><tbody>{% for node_type, count in payload.counts.nodes_by_type.items() %}<tr><td>{{ node_type|title }}</td><td>{{ count }}</td></tr>{% else %}<tr><td colspan="2">No graph nodes are available.</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="panel">
+  <h2>Nodes</h2>
+  <table class="data-table">
+    <thead><tr><th>Type</th><th>Label</th><th>Confirmed links</th><th>Review bindings</th><th>Occurrences</th><th>Node hash</th></tr></thead>
+    <tbody>{% for node in payload.graph.nodes %}<tr><td>{{ node.node_type }}</td><td>{{ node.label }}</td><td>{{ node.confirmed_link_ids|join(', ') }}</td><td>{% for review in node.review_bindings %}{{ review.decision_id }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td><td>{{ node.source_occurrences|length }}</td><td><small>{{ node.node_sha256 }}</small></td></tr>{% else %}<tr><td colspan="6">No confirmed-link nodes are visible.</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+<section class="panel">
+  <h2>Edges</h2>
+  <table class="data-table">
+    <thead><tr><th>Type</th><th>Source</th><th>Target</th><th>Confirmed link</th><th>Accepted review</th><th>Occurrences</th><th>Edge hash</th></tr></thead>
+    <tbody>{% for edge in payload.graph.edges %}<tr><td>{{ edge.edge_type }}</td><td>{{ edge.source }}</td><td>{{ edge.target }}</td><td>{{ edge.confirmed_link_id }}</td><td>{{ edge.accepted_review_decision_id }}</td><td>{{ edge.source_occurrences|length }}</td><td><small>{{ edge.edge_sha256 }}</small></td></tr>{% else %}<tr><td colspan="7">No confirmed-link edges are visible.</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+<section class="panel"><p class="muted">The graph is read-only. Every node and edge preserves confirmed-link IDs, accepted-review bindings, source occurrences, access scope, and provenance. Viewing the graph creates no graph record and changes no source event.</p></section>
+<section class="panel"><pre id="cross-case-relationship-graph-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+<script id="cross-case-relationship-graph-data" type="application/json">{{ payload.graph|tojson }}</script>
+<script src="{{ url_for('static', filename='cross_case_relationship_graph_v25_3.js') }}" defer></script>
+{% endblock %}
