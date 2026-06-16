@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-cross-case-link-impact-analysis>
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Cross-Case Link Impact Analysis</h1><p>Read-only analysis of cases, entities, evidence packages, review queues, closure states, and archive records affected by one confirmed link.</p></div>
+    <span class="status-pill {{ 'completed' if payload.status == 'ready' else 'failed' }}">{{ payload.status }}</span>
+  </div>
+</section>
+{% if payload.status == 'ready' %}
+<section class="panel">
+  <h2>Impact Summary</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>Affected cases</h3><p class="metric">{{ payload.counts.affected_cases }}</p></article>
+    <article class="card"><h3>Affected entities</h3><p class="metric">{{ payload.counts.affected_entities }}</p></article>
+    <article class="card"><h3>Evidence packages</h3><p class="metric">{{ payload.counts.evidence_packages }}</p></article>
+    <article class="card"><h3>Review queue entries</h3><p class="metric">{{ payload.counts.review_queue_entries }}</p></article>
+    <article class="card"><h3>Closure states</h3><p class="metric">{{ payload.counts.closure_states }}</p></article>
+    <article class="card"><h3>Archive records</h3><p class="metric">{{ payload.counts.archive_records }}</p></article>
+    <article class="card"><h3>Graph nodes</h3><p class="metric">{{ payload.counts.graph_nodes }}</p></article>
+    <article class="card"><h3>Graph edges</h3><p class="metric">{{ payload.counts.graph_edges }}</p></article>
+  </div>
+  <p><strong>Impact hash:</strong> <small>{{ payload.impact_sha256 }}</small></p>
+  <p><a href="/cross-case-intelligence/confirmed-links">Confirmed Link Registry</a> · <a href="/cross-case-intelligence/graph">Relationship Graph</a></p>
+</section>
+<section class="panel"><h2>Confirmed-Link and Graph Bindings</h2><pre>{{ payload.confirmed_link_binding|tojson(indent=2) }}</pre><pre>{{ payload.graph_binding|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Affected Cases</h2><table class="data-table"><thead><tr><th>Case</th><th>Closure state</th><th>Archive state</th><th>Retention</th><th>Reopen status</th><th>Unresolved actions</th></tr></thead><tbody>{% for item in payload.impact.closure_states %}<tr><td>{{ item.case_id }}</td><td>{{ item.current_closure_state }}</td><td>{{ item.current_archive_state }}</td><td>{{ item.retention_disposition or '—' }}</td><td>{{ item.reopen_status }}</td><td>{% for action in item.unresolved_actions %}{{ action.key }}{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>{% else %}<tr><td colspan="6">No affected cases.</td></tr>{% endfor %}</tbody></table></section>
+<section class="panel"><h2>Affected Entities and Graph Nodes</h2><table class="data-table"><thead><tr><th>Type</th><th>Label</th><th>Node ID</th><th>Confirmed links</th><th>Occurrences</th></tr></thead><tbody>{% for node in payload.impact.affected_entities %}<tr><td>{{ node.node_type }}</td><td>{{ node.label }}</td><td>{{ node.node_id }}</td><td>{{ node.confirmed_link_ids|join(', ') }}</td><td>{{ node.source_occurrences|length }}</td></tr>{% else %}<tr><td colspan="5">No affected graph entities.</td></tr>{% endfor %}</tbody></table></section>
+<section class="panel"><h2>Evidence Packages</h2><table class="data-table"><thead><tr><th>Case</th><th>Action</th><th>Record</th><th>Actor</th><th>Time</th></tr></thead><tbody>{% for item in payload.impact.evidence_packages %}<tr><td>{{ item.case_id }}</td><td>{{ item.action }}</td><td>{{ item.record_id }}</td><td>{{ item.actor }}</td><td>{{ item.occurred_at }}</td></tr>{% else %}<tr><td colspan="5">No evidence package records were found.</td></tr>{% endfor %}</tbody></table></section>
+<section class="panel"><h2>Review Queue Impact</h2><table class="data-table"><thead><tr><th>Case</th><th>Review state</th><th>Reviewer</th><th>Assignment age</th><th>Queues</th></tr></thead><tbody>{% for item in payload.impact.review_queues %}<tr><td>{{ item.case_id }}</td><td>{{ item.review_state }}</td><td>{{ item.assigned_reviewer or 'Unassigned' }}</td><td>{{ item.assignment_age_hours if item.assignment_age_hours is not none else '—' }}</td><td><a href="{{ item.reviewer_queue }}">Reviewer</a> · <a href="{{ item.supervisor_queue }}">Supervisor</a></td></tr>{% else %}<tr><td colspan="5">No affected review queue entries.</td></tr>{% endfor %}</tbody></table></section>
+<section class="panel"><h2>Archive Records</h2><table class="data-table"><thead><tr><th>Case</th><th>Record</th><th>Actor</th><th>Time</th></tr></thead><tbody>{% for item in payload.impact.archive_records %}<tr><td>{{ item.case_id }}</td><td>{{ item.timeline_id or item.record_id }}</td><td>{{ item.actor }}</td><td>{{ item.occurred_at }}</td></tr>{% else %}<tr><td colspan="4">No affected archive records.</td></tr>{% endfor %}</tbody></table></section>
+<section class="panel"><p class="muted">This analysis is read-only. The confirmed-link registry and relationship graph remain unchanged, no impact record is created, and no source event is modified.</p></section>
+{% else %}
+<section class="panel"><h2>Impact analysis unavailable</h2><pre>{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+<section class="panel"><pre id="cross-case-link-impact-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
