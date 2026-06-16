@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-cross-case-intelligence-history-audit>
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Cross-Case Intelligence History and Audit</h1><p>Ordered history of candidate discovery, analyst decisions, confirmed-link registrations, graph projections, and impact analyses.</p></div>
+    <span class="status-pill completed">{{ payload.status }}</span>
+  </div>
+</section>
+<section class="panel">
+  <h2>Current Cross-Case Intelligence State</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>History events</h3><p class="metric">{{ payload.event_count }}</p></article>
+    <article class="card"><h3>Correlations</h3><p class="metric">{{ payload.correlation_count }}</p></article>
+    <article class="card"><h3>Confirmed links</h3><p class="metric">{{ payload.confirmed_link_count }}</p></article>
+    <article class="card"><h3>Cases</h3><p class="metric">{{ payload.case_count }}</p></article>
+    <article class="card"><h3>Source-bound events</h3><p class="metric">{{ payload.source_bound_event_count }}</p></article>
+  </div>
+  <p><strong>Access scope:</strong> {{ payload.access_scope.mode }}{% if payload.access_scope.allowed_case_ids %} · {{ payload.access_scope.allowed_case_ids|join(', ') }}{% endif %}</p>
+  <p><strong>Current-state hash:</strong> <small>{{ payload.current_cross_case_intelligence_state_sha256 }}</small></p>
+  <p><a href="/cross-case-intelligence">Candidate Workspace</a> · <a href="/cross-case-intelligence/confirmed-links">Confirmed Link Registry</a> · <a href="/cross-case-intelligence/graph">Relationship Graph</a></p>
+  <pre id="current-cross-case-intelligence-state">{{ payload.current_cross_case_intelligence_state|tojson(indent=2) }}</pre>
+</section>
+<section class="panel">
+  <h2>Event Counts</h2>
+  <table class="data-table"><thead><tr><th>Event type</th><th>Count</th></tr></thead><tbody>{% for event_type, count in payload.event_type_counts.items() %}<tr><td>{{ event_type.replace('_', ' ')|title }}</td><td>{{ count }}</td></tr>{% endfor %}</tbody></table>
+  <h3>Actors</h3>
+  <table class="data-table"><thead><tr><th>Actor</th><th>Count</th></tr></thead><tbody>{% for actor, count in payload.actor_counts.items() %}<tr><td>{{ actor }}</td><td>{{ count }}</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="panel">
+  <h2>Ordered Cross-Case Intelligence History</h2>
+  <table class="data-table">
+    <thead><tr><th>Time</th><th>Type</th><th>Actor</th><th>Correlation</th><th>Confirmed link</th><th>Cases</th><th>Source</th><th>Binding hash</th></tr></thead>
+    <tbody>
+      {% for event in payload.history %}
+      <tr>
+        <td>{{ event.occurred_at }}</td>
+        <td>{{ event.event_type.replace('_', ' ')|title }}</td>
+        <td>{{ event.actor }}</td>
+        <td>{{ event.correlation_id or '—' }}</td>
+        <td>{{ event.confirmed_link_id or '—' }}</td>
+        <td>{{ event.case_ids|join(', ') if event.case_ids else '—' }}</td>
+        <td>{{ event.source_action or 'Derived checkpoint' }}{% if event.source_record_id %} · {{ event.source_record_id }}{% endif %}</td>
+        <td><small>{{ event.source_binding_sha256 }}</small></td>
+      </tr>
+      {% else %}<tr><td colspan="8">No cross-case intelligence history is available.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">This view is read-only. It creates no history record and does not alter candidate, review, confirmed-link, graph, impact, or source events.</p>
+</section>
+<section class="panel"><pre id="cross-case-intelligence-history-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
