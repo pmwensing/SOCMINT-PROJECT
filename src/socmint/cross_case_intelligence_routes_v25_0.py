@@ -13,6 +13,9 @@ from .cross_case_correlation_review_v25_1 import (
 from .cross_case_intelligence_history_audit_v25_5 import (
     build_cross_case_intelligence_history_audit,
 )
+from .cross_case_intelligence_metrics_routes_v25_6 import (
+    register_cross_case_intelligence_metrics_routes_v25_6,
+)
 from .cross_case_intelligence_workspace_v25_0 import (
     build_cross_case_intelligence_workspace,
 )
@@ -183,4 +186,5 @@ def register_cross_case_intelligence_routes_v25_0(app):
             return jsonify({"error": "login required"}), 401
         return jsonify(build_cross_case_intelligence_history_audit(allowed_case_ids=_allowed_case_ids()))
 
+    register_cross_case_intelligence_metrics_routes_v25_6(app)
     return app
