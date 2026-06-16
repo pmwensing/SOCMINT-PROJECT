@@ -18,7 +18,7 @@
   </div>
   <p><strong>Access scope:</strong> {{ payload.access_scope.mode }}{% if payload.access_scope.allowed_case_ids %} · {{ payload.access_scope.allowed_case_ids|join(', ') }}{% endif %}</p>
   <p><strong>Current-state hash:</strong> <small>{{ payload.current_cross_case_intelligence_state_sha256 }}</small></p>
-  <p><a href="/cross-case-intelligence">Candidate Workspace</a> · <a href="/cross-case-intelligence/confirmed-links">Confirmed Link Registry</a> · <a href="/cross-case-intelligence/graph">Relationship Graph</a></p>
+  <p><a href="/cross-case-intelligence">Candidate Workspace</a> · <a href="/cross-case-intelligence/confirmed-links">Confirmed Link Registry</a> · <a href="/cross-case-intelligence/graph">Relationship Graph</a> · <a href="/cross-case-intelligence/metrics">Metrics and Confidence</a></p>
   <pre id="current-cross-case-intelligence-state">{{ payload.current_cross_case_intelligence_state|tojson(indent=2) }}</pre>
 </section>
 <section class="panel">
