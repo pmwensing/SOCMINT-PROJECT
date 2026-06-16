@@ -13,6 +13,9 @@ from .cross_case_correlation_review_v25_1 import (
 from .cross_case_intelligence_workspace_v25_0 import (
     build_cross_case_intelligence_workspace,
 )
+from .cross_case_link_impact_analysis_v25_4 import (
+    build_cross_case_link_impact_analysis,
+)
 from .cross_case_relationship_graph_v25_3 import (
     build_cross_case_relationship_graph,
 )
@@ -160,5 +163,29 @@ def register_cross_case_intelligence_routes_v25_0(app):
                 allowed_case_ids=_allowed_case_ids()
             )
         )
+
+    @app.get("/cross-case-intelligence/confirmed-links/<confirmed_link_id>/impact")
+    def cross_case_link_impact_get_v25_4(confirmed_link_id: str):
+        if not session.get("user"):
+            return redirect(url_for("dashboard.login"))
+        result = build_cross_case_link_impact_analysis(
+            confirmed_link_id,
+            allowed_case_ids=_allowed_case_ids(),
+        )
+        return render_template(
+            "cross_case_link_impact_analysis_v25_4.html",
+            title="Cross-Case Link Impact Analysis",
+            payload=result,
+        ), 200 if result.get("status") == "ready" else 404
+
+    @app.get("/api/v1/cross-case-intelligence/confirmed-links/<confirmed_link_id>/impact")
+    def api_cross_case_link_impact_get_v25_4(confirmed_link_id: str):
+        if not session.get("user"):
+            return jsonify({"error": "login required"}), 401
+        result = build_cross_case_link_impact_analysis(
+            confirmed_link_id,
+            allowed_case_ids=_allowed_case_ids(),
+        )
+        return jsonify(result), 200 if result.get("status") == "ready" else 404
 
     return app
