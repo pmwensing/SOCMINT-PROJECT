@@ -1,4 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Supervisor Escalation Controls</h1>
+<div data-portfolio-escalations data-csrf-token="{{ session.get('_csrf_token', '') }}">
+<section class="panel"><div class="page-header"><div><h1>Supervisor Escalation Controls</h1><p>Actions for blocked and overdue cases.</p></div><span class="status-pill {{ 'failed' if payload.status == 'attention_required' else 'completed' }}">{{ payload.status }}</span></div><div id="portfolio-escalation-feedback" class="flash info" hidden></div></section>
+<section class="panel"><p><a href="/portfolio-operations">Back to Portfolio Operations Dashboard</a></p></section>
+{% for item in payload.items %}
+<section class="panel" data-escalation-case="{{ item.case_id }}">
+<h2>{{ item.case_id }} · {{ item.severity|title }}</h2>
+<p><strong>Stage:</strong> {{ item.current_stage }} · <strong>Stage age:</strong> {{ item.stage_age_hours or '—' }} h · <strong>Assignment age:</strong> {{ item.assignment_age_hours or '—' }} h</p>
+<p><strong>Reason:</strong> {{ item.blocking_reason or 'Overdue threshold exceeded' }} · <strong>Owner:</strong> {{ item.owner or 'Unowned' }} · <strong>Reviewer:</strong> {{ item.assigned_reviewers|join(', ') if item.assigned_reviewers else 'Unassigned' }}</p>
+<p><strong>History:</strong> {{ item.control_history_count }} · <strong>Escalated:</strong> {{ 'Yes' if item.escalated else 'No' }} · <strong>Acknowledged:</strong> {{ 'Yes' if item.acknowledged else 'No' }} · <strong>Resolved:</strong> {{ 'Yes' if item.resolved else 'No' }}</p>
+<label>Reason <input data-field="reason" type="text"></label>
+<label>Reviewer <input data-field="assigned_reviewer" type="text"></label>
+<label>Resolution <input data-field="resolution" type="text"></label>
+<label>Note <textarea data-field="note" rows="3"></textarea></label>
+<label><input data-field="confirmed" type="checkbox"> I explicitly confirm this action.</label>
+<p><button data-control="escalate" type="button">Escalate</button> <button data-control="acknowledge" type="button">Acknowledge</button> <button data-control="reassign" type="button">Reassign</button> <button data-control="resolve" type="button">Resolve</button></p>
+<pre data-output></pre>
+</section>
+{% else %}<section class="panel"><p>No blocked or overdue cases require action.</p></section>{% endfor %}
+<section class="panel"><p class="muted">Each action is stored separately and linked to the current queue snapshot. Case, stage, assignment, and queue records remain unchanged.</p></section>
+</div>
+<script src="{{ url_for('static', filename='portfolio_supervisor_escalations_v24_4.js') }}" defer></script>
 {% endblock %}
