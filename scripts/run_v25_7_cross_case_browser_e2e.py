@@ -75,7 +75,7 @@ def _metrics() -> dict:
 def _app(db: Path):
     os.environ["DATABASE_URL"] = f"sqlite:///{db}"
     os.environ["SOCMINT_DATA_DIR"] = str(db.parent)
-    os.environ["SOCMINT_SECRET_KEY"] = "v25-browser-e2e-stable-secret"
+    os.environ["SOCMINT_SECRET_KEY"] = "v25-browser-e2e-stable-secret-key-32chars-minimum"
     os.environ["SOCMINT_AUTO_CREATE_DB"] = "true"
 
     from src.socmint.dashboard import create_app
