@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-portfolio-history-audit>
+<section class="panel">
+  <div class="page-header">
+    <div><h1>Portfolio History and Audit</h1><p>Ordered operational history across portfolio, stage, assignment, blocker, overdue, escalation, and metrics events.</p></div>
+    <span class="status-pill completed">{{ payload.status }}</span>
+  </div>
+</section>
+<section class="panel"><p><a href="/portfolio-operations">Back to Portfolio Operations Dashboard</a></p></section>
+<section class="panel">
+  <h2>Current Portfolio State</h2>
+  <div class="grid cards-4">
+    <article class="card"><h3>History events</h3><p class="metric">{{ payload.event_count }}</p></article>
+    <article class="card"><h3>Cases represented</h3><p class="metric">{{ payload.case_count }}</p></article>
+    <article class="card"><h3>Bound events</h3><p class="metric">{{ payload.source_bound_event_count }}</p></article>
+    <article class="card"><h3>Current-state hash</h3><p><small>{{ payload.current_portfolio_state_sha256 }}</small></p></article>
+  </div>
+  <pre id="current-portfolio-state">{{ payload.current_portfolio_state|tojson(indent=2) }}</pre>
+</section>
+<section class="panel">
+  <h2>Event Counts</h2>
+  <table class="data-table"><thead><tr><th>Event type</th><th>Count</th></tr></thead><tbody>{% for event_type, count in payload.event_type_counts.items() %}<tr><td>{{ event_type.replace('_', ' ')|title }}</td><td>{{ count }}</td></tr>{% endfor %}</tbody></table>
+  <h3>Actors</h3>
+  <table class="data-table"><thead><tr><th>Actor</th><th>Count</th></tr></thead><tbody>{% for actor, count in payload.actor_counts.items() %}<tr><td>{{ actor }}</td><td>{{ count }}</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="panel">
+  <h2>Ordered Operational History</h2>
+  <table class="data-table">
+    <thead><tr><th>Time</th><th>Type</th><th>Case</th><th>Actor</th><th>Source action</th><th>Record</th><th>Source binding</th></tr></thead>
+    <tbody>
+      {% for event in payload.history %}
+      <tr>
+        <td>{{ event.occurred_at }}</td>
+        <td>{{ event.event_type.replace('_', ' ')|title }}</td>
+        <td>{{ event.case_id or 'Portfolio' }}</td>
+        <td>{{ event.actor }}</td>
+        <td>{{ event.source_action or 'Derived checkpoint' }}</td>
+        <td>{{ event.source_record_id or '—' }}</td>
+        <td><small>{{ event.source_binding_sha256 }}</small></td>
+      </tr>
+      {% else %}<tr><td colspan="7">No operational history is available.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">This view is read-only. It creates no portfolio-history record and does not alter portfolio, stage, assignment, blocker, overdue, escalation, or metrics source data.</p>
+</section>
+<section class="panel"><pre id="portfolio-history-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
