@@ -10,7 +10,7 @@ Each task handoff records handoff-from and handoff-to identity, handoff type, re
 
 Both workflows support acknowledged, accepted, declined, completed, and cancelled transitions. Every transition is a new immutable event bound to the current request or handoff ID, hash, source audit record, and previous workflow state. Terminal items cannot be transitioned again.
 
-Acknowledgement does not equal completion. Acceptance does not erase the original request or handoff. All prior events remain append-only and unchanged.
+acknowledgement does not equal completion. Acceptance does not erase the original request or handoff. All prior events remain append-only and unchanged.
 
 Routes:
 
