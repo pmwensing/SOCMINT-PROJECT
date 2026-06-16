@@ -4,6 +4,7 @@ from flask import jsonify, redirect, render_template, request, session, url_for
 
 from .portfolio_blocked_overdue_queue_v24_3 import build_blocked_overdue_case_queue
 from .portfolio_case_stage_overview_v24_1 import build_case_status_stage_overview
+from .portfolio_history_audit_v24_6 import build_portfolio_history_audit
 from .portfolio_operational_metrics_v24_5 import build_operational_metrics
 from .portfolio_operations_dashboard_v24_0 import build_portfolio_operations_dashboard
 from .portfolio_supervisor_escalation_v24_4 import (
@@ -44,6 +45,22 @@ def register_portfolio_operations_routes_v24_0(app):
         payload["escalation_controls"] = build_escalation_control_state()
         payload["operational_metrics"] = build_operational_metrics()
         return jsonify(payload)
+
+    @app.get("/portfolio-operations/history")
+    def portfolio_history_audit_get_v24_6():
+        if not session.get("user"):
+            return redirect(url_for("dashboard.login"))
+        return render_template(
+            "portfolio_history_audit_v24_6.html",
+            title="Portfolio History and Audit",
+            payload=build_portfolio_history_audit(),
+        )
+
+    @app.get("/api/v1/portfolio-operations/history")
+    def api_portfolio_history_audit_get_v24_6():
+        if not session.get("user"):
+            return jsonify({"error": "login required"}), 401
+        return jsonify(build_portfolio_history_audit())
 
     @app.get("/api/v1/portfolio-operations/stage-overview")
     def api_portfolio_stage_overview_get_v24_1():
