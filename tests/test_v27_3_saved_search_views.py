@@ -4,8 +4,7 @@ from src.socmint.saved_search_views_workspace_v27_3 import run_saved_view
 
 def test_v27_3_create_revise_visibility_and_deactivate(tmp_path, monkeypatch):
     from src.socmint import database
-    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
-    database.init_db()
+    database.configure_database(f"sqlite:///{tmp_path / 'app.db'}")
     created = create_view(name="My Findings", owner="alice", query="reuse", filters={"record_types": ["finding"]}, visibility="private", confirmed=True)
     assert created["status"] == "saved_view_created"
     duplicate = create_view(name="my findings", owner="alice", query="x", filters={}, visibility="private", confirmed=True)
