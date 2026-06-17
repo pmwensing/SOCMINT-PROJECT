@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-watchlist-monitoring>
+<section class="panel">
+<h1>Watchlists and Scheduled Search Monitoring</h1>
+<p>Append-only monitoring of active saved views with cadence, change detection, and notification rules.</p>
+<p><a href="/global-search/saved-views">Saved Views</a> · <a href="/global-search/advanced">Advanced Search</a></p>
+</section>
+<section class="panel">
+<h2>Summary</h2>
+<p><strong>Total:</strong> {{ payload.watchlist_count }} · <strong>Active:</strong> {{ payload.active_watchlist_count }} · <strong>Paused:</strong> {{ payload.paused_watchlist_count }} · <strong>Due:</strong> {{ payload.due_watchlist_count }} · <strong>Pending notifications:</strong> {{ payload.notification_pending_count }} · <strong>Runs:</strong> {{ payload.monitoring_run_count }}</p>
+</section>
+<section class="panel">
+<h2>Watchlists</h2>
+<table class="data-table"><thead><tr><th>Name</th><th>Status</th><th>Cadence</th><th>Rule</th><th>Saved view</th><th>Last run</th><th>Next due</th><th>Last change</th><th>Notification</th></tr></thead><tbody>
+{% for item in payload.watchlists %}
+<tr>
+<td>{{ item.name }}</td><td>{{ item.watchlist_status }}</td><td>{{ item.cadence }}</td><td>{{ item.notification_rule }}</td>
+<td>{{ item.saved_view_binding.saved_view_id }}</td><td>{{ item.last_run_at or '—' }}</td><td>{{ item.next_due_at or 'manual' }}</td>
+<td>{{ item.last_change_detected if item.last_change_detected is defined else '—' }}</td><td>{{ item.last_notification_triggered if item.last_notification_triggered is defined else '—' }}</td>
+</tr>
+{% else %}<tr><td colspan="9">No watchlists are configured.</td></tr>{% endfor %}
+</tbody></table>
+</section>
+<section class="panel"><p class="muted">Scheduled monitoring only determines when a run is due. Every run re-executes the saved view against the current case-access scope. Watchlists never grant access.</p></section>
+<section class="panel"><pre id="watchlist-monitoring-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
