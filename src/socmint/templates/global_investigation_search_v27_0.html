@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-global-investigation-search>
+<section class="panel">
+<h1>Global Investigation Search</h1>
+<p>Read-only search across visible investigation records.</p>
+<form method="get" action="/global-search">
+<label>Search query <input name="q" value="{{ payload.query }}" placeholder="Case, entity, evidence, finding, actor, or event"></label>
+<label>Result limit <input name="limit" type="number" min="1" max="500" value="{{ payload.query_contract.limit }}"></label>
+<button type="submit">Search</button>
+</form>
+<p><a href="/portfolio-operations">Portfolio Operations</a> · <a href="/cross-case-intelligence">Cross-Case Intelligence</a> · <a href="/collaboration">Collaboration</a></p>
+</section>
+<section class="panel">
+<h2>Search Summary</h2>
+<p><strong>Results:</strong> {{ payload.result_count }} · <strong>Visible cases:</strong> {{ payload.visible_case_ids|length }} · <strong>Access:</strong> {{ payload.access_scope.mode }}</p>
+<p><strong>Search SHA-256:</strong> <small>{{ payload.search_sha256 }}</small></p>
+<pre>{{ payload.result_type_counts|tojson(indent=2) }}</pre>
+</section>
+<section class="panel">
+<h2>Normalized Results</h2>
+<table class="data-table"><thead><tr><th>Score</th><th>Type</th><th>Title</th><th>Case</th><th>Summary</th><th>Actor / Time</th><th>Links</th></tr></thead><tbody>
+{% for item in payload.results %}
+<tr><td>{{ item.score }}</td><td>{{ item.result_type }}</td><td>{{ item.title }}<br><small>{{ item.matched_terms|join(', ') }}</small></td><td>{{ item.case_id }}</td><td>{{ item.summary }}</td><td>{{ item.actor or '—' }}<br><small>{{ item.occurred_at or '—' }}</small></td><td><a href="{{ item.links.primary }}">Open</a> · <a href="{{ item.links.case }}">Case</a> · <a href="{{ item.links.evidence }}">Evidence</a></td></tr>
+{% else %}<tr><td colspan="7">No visible results match the current query.</td></tr>{% endfor %}
+</tbody></table>
+</section>
+<section class="panel"><p class="muted">v27.0 is read-only and preserves existing case access.</p></section>
+<section class="panel"><pre id="global-investigation-search-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
