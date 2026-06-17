@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+from .core_record_search_routes_v27_1 import register_core_record_search_routes_v27_1
 from .global_investigation_search_v27_0 import build_global_investigation_search
 
 
@@ -57,4 +58,5 @@ def register_global_investigation_search_routes_v27_0(app):
             limit=_limit(),
         ))
 
+    register_core_record_search_routes_v27_1(app)
     return app
