@@ -19,4 +19,4 @@ Routes:
 
 All write operations require explicit confirmation. Revision and deactivation require an active owner-controlled view and a reason. Search source records and prior saved-view events remain unchanged.
 
-This slice introduces no schema migration. It stores append-only saved-view events in the existing audit log, performs no connector execution or collection activity, and changes no case access scope.
+This slice introduces no migration. It stores append-only saved-view events in the existing audit log, performs no connector execution or collection activity, and changes no case access scope.
