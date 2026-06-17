@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-core-record-search>
+<section class="panel">
+<h1>Case, Entity, Evidence, and Finding Search</h1>
+<p>Field-aware, read-only search with facets, previews, and direct case links.</p>
+<form method="get" action="/global-search/core-records">
+<label>Search query <input name="q" value="{{ payload.query }}" placeholder="Case ID, entity name, evidence title, finding text, or source field"></label>
+<label>Types<select name="type" multiple size="4">{% for item in payload.record_types %}<option value="{{ item }}" {% if item in payload.applied_filters.record_types %}selected{% endif %}>{{ item|title }}</option>{% endfor %}</select></label>
+<label>Case IDs <input name="case_ids" value="{{ payload.applied_filters.case_ids|join(',') }}"></label>
+<label>Actors <input name="actors" value="{{ payload.applied_filters.actors|join(',') }}"></label>
+<label>Statuses <input name="statuses" value="{{ payload.applied_filters.statuses|join(',') }}"></label>
+<label>Limit <input name="limit" type="number" min="1" max="500" value="{{ payload.applied_filters.limit }}"></label>
+<button type="submit">Search</button>
+</form>
+<p><a href="/global-search">Global Investigation Search</a></p>
+</section>
+<section class="panel">
+<h2>Facets</h2>
+<pre>{{ payload.facets|tojson(indent=2) }}</pre>
+<p><strong>Results:</strong> {{ payload.result_count }} · <strong>Visible cases:</strong> {{ payload.visible_case_ids|length }} · <strong>Search SHA-256:</strong> <small>{{ payload.search_sha256 }}</small></p>
+</section>
+<section class="panel">
+<h2>Field-Aware Results</h2>
+{% for item in payload.results %}
+<article class="card">
+<h3>{{ item.record_type|title }} · {{ item.case_id }}</h3>
+<p><strong>Score:</strong> {{ item.score }} · <strong>Status:</strong> {{ item.status }} · <strong>Actor:</strong> {{ item.actor }}</p>
+<p><strong>Matched terms:</strong> {{ item.matched_terms|join(', ') or '—' }}</p>
+<table class="data-table"><thead><tr><th>Field</th><th>Value</th><th>Matched</th></tr></thead><tbody>{% for field in item.preview.fields %}<tr><td>{{ field.field }}</td><td>{{ field.value }}</td><td>{{ field.matched }}</td></tr>{% endfor %}</tbody></table>
+<p><a href="{{ item.links.primary }}">Open result</a> · <a href="{{ item.links.case }}">Case</a> · <a href="{{ item.links.evidence }}">Evidence</a></p>
+</article>
+{% else %}<p>No visible case, entity, evidence, or finding records match the query and filters.</p>{% endfor %}
+</section>
+<section class="panel"><p class="muted">Relevance scores order retrieval results and do not represent factual confidence.</p></section>
+<section class="panel"><pre id="core-record-search-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
