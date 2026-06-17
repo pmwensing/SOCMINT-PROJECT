@@ -153,13 +153,6 @@ def build_advanced_search_filters(
     results = []
     excluded_counts = Counter()
     for item in candidates:
-        occurred = _occurred(item)
-        if start and (occurred is None or occurred < start):
-            excluded_counts["before_date_from"] += 1
-            continue
-        if end and (occurred is None or occurred > end):
-            excluded_counts["after_date_to"] += 1
-            continue
         if stage_set and _facet_value(item, "stage") not in stage_set:
             excluded_counts["stage"] += 1
             continue
@@ -171,6 +164,13 @@ def build_advanced_search_filters(
             continue
         if priority_set and _facet_value(item, "priority") not in priority_set:
             excluded_counts["priority"] += 1
+            continue
+        occurred = _occurred(item)
+        if start and (occurred is None or occurred < start):
+            excluded_counts["before_date_from"] += 1
+            continue
+        if end and (occurred is None or occurred > end):
+            excluded_counts["after_date_to"] += 1
             continue
         text = _search_text(item)
         if includes and not all(term in text for term in includes):
