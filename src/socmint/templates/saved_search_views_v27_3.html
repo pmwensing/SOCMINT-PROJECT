@@ -4,7 +4,7 @@
 <section class="panel">
 <h1>Saved Views and Search Presets</h1>
 <p>Named, revisioned search definitions that always execute against the current case-access scope.</p>
-<p><a href="/global-search">Global Search</a> · <a href="/global-search/advanced">Advanced Filters</a></p>
+<p><a href="/global-search">Global Search</a> · <a href="/global-search/advanced">Advanced Filters</a> · <a href="/global-search/watchlists">Watchlists and Scheduled Monitoring</a></p>
 </section>
 <section class="panel">
 <h2>Summary</h2>
@@ -18,10 +18,7 @@
 {% else %}<tr><td colspan="7">No active saved views are visible.</td></tr>{% endfor %}
 </tbody></table>
 </section>
-<section class="panel">
-<h2>Complete View History Projection</h2>
-<pre>{{ payload.saved_views|tojson(indent=2) }}</pre>
-</section>
+<section class="panel"><h2>Complete View History Projection</h2><pre>{{ payload.saved_views|tojson(indent=2) }}</pre></section>
 <section class="panel"><p class="muted">Private views are owner-only. Shared views expose only their definition and never grant case access. Revisions and deactivations are append-only.</p></section>
 <section class="panel"><pre id="saved-search-views-json">{{ payload|tojson(indent=2) }}</pre></section>
 </div>
