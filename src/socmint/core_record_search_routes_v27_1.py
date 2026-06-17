@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+from .advanced_search_filters_routes_v27_2 import register_advanced_search_filters_routes_v27_2
 from .core_record_search_v27_1 import build_core_record_search
 
 
@@ -58,4 +59,5 @@ def register_core_record_search_routes_v27_1(app):
             return jsonify({"error": "login required"}), 401
         return jsonify(_build())
 
+    register_advanced_search_filters_routes_v27_2(app)
     return app
