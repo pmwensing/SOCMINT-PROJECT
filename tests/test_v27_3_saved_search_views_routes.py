@@ -22,13 +22,16 @@ def test_v27_3_routes_require_login_and_dispatch(tmp_path, monkeypatch):
     client = _app(tmp_path, monkeypatch).test_client()
     assert client.get("/api/v1/global-search/saved-views").status_code == 401
     assert client.get("/global-search/saved-views").status_code in {302,303}
+    csrf = "v27-3-test-csrf-token"
     with client.session_transaction() as sess:
         sess["user"] = "alice"
         sess["allowed_case_ids"] = ["case-a"]
+        sess["_csrf_token"] = csrf
+    headers = {"X-CSRF-Token": csrf}
     assert client.get("/global-search/saved-views").status_code == 200
-    created = client.post("/api/v1/global-search/saved-views", json={"name":"Preset","query":"alpha","filters":{},"visibility":"private","confirmed":True})
-    revised = client.post("/api/v1/global-search/saved-views/view-1/revise", json={"name":"Preset 2","query":"alpha","filters":{},"visibility":"shared","reason":"update","confirmed":True})
-    deactivated = client.post("/api/v1/global-search/saved-views/view-2/deactivate", json={"reason":"obsolete","confirmed":True})
+    created = client.post("/api/v1/global-search/saved-views", json={"name":"Preset","query":"alpha","filters":{},"visibility":"private","confirmed":True}, headers=headers)
+    revised = client.post("/api/v1/global-search/saved-views/view-1/revise", json={"name":"Preset 2","query":"alpha","filters":{},"visibility":"shared","reason":"update","confirmed":True}, headers=headers)
+    deactivated = client.post("/api/v1/global-search/saved-views/view-2/deactivate", json={"reason":"obsolete","confirmed":True}, headers=headers)
     executed = client.get("/api/v1/global-search/saved-views/view-2/run?limit=25")
     assert [created.status_code,revised.status_code,deactivated.status_code,executed.status_code] == [200,200,200,200]
 
