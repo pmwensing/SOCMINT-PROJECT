@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-advanced-search-filters>
+<section class="panel">
+<h1>Advanced Filters and Search Facets</h1>
+<p>Composable, read-only filters over visible case, entity, evidence, and finding results.</p>
+<form method="get" action="/global-search/advanced">
+<label>Query <input name="q" value="{{ payload.query }}"></label>
+<label>Types <input name="types" value="{{ payload.active_filters.record_types|join(',') }}"></label>
+<label>Case IDs <input name="case_ids" value="{{ payload.active_filters.case_ids|join(',') }}"></label>
+<label>Actors <input name="actors" value="{{ payload.active_filters.actors|join(',') }}"></label>
+<label>Statuses <input name="statuses" value="{{ payload.active_filters.statuses|join(',') }}"></label>
+<label>Stages <input name="stages" value="{{ payload.active_filters.stages|join(',') }}"></label>
+<label>Source actions <input name="source_actions" value="{{ payload.active_filters.source_actions|join(',') }}"></label>
+<label>Confidence <input name="confidences" value="{{ payload.active_filters.confidences|join(',') }}"></label>
+<label>Priorities <input name="priorities" value="{{ payload.active_filters.priorities|join(',') }}"></label>
+<label>Date from <input type="date" name="date_from" value="{{ payload.active_filters.date_from }}"></label>
+<label>Date to <input type="date" name="date_to" value="{{ payload.active_filters.date_to }}"></label>
+<label>Include terms <input name="include_terms" value="{{ payload.active_filters.include_terms|join(',') }}"></label>
+<label>Exclude terms <input name="exclude_terms" value="{{ payload.active_filters.exclude_terms|join(',') }}"></label>
+<label>Exact case field <input name="field.case_id" value="{{ payload.active_filters.exact_fields.get('case_id','') }}"></label>
+<label>Sort <select name="sort">{% for item in payload.sort_modes %}<option value="{{ item }}" {% if item == payload.active_filters.sort %}selected{% endif %}>{{ item|title }}</option>{% endfor %}</select></label>
+<label>Limit <input name="limit" type="number" min="1" max="500" value="{{ payload.active_filters.limit }}"></label>
+<button type="submit">Apply Filters</button>
+</form>
+<p><a href="/global-search">Global Search</a> · <a href="/global-search/core-records">Core Record Search</a></p>
+</section>
+<section class="panel">
+<h2>Filter Summary</h2>
+<p><strong>Active filters:</strong> {{ payload.active_filter_count }} · <strong>Candidates:</strong> {{ payload.candidate_count }} · <strong>Results:</strong> {{ payload.result_count }}</p>
+<p><strong>Filter SHA-256:</strong> <small>{{ payload.filter_sha256 }}</small></p>
+<p><strong>Result-set SHA-256:</strong> <small>{{ payload.result_set_sha256 }}</small></p>
+<pre>{{ payload.active_filters|tojson(indent=2) }}</pre>
+</section>
+<section class="panel"><h2>Available Facets</h2><pre>{{ payload.facets|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Filtered Facets</h2><pre>{{ payload.filtered_facets|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Excluded Counts</h2><pre>{{ payload.excluded_counts|tojson(indent=2) }}</pre></section>
+<section class="panel">
+<h2>Filtered Results</h2>
+<table class="data-table"><thead><tr><th>Score</th><th>Type</th><th>Case</th><th>Actor</th><th>Status</th><th>Time</th><th>Links</th></tr></thead><tbody>
+{% for item in payload.results %}<tr><td>{{ item.score }}</td><td>{{ item.record_type }}</td><td>{{ item.case_id }}</td><td>{{ item.actor }}</td><td>{{ item.status }}</td><td>{{ item.occurred_at or '—' }}</td><td><a href="{{ item.links.primary }}">Open</a> · <a href="{{ item.links.case }}">Case</a></td></tr>{% else %}<tr><td colspan="7">No results match the active filters.</td></tr>{% endfor %}
+</tbody></table>
+</section>
+<section class="panel"><p class="muted">Filters never expand case access. Relevance is not confidence.</p></section>
+<section class="panel"><pre id="advanced-search-filters-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
