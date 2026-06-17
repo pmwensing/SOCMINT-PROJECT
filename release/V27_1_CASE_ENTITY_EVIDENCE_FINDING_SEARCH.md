@@ -6,7 +6,7 @@ The service performs field-aware matching across type-specific field catalogs. I
 
 Results include facets for record type, case ID, actor, and status. Facets are calculated only from records visible inside the current case access scope. Applied filters support record type, case ID, actor, status, and result limit.
 
-Every result includes compact result previews containing matched fields and selected context fields, plus source binding and SHA-256, actor, timestamp, status, and access scope. Relevance is not confidence: search scores only order retrieval results and do not assert factual accuracy or analytical confidence.
+Every result includes compact result previews containing matched fields and selected context fields, plus source binding and SHA-256, actor, timestamp, status, and access scope. relevance is not confidence: search scores only order retrieval results and do not assert factual accuracy or analytical confidence.
 
 Routes:
 
