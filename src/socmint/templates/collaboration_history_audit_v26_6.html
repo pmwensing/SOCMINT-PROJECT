@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="workspace">
+  <h1>Collaboration History and Audit</h1>
+  <p>Read-only ordered history of team assignments, notes, mentions, requests, handoffs, responses, escalations, resolutions, and workload checkpoints.</p>
+  <p><a href="/collaboration">Collaboration Workspace</a> · <a href="/collaboration/my-work">Team Workload Queue</a></p>
+
+  <div class="summary-grid">
+    <article><h2>Status</h2><p>{{ payload.status }}</p></article>
+    <article><h2>Events</h2><p>{{ payload.event_count }}</p></article>
+    <article><h2>Cases</h2><p>{{ payload.case_count }}</p></article>
+    <article><h2>Source-bound events</h2><p>{{ payload.source_bound_event_count }}</p></article>
+  </div>
+
+  <h2>Current Collaboration State</h2>
+  <pre>{{ payload.current_collaboration_state | tojson(indent=2) }}</pre>
+  <p><strong>State SHA-256:</strong> <code>{{ payload.current_collaboration_state_sha256 }}</code></p>
+
+  <h2>Event Counts</h2>
+  <pre>{{ payload.event_type_counts | tojson(indent=2) }}</pre>
+
+  <h2>Actor Counts</h2>
+  <pre>{{ payload.actor_counts | tojson(indent=2) }}</pre>
+
+  <h2>Ordered History</h2>
+  <table>
+    <thead><tr><th>Time</th><th>Event</th><th>Actor</th><th>Affected user</th><th>Case</th><th>Previous</th><th>New</th><th>Source</th></tr></thead>
+    <tbody>
+    {% for item in payload.history %}
+      <tr>
+        <td>{{ item.occurred_at }}</td>
+        <td>{{ item.event_type }}</td>
+        <td>{{ item.actor }}</td>
+        <td>{{ item.affected_user or "—" }}</td>
+        <td>{{ item.case_id or "—" }}</td>
+        <td>{{ item.previous_state or "—" }}</td>
+        <td>{{ item.new_state or "—" }}</td>
+        <td>{{ item.source_action or "checkpoint" }}{% if item.source_record_id %} #{{ item.source_record_id }}{% endif %}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="8">No collaboration history is visible in the current access scope.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Complete JSON</h2>
+  <pre>{{ payload | tojson(indent=2) }}</pre>
+</section>
+{% endblock %}
