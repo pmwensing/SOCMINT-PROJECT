@@ -5,6 +5,9 @@ from flask import jsonify, redirect, render_template, session, url_for
 from .case_team_role_assignment_routes_v26_1 import (
     register_case_team_role_assignment_routes_v26_1,
 )
+from .collaboration_history_audit_routes_v26_6 import (
+    register_collaboration_history_audit_routes_v26_6,
+)
 from .collaboration_notes_routes_v26_2 import (
     register_collaboration_notes_routes_v26_2,
 )
@@ -59,4 +62,5 @@ def register_collaboration_routes_v26_0(app):
     register_collaboration_requests_handoffs_routes_v26_3(app)
     register_collaboration_responses_resolution_routes_v26_4(app)
     register_team_workload_collaboration_queue_routes_v26_5(app)
+    register_collaboration_history_audit_routes_v26_6(app)
     return app
