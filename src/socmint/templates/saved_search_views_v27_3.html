@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-saved-search-views>
+<section class="panel">
+<h1>Saved Views and Search Presets</h1>
+<p>Named, revisioned search definitions that always execute against the current case-access scope.</p>
+<p><a href="/global-search">Global Search</a> · <a href="/global-search/advanced">Advanced Filters</a></p>
+</section>
+<section class="panel">
+<h2>Summary</h2>
+<p><strong>Visible:</strong> {{ payload.saved_view_count }} · <strong>Active:</strong> {{ payload.active_saved_view_count }} · <strong>Owned:</strong> {{ payload.owned_saved_view_count }} · <strong>Shared with me:</strong> {{ payload.shared_saved_view_count }} · <strong>History events:</strong> {{ payload.history_count }}</p>
+</section>
+<section class="panel">
+<h2>Active Saved Views</h2>
+<table class="data-table"><thead><tr><th>Name</th><th>Owner</th><th>Visibility</th><th>Revision</th><th>Query</th><th>Definition SHA-256</th><th>Run</th></tr></thead><tbody>
+{% for item in payload.active_saved_views %}
+<tr><td>{{ item.name }}</td><td>{{ item.owner }}</td><td>{{ item.visibility }}</td><td>{{ item.revision }}</td><td>{{ item.definition.query }}</td><td><small>{{ item.definition_sha256 }}</small></td><td><a href="/api/v1/global-search/saved-views/{{ item.saved_view_id }}/run">Run with current access</a></td></tr>
+{% else %}<tr><td colspan="7">No active saved views are visible.</td></tr>{% endfor %}
+</tbody></table>
+</section>
+<section class="panel">
+<h2>Complete View History Projection</h2>
+<pre>{{ payload.saved_views|tojson(indent=2) }}</pre>
+</section>
+<section class="panel"><p class="muted">Private views are owner-only. Shared views expose only their definition and never grant case access. Revisions and deactivations are append-only.</p></section>
+<section class="panel"><pre id="saved-search-views-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
