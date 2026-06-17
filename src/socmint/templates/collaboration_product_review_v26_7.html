@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="workspace">
+  <h1>Collaboration Product Review and Browser E2E Checkpoint</h1>
+  <p>Validates the complete v26 collaboration journey before v27 begins.</p>
+  <p><a href="/collaboration">Collaboration Workspace</a> · <a href="/collaboration/history">History and Audit</a> · <a href="/collaboration/my-work">Team Workload Queue</a></p>
+
+  <div class="summary-grid">
+    <article><h2>Status</h2><p>{{ payload.status }}</p></article>
+    <article><h2>Journey steps</h2><p>{{ payload.journey_step_count }}</p></article>
+    <article><h2>Blockers</h2><p>{{ payload.blocker_count }}</p></article>
+    <article><h2>Ready</h2><p>{{ payload.ready }}</p></article>
+  </div>
+
+  <h2>Product Journey</h2>
+  <pre>{{ payload.journey | tojson(indent=2) }}</pre>
+  <h2>Module Checks</h2>
+  <pre>{{ payload.module_checks | tojson(indent=2) }}</pre>
+  <h2>Asset Checks</h2>
+  <pre>{{ payload.asset_checks | tojson(indent=2) }}</pre>
+  <h2>Release Note Checks</h2>
+  <pre>{{ payload.release_note_checks | tojson(indent=2) }}</pre>
+  <h2>Route Checks</h2>
+  <pre>{{ payload.route_checks | tojson(indent=2) }}</pre>
+  <h2>Blockers</h2>
+  <pre>{{ payload.blockers | tojson(indent=2) }}</pre>
+  <h2>Complete JSON</h2>
+  <pre id="collaboration-product-review-json">{{ payload | tojson(indent=2) }}</pre>
+</section>
+{% endblock %}
