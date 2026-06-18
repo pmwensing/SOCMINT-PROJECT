@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-access-policy-administration>
+<section class="panel">
+<h1>Role, Permission, and Access Policy Management</h1>
+<p>Controlled role definitions, permission matrices, inherited permissions, explicit deny rules, case-level access grants, least-privilege checks, and immutable policy history.</p>
+<p><a href="/administration">Administration Workspace</a> · <a href="/administration/users">User Accounts</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel"><h2>Summary</h2><p><strong>Roles:</strong> {{ payload.role_count }} · <strong>Active roles:</strong> {{ payload.active_role_count }} · <strong>Access rules:</strong> {{ payload.access_rule_count }} · <strong>Active rules:</strong> {{ payload.active_access_rule_count }} · <strong>Explicit denies:</strong> {{ payload.explicit_deny_rule_count }} · <strong>Least-privilege findings:</strong> {{ payload.least_privilege_finding_count }}</p></section>
+<section class="panel"><h2>Permission Matrix</h2><pre>{{ payload.permission_matrix|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Role Definitions</h2><pre>{{ payload.roles|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Case-Level Access Rules</h2><pre>{{ payload.access_rules|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Least-Privilege Findings</h2><pre>{{ payload.least_privilege_findings|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Immutable Access-Policy History</h2><pre>{{ payload.access_policy_history|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">Explicit deny rules override inherited permissions and explicit grants. Viewing this workspace never grants access.</p></section>
+<section class="panel"><pre id="access-policy-administration-json">{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+</div>
+{% endblock %}
