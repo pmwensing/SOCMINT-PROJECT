@@ -4,6 +4,7 @@
 <section class="panel">
 <h1>Administration Workspace</h1>
 <p>Read-only administrative overview of users, roles, teams, sessions, access, policy, connectors, health, and pending governance work.</p>
+<p><a href="/administration/users">User and Account Administration</a></p>
 </section>
 <section class="panel"><h2>User and Role Summary</h2><pre>{{ payload.user_summary|tojson(indent=2) }}</pre><pre>{{ payload.role_summary|tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Teams and Access</h2><pre>{{ payload.team_summary|tojson(indent=2) }}</pre><pre>{{ payload.access_grant_summary|tojson(indent=2) }}</pre></section>
