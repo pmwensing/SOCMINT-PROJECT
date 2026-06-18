@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-administration-workspace>
+<section class="panel">
+<h1>Administration Workspace</h1>
+<p>Read-only administrative overview of users, roles, teams, sessions, access, policy, connectors, health, and pending governance work.</p>
+</section>
+<section class="panel"><h2>User and Role Summary</h2><pre>{{ payload.user_summary|tojson(indent=2) }}</pre><pre>{{ payload.role_summary|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Teams and Access</h2><pre>{{ payload.team_summary|tojson(indent=2) }}</pre><pre>{{ payload.access_grant_summary|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Active Sessions</h2><p><strong>Count:</strong> {{ payload.active_session_count }}</p><pre>{{ payload.active_sessions|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Policy and Governance</h2><pre>{{ payload.policy_summary|tojson(indent=2) }}</pre><p><strong>Pending actions:</strong> {{ payload.pending_admin_action_count }}</p><pre>{{ payload.pending_admin_actions|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Connectors and Platform Health</h2><pre>{{ payload.connector_summary|tojson(indent=2) }}</pre><pre>{{ payload.system_health|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Recent Governance Events</h2><pre>{{ payload.recent_governance_events|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">This workspace exposes no secret values and performs no user, permission, connector, policy, session, or case-access mutation.</p></section>
+<section class="panel"><pre id="administration-workspace-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
