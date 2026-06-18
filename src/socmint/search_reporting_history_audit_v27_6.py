@@ -15,7 +15,7 @@ VERSION = "v27.6.0"
 
 def _event_family(action: str, event_type: str) -> str:
     text = f"{action} {event_type}".lower()
-    if "saved_view" in text:
+    if "saved_search_view" in text or "saved_view" in text:
         return "saved_view"
     if "watchlist" in text:
         return "watchlist"
