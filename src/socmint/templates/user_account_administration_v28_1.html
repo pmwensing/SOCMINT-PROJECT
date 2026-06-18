@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-user-account-administration>
+<section class="panel">
+<h1>User and Account Administration</h1>
+<p>Controlled account provisioning, activation, suspension, role updates, and immutable account audit history.</p>
+<p><a href="/administration">Administration Workspace</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel">
+<h2>Summary</h2>
+<p><strong>Total:</strong> {{ payload.user_count }} · <strong>Active:</strong> {{ payload.active_user_count }} · <strong>Suspended:</strong> {{ payload.suspended_user_count }} · <strong>Administrators:</strong> {{ payload.administrator_count }} · <strong>Events:</strong> {{ payload.account_event_count }}</p>
+</section>
+<section class="panel">
+<h2>User Accounts</h2>
+<table class="data-table"><thead><tr><th>Username</th><th>Role</th><th>Administrator</th><th>Active</th><th>Created</th></tr></thead><tbody>
+{% for item in payload.users %}
+<tr><td>{{ item.username }}</td><td>{{ item.role }}</td><td>{{ item.is_admin }}</td><td>{{ item.is_active }}</td><td>{{ item.created_at }}</td></tr>
+{% else %}<tr><td colspan="5">No user accounts are available.</td></tr>{% endfor %}
+</tbody></table>
+</section>
+<section class="panel"><h2>Immutable Account History</h2><pre>{{ payload.account_history|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">Provisioned accounts begin inactive and require secure credential onboarding before activation. Credentials and hashes are never returned or recorded in account audit events.</p></section>
+<section class="panel"><pre id="user-account-administration-json">{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+</div>
+{% endblock %}
