@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+from .access_review_routes_v28_4 import register_access_review_routes_v28_4
 from .team_organization_events_v28_3 import append_team_event, create_team, revise_team
 from .team_organization_workspace_v28_3 import build_team_organization_workspace
 from .user_account_workspace_v28_1 import actor_is_administrator
@@ -97,4 +98,5 @@ def register_team_organization_routes_v28_3(app):
         result = append_team_event(team_id, actor=actor, event_type="team_workload_group_set", workload_group=str(payload.get("workload_group") or ""), reason=str(payload.get("reason") or ""), confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr)
         return jsonify(result), _code(result, "team_updated")
 
+    register_access_review_routes_v28_4(app)
     return app
