@@ -9,7 +9,8 @@ def _list(name: str) -> list[str]:
     values = request.args.getlist(name)
     if values:
         return [str(item).strip() for item in values if str(item).strip()]
-    raw = request.args.get(name + "s", "")
+    plural = {"family": "families", "actor": "actors"}.get(name, name + "s")
+    raw = request.args.get(plural, "")
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
