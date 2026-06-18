@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+from .administration_product_review_routes_v28_7 import register_administration_product_review_routes_v28_7
 from .platform_operations_events_v28_6 import acknowledge_incident, open_incident, resolve_incident
 from .platform_operations_workspace_v28_6 import build_platform_operations_workspace
 from .user_account_workspace_v28_1 import actor_is_administrator
@@ -69,4 +70,5 @@ def register_platform_operations_routes_v28_6(app):
         result = resolve_incident(incident_id, actor=actor, resolution=str(payload.get("resolution") or ""), reason=str(payload.get("reason") or ""), confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr)
         return jsonify(result), _code(result, "operational_incident_resolved")
 
+    register_administration_product_review_routes_v28_7(app)
     return app
