@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import jsonify, redirect, render_template, request, session, url_for
 
 from .search_reporting_history_audit_v27_6 import build_search_reporting_history_audit
+from .search_reporting_product_review_routes_v27_7 import register_search_reporting_product_review_routes_v27_7
 
 
 def _list(name: str) -> list[str]:
@@ -44,4 +45,5 @@ def register_search_reporting_history_audit_routes_v27_6(app):
             return jsonify({"error": "login required"}), 401
         return jsonify(_build())
 
+    register_search_reporting_product_review_routes_v27_7(app)
     return app
