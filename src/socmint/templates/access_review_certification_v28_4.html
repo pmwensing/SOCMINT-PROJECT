@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-access-review-certification>
+<section class="panel">
+<h1>Access Review and Certification</h1>
+<p>Review campaigns, reviewer assignments, certification decisions, expired and excessive-access findings, remediation queues, and immutable review history.</p>
+<p><a href="/administration">Administration Workspace</a> · <a href="/administration/access-policy">Access Policy</a> · <a href="/administration/teams">Teams</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel"><h2>Summary</h2><p><strong>Reviews:</strong> {{ payload.review_count }} · <strong>Open:</strong> {{ payload.open_review_count }} · <strong>Closed:</strong> {{ payload.closed_review_count }} · <strong>Pending assignments:</strong> {{ payload.pending_assignment_count }} · <strong>Decisions:</strong> {{ payload.certification_decision_count }} · <strong>Remediation:</strong> {{ payload.remediation_queue_count }}</p></section>
+<section class="panel"><h2>Open Reviews</h2><pre>{{ payload.open_reviews|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Pending Assignments</h2><pre>{{ payload.pending_assignments|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Certification Decisions</h2><pre>{{ payload.certification_decisions|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Expired Access Findings</h2><pre>{{ payload.expired_access_findings|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Excessive Access Findings</h2><pre>{{ payload.excessive_access_findings|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Remediation Queue</h2><pre>{{ payload.remediation_queue|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Immutable Certification History</h2><pre>{{ payload.access_review_history|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">Certification decisions do not directly rewrite access policy. Revoke and reduce decisions create remediation work that requires a separate v28.2 policy action.</p></section>
+<section class="panel"><pre id="access-review-certification-json">{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+</div>
+{% endblock %}
