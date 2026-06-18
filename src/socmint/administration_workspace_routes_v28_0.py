@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import jsonify, redirect, render_template, session, url_for
 
 from .administration_workspace_v28_0 import build_administration_workspace
+from .user_account_routes_v28_1 import register_user_account_routes_v28_1
 
 
 def register_administration_workspace_routes_v28_0(app):
@@ -22,4 +23,5 @@ def register_administration_workspace_routes_v28_0(app):
             return jsonify({"error": "login required"}), 401
         return jsonify(build_administration_workspace())
 
+    register_user_account_routes_v28_1(app)
     return app
