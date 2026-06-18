@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import jsonify, redirect, render_template, request, session, url_for
 
 from .access_policy_workspace_v28_2 import build_access_policy_workspace, evaluate_effective_access
+from .team_organization_routes_v28_3 import register_team_organization_routes_v28_3
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -45,4 +46,5 @@ def register_access_policy_routes_v28_2(app):
 
     from .access_policy_write_routes_v28_2 import register_access_policy_write_routes_v28_2
     register_access_policy_write_routes_v28_2(app)
+    register_team_organization_routes_v28_3(app)
     return app
