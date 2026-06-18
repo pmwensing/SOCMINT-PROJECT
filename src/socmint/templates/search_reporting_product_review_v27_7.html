@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-search-reporting-product-review>
+<section class="panel">
+<h1>Search and Reporting Product Review</h1>
+<p>Final v27 readiness checkpoint across search, saved views, watchlists, reporting, and audit.</p>
+<p><a href="/global-search">Global Search</a> · <a href="/global-search/core-records">Core Records</a> · <a href="/global-search/advanced">Advanced Filters</a> · <a href="/global-search/saved-views">Saved Views</a> · <a href="/global-search/watchlists">Watchlists</a> · <a href="/global-search/reports">Reports</a> · <a href="/global-search/history">History</a></p>
+</section>
+<section class="panel">
+<h2>Checkpoint Status</h2>
+<p><strong>Status:</strong> {{ payload.status }} · <strong>Ready:</strong> {{ payload.ready }} · <strong>Blockers:</strong> {{ payload.blocker_count }}</p>
+<p><strong>Journey steps:</strong> {{ payload.journey_step_count }}</p>
+</section>
+<section class="panel"><h2>Product Journey</h2><pre>{{ payload.journey|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Module Checks</h2><pre>{{ payload.module_checks|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Asset Checks</h2><pre>{{ payload.asset_checks|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Release Note Checks</h2><pre>{{ payload.release_note_checks|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Route Checks</h2><pre>{{ payload.route_checks|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Blockers</h2><pre>{{ payload.blockers|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">v27 closes only after this checkpoint and the browser E2E journey both pass.</p></section>
+<section class="panel"><pre id="search-reporting-product-review-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
