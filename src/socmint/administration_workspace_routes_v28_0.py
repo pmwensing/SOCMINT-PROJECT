@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import jsonify, redirect, render_template, session, url_for
 
 from .administration_workspace_v28_0 import build_administration_workspace
+from .integration_admin_routes_v28_5 import register_integration_admin_routes_v28_5
 from .user_account_routes_v28_1 import register_user_account_routes_v28_1
 
 
@@ -24,4 +25,5 @@ def register_administration_workspace_routes_v28_0(app):
         return jsonify(build_administration_workspace())
 
     register_user_account_routes_v28_1(app)
+    register_integration_admin_routes_v28_5(app)
     return app
