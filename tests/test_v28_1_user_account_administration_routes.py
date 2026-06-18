@@ -40,7 +40,7 @@ def test_v28_1_routes_require_admin_csrf_and_dispatch(tmp_path, monkeypatch):
 
 def test_v28_1_release_note_and_no_migration():
     note = Path("release/V28_1_USER_ACCOUNT_ADMINISTRATION.md").read_text(encoding="utf-8")
-    for phrase in ("User and Account Administration","account provisioning","activation","suspension","role updates","administrator required","explicit confirmation","administrative reason","immutable account audit history","last active administrator","credentials are never returned","case access scope is unchanged","no migration"):
+    for phrase in ("User and Account Administration","account provisioning","activation","suspension","role updates","administrator required","explicit confirmation","administrative reason","immutable account audit history","last active administrator","Credentials are never returned","case access scope is unchanged","no migration"):
         assert phrase in note
     migrations = [path for directory in (Path("migrations"),Path("alembic")) if directory.exists() for path in directory.rglob("*v28_1*")]
     assert migrations == []
