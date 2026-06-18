@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-search-reporting-history-audit>
+<section class="panel">
+<h1>Search, Watchlist, and Reporting History and Audit</h1>
+<p>Unified, ordered, read-only history across saved views, watchlists, monitoring runs, report definitions, and report packages.</p>
+<form method="get" action="/global-search/history">
+<label>Families <input name="families" value="{{ payload.filters.families|join(',') }}" placeholder="saved_view,watchlist,report_definition,report_package"></label>
+<label>Actors <input name="actors" value="{{ payload.filters.actors|join(',') }}"></label>
+<label>Limit <input name="limit" type="number" min="1" max="2000" value="{{ payload.filters.limit }}"></label>
+<button type="submit">Apply</button>
+</form>
+<p><a href="/global-search/saved-views">Saved Views</a> · <a href="/global-search/watchlists">Watchlists</a> · <a href="/global-search/reports">Reports</a> · <a href="/global-search/advanced">Advanced Search</a></p>
+</section>
+<section class="panel">
+<h2>Current State</h2>
+<pre>{{ payload.current_state_counts|tojson(indent=2) }}</pre>
+<p><strong>History events:</strong> {{ payload.event_count }} · <strong>History SHA-256:</strong> <small>{{ payload.history_sha256 }}</small></p>
+</section>
+<section class="panel"><h2>Event Counts</h2><pre>{{ payload.family_counts|tojson(indent=2) }}</pre><pre>{{ payload.action_counts|tojson(indent=2) }}</pre></section>
+<section class="panel">
+<h2>Ordered Operational History</h2>
+<table class="data-table"><thead><tr><th>Time</th><th>Family</th><th>Action</th><th>Actor</th><th>Identifiers</th><th>Counts</th><th>Hashes</th><th>Links</th></tr></thead><tbody>
+{% for item in payload.events %}
+<tr><td>{{ item.occurred_at or '—' }}</td><td>{{ item.family }}</td><td>{{ item.source_action }}<br><small>{{ item.event_type }}</small></td><td>{{ item.actor or '—' }}</td><td><pre>{{ item.identifiers|tojson(indent=2) }}</pre></td><td><pre>{{ item.event_counts|tojson(indent=2) }}</pre></td><td><pre>{{ item.hashes|tojson(indent=2) }}</pre></td><td><a href="{{ item.direct_links.saved_views }}">Views</a> · <a href="{{ item.direct_links.watchlists }}">Watchlists</a> · <a href="{{ item.direct_links.reports }}">Reports</a></td></tr>
+{% else %}<tr><td colspan="8">No history events match the active filters.</td></tr>{% endfor %}
+</tbody></table>
+</section>
+<section class="panel"><p class="muted">This workspace is read-only and preserves every underlying event, source binding, hash, and access scope.</p></section>
+<section class="panel"><pre id="search-reporting-history-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
