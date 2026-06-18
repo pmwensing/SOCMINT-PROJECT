@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-platform-operations>
+<section class="panel">
+<h1>Platform Health, Jobs, and Operational Audit</h1>
+<p>Read-only operational health with append-only incident tracking across database, storage, jobs, connector runs, configuration, and audit continuity.</p>
+<p><a href="/administration">Administration Workspace</a> · <a href="/administration/connectors">Connector Administration</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel"><h2>Overall Status</h2><p><strong>{{ payload.overall_status }}</strong> · Findings: {{ payload.operational_finding_count }} · Open incidents: {{ payload.open_operational_incident_count }}</p></section>
+<section class="panel"><h2>Database and Storage</h2><pre>{{ payload.database_health|tojson(indent=2) }}</pre><pre>{{ payload.storage_health|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Job and Queue Health</h2><pre>{{ payload.job_health|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Connector Run Continuity</h2><pre>{{ payload.connector_run_health|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Configuration State</h2><pre>{{ payload.configuration_state|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Audit-Log Continuity</h2><pre>{{ payload.audit_log_continuity|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Operational Findings</h2><pre>{{ payload.operational_findings|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Operational Incidents</h2><pre>{{ payload.operational_incidents|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Immutable Operational History</h2><pre>{{ payload.operational_history|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">This workspace cannot execute jobs, restart services, mutate configuration, rewrite audit records, or expose secret values.</p></section>
+<section class="panel"><pre id="platform-operations-json">{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+</div>
+{% endblock %}
