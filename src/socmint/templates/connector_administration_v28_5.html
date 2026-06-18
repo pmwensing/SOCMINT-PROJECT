@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-connector-administration>
+<section class="panel">
+<h1>Connector and Integration Administration</h1>
+<p>Controlled connector registration, authorization scopes, authentication readiness, state, rate limits, health, and immutable history.</p>
+<p><a href="/administration">Administration Workspace</a> · <a href="/administration/access-reviews">Access Reviews</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel"><h2>Summary</h2><p><strong>Connectors:</strong> {{ payload.connector_count }} · <strong>Active:</strong> {{ payload.active_connector_count }} · <strong>Disabled:</strong> {{ payload.disabled_connector_count }} · <strong>Findings:</strong> {{ payload.administration_finding_count }} · <strong>Events:</strong> {{ payload.connector_event_count }}</p></section>
+<section class="panel"><h2>Connector Summaries</h2><pre>{{ payload.connector_summaries|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Authentication Readiness</h2><pre>{{ payload.auth_readiness_counts|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Connector Health</h2><pre>{{ payload.connector_health|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Administration Findings</h2><pre>{{ payload.administration_findings|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Immutable Connector History</h2><pre>{{ payload.connector_history|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">Sensitive values are excluded and this workspace performs no connector execution.</p></section>
+<section class="panel"><pre id="connector-administration-json">{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+</div>
+{% endblock %}
