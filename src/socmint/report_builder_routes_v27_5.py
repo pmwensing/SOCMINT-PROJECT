@@ -4,6 +4,7 @@ from flask import jsonify, redirect, render_template, request, session, url_for
 
 from .report_builder_events_v27_5 import create_report_definition, current_reports, revise_report_definition
 from .report_export_packages_v27_5 import generate_report_package, latest_packages
+from .search_reporting_history_audit_routes_v27_6 import register_search_reporting_history_audit_routes_v27_6
 
 
 def _payload() -> dict:
@@ -94,4 +95,5 @@ def register_report_builder_routes_v27_5(app):
         )
         return jsonify(result), _code(result, "report_package_generated")
 
+    register_search_reporting_history_audit_routes_v27_6(app)
     return app
