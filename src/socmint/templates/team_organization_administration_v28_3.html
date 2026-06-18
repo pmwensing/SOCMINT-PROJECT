@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-team-organization-administration>
+<section class="panel">
+<h1>Team and Organizational Structure</h1>
+<p>Controlled teams, supervisors, memberships, organizational scopes, ownership boundaries, workload groups, and immutable team history.</p>
+<p><a href="/administration">Administration Workspace</a> · <a href="/administration/users">User Accounts</a> · <a href="/administration/access-policy">Access Policy</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel"><h2>Summary</h2><p><strong>Teams:</strong> {{ payload.team_count }} · <strong>Active:</strong> {{ payload.active_team_count }} · <strong>Memberships:</strong> {{ payload.member_assignment_count }} · <strong>Supervised:</strong> {{ payload.supervised_team_count }} · <strong>Findings:</strong> {{ payload.organization_finding_count }}</p></section>
+<section class="panel"><h2>Active Teams</h2><pre>{{ payload.active_teams|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Organizational Scopes</h2><pre>{{ payload.organizational_scope_counts|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Workload Groups</h2><pre>{{ payload.workload_group_counts|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Structure Findings</h2><pre>{{ payload.organization_findings|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Immutable Team History</h2><pre>{{ payload.team_history|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">Team membership and ownership boundaries are organizational metadata only and do not grant case access.</p></section>
+<section class="panel"><pre id="team-organization-administration-json">{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+</div>
+{% endblock %}
