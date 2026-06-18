@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-administration-product-review>
+<section class="panel">
+<h1>Administration Product Review</h1>
+<p>Final v28 checkpoint for the complete administration journey.</p>
+<p><a href="/administration">Administration Workspace</a> · <a href="/administration/users">Users</a> · <a href="/administration/access-policy">Access Policy</a> · <a href="/administration/teams">Teams</a> · <a href="/administration/access-reviews">Access Reviews</a> · <a href="/administration/connectors">Connectors</a> · <a href="/administration/operations">Operations</a></p>
+</section>
+<section class="panel"><h2>Checkpoint Status</h2><p><strong>{{ payload.status }}</strong> · Ready: {{ payload.ready }} · Blockers: {{ payload.blocker_count }}</p></section>
+<section class="panel"><h2>Administration Journey</h2><pre>{{ payload.journey|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Module Checks</h2><pre>{{ payload.module_checks|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Asset Checks</h2><pre>{{ payload.asset_checks|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Release Notes</h2><pre>{{ payload.release_note_checks|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Route Checks</h2><pre>{{ payload.route_checks|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Security and Preservation</h2><pre>{{ {
+  "authentication_validated": payload.authentication_validated,
+  "administrator_authorization_validated": payload.administrator_authorization_validated,
+  "csrf_write_protection_validated": payload.csrf_write_protection_validated,
+  "explicit_confirmation_validated": payload.explicit_confirmation_validated,
+  "reason_binding_validated": payload.reason_binding_validated,
+  "append_only_governance_validated": payload.append_only_governance_validated,
+  "credentials_and_secrets_excluded_validated": payload.credentials_and_secrets_excluded_validated,
+  "team_membership_does_not_grant_access_validated": payload.team_membership_does_not_grant_access_validated,
+  "access_review_does_not_mutate_policy_validated": payload.access_review_does_not_mutate_policy_validated,
+  "connector_execution_is_separate_validated": payload.connector_execution_is_separate_validated,
+  "operations_view_is_read_only_validated": payload.operations_view_is_read_only_validated,
+  "source_records_mutated": payload.source_records_mutated
+}|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Blockers</h2><pre>{{ payload.blockers|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">v28 closes only when the browser E2E report has zero failed checks.</p></section>
+<section class="panel"><pre id="administration-product-review-json">{{ payload|tojson(indent=2) }}</pre></section>
+</div>
+{% endblock %}
