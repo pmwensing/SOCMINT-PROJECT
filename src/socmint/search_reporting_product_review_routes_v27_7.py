@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, session, url_for
 
+from .administration_workspace_routes_v28_0 import register_administration_workspace_routes_v28_0
 from .search_reporting_product_review_v27_7 import build_search_reporting_product_review
 
 
@@ -25,4 +26,5 @@ def register_search_reporting_product_review_routes_v27_7(app):
         payload = build_search_reporting_product_review(routes=list(app.url_map.iter_rules()))
         return jsonify(payload), 200 if payload.get("ready") else 503
 
+    register_administration_workspace_routes_v28_0(app)
     return app
