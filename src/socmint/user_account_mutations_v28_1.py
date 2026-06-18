@@ -23,6 +23,8 @@ def provision_user(*, actor: str, username: str, role: str, is_admin: bool, reas
         return blocked("username_required")
     if role not in ALLOWED_ROLES:
         return blocked("role_invalid")
+    if role == "admin" and not is_admin:
+        return blocked("admin_role_requires_administrator_state")
     if not reason:
         return blocked("administrative_reason_required")
     database.ensure_configured()
@@ -55,6 +57,8 @@ def update_user(username: str, *, actor: str, role: str | None = None, is_admin:
         return blocked("administrative_reason_required")
     if role is not None and role not in ALLOWED_ROLES:
         return blocked("role_invalid")
+    if role == "admin" and is_admin is False:
+        return blocked("admin_role_requires_administrator_state")
     database.ensure_configured()
     session = database.Session()
     try:
@@ -66,6 +70,8 @@ def update_user(username: str, *, actor: str, role: str | None = None, is_admin:
         desired_active = bool(is_active) if is_active is not None else bool(user.is_active)
         if user.is_admin and user.is_active and (not desired_admin or not desired_active) and _active_admin_count(session) <= 1:
             return blocked("last_active_administrator_must_be_preserved")
+        if user.is_admin and is_admin is False and role is None:
+            return blocked("administrator_demotion_requires_non_admin_role")
         if role is not None:
             user.role = role
         if is_admin is not None:
