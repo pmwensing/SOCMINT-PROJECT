@@ -4,7 +4,7 @@
 <section class="panel">
 <h1>Collection Job Contract and State Machine</h1>
 <p>Controlled collection-job contracts, authorization bindings, state transitions, attempts, failure classification, retry eligibility, and immutable history.</p>
-<p><a href="/collection-operations">Collection Operations Workspace</a></p>
+<p><a href="/collection-operations">Collection Operations Workspace</a> · <a href="/collection-operations/policies">Authorization, Scope, and Collection Policy</a></p>
 </section>
 {% if payload.status == 'forbidden' %}
 <section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
@@ -15,7 +15,7 @@
 <section class="panel"><h2>Retryable Contracts</h2><pre>{{ payload.retryable_contracts|tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Contract Findings</h2><pre>{{ payload.contract_findings|tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Immutable Collection Job History</h2><pre>{{ payload.collection_job_history|tojson(indent=2) }}</pre></section>
-<section class="panel"><p class="muted">This layer records contracts and transitions only. It does not dispatch connectors, mutate legacy scan jobs, or execute retries.</p></section>
+<section class="panel"><p class="muted">Authorization requires an allowing v29.2 policy evaluation. This layer does not dispatch connectors, mutate legacy scan jobs, or execute retries.</p></section>
 <section class="panel"><pre id="collection-job-contract-json">{{ payload|tojson(indent=2) }}</pre></section>
 {% endif %}
 </div>
