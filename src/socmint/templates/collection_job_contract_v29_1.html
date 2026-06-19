@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-collection-job-contract>
+<section class="panel">
+<h1>Collection Job Contract and State Machine</h1>
+<p>Controlled collection-job contracts, authorization bindings, state transitions, attempts, failure classification, retry eligibility, and immutable history.</p>
+<p><a href="/collection-operations">Collection Operations Workspace</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel"><h2>Summary</h2><p><strong>Contracts:</strong> {{ payload.contract_count }} · <strong>Unresolved:</strong> {{ payload.unresolved_contract_count }} · <strong>Retryable:</strong> {{ payload.retryable_contract_count }} · <strong>Blocked:</strong> {{ payload.blocked_contract_count }} · <strong>Findings:</strong> {{ payload.contract_finding_count }}</p></section>
+<section class="panel"><h2>State Counts</h2><pre>{{ payload.state_counts|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Contracts</h2><pre>{{ payload.contracts|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Retryable Contracts</h2><pre>{{ payload.retryable_contracts|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Contract Findings</h2><pre>{{ payload.contract_findings|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Immutable Collection Job History</h2><pre>{{ payload.collection_job_history|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">This layer records contracts and transitions only. It does not dispatch connectors, mutate legacy scan jobs, or execute retries.</p></section>
+<section class="panel"><pre id="collection-job-contract-json">{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+</div>
+{% endblock %}
