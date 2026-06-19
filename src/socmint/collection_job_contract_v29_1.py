@@ -78,7 +78,7 @@ def history() -> list[dict[str, Any]]:
                 "audit_record_id": row.id,
                 "actor": row.actor,
                 "source_action": row.action,
-                "target_value": row.target_value,
+                "audit_target_value": row.target_value,
                 "recorded_at": row.created_at.isoformat() if row.created_at else None,
             }
             for row in rows
@@ -106,7 +106,7 @@ def _record(action: str, actor: str, target: str, event: dict[str, Any], ip_addr
             "audit_record_id": row.id,
             "actor": actor,
             "source_action": action,
-            "target_value": target,
+            "audit_target_value": target,
             "recorded_at": row.created_at.isoformat() if row.created_at else None,
         }
     finally:
