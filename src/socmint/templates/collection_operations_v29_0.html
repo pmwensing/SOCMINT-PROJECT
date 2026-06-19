@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-collection-operations>
+<section class="panel">
+<h1>Collection Operations Workspace</h1>
+<p>Read-only collection inventory, job state, connector runs, evidence outputs, provenance completeness, retry eligibility, and dossier contribution.</p>
+<p><a href="/administration">Administration Workspace</a> · <a href="/administration/connectors">Connector Administration</a> · <a href="/administration/operations">Platform Operations</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel"><h2>Summary</h2><p><strong>Jobs:</strong> {{ payload.job_count }} · <strong>Runs:</strong> {{ payload.collection_run_count }} · <strong>Stale:</strong> {{ payload.stale_job_count }} · <strong>Retry eligible:</strong> {{ payload.retry_eligible_count }} · <strong>Findings:</strong> {{ payload.operator_finding_count }}</p></section>
+<section class="panel"><h2>Collection Inventory</h2><pre>{{ payload.collection_inventory|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Job Inventory</h2><pre>{{ payload.job_inventory|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Evidence and Observations</h2><pre>{{ payload.evidence_summary|tojson(indent=2) }}</pre><pre>{{ payload.observation_summary|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Provenance</h2><pre>{{ payload.provenance_summary|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Target Bindings</h2><pre>{{ payload.target_bindings|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Retry Eligibility</h2><pre>{{ payload.retry_eligibility|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Dossier Value</h2><pre>{{ payload.dossier_value_summary|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Operator Findings</h2><pre>{{ payload.operator_findings|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">This workspace cannot execute connectors, mutate jobs, retry work, rotate credentials, alter case access, or rewrite evidence.</p></section>
+<section class="panel"><pre id="collection-operations-json">{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+</div>
+{% endblock %}
