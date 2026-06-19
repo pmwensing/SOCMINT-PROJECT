@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-connector-adapter-contract>
+<section class="panel">
+<h1>Connector Normalization and Adapter Contract</h1>
+<p>Capability declarations, normalized schemas, authorization requirements, rate limits, error classes, provenance, health, dossier value, and conformance history.</p>
+<p><a href="/collection-operations">Collection Operations</a> · <a href="/collection-operations/jobs">Collection Jobs</a> · <a href="/collection-operations/policies">Collection Policies</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel"><h2>Summary</h2><p><strong>Contracts:</strong> {{ payload.adapter_contract_count }} · <strong>Active:</strong> {{ payload.active_adapter_contract_count }} · <strong>Evaluations:</strong> {{ payload.conformance_evaluation_count }} · <strong>Findings:</strong> {{ payload.adapter_finding_count }}</p></section>
+<section class="panel"><h2>Adapter Summaries</h2><pre>{{ payload.adapter_summaries|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Error Class Catalog</h2><pre>{{ payload.error_class_catalog|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Conformance</h2><pre>{{ payload.conformance_counts|tojson(indent=2) }}</pre><pre>{{ payload.conformance_evaluations|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Adapter Findings</h2><pre>{{ payload.adapter_findings|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Immutable Adapter History</h2><pre>{{ payload.adapter_history|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">This layer defines and evaluates adapter contracts only. It does not execute connectors, alter connector definitions, or expose secrets.</p></section>
+<section class="panel"><pre id="connector-adapter-contract-json">{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+</div>
+{% endblock %}
