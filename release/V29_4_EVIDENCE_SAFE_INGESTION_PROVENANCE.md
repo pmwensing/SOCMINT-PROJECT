@@ -2,7 +2,7 @@
 
 Adds append-only artifact registration, content and acquisition hashes, collection-attempt bindings, duplicate detection, chain-of-custody checks, quarantine and rejection states, observation derivation, and immutable provenance history.
 
-The registration layer stores metadata and deterministic hashes only; no raw artifact content is stored in audit events. Existing results, media, findings, connector outputs, and legacy jobs remain unchanged.
+The registration layer stores metadata and deterministic hashes only; no raw artifact content is stored in audit events. The existing results, media, findings, connector outputs, and legacy jobs remain unchanged.
 
 Artifacts bind to a current v29.1 collection-job attempt, including the job event hash, attempt number, case, entity, source, and authorization reference. Registration requires a valid SHA-256 content hash, acquisition timestamp, source reference, content type, byte size, acquisition method, explicit confirmation, and reason.
 
