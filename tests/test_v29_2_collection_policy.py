@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from src.socmint.collection_job_contract_v29_1 import create_collection_job_contract
+from src.socmint.collection_job_contract_v29_1 import create_collection_job_contract, find_contract
 from src.socmint.collection_policy_v29_2 import create_collection_policy, evaluate_collection_job_policy, revise_collection_policy
 from src.socmint.collection_policy_workspace_v29_2 import build_collection_policy_workspace
 
@@ -9,6 +9,9 @@ def test_v29_2_policy_allow_deny_revision_and_workspace(tmp_path):
     from src.socmint import database
     database.configure_database(f"sqlite:///{tmp_path / 'app.db'}")
     job = create_collection_job_contract(actor="admin", connector="public_web", target_value="alice", target_type="username", case_id="case-a", entity_id="entity-a", source_id="source-a", authorization_binding={"request_id":"request-1"}, purpose="investigation", idempotency_key="idem-1", legacy_scan_job_id=None, reason="create", confirmed=True)
+    contract = find_contract(job["collection_job_id"])
+    assert contract["target_value"] == "alice"
+    assert contract["audit_target_value"] == job["collection_job_id"]
     policy = create_collection_policy(actor="admin", name="Public Web", description="approved", permitted_source_classes=["public_web"], permitted_purposes=["investigation"], jurisdictions=["CA"], case_ids=["case-a"], entity_ids=[], source_ids=[], deny_rules=[], exclusions=[], valid_from="", expires_at=(datetime.now(timezone.utc)+timedelta(days=90)).isoformat(), review_at=(datetime.now(timezone.utc)+timedelta(days=10)).isoformat(), reason="define", confirmed=True)
     assert policy["status"] == "collection_policy_created"
     allowed = evaluate_collection_job_policy(actor="admin", collection_job_id=job["collection_job_id"], jurisdiction="CA", reason="evaluate", confirmed=True)
