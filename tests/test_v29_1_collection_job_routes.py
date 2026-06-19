@@ -30,10 +30,14 @@ def test_v29_1_routes_require_admin_and_dispatch(tmp_path, monkeypatch):
         sess["_csrf_token"] = csrf
     headers = {"X-CSRF-Token": csrf}
     assert client.get("/collection-operations/jobs").status_code == 200
-    created = client.post("/api/v1/collection-operations/jobs", json={"connector":"demo","target_value":"alice","target_type":"username","authorization_binding":{"policy_id":"policy-1"},"purpose":"investigation","idempotency_key":"idem-1","reason":"create","confirmed":True}, headers=headers)
-    transitioned = client.post("/api/v1/collection-operations/jobs/collection-job-1/transition", json={"to_state":"authorized","authorization_binding":{"policy_id":"policy-1"},"reason":"authorize","confirmed":True}, headers=headers)
+    created = client.post("/api/v1/collection-operations/jobs", json={"connector":"demo","target_value":"alice","target_type":"username","authorization_binding":{"request_id":"request-1"},"purpose":"investigation","idempotency_key":"idem-1","reason":"create","confirmed":True}, headers=headers)
+    binding = {"collection_job_id":"collection-job-1","policy_evaluation_id":"evaluation-1","policy_event_sha256":"sha-1","decision":"allow","allowed_by_policy_ids":["policy-1"],"denied_by_policy_ids":[]}
+    transitioned = client.post("/api/v1/collection-operations/jobs/collection-job-1/transition", json={"to_state":"authorized","authorization_binding":binding,"reason":"authorize","confirmed":True}, headers=headers)
+    denied = client.post("/api/v1/collection-operations/jobs/collection-job-1/transition", json={"to_state":"authorized","authorization_binding":{"decision":"deny"},"reason":"authorize","confirmed":True}, headers=headers)
     assert created.status_code == 200
     assert transitioned.status_code == 200
+    assert denied.status_code == 422
+    assert denied.get_json()["blockers"][0]["key"] == "allowing_collection_policy_evaluation_required"
 
 
 def test_v29_1_release_note_and_no_migration():
