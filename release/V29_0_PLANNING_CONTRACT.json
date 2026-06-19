@@ -1,0 +1,66 @@
+{
+  "schema": "socmint.v29.planning_contract.v29_0",
+  "version": "v29.0.0-planning",
+  "program": "Connector and Collection Operations",
+  "primary_workspace": "Collection Operations Workspace",
+  "production_objective": "Operationalize repeatable, authorized, observable ingestion into the existing intelligence spine while keeping connectors subordinate to dossier value.",
+  "workflow_spine": [
+    "case",
+    "entity",
+    "raw_evidence",
+    "observation",
+    "corroboration",
+    "confidence",
+    "human_review",
+    "dossier_report_export"
+  ],
+  "roadmap": [
+    {"slice": "v29.0", "title": "Collection Operations Workspace", "mode": "read_only_baseline"},
+    {"slice": "v29.1", "title": "Collection Job Contract and State Machine", "mode": "controlled_state"},
+    {"slice": "v29.2", "title": "Authorization, Scope, and Collection Policy", "mode": "policy_gate"},
+    {"slice": "v29.3", "title": "Connector Normalization and Adapter Contract", "mode": "adapter_contract"},
+    {"slice": "v29.4", "title": "Evidence-Safe Ingestion and Provenance", "mode": "evidence_registration"},
+    {"slice": "v29.5", "title": "Retry, Recovery, and Operator Intervention", "mode": "controlled_recovery"},
+    {"slice": "v29.6", "title": "Collection Quality, Trust, and Dossier Contribution", "mode": "quality_gate"},
+    {"slice": "v29.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate"}
+  ],
+  "entry_gate": {
+    "roadmap_defined": true,
+    "production_objective_defined": true,
+    "runtime_code_added": false,
+    "route_added": false,
+    "migration_added": false
+  },
+  "v29_0_implementation_boundaries": {
+    "read_only": true,
+    "connector_execution": false,
+    "job_mutation": false,
+    "retry_execution": false,
+    "credential_rotation": false,
+    "secret_value_exposure": false,
+    "case_access_change": false,
+    "evidence_rewrite": false,
+    "migration_allowed_without_proven_gap": false
+  },
+  "production_invariants": {
+    "append_only_history": true,
+    "immutable_raw_evidence": true,
+    "explicit_actor_reason_scope_authorization": true,
+    "idempotent_retry_contracts": true,
+    "deterministic_bindings": true,
+    "human_review_for_consequential_use": true,
+    "connectors_must_prove_dossier_value": true,
+    "connector_zoo_prohibited": true,
+    "generic_mega_platform_positioning_prohibited": true
+  },
+  "closure_contract": {
+    "focused_tests_required": true,
+    "v29_regression_required": true,
+    "full_suite_required": true,
+    "browser_e2e_required": true,
+    "browser_failed_count": 0,
+    "v29_closed": true,
+    "next_action": "begin_v30"
+  },
+  "next_action": "review_and_accept_v29_0_planning_baseline"
+}
