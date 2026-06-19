@@ -1,6 +1,6 @@
 {
   "schema": "socmint.v29.planning_contract.v29_0",
-  "version": "v29.0.0",
+  "version": "v29.2.0",
   "program": "Connector and Collection Operations",
   "primary_workspace": "Collection Operations Workspace",
   "production_objective": "Operationalize repeatable, authorized, observable ingestion into the existing intelligence spine while keeping connectors subordinate to dossier value.",
@@ -16,8 +16,8 @@
   ],
   "roadmap": [
     {"slice": "v29.0", "title": "Collection Operations Workspace", "mode": "read_only_baseline", "implemented": true},
-    {"slice": "v29.1", "title": "Collection Job Contract and State Machine", "mode": "controlled_state", "implemented": false},
-    {"slice": "v29.2", "title": "Authorization, Scope, and Collection Policy", "mode": "policy_gate", "implemented": false},
+    {"slice": "v29.1", "title": "Collection Job Contract and State Machine", "mode": "controlled_state", "implemented": true},
+    {"slice": "v29.2", "title": "Authorization, Scope, and Collection Policy", "mode": "policy_gate", "implemented": true},
     {"slice": "v29.3", "title": "Connector Normalization and Adapter Contract", "mode": "adapter_contract", "implemented": false},
     {"slice": "v29.4", "title": "Evidence-Safe Ingestion and Provenance", "mode": "evidence_registration", "implemented": false},
     {"slice": "v29.5", "title": "Retry, Recovery, and Operator Intervention", "mode": "controlled_recovery", "implemented": false},
@@ -62,5 +62,5 @@
     "v29_closed": true,
     "next_action": "begin_v30"
   },
-  "next_action": "validate_v29_0_collection_operations_workspace"
+  "next_action": "validate_v29_2_collection_policy_gate"
 }
