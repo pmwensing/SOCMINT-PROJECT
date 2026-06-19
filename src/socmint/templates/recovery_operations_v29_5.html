@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-recovery-operations>
+<section class="panel">
+<h1>Retry, Recovery, and Operator Intervention</h1>
+<p>Controlled retry requests, decisions, backoff windows, recovery plans, operator interventions, terminal actions, and immutable recovery history.</p>
+<p><a href="/collection-operations">Collection Operations</a> · <a href="/collection-operations/jobs">Collection Jobs</a> · <a href="/collection-operations/evidence">Evidence Ingestion</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel"><h2>Summary</h2><p><strong>Retry requests:</strong> {{ payload.retry_request_count }} · <strong>Pending:</strong> {{ payload.pending_retry_request_count }} · <strong>Approved:</strong> {{ payload.approved_retry_request_count }} · <strong>Open windows:</strong> {{ payload.retry_window_open_count }} · <strong>Plans:</strong> {{ payload.recovery_plan_count }} · <strong>Interventions:</strong> {{ payload.operator_intervention_count }}</p></section>
+<section class="panel"><h2>Retry Request States</h2><pre>{{ payload.retry_request_state_counts|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Retry Requests</h2><pre>{{ payload.retry_requests|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Recovery Plans</h2><pre>{{ payload.recovery_plans|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Operator Interventions</h2><pre>{{ payload.operator_interventions|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Recovery Findings</h2><pre>{{ payload.recovery_findings|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Immutable Recovery History</h2><pre>{{ payload.recovery_history|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">Approved retries are plans only. Connector execution and automatic retry dispatch remain unavailable.</p></section>
+<section class="panel"><pre id="recovery-operations-json">{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+</div>
+{% endblock %}
