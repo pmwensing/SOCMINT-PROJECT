@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-collection-policy>
+<section class="panel">
+<h1>Authorization, Scope, and Collection Policy</h1>
+<p>Controlled collection authorization, purpose, jurisdiction, source classes, scope bindings, deny rules, exclusions, expiry, review dates, and immutable policy history.</p>
+<p><a href="/collection-operations">Collection Operations</a> · <a href="/collection-operations/jobs">Collection Job Contracts</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel"><h2>Summary</h2><p><strong>Policies:</strong> {{ payload.policy_count }} · <strong>Active:</strong> {{ payload.active_policy_count }} · <strong>Expired:</strong> {{ payload.expired_policy_count }} · <strong>Review due:</strong> {{ payload.review_due_policy_count }} · <strong>Evaluations:</strong> {{ payload.evaluation_count }} · <strong>Findings:</strong> {{ payload.policy_finding_count }}</p></section>
+<section class="panel"><h2>Active Policies</h2><pre>{{ payload.active_policies|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Evaluation Decisions</h2><pre>{{ payload.evaluation_decision_counts|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Expired and Review-Due Policies</h2><pre>{{ payload.expired_policies|tojson(indent=2) }}</pre><pre>{{ payload.review_due_policies|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Policy Findings</h2><pre>{{ payload.policy_findings|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Recent Evaluations</h2><pre>{{ payload.evaluations|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Immutable Collection-Policy History</h2><pre>{{ payload.collection_policy_history|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">Explicit deny and exclusion rules override allow matches. Evaluation does not mutate the job and does not execute a connector.</p></section>
+<section class="panel"><pre id="collection-policy-json">{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+</div>
+{% endblock %}
