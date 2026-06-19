@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div data-evidence-ingestion>
+<section class="panel">
+<h1>Evidence-Safe Ingestion and Provenance</h1>
+<p>Immutable artifact registration, acquisition hashes, collection-attempt bindings, duplicate detection, chain-of-custody review, observation derivation, quarantine, rejection, and provenance history.</p>
+<p><a href="/collection-operations">Collection Operations</a> · <a href="/collection-operations/jobs">Collection Jobs</a> · <a href="/collection-operations/policies">Collection Policies</a> · <a href="/collection-operations/adapters">Adapter Contracts</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel"><h2>Summary</h2><p><strong>Artifacts:</strong> {{ payload.artifact_count }} · <strong>Accepted:</strong> {{ payload.accepted_artifact_count }} · <strong>Quarantined:</strong> {{ payload.quarantined_artifact_count }} · <strong>Rejected:</strong> {{ payload.rejected_artifact_count }} · <strong>Duplicates:</strong> {{ payload.duplicate_artifact_count }} · <strong>Observations:</strong> {{ payload.derived_observation_count }}</p></section>
+<section class="panel"><h2>Artifact States</h2><pre>{{ payload.artifact_state_counts|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Artifacts</h2><pre>{{ payload.artifacts|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Derived Observations</h2><pre>{{ payload.derived_observations|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Chain of Custody</h2><pre>{{ payload.chain_of_custody_incomplete|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Ingestion Findings</h2><pre>{{ payload.ingestion_findings|tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Immutable Provenance History</h2><pre>{{ payload.provenance_history|tojson(indent=2) }}</pre></section>
+<section class="panel"><p class="muted">Raw content is not stored here. Existing evidence and connector output remain unchanged.</p></section>
+<section class="panel"><pre id="evidence-ingestion-json">{{ payload|tojson(indent=2) }}</pre></section>
+{% endif %}
+</div>
+{% endblock %}
