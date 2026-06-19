@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+from .collection_job_routes_v29_1 import register_collection_job_routes_v29_1
 from .collection_operations_workspace_v29_0 import build_collection_operations_workspace
 from .user_account_workspace_v28_1 import actor_is_administrator
 
@@ -55,4 +56,5 @@ def register_collection_operations_routes_v29_0(app):
             stale_after_hours = 24
         return jsonify(build_collection_operations_workspace(stale_after_hours=stale_after_hours))
 
+    register_collection_job_routes_v29_1(app)
     return app
