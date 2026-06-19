@@ -4,6 +4,7 @@ from flask import jsonify, redirect, render_template, request, session, url_for
 
 from .collection_job_contract_v29_1 import create_collection_job_contract, transition_collection_job
 from .collection_job_workspace_v29_1 import build_collection_job_workspace
+from .collection_policy_routes_v29_2 import register_collection_policy_routes_v29_2
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -23,6 +24,17 @@ def _authorized():
 
 def _code(result: dict, success: str) -> int:
     return 200 if result.get("status") == success else 422
+
+
+def _policy_binding_valid(binding, collection_job_id: str) -> bool:
+    return bool(
+        isinstance(binding, dict)
+        and binding.get("collection_job_id") == collection_job_id
+        and binding.get("policy_evaluation_id")
+        and binding.get("policy_event_sha256")
+        and binding.get("decision") == "allow"
+        and not binding.get("denied_by_policy_ids")
+    )
 
 
 def register_collection_job_routes_v29_1(app):
@@ -54,7 +66,12 @@ def register_collection_job_routes_v29_1(app):
         actor, error = _authorized()
         if error: return error
         payload = _payload()
-        result = transition_collection_job(collection_job_id=collection_job_id, actor=actor, to_state=str(payload.get("to_state") or ""), authorization_binding=payload.get("authorization_binding"), failure_category=str(payload.get("failure_category") or ""), reason=str(payload.get("reason") or ""), confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr)
+        to_state = str(payload.get("to_state") or "")
+        binding = payload.get("authorization_binding")
+        if to_state == "authorized" and not _policy_binding_valid(binding, collection_job_id):
+            return jsonify({"status":"blocked","blockers":[{"key":"allowing_collection_policy_evaluation_required"}],"collection_job_id":collection_job_id,"legacy_scan_job_mutated":False,"connector_execution_performed":False,"case_access_scope_changed":False}), 422
+        result = transition_collection_job(collection_job_id=collection_job_id, actor=actor, to_state=to_state, authorization_binding=binding, failure_category=str(payload.get("failure_category") or ""), reason=str(payload.get("reason") or ""), confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr)
         return jsonify(result), _code(result, "collection_job_transitioned")
 
+    register_collection_policy_routes_v29_2(app)
     return app
