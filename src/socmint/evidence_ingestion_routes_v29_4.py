@@ -4,6 +4,7 @@ from flask import jsonify, redirect, render_template, request, session, url_for
 
 from .evidence_ingestion_v29_4 import change_artifact_state, derive_observation, register_artifact
 from .evidence_ingestion_workspace_v29_4 import build_evidence_ingestion_workspace
+from .recovery_operations_routes_v29_5 import register_recovery_operations_routes_v29_5
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -48,21 +49,7 @@ def register_evidence_ingestion_routes_v29_4(app):
         if error:
             return error
         payload = _payload()
-        result = register_artifact(
-            actor=actor,
-            collection_job_id=str(payload.get("collection_job_id") or ""),
-            attempt_number=payload.get("attempt_number"),
-            source_reference=str(payload.get("source_reference") or ""),
-            acquired_at=str(payload.get("acquired_at") or ""),
-            content_sha256=str(payload.get("content_sha256") or ""),
-            content_type=str(payload.get("content_type") or ""),
-            byte_size=payload.get("byte_size"),
-            acquisition_method=str(payload.get("acquisition_method") or ""),
-            provenance_metadata=payload.get("provenance_metadata"),
-            reason=str(payload.get("reason") or ""),
-            confirmed=payload.get("confirmed") is True,
-            ip_address=request.remote_addr,
-        )
+        result = register_artifact(actor=actor, collection_job_id=str(payload.get("collection_job_id") or ""), attempt_number=payload.get("attempt_number"), source_reference=str(payload.get("source_reference") or ""), acquired_at=str(payload.get("acquired_at") or ""), content_sha256=str(payload.get("content_sha256") or ""), content_type=str(payload.get("content_type") or ""), byte_size=payload.get("byte_size"), acquisition_method=str(payload.get("acquisition_method") or ""), provenance_metadata=payload.get("provenance_metadata"), reason=str(payload.get("reason") or ""), confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr)
         return jsonify(result), _code(result, "evidence_artifact_registered")
 
     @app.post("/api/v1/collection-operations/evidence/<artifact_id>/state")
@@ -83,4 +70,5 @@ def register_evidence_ingestion_routes_v29_4(app):
         result = derive_observation(actor=actor, artifact_id=artifact_id, observation_type=str(payload.get("observation_type") or ""), normalized_value=payload.get("normalized_value"), confidence=str(payload.get("confidence") or ""), derivation_method=str(payload.get("derivation_method") or ""), reason=str(payload.get("reason") or ""), confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr)
         return jsonify(result), _code(result, "evidence_observation_derived")
 
+    register_recovery_operations_routes_v29_5(app)
     return app
