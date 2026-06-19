@@ -4,6 +4,7 @@ from flask import jsonify, redirect, render_template, request, session, url_for
 
 from .connector_adapter_contract_v29_3 import create_adapter_contract, evaluate_adapter_conformance, revise_adapter_contract
 from .connector_adapter_workspace_v29_3 import build_connector_adapter_workspace
+from .evidence_ingestion_routes_v29_4 import register_evidence_ingestion_routes_v29_4
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -65,4 +66,5 @@ def register_connector_adapter_routes_v29_3(app):
         result = evaluate_adapter_conformance(actor=actor, adapter_contract_id=adapter_contract_id, observed_capabilities=payload.get("observed_capabilities"), observed_input_schema=payload.get("observed_input_schema"), observed_output_schema=payload.get("observed_output_schema"), observed_error_classes=payload.get("observed_error_classes"), observed_provenance_fields=payload.get("observed_provenance_fields"), observed_health_fields=payload.get("observed_health_fields"), reason=str(payload.get("reason") or ""), confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr)
         return jsonify(result), _code(result, "adapter_conformance_evaluated")
 
+    register_evidence_ingestion_routes_v29_4(app)
     return app
