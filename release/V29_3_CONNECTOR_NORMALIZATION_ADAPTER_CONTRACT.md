@@ -6,7 +6,7 @@ Each adapter contract records a capability declaration, normalized input schema,
 
 Adapter revisions create new immutable versions bound to the prior contract. Existing connector definitions are not rewritten.
 
-Conformance evaluation compares observed capabilities, schemas, error classes, provenance fields, and health fields with the active adapter contract. Missing required behavior produces deterministic findings and prevents the adapter from being treated as conformant.
+The conformance evaluation compares observed capabilities, schemas, error classes, provenance fields, and health fields with the active adapter contract. Missing required behavior produces deterministic findings and prevents the adapter from being treated as conformant.
 
 The deterministic error-class catalog includes authorization, scope, rate limit, network, upstream, input, output, parsing, provenance, duplicate, and unknown errors.
 
