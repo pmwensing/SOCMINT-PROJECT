@@ -1,6 +1,6 @@
 {
   "schema": "socmint.v29.planning_contract.v29_0",
-  "version": "v29.0.0-planning",
+  "version": "v29.0.0",
   "program": "Connector and Collection Operations",
   "primary_workspace": "Collection Operations Workspace",
   "production_objective": "Operationalize repeatable, authorized, observable ingestion into the existing intelligence spine while keeping connectors subordinate to dossier value.",
@@ -15,20 +15,20 @@
     "dossier_report_export"
   ],
   "roadmap": [
-    {"slice": "v29.0", "title": "Collection Operations Workspace", "mode": "read_only_baseline"},
-    {"slice": "v29.1", "title": "Collection Job Contract and State Machine", "mode": "controlled_state"},
-    {"slice": "v29.2", "title": "Authorization, Scope, and Collection Policy", "mode": "policy_gate"},
-    {"slice": "v29.3", "title": "Connector Normalization and Adapter Contract", "mode": "adapter_contract"},
-    {"slice": "v29.4", "title": "Evidence-Safe Ingestion and Provenance", "mode": "evidence_registration"},
-    {"slice": "v29.5", "title": "Retry, Recovery, and Operator Intervention", "mode": "controlled_recovery"},
-    {"slice": "v29.6", "title": "Collection Quality, Trust, and Dossier Contribution", "mode": "quality_gate"},
-    {"slice": "v29.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate"}
+    {"slice": "v29.0", "title": "Collection Operations Workspace", "mode": "read_only_baseline", "implemented": true},
+    {"slice": "v29.1", "title": "Collection Job Contract and State Machine", "mode": "controlled_state", "implemented": false},
+    {"slice": "v29.2", "title": "Authorization, Scope, and Collection Policy", "mode": "policy_gate", "implemented": false},
+    {"slice": "v29.3", "title": "Connector Normalization and Adapter Contract", "mode": "adapter_contract", "implemented": false},
+    {"slice": "v29.4", "title": "Evidence-Safe Ingestion and Provenance", "mode": "evidence_registration", "implemented": false},
+    {"slice": "v29.5", "title": "Retry, Recovery, and Operator Intervention", "mode": "controlled_recovery", "implemented": false},
+    {"slice": "v29.6", "title": "Collection Quality, Trust, and Dossier Contribution", "mode": "quality_gate", "implemented": false},
+    {"slice": "v29.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": false}
   ],
   "entry_gate": {
     "roadmap_defined": true,
     "production_objective_defined": true,
-    "runtime_code_added": false,
-    "route_added": false,
+    "runtime_code_added": true,
+    "route_added": true,
     "migration_added": false
   },
   "v29_0_implementation_boundaries": {
@@ -62,5 +62,5 @@
     "v29_closed": true,
     "next_action": "begin_v30"
   },
-  "next_action": "review_and_accept_v29_0_planning_baseline"
+  "next_action": "validate_v29_0_collection_operations_workspace"
 }
