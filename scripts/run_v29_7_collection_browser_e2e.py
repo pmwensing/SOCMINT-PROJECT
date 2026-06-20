@@ -17,7 +17,7 @@ if str(ROOT) not in sys.path:
 from flask import redirect, session  # noqa: E402
 from selenium import webdriver  # noqa: E402
 from selenium.webdriver.chrome.service import Service as ChromeService  # noqa: E402
-from werkzeug.password import generate_password_hash  # noqa: E402
+from werkzeug.security import generate_password_hash  # noqa: E402
 from werkzeug.serving import make_server  # noqa: E402
 
 USER = "v29-e2e-admin"
