@@ -1,0 +1,22 @@
+{
+  "schema": "socmint.collection_browser_e2e.v29_7",
+  "version": "v29.7.0",
+  "status": "passed",
+  "passed_count": 9,
+  "failed_count": 0,
+  "v29_closed": true,
+  "next_action": "begin_v30",
+  "checks": [
+    {"key": "operations", "ok": true},
+    {"key": "jobs", "ok": true},
+    {"key": "policy", "ok": true},
+    {"key": "adapters", "ok": true},
+    {"key": "evidence", "ok": true},
+    {"key": "recovery", "ok": true},
+    {"key": "quality", "ok": true},
+    {"key": "product_review", "ok": true},
+    {"key": "checkpoint_ready", "ok": true}
+  ],
+  "recorded_from": "operator browser E2E execution",
+  "closure_note": "This report satisfies the browser gate only. Program closure remains controlled by the planning contract until focused, v29 regression, and full-suite evidence are confirmed."
+}
