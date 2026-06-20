@@ -1,0 +1,82 @@
+{
+  "schema": "socmint.v30.planning_contract.v30_0",
+  "version": "v30.0.0",
+  "program": "Corroboration, Analytic Confidence, and Review",
+  "primary_workspace": "Analytic Review Workspace",
+  "production_objective": "Convert accepted collection outputs into explainable, reviewable, and explicitly confidence-scored analytic contributions without collapsing evidence, observations, assessments, or human judgment into one opaque result.",
+  "workflow_spine": [
+    "case",
+    "entity",
+    "raw_evidence",
+    "observation",
+    "corroboration",
+    "contradiction",
+    "confidence",
+    "human_review",
+    "dossier_contribution"
+  ],
+  "roadmap": [
+    {"slice": "v30.0", "title": "Analytic Review Workspace and Planning Baseline", "mode": "read_only_baseline", "implemented": false},
+    {"slice": "v30.1", "title": "Corroboration Claim Contract", "mode": "controlled_state", "implemented": false},
+    {"slice": "v30.2", "title": "Evidence and Observation Linkage", "mode": "deterministic_binding", "implemented": false},
+    {"slice": "v30.3", "title": "Contradiction and Disagreement Handling", "mode": "analytic_conflict", "implemented": false},
+    {"slice": "v30.4", "title": "Confidence Model and Explainability", "mode": "confidence_gate", "implemented": false},
+    {"slice": "v30.5", "title": "Human Analytic Review and Decision Record", "mode": "human_review", "implemented": false},
+    {"slice": "v30.6", "title": "Dossier Contribution and Reassessment", "mode": "contribution_gate", "implemented": false},
+    {"slice": "v30.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": false}
+  ],
+  "entry_gate": {
+    "roadmap_defined": true,
+    "production_objective_defined": true,
+    "primary_workspace_defined": true,
+    "workflow_spine_defined": true,
+    "scope_boundaries_defined": true,
+    "production_invariants_defined": true,
+    "runtime_code_added": false,
+    "route_added": false,
+    "migration_added": false,
+    "entry_gate_status": "planning_complete_runtime_not_started"
+  },
+  "scope_boundaries": {
+    "connector_execution": false,
+    "raw_evidence_rewrite": false,
+    "observation_rewrite": false,
+    "automatic_claim_truth_assignment": false,
+    "automatic_high_confidence_assignment": false,
+    "automatic_dossier_mutation": false,
+    "case_access_change": false,
+    "secret_value_exposure": false,
+    "migration_allowed_without_proven_schema_gap": false
+  },
+  "production_invariants": {
+    "append_only_analytic_history": true,
+    "immutable_source_bindings": true,
+    "separate_evidence_observation_claim_and_review_layers": true,
+    "contradictory_evidence_preserved": true,
+    "confidence_must_be_explainable": true,
+    "confidence_must_not_equal_truth": true,
+    "human_review_required_for_consequential_use": true,
+    "deterministic_hash_bindings": true,
+    "reassessment_must_preserve_prior_decisions": true,
+    "dossier_contribution_requires_explicit_approval": true
+  },
+  "entry_requirements": [
+    "inventory existing evidence, observation, confidence, review, and dossier contracts",
+    "prove no existing v30-equivalent workspace or route is already authoritative",
+    "define canonical claim and corroboration identifiers",
+    "define confidence inputs without embedding unverifiable model judgment",
+    "define contradiction preservation and supersession behavior",
+    "define human review roles, reasons, and confirmation requirements",
+    "define focused, regression, full-suite, and browser closure gates"
+  ],
+  "closure_contract": {
+    "focused_tests_required": true,
+    "v30_regression_required": true,
+    "full_suite_required": true,
+    "browser_e2e_required": true,
+    "browser_failed_count": null,
+    "v30_closed": false,
+    "next_action": "implement_v30_0_analytic_review_workspace"
+  },
+  "next_action": "implement_v30_0_analytic_review_workspace"
+}
