@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+<h1>Collection Quality, Trust, and Dossier Contribution</h1>
+<p>Deterministic quality scoring, trust classification, findings, and explicit human review before collection output can contribute to a dossier.</p>
+<p><a href="/collection-operations">Collection Operations</a> · <a href="/collection-operations/evidence">Evidence Ingestion</a> · <a href="/collection-operations/recovery">Retry and Recovery</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel">
+<h2>Quality gate</h2>
+<ul>
+<li>Artifacts: {{ payload.artifact_count }}</li>
+<li>Assessments: {{ payload.quality_assessment_count }}</li>
+<li>Contribution reviews: {{ payload.dossier_contribution_review_count }}</li>
+<li>Approved contributions: {{ payload.approved_dossier_contribution_count }}</li>
+<li>Review queue: {{ payload.quality_review_queue_count }}</li>
+<li>Findings: {{ payload.quality_finding_count }}</li>
+</ul>
+<p>Trust tiers: {{ payload.trust_tier_counts }}</p>
+<p>Contribution decisions: {{ payload.dossier_contribution_decision_counts }}</p>
+</section>
+<section class="panel"><h2>Review queue</h2><pre>{{ payload.quality_review_queue | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Quality assessments</h2><pre>{{ payload.quality_assessments | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Dossier contribution reviews</h2><pre>{{ payload.dossier_contribution_reviews | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Findings</h2><pre>{{ payload.quality_findings | tojson(indent=2) }}</pre></section>
+{% endif %}
+{% endblock %}
