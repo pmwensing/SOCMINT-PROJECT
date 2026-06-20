@@ -6,6 +6,7 @@ from typing import Any
 from . import database
 from .analytic_confidence_v30_4 import confidence_assessments
 from .analytic_conflict_v30_3 import current_conflicts
+from .analytic_dossier_contribution_v30_6 import current_contribution_decisions
 from .claim_source_linkage_v30_2 import claim_linkages
 from .collection_quality_v29_6 import contribution_reviews, quality_assessments
 from .corroboration_claim_v30_1 import current_claims
@@ -14,7 +15,7 @@ from .human_analytic_review_v30_5 import current_review_decisions
 from .report_review import list_enrichment_review_items, review_summary, safe_rows, table_exists
 
 SCHEMA = "socmint.analytic_review_workspace.v30_0"
-VERSION = "v30.5.0"
+VERSION = "v30.6.0"
 
 
 def _claim_inventory() -> list[dict[str, Any]]:
@@ -61,6 +62,7 @@ def build_analytic_review_workspace() -> dict[str, Any]:
     conflicts = current_conflicts()
     v30_confidence = confidence_assessments()
     human_reviews = current_review_decisions()
+    analytic_contributions = current_contribution_decisions()
     claims = [*legacy_claims, *v30_claims]
     quality = quality_assessments()
     contribution = contribution_reviews()
@@ -89,11 +91,14 @@ def build_analytic_review_workspace() -> dict[str, Any]:
     linked_claim_ids = {str(item.get("claim_id")) for item in linkages}
     confidence_claim_ids = {str(item.get("claim_id")) for item in v30_confidence}
     reviewed_claim_ids = {str(item.get("claim_id")) for item in human_reviews}
+    contribution_claim_ids = {str(item.get("claim_id")) for item in analytic_contributions}
     unlinked_claims = [item for item in v30_claims if item.get("claim_state") == "proposed" and str(item.get("claim_id")) not in linked_claim_ids]
     unassessed_claims = [item for item in v30_claims if item.get("claim_state") == "proposed" and str(item.get("claim_id")) in linked_claim_ids and str(item.get("claim_id")) not in confidence_claim_ids]
     awaiting_human_review = [item for item in v30_claims if item.get("claim_state") == "proposed" and str(item.get("claim_id")) in confidence_claim_ids and str(item.get("claim_id")) not in reviewed_claim_ids]
+    approved_reviews_awaiting_contribution = [item for item in human_reviews if item.get("decision") == "approved" and str(item.get("claim_id")) not in contribution_claim_ids]
     unresolved_conflicts = [item for item in conflicts if item.get("resolution") == "unresolved"]
     human_review_summary = dict(sorted(Counter(str(item.get("decision") or "unknown") for item in human_reviews).items()))
+    analytic_contribution_summary = dict(sorted(Counter(str(item.get("decision") or "unknown") for item in analytic_contributions).items()))
 
     findings: list[dict[str, Any]] = []
     if detected_contradictions:
@@ -109,6 +114,8 @@ def build_analytic_review_workspace() -> dict[str, Any]:
         findings.append({"severity": "medium", "key": "linked_claims_missing_confidence_assessment", "count": len(unassessed_claims)})
     if awaiting_human_review:
         findings.append({"severity": "medium", "key": "confidence_assessed_claims_awaiting_human_review", "count": len(awaiting_human_review)})
+    if approved_reviews_awaiting_contribution:
+        findings.append({"severity": "medium", "key": "approved_human_reviews_awaiting_dossier_contribution_decision", "count": len(approved_reviews_awaiting_contribution)})
     missing_confidence = [item for item in legacy_claims if item.get("confidence") is None]
     if missing_confidence:
         findings.append({"severity": "medium", "key": "claims_missing_confidence", "count": len(missing_confidence)})
@@ -142,6 +149,10 @@ def build_analytic_review_workspace() -> dict[str, Any]:
         "human_analytic_review_count": len(human_reviews),
         "awaiting_human_review_count": len(awaiting_human_review),
         "human_analytic_review_summary": human_review_summary,
+        "analytic_dossier_contribution_inventory": analytic_contributions,
+        "analytic_dossier_contribution_count": len(analytic_contributions),
+        "approved_reviews_awaiting_contribution_count": len(approved_reviews_awaiting_contribution),
+        "analytic_dossier_contribution_summary": analytic_contribution_summary,
         "confidence_inventory": confidence_records,
         "confidence_record_count": len(confidence_records),
         "review_item_inventory": [item.__dict__ for item in review_items],
@@ -163,5 +174,5 @@ def build_analytic_review_workspace() -> dict[str, Any]:
         "review_decisions_mutated": False,
         "dossier_mutated": False,
         "connector_execution_performed": False,
-        "next_action": "evaluate_dossier_contribution_and_reassessment",
+        "next_action": "product_review_and_browser_e2e_checkpoint",
     }
