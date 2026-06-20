@@ -4,19 +4,9 @@
   "program": "Corroboration, Analytic Confidence, and Review",
   "primary_workspace": "Analytic Review Workspace",
   "production_objective": "Convert accepted collection outputs into explainable, reviewable, and explicitly confidence-scored analytic contributions without collapsing evidence, observations, assessments, or human judgment into one opaque result.",
-  "workflow_spine": [
-    "case",
-    "entity",
-    "raw_evidence",
-    "observation",
-    "corroboration",
-    "contradiction",
-    "confidence",
-    "human_review",
-    "dossier_contribution"
-  ],
+  "workflow_spine": ["case", "entity", "raw_evidence", "observation", "corroboration", "contradiction", "confidence", "human_review", "dossier_contribution"],
   "roadmap": [
-    {"slice": "v30.0", "title": "Analytic Review Workspace and Planning Baseline", "mode": "read_only_baseline", "implemented": false},
+    {"slice": "v30.0", "title": "Analytic Review Workspace and Planning Baseline", "mode": "read_only_baseline", "implemented": true},
     {"slice": "v30.1", "title": "Corroboration Claim Contract", "mode": "controlled_state", "implemented": false},
     {"slice": "v30.2", "title": "Evidence and Observation Linkage", "mode": "deterministic_binding", "implemented": false},
     {"slice": "v30.3", "title": "Contradiction and Disagreement Handling", "mode": "analytic_conflict", "implemented": false},
@@ -32,10 +22,10 @@
     "workflow_spine_defined": true,
     "scope_boundaries_defined": true,
     "production_invariants_defined": true,
-    "runtime_code_added": false,
-    "route_added": false,
+    "runtime_code_added": true,
+    "route_added": true,
     "migration_added": false,
-    "entry_gate_status": "planning_complete_runtime_not_started"
+    "entry_gate_status": "v30_0_read_only_baseline_implemented"
   },
   "scope_boundaries": {
     "connector_execution": false,
@@ -76,7 +66,7 @@
     "browser_e2e_required": true,
     "browser_failed_count": null,
     "v30_closed": false,
-    "next_action": "implement_v30_0_analytic_review_workspace"
+    "next_action": "implement_v30_1_corroboration_claim_contract"
   },
-  "next_action": "implement_v30_0_analytic_review_workspace"
+  "next_action": "implement_v30_1_corroboration_claim_contract"
 }
