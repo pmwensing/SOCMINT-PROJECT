@@ -10,10 +10,11 @@ from .claim_source_linkage_v30_2 import claim_linkages
 from .collection_quality_v29_6 import contribution_reviews, quality_assessments
 from .corroboration_claim_v30_1 import current_claims
 from .evidence_ingestion_v29_4 import current_artifacts, observations
+from .human_analytic_review_v30_5 import current_review_decisions
 from .report_review import list_enrichment_review_items, review_summary, safe_rows, table_exists
 
 SCHEMA = "socmint.analytic_review_workspace.v30_0"
-VERSION = "v30.4.0"
+VERSION = "v30.5.0"
 
 
 def _claim_inventory() -> list[dict[str, Any]]:
@@ -59,6 +60,7 @@ def build_analytic_review_workspace() -> dict[str, Any]:
     linkages = claim_linkages()
     conflicts = current_conflicts()
     v30_confidence = confidence_assessments()
+    human_reviews = current_review_decisions()
     claims = [*legacy_claims, *v30_claims]
     quality = quality_assessments()
     contribution = contribution_reviews()
@@ -86,9 +88,12 @@ def build_analytic_review_workspace() -> dict[str, Any]:
     pending_quality = [item for item in quality if not any(r.get("quality_assessment_id") == item.get("quality_assessment_id") for r in contribution)]
     linked_claim_ids = {str(item.get("claim_id")) for item in linkages}
     confidence_claim_ids = {str(item.get("claim_id")) for item in v30_confidence}
+    reviewed_claim_ids = {str(item.get("claim_id")) for item in human_reviews}
     unlinked_claims = [item for item in v30_claims if item.get("claim_state") == "proposed" and str(item.get("claim_id")) not in linked_claim_ids]
     unassessed_claims = [item for item in v30_claims if item.get("claim_state") == "proposed" and str(item.get("claim_id")) in linked_claim_ids and str(item.get("claim_id")) not in confidence_claim_ids]
+    awaiting_human_review = [item for item in v30_claims if item.get("claim_state") == "proposed" and str(item.get("claim_id")) in confidence_claim_ids and str(item.get("claim_id")) not in reviewed_claim_ids]
     unresolved_conflicts = [item for item in conflicts if item.get("resolution") == "unresolved"]
+    human_review_summary = dict(sorted(Counter(str(item.get("decision") or "unknown") for item in human_reviews).items()))
 
     findings: list[dict[str, Any]] = []
     if detected_contradictions:
@@ -102,6 +107,8 @@ def build_analytic_review_workspace() -> dict[str, Any]:
         findings.append({"severity": "medium", "key": "corroboration_claims_missing_source_linkage", "count": len(unlinked_claims)})
     if unassessed_claims:
         findings.append({"severity": "medium", "key": "linked_claims_missing_confidence_assessment", "count": len(unassessed_claims)})
+    if awaiting_human_review:
+        findings.append({"severity": "medium", "key": "confidence_assessed_claims_awaiting_human_review", "count": len(awaiting_human_review)})
     missing_confidence = [item for item in legacy_claims if item.get("confidence") is None]
     if missing_confidence:
         findings.append({"severity": "medium", "key": "claims_missing_confidence", "count": len(missing_confidence)})
@@ -131,6 +138,10 @@ def build_analytic_review_workspace() -> dict[str, Any]:
         "analytic_confidence_inventory": v30_confidence,
         "analytic_confidence_count": len(v30_confidence),
         "unassessed_linked_claim_count": len(unassessed_claims),
+        "human_analytic_review_inventory": human_reviews,
+        "human_analytic_review_count": len(human_reviews),
+        "awaiting_human_review_count": len(awaiting_human_review),
+        "human_analytic_review_summary": human_review_summary,
         "confidence_inventory": confidence_records,
         "confidence_record_count": len(confidence_records),
         "review_item_inventory": [item.__dict__ for item in review_items],
@@ -152,5 +163,5 @@ def build_analytic_review_workspace() -> dict[str, Any]:
         "review_decisions_mutated": False,
         "dossier_mutated": False,
         "connector_execution_performed": False,
-        "next_action": "human_analytic_review",
+        "next_action": "evaluate_dossier_contribution_and_reassessment",
     }
