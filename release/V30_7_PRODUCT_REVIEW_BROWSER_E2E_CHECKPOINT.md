@@ -18,15 +18,17 @@ Validate the complete v30 analytic-review product surface, route chain, release 
 - `GET /analytic-review/product-review`
 - `GET /api/v1/analytic-review/product-review-checkpoint`
 
-## Browser command
+## Closure results
 
-```bash
-python3 scripts/run_v30_7_analytic_review_browser_e2e.py --json
-```
+- focused v30.7 tests: 3 passed, 0 failed
+- complete v30 regression: 24 passed, 0 failed
+- full project suite: 1500 passed, 0 failed
+- Ruff lint: passed
+- browser E2E: 8 passed, 0 failed
 
-## Closure authority
+## Closure status
 
-A passing browser report alone does not close v30. Closure also requires passing focused v30.7 tests, the complete v30 regression suite, and the full project suite. The planning contract remains the closure authority.
+v30.7 is implemented and v30 is closed. The next action is v31 planning.
 
 ## Safety boundaries
 
