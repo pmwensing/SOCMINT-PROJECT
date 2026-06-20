@@ -14,6 +14,7 @@
     <li>Evidence: {{ payload.evidence_count }}</li>
     <li>Observations: {{ payload.observation_count }}</li>
     <li>Claims: {{ payload.claim_count }}</li>
+    <li>v30 corroboration claims: {{ payload.corroboration_claim_count }}</li>
     <li>Confidence records: {{ payload.confidence_record_count }}</li>
     <li>Review items: {{ payload.review_item_count }}</li>
     <li>Review decisions: {{ payload.review_decision_count }}</li>
@@ -24,7 +25,8 @@
 </section>
 <section class="panel"><h2>Analytic findings</h2><pre>{{ payload.analytic_findings | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Contradictions</h2><pre>{{ payload.contradiction_inventory | tojson(indent=2) }}</pre></section>
-<section class="panel"><h2>Claims</h2><pre>{{ payload.claim_inventory | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>v30 corroboration claims</h2><pre>{{ payload.corroboration_claim_inventory | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>All claims</h2><pre>{{ payload.claim_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Confidence</h2><pre>{{ payload.confidence_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Review decisions</h2><pre>{{ payload.review_decision_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Dossier contribution readiness</h2><pre>{{ payload.dossier_contribution_inventory | tojson(indent=2) }}</pre></section>
