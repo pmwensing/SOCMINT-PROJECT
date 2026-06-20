@@ -7,6 +7,7 @@ def _base(monkeypatch):
     monkeypatch.setattr(workspace, "observations", lambda: [])
     monkeypatch.setattr(workspace, "quality_assessments", lambda: [])
     monkeypatch.setattr(workspace, "contribution_reviews", lambda: [])
+    monkeypatch.setattr(workspace, "current_claims", lambda: [])
     monkeypatch.setattr(workspace, "_claim_inventory", lambda: [])
     monkeypatch.setattr(workspace, "_review_decisions", lambda: [])
     monkeypatch.setattr(workspace, "list_enrichment_review_items", lambda limit=500: [])
