@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import jsonify, request, session
 
 from .analytic_confidence_v30_4 import assess_confidence, confidence_assessments
+from .human_analytic_review_routes_v30_5 import register_human_analytic_review_routes_v30_5
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -43,6 +44,8 @@ def register_analytic_confidence_routes_v30_4(app):
             confirmed=data.get("confirmed") is True,
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "analytic_confidence_assessed" else 422
+        code = 200 if result.get("status") == "analytic_confidence_assessed" else 422
+        return jsonify(result), code
 
+    register_human_analytic_review_routes_v30_5(app)
     return app
