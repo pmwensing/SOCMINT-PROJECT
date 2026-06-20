@@ -100,7 +100,7 @@ def _score_artifact(artifact: dict[str, Any]) -> tuple[int, list[dict[str, str]]
     if state == "accepted":
         score += 25
     elif state == "registered":
-        score += 10
+        score += 5
         findings.append({"severity": "medium", "key": "artifact_acceptance_pending"})
     else:
         findings.append({"severity": "high", "key": f"artifact_state_{state}"})
@@ -148,6 +148,8 @@ def assess_collection_quality(*, actor: str, artifact_id: str, reason: str, conf
         "collection_job_id": artifact.get("collection_job_id"),
         "case_id": (artifact.get("contract_binding") or {}).get("case_id"),
         "entity_id": (artifact.get("contract_binding") or {}).get("entity_id"),
+        "artifact_state": artifact.get("artifact_state"),
+        "observation_count": len(observation_ids),
         "quality_score": score,
         "trust_tier": trust_tier,
         "quality_findings": findings,
@@ -176,6 +178,10 @@ def review_dossier_contribution(*, actor: str, quality_assessment_id: str, decis
         return blocked("dossier_contribution_decision_invalid")
     if not rationale:
         return blocked("review_rationale_required")
+    if decision == "approved" and assessment.get("artifact_state") != "accepted":
+        return blocked("accepted_artifact_required")
+    if decision == "approved" and int(assessment.get("observation_count") or 0) < 1:
+        return blocked("derived_observation_required")
     if decision == "approved" and assessment.get("trust_tier") not in {"supported", "trusted"}:
         return blocked("supported_or_trusted_assessment_required")
     binding = {"quality_assessment_id": quality_assessment_id, "quality_assessment_sha256": assessment.get("quality_assessment_sha256"), "artifact_id": assessment.get("artifact_id"), "case_id": assessment.get("case_id"), "entity_id": assessment.get("entity_id")}
