@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel"><h1>Collection Product Review</h1><p>Final v29 product, route, asset, invariant, and browser-readiness checkpoint.</p><p><a href="/collection-operations">Collection Operations</a> · <a href="/collection-operations/quality">Quality and Trust</a></p></section>
+{% if payload.status == 'forbidden' %}<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>{% else %}
+<section class="panel"><h2>Status</h2><p>{{ payload.status }}</p><ul><li>Ready: {{ payload.ready }}</li><li>Journey steps: {{ payload.journey_step_count }}</li><li>Blockers: {{ payload.blocker_count }}</li></ul></section>
+<section class="panel"><h2>Journey</h2><pre>{{ payload.journey | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Blockers</h2><pre>{{ payload.blockers | tojson(indent=2) }}</pre></section>
+{% endif %}{% endblock %}
