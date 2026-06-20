@@ -1,0 +1,167 @@
+from __future__ import annotations
+
+from collections import Counter, defaultdict
+from typing import Any
+
+from . import database
+from .collection_quality_v29_6 import contribution_reviews, quality_assessments
+from .evidence_ingestion_v29_4 import current_artifacts, observations
+from .report_review import list_enrichment_review_items, review_summary, safe_rows, table_exists
+
+SCHEMA = "socmint.analytic_review_workspace.v30_0"
+VERSION = "v30.0.0"
+
+
+def _claim_inventory() -> list[dict[str, Any]]:
+    if not table_exists("spine_dossier_assertions"):
+        return []
+    return safe_rows(
+        """
+        SELECT id, subject_id, assertion_type, normalized_value, confidence,
+               validation_state, created_at
+        FROM spine_dossier_assertions
+        ORDER BY id DESC
+        LIMIT 500
+        """
+    )
+
+
+def _review_decisions() -> list[dict[str, Any]]:
+    if not table_exists("review_decisions"):
+        return []
+    return safe_rows(
+        """
+        SELECT *
+        FROM review_decisions
+        ORDER BY id DESC
+        LIMIT 500
+        """
+    )
+
+
+def _contradictions(claims: list[dict[str, Any]], obs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str], set[str]] = defaultdict(set)
+    sources: dict[tuple[str, str], list[str]] = defaultdict(list)
+    for item in claims:
+        subject = str(item.get("subject_id") or "")
+        kind = str(item.get("assertion_type") or "unknown")
+        value = str(item.get("normalized_value") or "").strip()
+        if value:
+            grouped[(subject, kind)].add(value)
+            sources[(subject, kind)].append(f"assertion:{item.get('id')}")
+    for item in obs:
+        binding = item.get("contract_binding") or {}
+        subject = str(binding.get("entity_id") or binding.get("case_id") or item.get("artifact_id") or "")
+        kind = str(item.get("observation_type") or "unknown")
+        value = str(item.get("normalized_value") or "").strip()
+        if value:
+            grouped[(subject, kind)].add(value)
+            sources[(subject, kind)].append(str(item.get("observation_id") or item.get("artifact_event_id") or "observation"))
+    return [
+        {
+            "subject_key": subject,
+            "claim_type": kind,
+            "distinct_values": sorted(values),
+            "source_refs": sources[(subject, kind)],
+            "status": "requires_human_review",
+        }
+        for (subject, kind), values in grouped.items()
+        if len(values) > 1
+    ]
+
+
+def build_analytic_review_workspace() -> dict[str, Any]:
+    database.ensure_configured()
+    artifacts = current_artifacts()
+    obs = observations()
+    claims = _claim_inventory()
+    quality = quality_assessments()
+    contribution = contribution_reviews()
+    review_items = list_enrichment_review_items(limit=500)
+    decisions = _review_decisions()
+    contradictions = _contradictions(claims, obs)
+
+    confidence_records = [
+        {
+            "record_type": "claim",
+            "record_id": f"assertion:{item.get('id')}",
+            "confidence": item.get("confidence"),
+            "review_state": item.get("validation_state"),
+        }
+        for item in claims
+        if item.get("confidence") is not None
+    ] + [
+        {
+            "record_type": "review_item",
+            "record_id": item.id,
+            "confidence": item.confidence,
+            "review_state": item.status,
+        }
+        for item in review_items
+        if item.confidence is not None
+    ] + [
+        {
+            "record_type": "collection_quality",
+            "record_id": item.get("quality_assessment_id"),
+            "confidence": item.get("quality_score"),
+            "review_state": item.get("trust_tier"),
+        }
+        for item in quality
+    ]
+
+    approved = [item for item in contribution if item.get("decision") == "approved"]
+    held = [item for item in contribution if item.get("decision") == "held"]
+    rejected = [item for item in contribution if item.get("decision") == "rejected"]
+    pending_quality = [item for item in quality if not any(r.get("quality_assessment_id") == item.get("quality_assessment_id") for r in contribution)]
+
+    findings: list[dict[str, Any]] = []
+    if contradictions:
+        findings.append({"severity": "high", "key": "contradictory_claim_values_present", "count": len(contradictions)})
+    unreviewed_claims = [item for item in claims if str(item.get("validation_state") or "").lower() in {"", "pending", "unreviewed", "needs_review"}]
+    if unreviewed_claims:
+        findings.append({"severity": "medium", "key": "claims_require_review", "count": len(unreviewed_claims)})
+    missing_confidence = [item for item in claims if item.get("confidence") is None]
+    if missing_confidence:
+        findings.append({"severity": "medium", "key": "claims_missing_confidence", "count": len(missing_confidence)})
+    if pending_quality:
+        findings.append({"severity": "medium", "key": "quality_assessments_pending_contribution_review", "count": len(pending_quality)})
+
+    return {
+        "schema": SCHEMA,
+        "version": VERSION,
+        "status": "ready",
+        "read_only": True,
+        "evidence_inventory": artifacts,
+        "evidence_count": len(artifacts),
+        "observation_inventory": obs,
+        "observation_count": len(obs),
+        "claim_inventory": claims,
+        "claim_count": len(claims),
+        "confidence_inventory": confidence_records,
+        "confidence_record_count": len(confidence_records),
+        "review_item_inventory": [item.__dict__ for item in review_items],
+        "review_item_count": len(review_items),
+        "review_decision_inventory": decisions,
+        "review_decision_count": len(decisions),
+        "contradiction_inventory": contradictions,
+        "contradiction_count": len(contradictions),
+        "dossier_contribution_inventory": contribution,
+        "dossier_contribution_summary": {
+            "approved": len(approved),
+            "held": len(held),
+            "rejected": len(rejected),
+            "pending_review": len(pending_quality),
+        },
+        "quality_assessment_count": len(quality),
+        "review_summary": review_summary(),
+        "confidence_state_counts": dict(sorted(Counter(str(item.get("review_state") or "unknown") for item in confidence_records).items())),
+        "analytic_findings": findings,
+        "analytic_finding_count": len(findings),
+        "raw_evidence_mutated": False,
+        "observations_mutated": False,
+        "claims_mutated": False,
+        "review_decisions_mutated": False,
+        "dossier_mutated": False,
+        "connector_execution_performed": False,
+        "next_action": "define_v30_1_corroboration_claim_contract",
+    }
