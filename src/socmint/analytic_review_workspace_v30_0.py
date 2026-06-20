@@ -4,13 +4,14 @@ from collections import Counter, defaultdict
 from typing import Any
 
 from . import database
+from .claim_source_linkage_v30_2 import claim_linkages
 from .collection_quality_v29_6 import contribution_reviews, quality_assessments
 from .corroboration_claim_v30_1 import current_claims
 from .evidence_ingestion_v29_4 import current_artifacts, observations
 from .report_review import list_enrichment_review_items, review_summary, safe_rows, table_exists
 
 SCHEMA = "socmint.analytic_review_workspace.v30_0"
-VERSION = "v30.1.0"
+VERSION = "v30.2.0"
 
 
 def _claim_inventory() -> list[dict[str, Any]]:
@@ -53,8 +54,8 @@ def _contradictions(claims: list[dict[str, Any]], obs: list[dict[str, Any]]) -> 
     for item in obs:
         binding = item.get("contract_binding") or {}
         subject = str(binding.get("entity_id") or binding.get("case_id") or item.get("artifact_id") or "")
-        kind = str(item.get("observation_type") or "unknown")
-        value = str(item.get("normalized_value") or "").strip()
+        kind = str(item.get("observation_type") or (item.get("observation") or {}).get("observation_type") or "unknown")
+        value = str(item.get("normalized_value") or (item.get("observation") or {}).get("normalized_value") or "").strip()
         if value:
             grouped[(subject, kind)].add(value)
             sources[(subject, kind)].append(str(item.get("observation_id") or item.get("artifact_event_id") or "observation"))
@@ -77,6 +78,7 @@ def build_analytic_review_workspace() -> dict[str, Any]:
     obs = observations()
     legacy_claims = _claim_inventory()
     v30_claims = current_claims()
+    linkages = claim_linkages()
     claims = [*legacy_claims, *v30_claims]
     quality = quality_assessments()
     contribution = contribution_reviews()
@@ -116,6 +118,8 @@ def build_analytic_review_workspace() -> dict[str, Any]:
     held = [item for item in contribution if item.get("decision") == "held"]
     rejected = [item for item in contribution if item.get("decision") == "rejected"]
     pending_quality = [item for item in quality if not any(r.get("quality_assessment_id") == item.get("quality_assessment_id") for r in contribution)]
+    linked_claim_ids = {str(item.get("claim_id")) for item in linkages}
+    unlinked_claims = [item for item in v30_claims if item.get("claim_state") == "proposed" and str(item.get("claim_id")) not in linked_claim_ids]
 
     findings: list[dict[str, Any]] = []
     if contradictions:
@@ -126,6 +130,8 @@ def build_analytic_review_workspace() -> dict[str, Any]:
     ] + [item for item in v30_claims if item.get("claim_state") == "proposed"]
     if unreviewed_claims:
         findings.append({"severity": "medium", "key": "claims_require_review", "count": len(unreviewed_claims)})
+    if unlinked_claims:
+        findings.append({"severity": "medium", "key": "corroboration_claims_missing_source_linkage", "count": len(unlinked_claims)})
     missing_confidence = [item for item in legacy_claims if item.get("confidence") is None]
     if missing_confidence:
         findings.append({"severity": "medium", "key": "claims_missing_confidence", "count": len(missing_confidence)})
@@ -146,6 +152,9 @@ def build_analytic_review_workspace() -> dict[str, Any]:
         "legacy_claim_count": len(legacy_claims),
         "corroboration_claim_inventory": v30_claims,
         "corroboration_claim_count": len(v30_claims),
+        "claim_source_linkage_inventory": linkages,
+        "claim_source_linkage_count": len(linkages),
+        "unlinked_corroboration_claim_count": len(unlinked_claims),
         "confidence_inventory": confidence_records,
         "confidence_record_count": len(confidence_records),
         "review_item_inventory": [item.__dict__ for item in review_items],
@@ -172,5 +181,5 @@ def build_analytic_review_workspace() -> dict[str, Any]:
         "review_decisions_mutated": False,
         "dossier_mutated": False,
         "connector_execution_performed": False,
-        "next_action": "bind_claim_evidence_and_observations",
+        "next_action": "review_contradictions_and_disagreement",
     }
