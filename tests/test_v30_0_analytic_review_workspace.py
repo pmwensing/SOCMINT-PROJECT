@@ -10,6 +10,7 @@ def _base(monkeypatch):
     monkeypatch.setattr(workspace, "current_claims", lambda: [])
     monkeypatch.setattr(workspace, "claim_linkages", lambda: [])
     monkeypatch.setattr(workspace, "current_conflicts", lambda: [])
+    monkeypatch.setattr(workspace, "confidence_assessments", lambda: [])
     monkeypatch.setattr(workspace, "_claim_inventory", lambda: [])
     monkeypatch.setattr(workspace, "_review_decisions", lambda: [])
     monkeypatch.setattr(workspace, "list_enrichment_review_items", lambda limit=500: [])
@@ -30,6 +31,7 @@ def test_v30_0_builds_read_only_inventory(monkeypatch):
     assert result["claim_count"] == 1
     assert result["claim_source_linkage_count"] == 0
     assert result["analytic_conflict_count"] == 0
+    assert result["analytic_confidence_count"] == 0
     assert result["dossier_contribution_summary"]["approved"] == 1
     assert result["dossier_mutated"] is False
 
