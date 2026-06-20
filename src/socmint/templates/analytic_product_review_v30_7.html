@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h1>Analytic Product Review</h1>
+  <p>v30.7 product readiness and browser E2E checkpoint.</p>
+  <p><a href="/analytic-review">Analytic Review Workspace</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel">
+  <h2>Checkpoint</h2>
+  <p>Ready: {{ payload.ready }}</p>
+  <p>Blockers: {{ payload.blocker_count }}</p>
+  <p>Journey steps: {{ payload.journey_step_count }}</p>
+</section>
+<section class="panel"><h2>Blockers</h2><pre>{{ payload.blockers | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Modules</h2><pre>{{ payload.module_checks | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Assets</h2><pre>{{ payload.asset_checks | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Routes</h2><pre>{{ payload.route_checks | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Journey</h2><pre>{{ payload.journey | tojson(indent=2) }}</pre></section>
+{% endif %}
+{% endblock %}
