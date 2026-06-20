@@ -2,7 +2,7 @@
 {% block content %}
 <section class="panel">
   <h1>Analytic Review Workspace</h1>
-  <p>Read-only inventory of evidence, observations, claims, confidence, review decisions, contradictions, and dossier contribution readiness.</p>
+  <p>Read-only inventory of evidence, observations, claims, source linkages, confidence, review decisions, contradictions, and dossier contribution readiness.</p>
   <p><a href="/collection-operations">Collection Operations</a> · <a href="/collection-operations/quality">Collection Quality</a></p>
 </section>
 {% if payload.status == 'forbidden' %}
@@ -15,6 +15,8 @@
     <li>Observations: {{ payload.observation_count }}</li>
     <li>Claims: {{ payload.claim_count }}</li>
     <li>v30 corroboration claims: {{ payload.corroboration_claim_count }}</li>
+    <li>Claim source linkages: {{ payload.claim_source_linkage_count }}</li>
+    <li>Unlinked proposed claims: {{ payload.unlinked_corroboration_claim_count }}</li>
     <li>Confidence records: {{ payload.confidence_record_count }}</li>
     <li>Review items: {{ payload.review_item_count }}</li>
     <li>Review decisions: {{ payload.review_decision_count }}</li>
@@ -25,6 +27,7 @@
 </section>
 <section class="panel"><h2>Analytic findings</h2><pre>{{ payload.analytic_findings | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Contradictions</h2><pre>{{ payload.contradiction_inventory | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Claim source linkages</h2><pre>{{ payload.claim_source_linkage_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>v30 corroboration claims</h2><pre>{{ payload.corroboration_claim_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>All claims</h2><pre>{{ payload.claim_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Confidence</h2><pre>{{ payload.confidence_inventory | tojson(indent=2) }}</pre></section>
