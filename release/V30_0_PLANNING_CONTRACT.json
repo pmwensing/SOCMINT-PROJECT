@@ -1,6 +1,6 @@
 {
   "schema": "socmint.v30.planning_contract.v30_0",
-  "version": "v30.1.0",
+  "version": "v30.2.0",
   "program": "Corroboration, Analytic Confidence, and Review",
   "primary_workspace": "Analytic Review Workspace",
   "production_objective": "Convert accepted collection outputs into explainable, reviewable, and explicitly confidence-scored analytic contributions without collapsing evidence, observations, assessments, or human judgment into one opaque result.",
@@ -8,7 +8,7 @@
   "roadmap": [
     {"slice": "v30.0", "title": "Analytic Review Workspace and Planning Baseline", "mode": "read_only_baseline", "implemented": true},
     {"slice": "v30.1", "title": "Corroboration Claim Contract", "mode": "controlled_state", "implemented": true},
-    {"slice": "v30.2", "title": "Evidence and Observation Linkage", "mode": "deterministic_binding", "implemented": false},
+    {"slice": "v30.2", "title": "Evidence and Observation Linkage", "mode": "deterministic_binding", "implemented": true},
     {"slice": "v30.3", "title": "Contradiction and Disagreement Handling", "mode": "analytic_conflict", "implemented": false},
     {"slice": "v30.4", "title": "Confidence Model and Explainability", "mode": "confidence_gate", "implemented": false},
     {"slice": "v30.5", "title": "Human Analytic Review and Decision Record", "mode": "human_review", "implemented": false},
@@ -25,7 +25,7 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "entry_gate_status": "v30_1_claim_contract_implemented"
+    "entry_gate_status": "v30_2_source_linkage_implemented"
   },
   "scope_boundaries": {
     "connector_execution": false,
@@ -66,7 +66,7 @@
     "browser_e2e_required": true,
     "browser_failed_count": null,
     "v30_closed": false,
-    "next_action": "implement_v30_2_evidence_and_observation_linkage"
+    "next_action": "implement_v30_3_contradiction_and_disagreement_handling"
   },
-  "next_action": "implement_v30_2_evidence_and_observation_linkage"
+  "next_action": "implement_v30_3_contradiction_and_disagreement_handling"
 }
