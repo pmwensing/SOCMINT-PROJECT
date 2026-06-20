@@ -340,9 +340,7 @@ def build_attachment_zip(
         "case_id": case_id,
         "subject_id": subject_id,
         "zip_path": str(zip_path),
-        "download_url": (
-            f"/reports/export-center/bundles/{zip_path.name}/download"
-        ),
+        "download_url": (f"/reports/export-center/bundles/{zip_path.name}/download"),
         "attachment_manifest_path": attach_manifest["attachment_manifest_path"],
         "attachment_count": attach_manifest["attachment_count"],
         "missing_count": attach_manifest["missing_count"],

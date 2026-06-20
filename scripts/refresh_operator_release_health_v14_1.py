@@ -21,12 +21,25 @@ def _gh_json(args: list[str]) -> Any:
         timeout=30,
     )
     if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or result.stdout.strip() or "gh command failed")
+        raise RuntimeError(
+            result.stderr.strip() or result.stdout.strip() or "gh command failed"
+        )
     return json.loads(result.stdout or "null")
 
 
 def build_release_health_snapshot() -> dict[str, Any]:
-    open_prs = _gh_json(["pr", "list", "--state", "open", "--limit", "100", "--json", "number,title,headRefName,url"])
+    open_prs = _gh_json(
+        [
+            "pr",
+            "list",
+            "--state",
+            "open",
+            "--limit",
+            "100",
+            "--json",
+            "number,title,headRefName,url",
+        ]
+    )
     runs = _gh_json(
         [
             "run",
@@ -41,7 +54,9 @@ def build_release_health_snapshot() -> dict[str, Any]:
     )
     latest_master = runs[0] if runs else None
     latest_sha = latest_master.get("headSha") if latest_master else None
-    checks = [run for run in runs if run.get("headSha") == latest_sha] if latest_sha else []
+    checks = (
+        [run for run in runs if run.get("headSha") == latest_sha] if latest_sha else []
+    )
     passing = all(check.get("conclusion") == "success" for check in checks)
     return {
         "schema": SCHEMA,
@@ -60,13 +75,19 @@ def write_release_health_snapshot(path: str | Path = DEFAULT_OUTPUT) -> dict[str
     output = Path(path)
     payload = build_release_health_snapshot()
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return payload
 
 
 def main() -> int:
     payload = write_release_health_snapshot()
-    print(json.dumps({"path": str(DEFAULT_OUTPUT), "status": payload["status"]}, sort_keys=True))
+    print(
+        json.dumps(
+            {"path": str(DEFAULT_OUTPUT), "status": payload["status"]}, sort_keys=True
+        )
+    )
     return 0
 
 

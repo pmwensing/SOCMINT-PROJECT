@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -22,31 +24,35 @@ def test_v25_2_registry_routes_and_ui(tmp_path, monkeypatch):
             "mode": "restricted",
             "allowed_case_ids": ["case-alpha", "case-bravo"],
         },
-        "confirmed_links": [{
-            "confirmed_link_id": "confirmed-cross-case-link-abc",
-            "confirmed_link_sha256": "f" * 64,
-            "category": "entity",
-            "match_value": "entity-42",
-            "display_values": ["entity-42"],
-            "case_ids": ["case-alpha", "case-bravo"],
-            "source_occurrence_count": 2,
-            "source_occurrences_sha256": "o" * 64,
-            "accepted_review_decision_id": "correlation-review-accepted",
-            "accepted_review_decision_sha256": "d" * 64,
-            "registered_by": "registry-manager",
-            "registered_at": "2026-06-16T06:00:00+00:00",
-        }],
+        "confirmed_links": [
+            {
+                "confirmed_link_id": "confirmed-cross-case-link-abc",
+                "confirmed_link_sha256": "f" * 64,
+                "category": "entity",
+                "match_value": "entity-42",
+                "display_values": ["entity-42"],
+                "case_ids": ["case-alpha", "case-bravo"],
+                "source_occurrence_count": 2,
+                "source_occurrences_sha256": "o" * 64,
+                "accepted_review_decision_id": "correlation-review-accepted",
+                "accepted_review_decision_sha256": "d" * 64,
+                "registered_by": "registry-manager",
+                "registered_at": "2026-06-16T06:00:00+00:00",
+            }
+        ],
         "confirmed_link_count": 1,
-        "accepted_pending_registration": [{
-            "correlation_id": "cross-case-identifier-pending",
-            "review_decision_id": "correlation-review-pending",
-            "review_decision_sha256": "e" * 64,
-            "reviewer": "reviewer-one",
-            "reason": "Shared identifier confirmed.",
-            "case_ids": ["case-alpha", "case-bravo"],
-            "category": "identifier",
-            "match_value": "shared@example.com",
-        }],
+        "accepted_pending_registration": [
+            {
+                "correlation_id": "cross-case-identifier-pending",
+                "review_decision_id": "correlation-review-pending",
+                "review_decision_sha256": "e" * 64,
+                "reviewer": "reviewer-one",
+                "reason": "Shared identifier confirmed.",
+                "case_ids": ["case-alpha", "case-bravo"],
+                "category": "identifier",
+                "match_value": "shared@example.com",
+            }
+        ],
         "accepted_pending_count": 1,
         "review_disposition_counts": {
             "accept": 2,
@@ -73,7 +79,8 @@ def test_v25_2_registry_routes_and_ui(tmp_path, monkeypatch):
         "register_confirmed_cross_case_link",
         lambda correlation_id, **kwargs: captured.update(
             {"correlation_id": correlation_id, **kwargs}
-        ) or {
+        )
+        or {
             "schema": "socmint.cross_case_confirmed_link_registry.v25_2",
             "version": "v25.2.0",
             "correlation_id": correlation_id,
@@ -87,8 +94,13 @@ def test_v25_2_registry_routes_and_ui(tmp_path, monkeypatch):
     )
 
     client = _app(tmp_path, monkeypatch).test_client()
-    assert client.get("/api/v1/cross-case-intelligence/confirmed-links").status_code == 401
-    assert client.get("/cross-case-intelligence/confirmed-links").status_code in {302, 303}
+    assert (
+        client.get("/api/v1/cross-case-intelligence/confirmed-links").status_code == 401
+    )
+    assert client.get("/cross-case-intelligence/confirmed-links").status_code in {
+        302,
+        303,
+    }
 
     with client.session_transaction() as sess:
         sess["user"] = "registry-manager"
@@ -146,12 +158,19 @@ def test_v25_2_blocked_registration_returns_422(tmp_path, monkeypatch):
         headers={"X-CSRF-Token": "test-csrf"},
     )
     assert response.status_code == 422
-    assert response.get_json()["blockers"][0]["key"] == "latest_correlation_review_must_be_accept"
+    assert (
+        response.get_json()["blockers"][0]["key"]
+        == "latest_correlation_review_must_be_accept"
+    )
 
 
 def test_v25_2_release_note_client_and_no_migration():
-    note = Path("release/V25_2_CONFIRMED_CROSS_CASE_LINK_REGISTRY.md").read_text(encoding="utf-8")
-    script = Path("src/socmint/static/cross_case_confirmed_link_registry_v25_2.js").read_text(encoding="utf-8")
+    note = Path("release/V25_2_CONFIRMED_CROSS_CASE_LINK_REGISTRY.md").read_text(
+        encoding="utf-8"
+    )
+    script = Path(
+        "src/socmint/static/cross_case_confirmed_link_registry_v25_2.js"
+    ).read_text(encoding="utf-8")
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

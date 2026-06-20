@@ -12,9 +12,44 @@ from .forensic_intake_v12_5 import manifests_root
 SCHEMA = "socmint.authenticity_integrity.v12_7"
 DASHBOARD_SCHEMA = "socmint.evidence_integrity_dashboard.v12_7"
 
-SCREENSHOT_HINTS = {"screenshot", "screen shot", "capture", "img_", "photo_", "whatsapp", "telegram", "signal", "messenger"}
-PDF_PRODUCER_RECONSTRUCTION_HINTS = {"scanner", "scan", "print", "microsoft print", "pdfcreator", "wkhtmltopdf", "ghostscript", "pypdf", "itext", "tx_pdf", "pdf library"}
-MEDIA_EDITOR_HINTS = {"photoshop", "gimp", "lightroom", "snapseed", "canva", "paint", "preview", "pixelmator", "capcut", "premiere", "final cut", "after effects"}
+SCREENSHOT_HINTS = {
+    "screenshot",
+    "screen shot",
+    "capture",
+    "img_",
+    "photo_",
+    "whatsapp",
+    "telegram",
+    "signal",
+    "messenger",
+}
+PDF_PRODUCER_RECONSTRUCTION_HINTS = {
+    "scanner",
+    "scan",
+    "print",
+    "microsoft print",
+    "pdfcreator",
+    "wkhtmltopdf",
+    "ghostscript",
+    "pypdf",
+    "itext",
+    "tx_pdf",
+    "pdf library",
+}
+MEDIA_EDITOR_HINTS = {
+    "photoshop",
+    "gimp",
+    "lightroom",
+    "snapseed",
+    "canva",
+    "paint",
+    "preview",
+    "pixelmator",
+    "capcut",
+    "premiere",
+    "final cut",
+    "after effects",
+}
 
 
 def utc_now() -> str:
@@ -48,7 +83,9 @@ def _metadata_text(item: dict[str, Any]) -> str:
 
 def _filename(item: dict[str, Any]) -> str:
     meta = item.get("metadata") or {}
-    return str(meta.get("filename") or Path(item.get("preserved_path") or "").name or "").lower()
+    return str(
+        meta.get("filename") or Path(item.get("preserved_path") or "").name or ""
+    ).lower()
 
 
 def _metadata_tool_payload(item: dict[str, Any], tool: str) -> dict[str, Any] | None:
@@ -66,21 +103,63 @@ def detect_metadata_mismatches(item: dict[str, Any]) -> list[dict[str, Any]]:
     mime_guess = metadata.get("mime_guess")
     ext = str(metadata.get("extension") or "").lower()
     expected_by_ext = {
-        ".jpg": "image", ".jpeg": "image", ".png": "image", ".gif": "image", ".webp": "image",
-        ".mp4": "video", ".mov": "video", ".mkv": "video", ".avi": "video",
-        ".mp3": "audio", ".wav": "audio", ".m4a": "audio",
-        ".pdf": "document", ".docx": "document", ".txt": "document", ".csv": "document",
-        ".eml": "email_export", ".mbox": "email_export",
+        ".jpg": "image",
+        ".jpeg": "image",
+        ".png": "image",
+        ".gif": "image",
+        ".webp": "image",
+        ".mp4": "video",
+        ".mov": "video",
+        ".mkv": "video",
+        ".avi": "video",
+        ".mp3": "audio",
+        ".wav": "audio",
+        ".m4a": "audio",
+        ".pdf": "document",
+        ".docx": "document",
+        ".txt": "document",
+        ".csv": "document",
+        ".eml": "email_export",
+        ".mbox": "email_export",
     }
     expected = expected_by_ext.get(ext)
     if expected and expected != kind:
-        flags.append({"type": "extension_kind_mismatch", "severity": "high", "expected": expected, "actual": kind, "extension": ext})
+        flags.append(
+            {
+                "type": "extension_kind_mismatch",
+                "severity": "high",
+                "expected": expected,
+                "actual": kind,
+                "extension": ext,
+            }
+        )
     if mime_guess and kind == "image" and not str(mime_guess).startswith("image/"):
-        flags.append({"type": "mime_kind_mismatch", "severity": "high", "mime": mime_guess, "kind": kind})
+        flags.append(
+            {
+                "type": "mime_kind_mismatch",
+                "severity": "high",
+                "mime": mime_guess,
+                "kind": kind,
+            }
+        )
     if mime_guess and kind == "video" and not str(mime_guess).startswith("video/"):
-        flags.append({"type": "mime_kind_mismatch", "severity": "high", "mime": mime_guess, "kind": kind})
+        flags.append(
+            {
+                "type": "mime_kind_mismatch",
+                "severity": "high",
+                "mime": mime_guess,
+                "kind": kind,
+            }
+        )
     if item.get("original_sha256") != item.get("preserved_sha256"):
-        flags.append({"type": "hash_mismatch", "severity": "critical", "original_sha256": item.get("original_sha256"), "preserved_sha256": item.get("preserved_sha256")})
+        flags.append(
+            {
+                "type": "hash_mismatch",
+                "severity": "critical",
+                "original_sha256": item.get("original_sha256"),
+                "preserved_sha256": item.get("preserved_sha256"),
+            }
+        )
     if not ((item.get("court_safe") or {}).get("hash_verified")):
         flags.append({"type": "hash_not_verified", "severity": "critical"})
     return flags
@@ -92,18 +171,58 @@ def detect_tamper_flags(item: dict[str, Any]) -> list[dict[str, Any]]:
     text = _metadata_text(item)
     filename = _filename(item)
     if kind == "image" and any(hint in filename for hint in SCREENSHOT_HINTS):
-        flags.append({"type": "screenshot_or_messaging_capture", "severity": "review", "reason": "filename suggests screenshot or social/messaging capture"})
+        flags.append(
+            {
+                "type": "screenshot_or_messaging_capture",
+                "severity": "review",
+                "reason": "filename suggests screenshot or social/messaging capture",
+            }
+        )
     if kind == "image" and "exiftool" not in (item.get("metadata") or {}):
-        flags.append({"type": "image_missing_exiftool_metadata", "severity": "review", "reason": "ExifTool metadata not available; install exiftool for deeper checks"})
-    if kind == "document" and filename.endswith(".pdf") and any(hint in text for hint in PDF_PRODUCER_RECONSTRUCTION_HINTS):
-        flags.append({"type": "pdf_reconstruction_or_generated_pdf_hint", "severity": "review", "reason": "metadata producer/tool hints suggest generated, scanned, or reconstructed PDF"})
+        flags.append(
+            {
+                "type": "image_missing_exiftool_metadata",
+                "severity": "review",
+                "reason": "ExifTool metadata not available; install exiftool for deeper checks",
+            }
+        )
+    if (
+        kind == "document"
+        and filename.endswith(".pdf")
+        and any(hint in text for hint in PDF_PRODUCER_RECONSTRUCTION_HINTS)
+    ):
+        flags.append(
+            {
+                "type": "pdf_reconstruction_or_generated_pdf_hint",
+                "severity": "review",
+                "reason": "metadata producer/tool hints suggest generated, scanned, or reconstructed PDF",
+            }
+        )
     if kind in {"image", "video"} and any(hint in text for hint in MEDIA_EDITOR_HINTS):
-        flags.append({"type": "media_editor_metadata_hint", "severity": "review", "reason": "metadata contains common editor/tool names"})
+        flags.append(
+            {
+                "type": "media_editor_metadata_hint",
+                "severity": "review",
+                "reason": "metadata contains common editor/tool names",
+            }
+        )
     if kind in {"video", "audio"} and "ffprobe" not in (item.get("metadata") or {}):
-        flags.append({"type": "media_probe_missing", "severity": "review", "reason": "ffprobe metadata not available; install ffmpeg/ffprobe for deeper checks"})
+        flags.append(
+            {
+                "type": "media_probe_missing",
+                "severity": "review",
+                "reason": "ffprobe metadata not available; install ffmpeg/ffprobe for deeper checks",
+            }
+        )
     preserved_path = str(item.get("preserved_path") or "")
     if preserved_path and not Path(preserved_path).exists():
-        flags.append({"type": "preserved_file_missing", "severity": "critical", "reason": "vault original path is missing"})
+        flags.append(
+            {
+                "type": "preserved_file_missing",
+                "severity": "critical",
+                "reason": "vault original path is missing",
+            }
+        )
     return flags
 
 
@@ -164,13 +283,21 @@ def provenance_confidence(item: dict[str, Any]) -> dict[str, Any]:
     score = max(0.0, min(1.0, score))
     return {
         "score": round(score, 3),
-        "rating": "strong" if score >= 0.8 else "moderate" if score >= 0.6 else "weak" if score >= 0.35 else "fail",
+        "rating": "strong"
+        if score >= 0.8
+        else "moderate"
+        if score >= 0.6
+        else "weak"
+        if score >= 0.35
+        else "fail",
         "factors": {
             "hash_verified": hash_verified,
             "custody_event_count": len(custody_events),
             "manifest_linked": has_manifest,
             "source_path_present": bool(source_path),
-            "preserved_path_exists": bool(preserved_path and Path(preserved_path).exists()),
+            "preserved_path_exists": bool(
+                preserved_path and Path(preserved_path).exists()
+            ),
         },
     }
 
@@ -210,7 +337,8 @@ def analyze_evidence_item(item: dict[str, Any]) -> dict[str, Any]:
         "provenance_confidence": provenance,
         "composite_score": composite,
         "decision": decision,
-        "requires_human_review": decision != "court-ready-review" or bool(authenticity.get("flags")),
+        "requires_human_review": decision != "court-ready-review"
+        or bool(authenticity.get("flags")),
         "legal_use_note": "Authenticity scoring is an analytical aid. Human review and source verification remain required before legal use.",
     }
 
@@ -231,7 +359,10 @@ def integrity_dashboard_payload(root: str | None = None) -> dict[str, Any]:
             "ratings": dict(ratings),
             "decisions": dict(decisions),
             "surfaces": dict(surfaces),
-            "avg_composite_score": round(sum(row["composite_score"] for row in analyses) / max(1, len(analyses)), 3),
+            "avg_composite_score": round(
+                sum(row["composite_score"] for row in analyses) / max(1, len(analyses)),
+                3,
+            ),
         },
         "analyses": analyses,
         "flagged_items": flagged,

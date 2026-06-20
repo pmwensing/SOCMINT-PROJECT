@@ -3,10 +3,14 @@ from __future__ import annotations
 import base64
 
 from socmint.dashboard import create_app
-from socmint.dossier_finalization_certificate_routes_v7_5_4 import register_dossier_finalization_certificate_routes
+from socmint.dossier_finalization_certificate_routes_v7_5_4 import (
+    register_dossier_finalization_certificate_routes,
+)
 from socmint.dossier_finalization_export_v7_5_2 import build_finalization_export_packet
 from socmint.dossier_finalization_export_v7_5_2 import build_finalization_export_zip
-from socmint.dossier_finalization_export_verify_v7_5_3 import verify_finalization_export_packet
+from socmint.dossier_finalization_export_verify_v7_5_3 import (
+    verify_finalization_export_packet,
+)
 
 CSRF_TOKEN = "test-csrf-token"
 CSRF_HEADERS = {"X-CSRF-Token": CSRF_TOKEN}
@@ -15,9 +19,25 @@ CSRF_HEADERS = {"X-CSRF-Token": CSRF_TOKEN}
 def base_payload():
     return {
         "quality_gate": {"status": "pass", "finding_count": 0},
-        "export_enforcement": {"status": "allowed", "allowed": True, "final_export_blocked": False},
-        "evidence_manifest": {"status": "pass", "appendix_summary": {"missing_ref_count": 0, "missing_hash_count": 0, "missing_source_count": 0}},
-        "identity_confidence": {"status": "pass", "contradiction_count": 0, "low_confidence_count": 0, "needs_review_count": 0},
+        "export_enforcement": {
+            "status": "allowed",
+            "allowed": True,
+            "final_export_blocked": False,
+        },
+        "evidence_manifest": {
+            "status": "pass",
+            "appendix_summary": {
+                "missing_ref_count": 0,
+                "missing_hash_count": 0,
+                "missing_source_count": 0,
+            },
+        },
+        "identity_confidence": {
+            "status": "pass",
+            "contradiction_count": 0,
+            "low_confidence_count": 0,
+            "needs_review_count": 0,
+        },
         "connector_compliance": {"status": "pass", "finding_count": 0},
         "policy_coverage": {"status": "pass", "finding_count": 0},
     }
@@ -49,12 +69,18 @@ def test_json_route_returns_valid_certificate_from_wrapped_report():
     response = post_json(
         client,
         "/api/v1/dossier-builder/v3/intelligence/finalization/certificate",
-        {"verification_report": verified_report(), "packet_name": "packet-a", "reviewer": "analyst"},
+        {
+            "verification_report": verified_report(),
+            "packet_name": "packet-a",
+            "reviewer": "analyst",
+        },
     )
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["schema"] == "socmint.v7_5_4.dossier_finalization_verification_certificate"
+    assert (
+        data["schema"] == "socmint.v7_5_4.dossier_finalization_verification_certificate"
+    )
     assert data["status"] == "valid"
     assert data["valid"] is True
     assert data["packet_name"] == "packet-a"
@@ -62,7 +88,11 @@ def test_json_route_returns_valid_certificate_from_wrapped_report():
 
 def test_raw_verification_report_request_shape_works():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate", verified_report())
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate",
+        verified_report(),
+    )
 
     assert response.status_code == 200
     assert response.get_json()["status"] == "valid"
@@ -116,7 +146,11 @@ def test_invalid_base64_returns_failed_certificate_not_500():
 
 def test_csrf_token_is_required_by_test_client_pattern():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate", {"verification_report": verified_report()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate",
+        {"verification_report": verified_report()},
+    )
 
     assert response.status_code == 200
 
@@ -129,7 +163,11 @@ def test_no_connector_execution_function_is_called(monkeypatch):
 
     monkeypatch.setattr(cert_module, "execute_connector", explode, raising=False)
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate", {"verification_report": verified_report()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate",
+        {"verification_report": verified_report()},
+    )
 
     assert response.status_code == 200
     assert response.get_json()["status"] == "valid"

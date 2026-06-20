@@ -10,7 +10,12 @@ def build_user_account_workspace() -> dict[str, Any]:
     database.ensure_configured()
     session = database.Session()
     try:
-        users = [snapshot(item) for item in session.query(database.User).order_by(database.User.username.asc()).all()]
+        users = [
+            snapshot(item)
+            for item in session.query(database.User)
+            .order_by(database.User.username.asc())
+            .all()
+        ]
     finally:
         session.close()
     events = history()
@@ -37,7 +42,11 @@ def actor_is_administrator(username: str) -> bool:
     database.ensure_configured()
     session = database.Session()
     try:
-        user = session.query(database.User).filter(database.User.username == username).first()
+        user = (
+            session.query(database.User)
+            .filter(database.User.username == username)
+            .first()
+        )
         return bool(user and user.is_active and user.is_admin)
     finally:
         session.close()

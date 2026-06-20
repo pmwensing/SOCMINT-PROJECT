@@ -32,8 +32,7 @@ def _app(db: Path):
     os.environ["DATABASE_URL"] = f"sqlite:///{db}"
     os.environ["SOCMINT_DATA_DIR"] = str(db.parent)
     os.environ["SOCMINT_SECRET_KEY"] = (
-        "v20-browser-e2e-test-secret-key-2026-"
-        "4f13796cc8e744c6a741d55903be50d5"
+        "v20-browser-e2e-test-secret-key-2026-4f13796cc8e744c6a741d55903be50d5"
     )
     os.environ["SOCMINT_AUTO_CREATE_DB"] = "true"
     from src.socmint.case_findings_routes_v20 import register_case_findings_routes_v20
@@ -99,9 +98,7 @@ def run(output: Path) -> dict:
                 "The reviewed account is attributable to the subject."
             )
             browser.find_element(By.ID, "finding-claim-ids").send_keys("claim-1")
-            browser.find_element(By.ID, "finding-evidence-ids").send_keys(
-                "evidence-1"
-            )
+            browser.find_element(By.ID, "finding-evidence-ids").send_keys("evidence-1")
             browser.find_element(By.ID, "propose-case-finding").click()
             wait.until(
                 EC.presence_of_element_located((By.CLASS_NAME, "save-finding-decision"))

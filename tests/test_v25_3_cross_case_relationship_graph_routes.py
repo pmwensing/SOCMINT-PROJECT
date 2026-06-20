@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -32,7 +34,9 @@ def test_v25_3_graph_routes_apply_scope_and_render(tmp_path, monkeypatch):
                     "value": "case-alpha",
                     "label": "case-alpha",
                     "confirmed_link_ids": ["confirmed-link-1"],
-                    "review_bindings": [{"decision_id": "review-1", "decision_sha256": "d" * 64}],
+                    "review_bindings": [
+                        {"decision_id": "review-1", "decision_sha256": "d" * 64}
+                    ],
                     "source_occurrences": [],
                     "provenance": [{"confirmed_link_id": "confirmed-link-1"}],
                     "node_sha256": "n" * 64,
@@ -43,7 +47,9 @@ def test_v25_3_graph_routes_apply_scope_and_render(tmp_path, monkeypatch):
                     "value": "entity-42",
                     "label": "entity-42",
                     "confirmed_link_ids": ["confirmed-link-1"],
-                    "review_bindings": [{"decision_id": "review-1", "decision_sha256": "d" * 64}],
+                    "review_bindings": [
+                        {"decision_id": "review-1", "decision_sha256": "d" * 64}
+                    ],
                     "source_occurrences": [{"case_id": "case-alpha", "record_id": 1}],
                     "provenance": [{"confirmed_link_id": "confirmed-link-1"}],
                     "node_sha256": "e" * 64,
@@ -75,7 +81,14 @@ def test_v25_3_graph_routes_apply_scope_and_render(tmp_path, monkeypatch):
             "nodes_by_type": {"case": 1, "entity": 1},
             "edges_by_type": {"case_confirmed_link": 1},
         },
-        "node_types": ["case", "entity", "evidence", "identifier", "infrastructure", "temporal"],
+        "node_types": [
+            "case",
+            "entity",
+            "evidence",
+            "identifier",
+            "infrastructure",
+            "temporal",
+        ],
         "source_occurrences_preserved": True,
         "review_bindings_preserved": True,
         "provenance_preserved": True,
@@ -112,7 +125,9 @@ def test_v25_3_graph_routes_apply_scope_and_render(tmp_path, monkeypatch):
     assert api.status_code == 200
     assert api.get_json()["counts"]["nodes"] == 2
     assert api.get_json()["graph_sha256"] == "g" * 64
-    assert all(call["allowed_case_ids"] == {"case-alpha", "case-bravo"} for call in captured)
+    assert all(
+        call["allowed_case_ids"] == {"case-alpha", "case-bravo"} for call in captured
+    )
 
 
 def test_v25_3_registry_links_to_graph(tmp_path, monkeypatch):
@@ -146,12 +161,16 @@ def test_v25_3_registry_links_to_graph(tmp_path, monkeypatch):
     page = client.get("/cross-case-intelligence/confirmed-links")
     assert page.status_code == 200
     assert b"Open Relationship Graph" in page.data
-    assert b'/cross-case-intelligence/graph' in page.data
+    assert b"/cross-case-intelligence/graph" in page.data
 
 
 def test_v25_3_release_note_client_and_no_migration():
-    note = Path("release/V25_3_CROSS_CASE_RELATIONSHIP_GRAPH.md").read_text(encoding="utf-8")
-    script = Path("src/socmint/static/cross_case_relationship_graph_v25_3.js").read_text(encoding="utf-8")
+    note = Path("release/V25_3_CROSS_CASE_RELATIONSHIP_GRAPH.md").read_text(
+        encoding="utf-8"
+    )
+    script = Path(
+        "src/socmint/static/cross_case_relationship_graph_v25_3.js"
+    ).read_text(encoding="utf-8")
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))
@@ -159,7 +178,10 @@ def test_v25_3_release_note_client_and_no_migration():
         for path in directory.rglob("*v25_3*")
     ]
 
-    assert "cases, entities, identifiers, infrastructure, evidence, and temporal relationships" in note
+    assert (
+        "cases, entities, identifiers, infrastructure, evidence, and temporal relationships"
+        in note
+    )
     assert "confirmed-link IDs" in note
     assert "source occurrences" in note
     assert "accepted-review bindings" in note

@@ -69,7 +69,13 @@ def build_commands(readiness: str, workspace: dict[str, Any]) -> list[dict[str, 
     ]
 
 
-def _card(card_type: str, title: str, status: str, detail: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
+def _card(
+    card_type: str,
+    title: str,
+    status: str,
+    detail: str,
+    data: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     return {
         "type": card_type,
         "title": title,
@@ -80,7 +86,11 @@ def _card(card_type: str, title: str, status: str, detail: str, data: dict[str, 
 
 
 def build_cards(readiness: str, workspace: dict[str, Any]) -> list[dict[str, Any]]:
-    package_files = workspace.get("package_files") if isinstance(workspace.get("package_files"), list) else []
+    package_files = (
+        workspace.get("package_files")
+        if isinstance(workspace.get("package_files"), list)
+        else []
+    )
     finding_count = int(workspace.get("finding_count") or 0)
     return [
         _card(
@@ -88,27 +98,39 @@ def build_cards(readiness: str, workspace: dict[str, Any]) -> list[dict[str, Any
             "Delivery readiness",
             readiness,
             f"Delivery action is {workspace.get('delivery_action') or 'unknown'}.",
-            {"delivery_action": workspace.get("delivery_action"), "package_ready": workspace.get("package_ready")},
+            {
+                "delivery_action": workspace.get("delivery_action"),
+                "package_ready": workspace.get("package_ready"),
+            },
         ),
         _card(
             "package_inventory",
             "Package inventory",
             "ok" if package_files else "missing",
             f"Package contains {len(package_files)} manifest entries.",
-            {"file_count": workspace.get("file_count"), "manifest_file_count": workspace.get("manifest_file_count")},
+            {
+                "file_count": workspace.get("file_count"),
+                "manifest_file_count": workspace.get("manifest_file_count"),
+            },
         ),
         _card(
             "findings",
             "Findings",
             "ok" if finding_count == 0 else "review",
             f"Workspace reports {finding_count} finding(s).",
-            {"finding_count": finding_count, "failure_count": workspace.get("failure_count"), "warning_count": workspace.get("warning_count")},
+            {
+                "finding_count": finding_count,
+                "failure_count": workspace.get("failure_count"),
+                "warning_count": workspace.get("warning_count"),
+            },
         ),
         _card(
             "export_availability",
             "Export availability",
             "available" if readiness == "ready" else "blocked",
-            "ZIP export is available." if readiness == "ready" else "ZIP export is blocked until readiness is resolved.",
+            "ZIP export is available."
+            if readiness == "ready"
+            else "ZIP export is blocked until readiness is resolved.",
             deepcopy(workspace.get("export") or {}),
         ),
         _card(
@@ -147,5 +169,7 @@ def build_operator_console_from_request(payload: dict[str, Any]) -> dict[str, An
     return build_operator_console_from_workspace(workspace)
 
 
-def build_operator_commands_from_request(payload: dict[str, Any]) -> list[dict[str, Any]]:
+def build_operator_commands_from_request(
+    payload: dict[str, Any],
+) -> list[dict[str, Any]]:
     return list(build_operator_console_from_request(payload).get("commands") or [])

@@ -6,9 +6,15 @@ from flask import jsonify, request
 
 from .dossier_finalization_certificate_bundle_verify_v7_5_6 import _base_report
 from .dossier_finalization_certificate_bundle_verify_v7_5_6 import _finding
-from .dossier_finalization_certificate_bundle_verify_v7_5_6 import summarize_bundle_verification
-from .dossier_finalization_certificate_bundle_verify_v7_5_6 import verify_certificate_bundle
-from .dossier_finalization_certificate_bundle_verify_v7_5_6 import verify_certificate_bundle_zip
+from .dossier_finalization_certificate_bundle_verify_v7_5_6 import (
+    summarize_bundle_verification,
+)
+from .dossier_finalization_certificate_bundle_verify_v7_5_6 import (
+    verify_certificate_bundle,
+)
+from .dossier_finalization_certificate_bundle_verify_v7_5_6 import (
+    verify_certificate_bundle_zip,
+)
 
 
 def _request_payload() -> dict:
@@ -25,13 +31,21 @@ def _failed_base64_report(detail: str) -> dict:
 
 
 def register_dossier_finalization_certificate_bundle_verify_routes(app):
-    @app.post("/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle/verify")
+    @app.post(
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle/verify"
+    )
     def api_verify_certificate_bundle():
         payload = _request_payload()
-        bundle = payload.get("bundle") if isinstance(payload.get("bundle"), dict) else payload
+        bundle = (
+            payload.get("bundle")
+            if isinstance(payload.get("bundle"), dict)
+            else payload
+        )
         return jsonify(verify_certificate_bundle(bundle))
 
-    @app.post("/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle/verify-zip")
+    @app.post(
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle/verify-zip"
+    )
     def api_verify_certificate_bundle_zip():
         payload = _request_payload()
         encoded = payload.get("zip_base64")

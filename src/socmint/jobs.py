@@ -12,11 +12,13 @@ SPINE_REQUESTED_BY = re.compile(r"^spine:(?P<subject_id>\d+):")
 
 def build_dossier(target, target_type, enabled_tools=None):
     from .main import build_dossier as main_build_dossier
+
     return main_build_dossier(target, target_type, enabled_tools=enabled_tools)
 
 
 def enrich_dossier(dossier):
     from .enrichment import enrich_dossier as run_enrichment
+
     return run_enrichment(dossier)
 
 
@@ -31,11 +33,16 @@ def _process_spine_job(job: dict, subject_id: int) -> dict:
 
     seed = None
     for candidate in db.list_spine_seeds(subject_id):
-        if candidate.seed_type == job["target_type"] and candidate.normalized_value == job["target_value"]:
+        if (
+            candidate.seed_type == job["target_type"]
+            and candidate.normalized_value == job["target_value"]
+        ):
             seed = candidate
             break
     if seed is None:
-        raise ValueError(f"No matching spine seed for subject {subject_id}: {job['target_type']} {job['target_value']}")
+        raise ValueError(
+            f"No matching spine seed for subject {subject_id}: {job['target_type']} {job['target_value']}"
+        )
 
     run_ids = []
     skipped = []
@@ -46,17 +53,31 @@ def _process_spine_job(job: dict, subject_id: int) -> dict:
             skipped.append({"connector": key, "reason": "not in HIGH_VALUE_CONNECTORS"})
             continue
         if seed.seed_type not in spec["seed_types"]:
-            skipped.append({"connector": key, "reason": f"seed type {seed.seed_type} not supported", "supported": spec["seed_types"]})
+            skipped.append(
+                {
+                    "connector": key,
+                    "reason": f"seed type {seed.seed_type} not supported",
+                    "supported": spec["seed_types"],
+                }
+            )
             continue
         run_ids.append(run_connector_for_seed(subject_id, seed, key, spec))
 
     if not run_ids:
-        raise ValueError(f"Spine job created no connector runs; tools={job['tools']} seed_type={seed.seed_type} skipped={skipped}")
+        raise ValueError(
+            f"Spine job created no connector runs; tools={job['tools']} seed_type={seed.seed_type} skipped={skipped}"
+        )
 
     correlate_subject(subject_id)
     db.finish_scan_job(job["id"], "completed", target_id=None)
     logger.info("Completed spine scan job %s for subject %s", job["id"], subject_id)
-    return {"id": job["id"], "status": "completed", "subject_id": subject_id, "run_ids": run_ids, "spine": True}
+    return {
+        "id": job["id"],
+        "status": "completed",
+        "subject_id": subject_id,
+        "run_ids": run_ids,
+        "spine": True,
+    }
 
 
 def process_next_scan_job():
@@ -69,7 +90,9 @@ def process_next_scan_job():
         if subject_id is not None:
             return _process_spine_job(job, subject_id)
 
-        dossier = build_dossier(job["target_value"], job["target_type"], enabled_tools=set(job["tools"]))
+        dossier = build_dossier(
+            job["target_value"], job["target_type"], enabled_tools=set(job["tools"])
+        )
         if job["enrich"]:
             dossier = enrich_dossier(dossier)
         target_id = db.save_dossier(dossier)
@@ -105,7 +128,14 @@ def scan_job_health(limit=250):
             started_at = started_at.replace(tzinfo=UTC)
         age_seconds = int((now - started_at).total_seconds())
         if age_seconds >= int(STALE_RUNNING_AFTER.total_seconds()):
-            stale.append({"id": job.id, "target_value": job.target_value, "started_at": job.started_at.isoformat(), "age_seconds": age_seconds})
+            stale.append(
+                {
+                    "id": job.id,
+                    "target_value": job.target_value,
+                    "started_at": job.started_at.isoformat(),
+                    "age_seconds": age_seconds,
+                }
+            )
     return {
         "schema": "socmint.scan_job_health.v7_8_1",
         "generated_at": now.isoformat(),

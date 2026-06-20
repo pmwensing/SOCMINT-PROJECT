@@ -30,7 +30,8 @@ def _attempt_rows(attempts: list[Any]) -> list[dict[str, Any]]:
             "status": status,
             "operator": attempt.get("operator") or "unassigned",
             "detail": attempt.get("detail") or "",
-            "retryable": status in RETRYABLE_STATUSES and attempt.get("retryable", True) is not False,
+            "retryable": status in RETRYABLE_STATUSES
+            and attempt.get("retryable", True) is not False,
         }
         rows.append(
             {
@@ -48,7 +49,11 @@ def _ledger_state(
     blockers = []
     if operations.get("dispatchable") is not True:
         blockers.extend(deepcopy(operations.get("blockers") or []))
-        blockers.append(_blocker("operations_blocked", "delivery operations snapshot is not dispatchable"))
+        blockers.append(
+            _blocker(
+                "operations_blocked", "delivery operations snapshot is not dispatchable"
+            )
+        )
     if blockers:
         return "blocked", blockers, False
 
@@ -71,11 +76,19 @@ def build_case_delivery_attempt_ledger(
         if isinstance(safe_payload.get("operations"), dict)
         else build_case_delivery_operations_from_request(case_id, safe_payload)
     )
-    attempts = _attempt_rows(safe_payload.get("attempts") if isinstance(safe_payload.get("attempts"), list) else [])
+    attempts = _attempt_rows(
+        safe_payload.get("attempts")
+        if isinstance(safe_payload.get("attempts"), list)
+        else []
+    )
     state, blockers, retry_eligible = _ledger_state(operations, attempts)
     latest_attempt = attempts[-1] if attempts else {}
-    success_count = sum(1 for attempt in attempts if attempt.get("status") in SUCCESS_STATUSES)
-    failure_count = sum(1 for attempt in attempts if attempt.get("status") in RETRYABLE_STATUSES)
+    success_count = sum(
+        1 for attempt in attempts if attempt.get("status") in SUCCESS_STATUSES
+    )
+    failure_count = sum(
+        1 for attempt in attempts if attempt.get("status") in RETRYABLE_STATUSES
+    )
     payload_core = {
         "schema": CASE_DELIVERY_ATTEMPT_LEDGER_SCHEMA,
         "version": VERSION,
@@ -95,7 +108,9 @@ def build_case_delivery_attempt_ledger(
         "operations": operations,
         "attempts": attempts,
         "blockers": blockers,
-        "next_action": "record_delivery_attempt" if retry_eligible else "review_delivery_attempts",
+        "next_action": "record_delivery_attempt"
+        if retry_eligible
+        else "review_delivery_attempts",
     }
     return {
         **result,
@@ -103,5 +118,7 @@ def build_case_delivery_attempt_ledger(
     }
 
 
-def build_case_delivery_attempt_ledger_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def build_case_delivery_attempt_ledger_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     return build_case_delivery_attempt_ledger(case_id, payload)

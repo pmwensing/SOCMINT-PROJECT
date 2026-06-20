@@ -60,7 +60,10 @@ def _event_stage(event: dict[str, Any]) -> str:
     details = event.get("details") or {}
     if action == "case_reopen_authorization" and details.get("decision") != "authorize":
         return "archived"
-    if action == "case_supervisor_closure_decision" and details.get("decision") != "close":
+    if (
+        action == "case_supervisor_closure_decision"
+        and details.get("decision") != "close"
+    ):
         return "closure_review"
     return STAGE_ACTIONS.get(action, "active")
 
@@ -77,19 +80,23 @@ def normalize_case_stage(
     for event in events:
         stage = _event_stage(event)
         if stage != last_stage:
-            transitions.append({
-                "stage": stage,
-                "entered_at": event.get("occurred_at"),
-                "source_action": event.get("action"),
-                "source_record_id": event.get("record_id"),
-            })
+            transitions.append(
+                {
+                    "stage": stage,
+                    "entered_at": event.get("occurred_at"),
+                    "source_action": event.get("action"),
+                    "source_record_id": event.get("record_id"),
+                }
+            )
             last_stage = stage
 
     current_stage = transitions[-1]["stage"] if transitions else "unstarted"
     prior_stage = transitions[-2]["stage"] if len(transitions) > 1 else None
     entered_at = transitions[-1]["entered_at"] if transitions else None
     entered_dt = _parse(entered_at)
-    duration_seconds = max(0, int((now - entered_dt).total_seconds())) if entered_dt else None
+    duration_seconds = (
+        max(0, int((now - entered_dt).total_seconds())) if entered_dt else None
+    )
 
     blockers = []
     for event in events:
@@ -107,7 +114,9 @@ def normalize_case_stage(
         "prior_stage": prior_stage,
         "stage_entered_at": entered_at,
         "stage_duration_seconds": duration_seconds,
-        "stage_duration_hours": round(duration_seconds / 3600, 2) if duration_seconds is not None else None,
+        "stage_duration_hours": round(duration_seconds / 3600, 2)
+        if duration_seconds is not None
+        else None,
         "progress_position": position,
         "progress_total": len(STAGES),
         "progress_percent": round(position / len(STAGES) * 100, 1),
@@ -127,7 +136,10 @@ def build_case_status_stage_overview(
 ) -> dict[str, Any]:
     grouped = _case_events()
     case_ids = sorted(set(grouped) | set(_configured_case_ids()))
-    cases = [normalize_case_stage(case_id, grouped.get(case_id, []), now=now) for case_id in case_ids]
+    cases = [
+        normalize_case_stage(case_id, grouped.get(case_id, []), now=now)
+        for case_id in case_ids
+    ]
     counts = Counter(item["current_stage"] for item in cases)
     return {
         "schema": SCHEMA,
@@ -135,7 +147,9 @@ def build_case_status_stage_overview(
         "status": "ready",
         "stage_model": list(STAGES),
         "stage_counts": dict(sorted(counts.items())),
-        "cases": sorted(cases, key=lambda item: (item["progress_position"], item["case_id"])),
+        "cases": sorted(
+            cases, key=lambda item: (item["progress_position"], item["case_id"])
+        ),
         "case_count": len(cases),
         "blocked_count": sum(1 for item in cases if item["blocked"]),
         "source_records_mutated": False,

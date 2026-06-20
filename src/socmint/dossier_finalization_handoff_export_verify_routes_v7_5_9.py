@@ -6,8 +6,12 @@ from flask import jsonify, request
 
 from .dossier_finalization_handoff_export_verify_v7_5_9 import _base_report
 from .dossier_finalization_handoff_export_verify_v7_5_9 import _finding
-from .dossier_finalization_handoff_export_verify_v7_5_9 import summarize_handoff_export_verification
-from .dossier_finalization_handoff_export_verify_v7_5_9 import verify_handoff_export_bundle
+from .dossier_finalization_handoff_export_verify_v7_5_9 import (
+    summarize_handoff_export_verification,
+)
+from .dossier_finalization_handoff_export_verify_v7_5_9 import (
+    verify_handoff_export_bundle,
+)
 from .dossier_finalization_handoff_export_verify_v7_5_9 import verify_handoff_export_zip
 
 
@@ -25,13 +29,21 @@ def _failed_base64_report(detail: str) -> dict:
 
 
 def register_dossier_finalization_handoff_export_verify_routes(app):
-    @app.post("/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index/export/verify")
+    @app.post(
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index/export/verify"
+    )
     def api_verify_handoff_export_bundle():
         payload = _request_payload()
-        bundle = payload.get("bundle") if isinstance(payload.get("bundle"), dict) else payload
+        bundle = (
+            payload.get("bundle")
+            if isinstance(payload.get("bundle"), dict)
+            else payload
+        )
         return jsonify(verify_handoff_export_bundle(bundle))
 
-    @app.post("/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index/export/verify-zip")
+    @app.post(
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index/export/verify-zip"
+    )
     def api_verify_handoff_export_zip():
         payload = _request_payload()
         encoded = payload.get("zip_base64")

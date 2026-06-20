@@ -29,10 +29,18 @@ SAMPLE_RESULTS: dict[str, dict[str, Any]] = {
         "raw_result": {
             "status": "completed",
             "returncode": 0,
-            "stdout": json.dumps({
-                "GitHub": {"status": "found", "url": "https://github.com/example_user_001"},
-                "GitLab": {"exists": True, "profile_url": "https://gitlab.com/example_user_001"},
-            }),
+            "stdout": json.dumps(
+                {
+                    "GitHub": {
+                        "status": "found",
+                        "url": "https://github.com/example_user_001",
+                    },
+                    "GitLab": {
+                        "exists": True,
+                        "profile_url": "https://gitlab.com/example_user_001",
+                    },
+                }
+            ),
             "stderr": "",
         },
         "expected_types": {"profile_url"},
@@ -82,7 +90,10 @@ def _sample_result(connector: str, sample: dict[str, Any]) -> dict[str, Any]:
 
 
 def normalization_qa_report() -> dict[str, Any]:
-    samples = [_sample_result(connector, sample) for connector, sample in SAMPLE_RESULTS.items()]
+    samples = [
+        _sample_result(connector, sample)
+        for connector, sample in SAMPLE_RESULTS.items()
+    ]
     passed = sum(1 for item in samples if item["status"] == "pass")
     return {
         "schema": CONNECTOR_RUN_QA_SCHEMA,
@@ -142,10 +153,12 @@ def connector_run_qa_report() -> dict[str, Any]:
         "qa_gate": {
             "decision": "go" if ok else "hold",
             "required_before_real_runs": [
-                issue for issue, passed in {
+                issue
+                for issue, passed in {
                     "normalization_samples": normalization["status"] == "pass",
                     "core_connector_runtime": runtime["status"] == "pass",
-                }.items() if not passed
+                }.items()
+                if not passed
             ],
         },
     }

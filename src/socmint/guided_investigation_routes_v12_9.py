@@ -25,5 +25,15 @@ def register_guided_investigation_routes(app) -> None:
     def api_guided_investigation():
         return jsonify(guided_investigation_payload(subject_id=_subject_id()))
 
-    app.add_url_rule("/investigation/flow", endpoint="guided_investigation_dashboard", view_func=guided_investigation_dashboard, methods=["GET"])
-    app.add_url_rule("/api/v1/investigation/flow", endpoint="api_guided_investigation", view_func=api_guided_investigation, methods=["GET"])
+    app.add_url_rule(
+        "/investigation/flow",
+        endpoint="guided_investigation_dashboard",
+        view_func=guided_investigation_dashboard,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/investigation/flow",
+        endpoint="api_guided_investigation",
+        view_func=api_guided_investigation,
+        methods=["GET"],
+    )

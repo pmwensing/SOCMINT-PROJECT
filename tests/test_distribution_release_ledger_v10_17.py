@@ -33,7 +33,9 @@ def _evidence():
 
 def _verified_export(tmp_path, monkeypatch, subject_id="subject-release-ledger-safe"):
     monkeypatch.chdir(tmp_path)
-    persist_export_pack(_subject(subject_id), _evidence(), analyst_reviewed=True, audit=True)
+    persist_export_pack(
+        _subject(subject_id), _evidence(), analyst_reviewed=True, audit=True
+    )
     record_distribution_action(
         case_id="case-release-ledger-1017",
         subject_id=subject_id,
@@ -99,7 +101,9 @@ def test_v10_17_release_state_ready_to_seal_before_seal(tmp_path, monkeypatch):
 
 
 def test_v10_17_ledger_summary_lists_released_subjects(tmp_path, monkeypatch):
-    subject_id = _verified_export(tmp_path, monkeypatch, "subject-release-ledger-summary")
+    subject_id = _verified_export(
+        tmp_path, monkeypatch, "subject-release-ledger-summary"
+    )
     seal = create_distribution_release_seal(
         case_id="case-release-ledger-1017",
         subject_id=subject_id,
@@ -132,14 +136,25 @@ def test_v10_17_release_seal_markdown_contains_seal_fields(tmp_path, monkeypatch
 def test_v10_17_release_ledger_routes_are_registered():
     routes = {rule.rule for rule in app.url_map.iter_rules()}
 
-    assert "/api/v1/dossier-builder/v3/distribution-release/<case_id>/<subject_id>/seal" in routes
-    assert "/api/v1/dossier-builder/v3/distribution-release/<case_id>/<subject_id>" in routes
-    assert "/api/v1/dossier-builder/v3/distribution-release/<case_id>/<subject_id>/markdown" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/distribution-release/<case_id>/<subject_id>/seal"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/distribution-release/<case_id>/<subject_id>"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/distribution-release/<case_id>/<subject_id>/markdown"
+        in routes
+    )
     assert "/api/v1/dossier-builder/v3/distribution-release-ledger/<case_id>" in routes
 
 
 def test_v10_17_release_state_api_requires_login():
     client = app.test_client()
-    response = client.get("/api/v1/dossier-builder/v3/distribution-release/case/subject")
+    response = client.get(
+        "/api/v1/dossier-builder/v3/distribution-release/case/subject"
+    )
 
     assert response.status_code == 401

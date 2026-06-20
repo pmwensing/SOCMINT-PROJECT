@@ -36,7 +36,9 @@ def normalize_export_mode(mode: str | None) -> str:
     return value if value in ALLOWED_EXPORT_MODES else "draft"
 
 
-def evaluate_dossier_export(payload: dict[str, Any], mode: str | None = "draft") -> dict[str, Any]:
+def evaluate_dossier_export(
+    payload: dict[str, Any], mode: str | None = "draft"
+) -> dict[str, Any]:
     export_mode = normalize_export_mode(mode)
     gate = _quality_gate(payload)
     quality_status = str(gate.get("status") or "not_checked")
@@ -56,7 +58,11 @@ def evaluate_dossier_export(payload: dict[str, Any], mode: str | None = "draft")
             final_export_blocked=True,
         )
     else:
-        reason = "Draft/preview export allowed with quality gate context." if export_mode != "final" else "Final dossier export allowed."
+        reason = (
+            "Draft/preview export allowed with quality gate context."
+            if export_mode != "final"
+            else "Final dossier export allowed."
+        )
         decision = ExportDecision(
             schema=EXPORT_ENFORCEMENT_SCHEMA,
             generated_at=utc_now(),
@@ -72,7 +78,9 @@ def evaluate_dossier_export(payload: dict[str, Any], mode: str | None = "draft")
     return asdict(decision)
 
 
-def attach_export_enforcement(payload: dict[str, Any], mode: str | None = "draft") -> dict[str, Any]:
+def attach_export_enforcement(
+    payload: dict[str, Any], mode: str | None = "draft"
+) -> dict[str, Any]:
     enriched = dict(payload)
     enriched["export_enforcement"] = evaluate_dossier_export(payload, mode=mode)
     enriched["final_export_allowed"] = bool(enriched["export_enforcement"]["allowed"])

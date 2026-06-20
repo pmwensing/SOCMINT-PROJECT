@@ -24,7 +24,9 @@ def register_assertion_trust_gate_routes(app) -> None:
     def assertion_trust_gate_dashboard():
         payload = assertion_trust_dashboard_plus(subject_id=_subject_id())
         card = assertion_command_center_card(subject_id=_subject_id())
-        return render_template("assertion_trust_gate_dashboard.html", payload=payload, card=card)
+        return render_template(
+            "assertion_trust_gate_dashboard.html", payload=payload, card=card
+        )
 
     @login_required
     def api_assertion_trust_gate():
@@ -38,7 +40,27 @@ def register_assertion_trust_gate_routes(app) -> None:
     def api_assertion_trust_report():
         return jsonify(write_assertion_trust_report(subject_id=_subject_id()))
 
-    app.add_url_rule("/assertions/trust/gate", endpoint="assertion_trust_gate_dashboard", view_func=assertion_trust_gate_dashboard, methods=["GET"])
-    app.add_url_rule("/api/v1/assertions/trust/gate", endpoint="api_assertion_trust_gate", view_func=api_assertion_trust_gate, methods=["GET"])
-    app.add_url_rule("/api/v1/assertions/trust/summary", endpoint="api_assertion_trust_summary", view_func=api_assertion_trust_summary, methods=["GET"])
-    app.add_url_rule("/api/v1/assertions/trust/report", endpoint="api_assertion_trust_report", view_func=api_assertion_trust_report, methods=["GET"])
+    app.add_url_rule(
+        "/assertions/trust/gate",
+        endpoint="assertion_trust_gate_dashboard",
+        view_func=assertion_trust_gate_dashboard,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/assertions/trust/gate",
+        endpoint="api_assertion_trust_gate",
+        view_func=api_assertion_trust_gate,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/assertions/trust/summary",
+        endpoint="api_assertion_trust_summary",
+        view_func=api_assertion_trust_summary,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/assertions/trust/report",
+        endpoint="api_assertion_trust_report",
+        view_func=api_assertion_trust_report,
+        methods=["GET"],
+    )

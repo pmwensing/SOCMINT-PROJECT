@@ -63,7 +63,9 @@ def full_report_export_history(subject_id: int, limit: int = 25) -> dict[str, An
     }
 
 
-def compare_full_report_exports(subject_id: int, left: str | None = None, right: str | None = None) -> dict[str, Any]:
+def compare_full_report_exports(
+    subject_id: int, left: str | None = None, right: str | None = None
+) -> dict[str, Any]:
     history = full_report_export_history(subject_id, limit=100)
     exports = history["exports"]
     by_name = {item.get("name"): item for item in exports if item.get("name")}
@@ -95,7 +97,8 @@ def compare_full_report_exports(subject_id: int, left: str | None = None, right:
             "left": left_score.get(key),
             "right": right_score.get(key),
             "delta": (right_score.get(key) or 0) - (left_score.get(key) or 0)
-            if isinstance(left_score.get(key, 0), (int, float)) and isinstance(right_score.get(key, 0), (int, float))
+            if isinstance(left_score.get(key, 0), (int, float))
+            and isinstance(right_score.get(key, 0), (int, float))
             else None,
         }
         for key in keys
@@ -138,16 +141,43 @@ def _history_html(history: dict[str, Any], compare: dict[str, Any]) -> str:
     for item in history.get("exports", []):
         actions = []
         if item.get("zip_name"):
-            actions.append(_artifact_link("Download ZIP", _download_url(subject_id, item.get("zip_name")), True))
+            actions.append(
+                _artifact_link(
+                    "Download ZIP",
+                    _download_url(subject_id, item.get("zip_name")),
+                    True,
+                )
+            )
         if item.get("manifest_name"):
-            actions.append(_artifact_link("Download Manifest", _download_url(subject_id, item.get("manifest_name"))))
-            actions.append(_artifact_link("View Manifest", _view_url(subject_id, item.get("manifest_name"))))
+            actions.append(
+                _artifact_link(
+                    "Download Manifest",
+                    _download_url(subject_id, item.get("manifest_name")),
+                )
+            )
+            actions.append(
+                _artifact_link(
+                    "View Manifest", _view_url(subject_id, item.get("manifest_name"))
+                )
+            )
         if item.get("html_name"):
-            actions.append(_artifact_link("Open HTML", _view_url(subject_id, item.get("html_name"))))
+            actions.append(
+                _artifact_link(
+                    "Open HTML", _view_url(subject_id, item.get("html_name"))
+                )
+            )
         if item.get("json_name"):
-            actions.append(_artifact_link("View JSON", _view_url(subject_id, item.get("json_name"))))
+            actions.append(
+                _artifact_link(
+                    "View JSON", _view_url(subject_id, item.get("json_name"))
+                )
+            )
         if item.get("markdown_name"):
-            actions.append(_artifact_link("View Markdown", _view_url(subject_id, item.get("markdown_name"))))
+            actions.append(
+                _artifact_link(
+                    "View Markdown", _view_url(subject_id, item.get("markdown_name"))
+                )
+            )
         cards.append(
             "<article class='export-artifact-card'>"
             f"<span>Export result</span><strong>{html.escape(str(item.get('name') or ''))}</strong>"
@@ -176,8 +206,8 @@ def _history_html(history: dict[str, Any], compare: dict[str, Any]) -> str:
         <section class='runtime-utility-card'>
           <h1>Full Report Export History — Subject {subject_id}</h1>
           <div class='export-summary-list'>
-            <div><span>Exports</span><strong>{history.get('count', 0)}</strong></div>
-            <div><span>History API</span><code>{html.escape(history.get('schema', ''))}</code></div>
+            <div><span>Exports</span><strong>{history.get("count", 0)}</strong></div>
+            <div><span>History API</span><code>{html.escape(history.get("schema", ""))}</code></div>
           </div>
           <div class='runtime-utility-actions'>
             <a href='{view_url}'>Export Panel</a>
@@ -226,7 +256,9 @@ def register_full_report_history_routes(app) -> None:
             left=request.args.get("left"),
             right=request.args.get("right"),
         )
-        return Response(_history_html(history, compare), mimetype="text/html; charset=utf-8")
+        return Response(
+            _history_html(history, compare), mimetype="text/html; charset=utf-8"
+        )
 
     app.add_url_rule(
         "/api/v1/spine/subjects/<int:subject_id>/full-report/history",

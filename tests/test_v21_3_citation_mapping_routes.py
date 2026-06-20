@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -25,32 +27,48 @@ def _payload():
         "citation_count": 1,
         "unresolved_count": 0,
         "unresolved": [],
-        "citation_catalog": [{
-            "label": "C1", "claim_id": "assertion:1",
-            "claim_value": "value", "source": "assertion",
-            "evidence_refs": ["evidence-1"], "artifact_links": [],
-        }],
-        "sections": [{
-            "section_id": "key_findings", "title": "Key Findings",
-            "position": 1, "citation_ready_narrative": "Narrative [C1]",
-            "citations_complete": True,
-            "findings": [{
-                "citation_ready_text": "Finding [C1]",
-                "citation_labels": ["C1"],
-                "unresolved_claim_ids": [],
-                "unresolved_evidence_ids": [],
-            }],
-        }],
+        "citation_catalog": [
+            {
+                "label": "C1",
+                "claim_id": "assertion:1",
+                "claim_value": "value",
+                "source": "assertion",
+                "evidence_refs": ["evidence-1"],
+                "artifact_links": [],
+            }
+        ],
+        "sections": [
+            {
+                "section_id": "key_findings",
+                "title": "Key Findings",
+                "position": 1,
+                "citation_ready_narrative": "Narrative [C1]",
+                "citations_complete": True,
+                "findings": [
+                    {
+                        "citation_ready_text": "Finding [C1]",
+                        "citation_labels": ["C1"],
+                        "unresolved_claim_ids": [],
+                        "unresolved_evidence_ids": [],
+                    }
+                ],
+            }
+        ],
         "latest_snapshot": None,
     }
 
 
 def test_v21_3_routes_and_ui(tmp_path, monkeypatch):
     from src.socmint import dossier_citation_mapping_routes_v21_3 as routes
-    monkeypatch.setattr(routes, "build_dossier_citation_mapping", lambda *a, **k: _payload())
-    monkeypatch.setattr(routes, "save_citation_mapping_snapshot", lambda *a, **k: {
-        "status": "saved", "snapshot_record_id": 7
-    })
+
+    monkeypatch.setattr(
+        routes, "build_dossier_citation_mapping", lambda *a, **k: _payload()
+    )
+    monkeypatch.setattr(
+        routes,
+        "save_citation_mapping_snapshot",
+        lambda *a, **k: {"status": "saved", "snapshot_record_id": 7},
+    )
     client = _app(tmp_path, monkeypatch).test_client()
     with client.session_transaction() as sess:
         sess["user"] = "operator"
@@ -59,7 +77,8 @@ def test_v21_3_routes_and_ui(tmp_path, monkeypatch):
     ui = client.get("/dossier-assembly/case-alpha/citations?subject_id=42")
     saved = client.post(
         "/api/v1/dossier-assembly/case-alpha/citation-snapshot?subject_id=42",
-        json={}, headers={"X-CSRF-Token": "test-csrf"},
+        json={},
+        headers={"X-CSRF-Token": "test-csrf"},
     )
     assert api.status_code == 200
     assert ui.status_code == 200
@@ -71,9 +90,18 @@ def test_v21_3_routes_and_ui(tmp_path, monkeypatch):
 
 
 def test_v21_3_release_note_client_and_no_migration():
-    note = Path("release/V21_3_SOURCE_EVIDENCE_CITATION_MAPPING.md").read_text(encoding="utf-8")
-    script = Path("src/socmint/static/dossier_citation_mapping_v21_3.js").read_text(encoding="utf-8")
-    migrations = [p for d in (Path("migrations"), Path("alembic")) if d.exists() for p in d.rglob("*v21_3*")]
+    note = Path("release/V21_3_SOURCE_EVIDENCE_CITATION_MAPPING.md").read_text(
+        encoding="utf-8"
+    )
+    script = Path("src/socmint/static/dossier_citation_mapping_v21_3.js").read_text(
+        encoding="utf-8"
+    )
+    migrations = [
+        p
+        for d in (Path("migrations"), Path("alembic"))
+        if d.exists()
+        for p in d.rglob("*v21_3*")
+    ]
     assert "unresolved citations" in note
     assert "citation-ready dossier content" in note
     assert "draft snapshot" in note

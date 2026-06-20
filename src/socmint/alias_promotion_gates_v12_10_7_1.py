@@ -25,14 +25,42 @@ ASSET_ONLY_HOSTS = {
 }
 
 ASSET_EXTENSIONS = (
-    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".avif", ".css", ".js"
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".svg",
+    ".ico",
+    ".avif",
+    ".css",
+    ".js",
 )
 
 ASSET_PATH_HINTS = (
-    "avatar", "avatars", "profile_images", "images", "image", "img",
-    "favicon", "favicons", "logo", "logos", "static", "assets", "asset",
-    "cdn", "webapp", "manifest", "mstile", "default_avatar", "cropcenter",
-    "ssr-avatar", "ssr_", "ytc/", "30day-avatar",
+    "avatar",
+    "avatars",
+    "profile_images",
+    "images",
+    "image",
+    "img",
+    "favicon",
+    "favicons",
+    "logo",
+    "logos",
+    "static",
+    "assets",
+    "asset",
+    "cdn",
+    "webapp",
+    "manifest",
+    "mstile",
+    "default_avatar",
+    "cropcenter",
+    "ssr-avatar",
+    "ssr_",
+    "ytc/",
+    "30day-avatar",
 )
 
 PHONE_MIN_DIGITS = 10
@@ -56,8 +84,12 @@ def is_asset_only_url(url: Any) -> bool:
     parsed = urlparse(value)
     host = domain_for_url(value)
     path = parsed.path.lower()
-    host_match = any(host == item or host.endswith("." + item) for item in ASSET_ONLY_HOSTS)
-    ext_match = any(path.endswith(ext) or f"{ext}?" in value for ext in ASSET_EXTENSIONS)
+    host_match = any(
+        host == item or host.endswith("." + item) for item in ASSET_ONLY_HOSTS
+    )
+    ext_match = any(
+        path.endswith(ext) or f"{ext}?" in value for ext in ASSET_EXTENSIONS
+    )
     hint_match = any(hint in path for hint in ASSET_PATH_HINTS)
     return (host_match and (ext_match or hint_match)) or (ext_match and hint_match)
 
@@ -67,7 +99,10 @@ def classify_asset_url(url: Any) -> str:
     if not is_asset_only_url(value):
         return "profile_url"
     path = urlparse(value).path.lower()
-    if any(token in path for token in ("avatar", "profile_images", "ytc/", "30day-avatar", "ssr-avatar")):
+    if any(
+        token in path
+        for token in ("avatar", "profile_images", "ytc/", "30day-avatar", "ssr-avatar")
+    ):
         return "avatar_url"
     return "static_asset_url"
 
@@ -111,7 +146,9 @@ def phone_rejection_reason(value: Any) -> str | None:
     return None
 
 
-def classify_observation_type(observation_type: str, value: Any) -> tuple[str, list[str], bool]:
+def classify_observation_type(
+    observation_type: str, value: Any
+) -> tuple[str, list[str], bool]:
     reasons: list[str] = []
     otype = norm(observation_type)
     if otype in {"profile_url", "url"} and is_asset_only_url(value):
@@ -121,7 +158,11 @@ def classify_observation_type(observation_type: str, value: Any) -> tuple[str, l
         reason = phone_rejection_reason(value)
         if reason:
             reasons.append(reason)
-            safe_type = "platform_artifact_id" if reason == "rejected_platform_artifact_id" else "metadata_artifact"
+            safe_type = (
+                "platform_artifact_id"
+                if reason == "rejected_platform_artifact_id"
+                else "metadata_artifact"
+            )
             return safe_type, reasons, True
     return otype, reasons, False
 
@@ -136,7 +177,9 @@ def promotion_gate_for_observation(observation: dict[str, Any]) -> dict[str, Any
         "original_type": otype,
         "safe_type": converted_type,
         "reason_labels": reasons,
-        "ui_badge": "Promotion blocked: not identity evidence" if blocked else "Promotion allowed",
+        "ui_badge": "Promotion blocked: not identity evidence"
+        if blocked
+        else "Promotion allowed",
     }
 
 
@@ -163,21 +206,25 @@ def apply_promotion_gates_to_alias(alias: dict[str, Any]) -> dict[str, Any]:
     value = alias.get("normalized_value") or alias.get("alias_value")
 
     if alias_type == "url" and is_asset_only_url(value):
-        gate.update({
-            "blocked": True,
-            "reason_labels": ["rejected_asset_only_url"],
-            "ui_badge": "Promotion blocked: not identity evidence",
-            "safe_type": classify_asset_url(value),
-        })
+        gate.update(
+            {
+                "blocked": True,
+                "reason_labels": ["rejected_asset_only_url"],
+                "ui_badge": "Promotion blocked: not identity evidence",
+                "safe_type": classify_asset_url(value),
+            }
+        )
     elif alias_type == "phone":
         reason = phone_rejection_reason(value)
         if reason:
-            gate.update({
-                "blocked": True,
-                "reason_labels": [reason],
-                "ui_badge": "Promotion blocked: not identity evidence",
-                "safe_type": "metadata_artifact",
-            })
+            gate.update(
+                {
+                    "blocked": True,
+                    "reason_labels": [reason],
+                    "ui_badge": "Promotion blocked: not identity evidence",
+                    "safe_type": "metadata_artifact",
+                }
+            )
 
     alias["promotion_gate"] = gate
     if gate["blocked"]:

@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from src.socmint.collection_product_review_v29_7 import REQUIRED_ROUTES, build_collection_product_review
+from src.socmint.collection_product_review_v29_7 import (
+    REQUIRED_ROUTES,
+    build_collection_product_review,
+)
 
 
 class Route:

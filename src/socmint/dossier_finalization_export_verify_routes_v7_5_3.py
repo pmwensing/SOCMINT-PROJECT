@@ -28,7 +28,11 @@ def register_dossier_finalization_export_verify_routes(app):
     @app.post("/api/v1/dossier-builder/v3/intelligence/finalization/export/verify")
     def api_verify_finalization_export_packet():
         payload = _request_payload()
-        packet = payload.get("packet") if isinstance(payload.get("packet"), dict) else payload
+        packet = (
+            payload.get("packet")
+            if isinstance(payload.get("packet"), dict)
+            else payload
+        )
         return jsonify(verify_finalization_export_packet(packet))
 
     @app.post("/api/v1/dossier-builder/v3/intelligence/finalization/export/verify-zip")

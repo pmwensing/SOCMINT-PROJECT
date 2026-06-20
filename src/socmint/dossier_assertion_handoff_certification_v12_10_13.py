@@ -25,8 +25,14 @@ def build_dossier_assertion_handoff_certification(
         decision = "REVIEW_BLOCKED_QUEUE"
         next_action = "Resolve blocked handoff packets before assertion review."
     certification_checks = [
-        {"name": "handoff_verification_passed", "status": "pass" if verification_passed else "fail"},
-        {"name": "handoff_seal_present", "status": "pass" if handoff_seal.get("bundle_hash_sha256") else "fail"},
+        {
+            "name": "handoff_verification_passed",
+            "status": "pass" if verification_passed else "fail",
+        },
+        {
+            "name": "handoff_seal_present",
+            "status": "pass" if handoff_seal.get("bundle_hash_sha256") else "fail",
+        },
         {"name": "manual_assertion_review_required", "status": "review"},
     ]
     return {
@@ -46,7 +52,9 @@ def build_dossier_assertion_handoff_certification(
     }
 
 
-def export_dossier_assertion_handoff_certification_report(payload: dict[str, Any], fmt: str = "json") -> tuple[str, str, str]:
+def export_dossier_assertion_handoff_certification_report(
+    payload: dict[str, Any], fmt: str = "json"
+) -> tuple[str, str, str]:
     fmt = (fmt or "json").lower().strip()
     if fmt in {"md", "markdown"}:
         lines = [
@@ -64,6 +72,25 @@ def export_dossier_assertion_handoff_certification_report(payload: dict[str, Any
         ]
         for check in payload.get("certification_checks", []):
             lines.append(f"- {check.get('name')}: {check.get('status')}")
-        lines.extend(["", "## Next Action", "", payload.get("next_action", ""), "", "## Rule", "", payload.get("dossier_rule", "")])
-        return "text/markdown", "dossier-assertion-handoff-certification.md", "\n".join(lines)
-    return "application/json", "dossier-assertion-handoff-certification.json", json.dumps(payload, indent=2, sort_keys=True)
+        lines.extend(
+            [
+                "",
+                "## Next Action",
+                "",
+                payload.get("next_action", ""),
+                "",
+                "## Rule",
+                "",
+                payload.get("dossier_rule", ""),
+            ]
+        )
+        return (
+            "text/markdown",
+            "dossier-assertion-handoff-certification.md",
+            "\n".join(lines),
+        )
+    return (
+        "application/json",
+        "dossier-assertion-handoff-certification.json",
+        json.dumps(payload, indent=2, sort_keys=True),
+    )

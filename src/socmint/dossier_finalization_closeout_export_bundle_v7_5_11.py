@@ -10,11 +10,17 @@ from datetime import UTC, datetime
 from typing import Any
 
 from .dossier_finalization_closeout_report_v7_5_10 import build_closeout_report
-from .dossier_finalization_closeout_report_v7_5_10 import render_closeout_report_markdown
+from .dossier_finalization_closeout_report_v7_5_10 import (
+    render_closeout_report_markdown,
+)
 from .dossier_finalization_closeout_report_v7_5_10 import summarize_closeout_report
 
-CLOSEOUT_EXPORT_BUNDLE_SCHEMA = "socmint.v7_5_11.dossier_finalization_closeout_export_bundle"
-CLOSEOUT_EXPORT_MANIFEST_SCHEMA = "socmint.v7_5_11.dossier_finalization_closeout_export_manifest"
+CLOSEOUT_EXPORT_BUNDLE_SCHEMA = (
+    "socmint.v7_5_11.dossier_finalization_closeout_export_bundle"
+)
+CLOSEOUT_EXPORT_MANIFEST_SCHEMA = (
+    "socmint.v7_5_11.dossier_finalization_closeout_export_manifest"
+)
 APPROVED_LINE = "v7.5.11"
 DEFAULT_BUNDLE_NAME = "socmint-v7.5.11-closeout-report-export"
 REQUIRED_FILES = (
@@ -120,7 +126,9 @@ def build_closeout_export_bundle_files(bundle: dict[str, Any]) -> dict[str, byte
         "closeout_report.md": render_closeout_report_markdown(report).encode("utf-8"),
         "closeout_report_summary.json": canonical_json(summary).encode("utf-8"),
     }
-    preview_bundle = {key: value for key, value in bundle.items() if key not in {"manifest", "files"}}
+    preview_bundle = {
+        key: value for key, value in bundle.items() if key not in {"manifest", "files"}
+    }
     files["README.md"] = _readme(preview_bundle).encode("utf-8")
     files["manifest.json"] = b"{}\n"
     manifest = closeout_export_manifest(files)
@@ -139,7 +147,9 @@ def build_closeout_export_zip(bundle: dict[str, Any]) -> bytes:
     return buffer.getvalue()
 
 
-def build_closeout_export_bundle(closeout_report: dict[str, Any], *, bundle_name: str | None = None) -> dict[str, Any]:
+def build_closeout_export_bundle(
+    closeout_report: dict[str, Any], *, bundle_name: str | None = None
+) -> dict[str, Any]:
     report = deepcopy(closeout_report or {})
     bundle: dict[str, Any] = {
         "schema": CLOSEOUT_EXPORT_BUNDLE_SCHEMA,
@@ -167,5 +177,7 @@ def build_closeout_export_bundle_from_verification_report(
     operator: str | None = None,
     notes: str | None = None,
 ) -> dict[str, Any]:
-    report = build_closeout_report(deepcopy(verification_report or {}), operator=operator, notes=notes)
+    report = build_closeout_report(
+        deepcopy(verification_report or {}), operator=operator, notes=notes
+    )
     return build_closeout_export_bundle(report, bundle_name=bundle_name)

@@ -14,30 +14,90 @@ SCHEMA = "socmint.cross_case_intelligence_workspace.v25_0"
 VERSION = "v25.0.0"
 
 ENTITY_KEYS = {
-    "entity", "entity_id", "subject", "subject_id", "person", "person_id",
-    "profile", "profile_id", "display_name", "full_name", "name",
+    "entity",
+    "entity_id",
+    "subject",
+    "subject_id",
+    "person",
+    "person_id",
+    "profile",
+    "profile_id",
+    "display_name",
+    "full_name",
+    "name",
 }
 IDENTIFIER_KEYS = {
-    "identifier", "identifier_value", "username", "user_name", "handle",
-    "email", "email_address", "phone", "phone_number", "account_id",
-    "external_id", "uid",
+    "identifier",
+    "identifier_value",
+    "username",
+    "user_name",
+    "handle",
+    "email",
+    "email_address",
+    "phone",
+    "phone_number",
+    "account_id",
+    "external_id",
+    "uid",
 }
 INFRASTRUCTURE_KEYS = {
-    "domain", "hostname", "host", "ip", "ip_address", "ipv4", "ipv6",
-    "url", "uri", "website", "endpoint",
+    "domain",
+    "hostname",
+    "host",
+    "ip",
+    "ip_address",
+    "ipv4",
+    "ipv6",
+    "url",
+    "uri",
+    "website",
+    "endpoint",
 }
 EVIDENCE_KEYS = {
-    "evidence", "evidence_id", "artifact", "artifact_id", "claim", "claim_id",
-    "assertion", "assertion_id", "source", "source_id", "capture", "capture_id",
-    "document_id", "media_id",
+    "evidence",
+    "evidence_id",
+    "artifact",
+    "artifact_id",
+    "claim",
+    "claim_id",
+    "assertion",
+    "assertion_id",
+    "source",
+    "source_id",
+    "capture",
+    "capture_id",
+    "document_id",
+    "media_id",
 }
 TIMELINE_KEYS = {
-    "event", "event_id", "event_type", "occurred_at", "observed_at", "captured_at",
-    "published_at", "timestamp", "date", "datetime", "time",
+    "event",
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "observed_at",
+    "captured_at",
+    "published_at",
+    "timestamp",
+    "date",
+    "datetime",
+    "time",
 }
 IGNORED_VALUES = {
-    "", "none", "null", "true", "false", "unknown", "ready", "complete",
-    "completed", "active", "blocked", "failed", "success", "saved", "recorded",
+    "",
+    "none",
+    "null",
+    "true",
+    "false",
+    "unknown",
+    "ready",
+    "complete",
+    "completed",
+    "active",
+    "blocked",
+    "failed",
+    "success",
+    "saved",
+    "recorded",
 }
 
 
@@ -75,11 +135,17 @@ def _category_for(key: str, value: str) -> str | None:
     key_name = key.lower().strip()
     if key_name in ENTITY_KEYS or key_name.endswith("_entity_id"):
         return "entity"
-    if key_name in IDENTIFIER_KEYS or key_name.endswith(("_username", "_handle", "_email")):
+    if key_name in IDENTIFIER_KEYS or key_name.endswith(
+        ("_username", "_handle", "_email")
+    ):
         return "identifier"
-    if key_name in INFRASTRUCTURE_KEYS or key_name.endswith(("_domain", "_hostname", "_ip", "_url")):
+    if key_name in INFRASTRUCTURE_KEYS or key_name.endswith(
+        ("_domain", "_hostname", "_ip", "_url")
+    ):
         return "infrastructure"
-    if key_name in EVIDENCE_KEYS or key_name.endswith(("_evidence_id", "_artifact_id", "_claim_id", "_assertion_id")):
+    if key_name in EVIDENCE_KEYS or key_name.endswith(
+        ("_evidence_id", "_artifact_id", "_claim_id", "_assertion_id")
+    ):
         return "evidence"
     if key_name in TIMELINE_KEYS or key_name.endswith(("_at", "_date", "_timestamp")):
         return "timeline"
@@ -128,14 +194,18 @@ def _case_audit_records() -> list[dict[str, Any]]:
             details = _json_details(row)
             if not isinstance(details, dict):
                 continue
-            records.append({
-                "case_id": case_id,
-                "record_id": row.id,
-                "action": action,
-                "actor": row.actor,
-                "occurred_at": row.created_at.isoformat() if row.created_at else None,
-                "details": details,
-            })
+            records.append(
+                {
+                    "case_id": case_id,
+                    "record_id": row.id,
+                    "action": action,
+                    "actor": row.actor,
+                    "occurred_at": row.created_at.isoformat()
+                    if row.created_at
+                    else None,
+                    "details": details,
+                }
+            )
         return records
     finally:
         session.close()
@@ -156,7 +226,9 @@ def build_cross_case_intelligence_workspace(
     records: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     minimum = max(2, int(minimum_case_count))
-    source_records = _visible_records(records if records is not None else _case_audit_records(), allowed_case_ids)
+    source_records = _visible_records(
+        records if records is not None else _case_audit_records(), allowed_case_ids
+    )
 
     values: dict[tuple[str, str], dict[str, Any]] = {}
     case_actions: dict[str, Counter[str]] = defaultdict(Counter)
@@ -186,13 +258,16 @@ def build_cross_case_intelligence_workspace(
         for category, display_value, path in _walk(details):
             match_value = _normalized_match_value(category, display_value)
             key = (category, match_value)
-            entry = values.setdefault(key, {
-                "category": category,
-                "match_value": match_value,
-                "display_values": set(),
-                "case_ids": set(),
-                "occurrences": [],
-            })
+            entry = values.setdefault(
+                key,
+                {
+                    "category": category,
+                    "match_value": match_value,
+                    "display_values": set(),
+                    "case_ids": set(),
+                    "occurrences": [],
+                },
+            )
             occurrence = {
                 **provenance_base,
                 "field_path": path,
@@ -242,10 +317,18 @@ def build_cross_case_intelligence_workspace(
         correlations[plural[entry["category"]]].append(item)
 
     for items in correlations.values():
-        items.sort(key=lambda item: (-item["case_count"], -item["occurrence_count"], item["match_value"]))
+        items.sort(
+            key=lambda item: (
+                -item["case_count"],
+                -item["occurrence_count"],
+                item["match_value"],
+            )
+        )
 
     action_patterns = []
-    all_actions = sorted({action for counts in case_actions.values() for action in counts})
+    all_actions = sorted(
+        {action for counts in case_actions.values() for action in counts}
+    )
     for action in all_actions:
         participating = {
             case_id: counts[action]
@@ -253,15 +336,17 @@ def build_cross_case_intelligence_workspace(
             if counts[action] > 0
         }
         if len(participating) >= minimum:
-            action_patterns.append({
-                "pattern_type": "repeated_action",
-                "pattern": action,
-                "case_ids": sorted(participating),
-                "case_count": len(participating),
-                "occurrence_count": sum(participating.values()),
-                "counts_by_case": dict(sorted(participating.items())),
-                "human_review_required": True,
-            })
+            action_patterns.append(
+                {
+                    "pattern_type": "repeated_action",
+                    "pattern": action,
+                    "case_ids": sorted(participating),
+                    "case_count": len(participating),
+                    "occurrence_count": sum(participating.values()),
+                    "counts_by_case": dict(sorted(participating.items())),
+                    "human_review_required": True,
+                }
+            )
 
     blocker_patterns = [
         {
@@ -297,8 +382,12 @@ def build_cross_case_intelligence_workspace(
         "status": "ready",
         "minimum_case_count": minimum,
         "access_scope": {
-            "mode": "restricted" if allowed_case_ids is not None else "all_visible_cases",
-            "allowed_case_ids": sorted(allowed_case_ids) if allowed_case_ids is not None else None,
+            "mode": "restricted"
+            if allowed_case_ids is not None
+            else "all_visible_cases",
+            "allowed_case_ids": sorted(allowed_case_ids)
+            if allowed_case_ids is not None
+            else None,
             "visible_case_ids": case_ids,
         },
         "counts": counts,
@@ -307,7 +396,10 @@ def build_cross_case_intelligence_workspace(
         "case_provenance": {
             case_id: sorted(
                 records,
-                key=lambda value: (value.get("occurred_at") or "", int(value.get("record_id") or 0)),
+                key=lambda value: (
+                    value.get("occurred_at") or "",
+                    int(value.get("record_id") or 0),
+                ),
             )
             for case_id, records in sorted(case_provenance.items())
         },

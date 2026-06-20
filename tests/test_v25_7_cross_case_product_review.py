@@ -47,10 +47,12 @@ def test_v25_7_product_review_detects_missing_route_and_duplicate():
             self.methods = methods
 
     routes = [Route(rule, {"GET"}) for rule in REQUIRED_ROUTES[:-1]]
-    routes.extend([
-        Route("/cross-case-intelligence", {"GET"}),
-        Route("/cross-case-intelligence", {"GET"}),
-    ])
+    routes.extend(
+        [
+            Route("/cross-case-intelligence", {"GET"}),
+            Route("/cross-case-intelligence", {"GET"}),
+        ]
+    )
 
     result = build_cross_case_intelligence_product_review(Path("."), routes=routes)
     keys = {item["key"] for item in result["blockers"]}

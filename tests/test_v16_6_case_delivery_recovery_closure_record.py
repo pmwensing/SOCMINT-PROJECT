@@ -2,11 +2,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.socmint.case_delivery_recovery_action_receipt_v16_4 import build_case_delivery_recovery_action_receipt
-from src.socmint.case_delivery_recovery_closure_record_v16_6 import CASE_DELIVERY_RECOVERY_CLOSURE_RECORD_SCHEMA
-from src.socmint.case_delivery_recovery_closure_record_v16_6 import build_case_delivery_recovery_closure_record
+from src.socmint.case_delivery_recovery_action_receipt_v16_4 import (
+    build_case_delivery_recovery_action_receipt,
+)
+from src.socmint.case_delivery_recovery_closure_record_v16_6 import (
+    CASE_DELIVERY_RECOVERY_CLOSURE_RECORD_SCHEMA,
+)
+from src.socmint.case_delivery_recovery_closure_record_v16_6 import (
+    build_case_delivery_recovery_closure_record,
+)
 from src.socmint.case_delivery_recovery_v16_3 import build_case_delivery_recovery
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
 from tests.test_v15_case_delivery_workspace import ready_payload
 
@@ -50,7 +58,9 @@ def _closed_recovery_payload(status: str = "completed"):
 def test_case_delivery_recovery_closure_record_closes_verified_completed_receipt():
     recovery, receipt = _closed_recovery_payload()
 
-    result = build_case_delivery_recovery_closure_record(recovery, receipt, closer="delivery-owner")
+    result = build_case_delivery_recovery_closure_record(
+        recovery, receipt, closer="delivery-owner"
+    )
 
     assert result["status"] == "closed"
     assert result["closed"] is True
@@ -67,9 +77,15 @@ def test_case_delivery_recovery_closure_record_closes_verified_completed_receipt
 def test_case_delivery_recovery_closure_record_id_is_deterministic_and_payload_sensitive():
     recovery, receipt = _closed_recovery_payload()
 
-    first = build_case_delivery_recovery_closure_record(recovery, receipt, closer="delivery-owner")
-    second = build_case_delivery_recovery_closure_record(recovery, receipt, closer="delivery-owner")
-    changed = build_case_delivery_recovery_closure_record(recovery, receipt, closer="other-owner")
+    first = build_case_delivery_recovery_closure_record(
+        recovery, receipt, closer="delivery-owner"
+    )
+    second = build_case_delivery_recovery_closure_record(
+        recovery, receipt, closer="delivery-owner"
+    )
+    changed = build_case_delivery_recovery_closure_record(
+        recovery, receipt, closer="other-owner"
+    )
 
     assert first["closure"]["closure_id"] == second["closure"]["closure_id"]
     assert first["closure"]["closure_id"] != changed["closure"]["closure_id"]
@@ -78,28 +94,41 @@ def test_case_delivery_recovery_closure_record_id_is_deterministic_and_payload_s
 def test_case_delivery_recovery_closure_record_blocks_pending_receipt():
     recovery, receipt = _closed_recovery_payload(status="pending")
 
-    result = build_case_delivery_recovery_closure_record(recovery, receipt, closer="delivery-owner")
+    result = build_case_delivery_recovery_closure_record(
+        recovery, receipt, closer="delivery-owner"
+    )
 
     assert result["status"] == "blocked"
     assert result["closed"] is False
     assert result["closure"] is None
-    assert any(blocker["key"] == "receipt_not_complete" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "receipt_not_complete" for blocker in result["blockers"]
+    )
 
 
 def test_case_delivery_recovery_closure_record_blocks_tampered_receipt():
     recovery, receipt = _closed_recovery_payload()
     tampered = {**receipt, "receipt_id": "tampered"}
 
-    result = build_case_delivery_recovery_closure_record(recovery, tampered, closer="delivery-owner")
+    result = build_case_delivery_recovery_closure_record(
+        recovery, tampered, closer="delivery-owner"
+    )
 
     assert result["status"] == "blocked"
     assert result["closed"] is False
     assert result["closure"] is None
-    assert any(blocker["key"] == "receipt_id_mismatch" for blocker in result["blockers"])
-    assert any(blocker["key"] == "receipt_verification_blocked" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "receipt_id_mismatch" for blocker in result["blockers"]
+    )
+    assert any(
+        blocker["key"] == "receipt_verification_blocked"
+        for blocker in result["blockers"]
+    )
 
 
-def test_case_delivery_recovery_closure_record_route_requires_login(tmp_path, monkeypatch):
+def test_case_delivery_recovery_closure_record_route_requires_login(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -115,7 +144,9 @@ def test_case_delivery_recovery_closure_record_route_requires_login(tmp_path, mo
     assert response.status_code == 401
 
 
-def test_case_delivery_recovery_closure_record_route_returns_closed(tmp_path, monkeypatch):
+def test_case_delivery_recovery_closure_record_route_returns_closed(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -140,7 +171,9 @@ def test_case_delivery_recovery_closure_record_route_returns_closed(tmp_path, mo
 
 
 def test_v16_6_release_note_and_changelog_are_present():
-    note = Path("release/V16_6_DELIVERY_RECOVERY_CLOSURE_RECORD.md").read_text(encoding="utf-8")
+    note = Path("release/V16_6_DELIVERY_RECOVERY_CLOSURE_RECORD.md").read_text(
+        encoding="utf-8"
+    )
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/case-delivery/<case_id>/recovery-closure-record" in note

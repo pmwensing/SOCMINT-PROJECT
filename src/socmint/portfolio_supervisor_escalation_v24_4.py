@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from . import database
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .portfolio_blocked_overdue_queue_v24_3 import build_blocked_overdue_case_queue
 
 SCHEMA = "socmint.portfolio_supervisor_escalation.v24_4"
@@ -20,7 +25,11 @@ ACTIONS = {
 def _queue_item(case_id: str) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     snapshot = build_blocked_overdue_case_queue()
     item = next(
-        (value for value in snapshot.get("queue") or [] if value.get("case_id") == case_id),
+        (
+            value
+            for value in snapshot.get("queue") or []
+            if value.get("case_id") == case_id
+        ),
         None,
     )
     return item, snapshot
@@ -281,14 +290,20 @@ def build_escalation_control_state() -> dict[str, Any]:
         case_id = str(item.get("case_id"))
         history = escalation_history(case_id)
         latest = history[-1] if history else None
-        items.append({
-            **item,
-            "latest_control": latest,
-            "control_history_count": len(history),
-            "escalated": any(value.get("control") == "escalate" for value in history),
-            "acknowledged": any(value.get("control") == "acknowledge" for value in history),
-            "resolved": bool(latest and latest.get("control") == "resolve"),
-        })
+        items.append(
+            {
+                **item,
+                "latest_control": latest,
+                "control_history_count": len(history),
+                "escalated": any(
+                    value.get("control") == "escalate" for value in history
+                ),
+                "acknowledged": any(
+                    value.get("control") == "acknowledge" for value in history
+                ),
+                "resolved": bool(latest and latest.get("control") == "resolve"),
+            }
+        )
     return {
         "schema": SCHEMA,
         "version": VERSION,
@@ -296,5 +311,7 @@ def build_escalation_control_state() -> dict[str, Any]:
         "items": items,
         "item_count": len(items),
         "source_records_mutated": False,
-        "next_action": "review_supervisor_escalations" if items else "monitor_portfolio",
+        "next_action": "review_supervisor_escalations"
+        if items
+        else "monitor_portfolio",
     }

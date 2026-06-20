@@ -7,10 +7,16 @@ import zipfile
 from copy import deepcopy
 from typing import Any
 
-from .v10_27_final_delivery_evidence_capsule import build_final_delivery_evidence_capsule_from_request
+from .v10_27_final_delivery_evidence_capsule import (
+    build_final_delivery_evidence_capsule_from_request,
+)
 
-FINAL_DELIVERY_CAPSULE_EXPORT_PACK_SCHEMA = "socmint.v10_28.final_delivery_capsule_export_pack"
-FINAL_DELIVERY_CAPSULE_EXPORT_MANIFEST_SCHEMA = "socmint.v10_28.final_delivery_capsule_export_manifest"
+FINAL_DELIVERY_CAPSULE_EXPORT_PACK_SCHEMA = (
+    "socmint.v10_28.final_delivery_capsule_export_pack"
+)
+FINAL_DELIVERY_CAPSULE_EXPORT_MANIFEST_SCHEMA = (
+    "socmint.v10_28.final_delivery_capsule_export_manifest"
+)
 VERSION = "v10.28.0"
 
 REQUIRED_FILES = (
@@ -30,7 +36,10 @@ CONTENT_TYPES = {
 
 
 def canonical_json(data: dict[str, Any]) -> str:
-    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
+    return (
+        json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        + "\n"
+    )
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -62,7 +71,11 @@ def _readme(pack: dict[str, Any]) -> str:
 
 def _pack_core(capsule: dict[str, Any]) -> dict[str, Any]:
     summary = capsule.get("summary") if isinstance(capsule.get("summary"), dict) else {}
-    receipt = capsule.get("operator_receipt") if isinstance(capsule.get("operator_receipt"), dict) else {}
+    receipt = (
+        capsule.get("operator_receipt")
+        if isinstance(capsule.get("operator_receipt"), dict)
+        else {}
+    )
     return {
         "schema": FINAL_DELIVERY_CAPSULE_EXPORT_PACK_SCHEMA,
         "version": VERSION,
@@ -81,7 +94,9 @@ def _payload_files(pack: dict[str, Any]) -> dict[str, bytes]:
     return {
         "README.md": _readme(pack).encode("utf-8"),
         "final_delivery_evidence_capsule.json": canonical_json(capsule).encode("utf-8"),
-        "final_delivery_evidence_capsule_summary.json": canonical_json(summary).encode("utf-8"),
+        "final_delivery_evidence_capsule_summary.json": canonical_json(summary).encode(
+            "utf-8"
+        ),
         "operator_receipt.json": canonical_json(receipt).encode("utf-8"),
     }
 
@@ -140,7 +155,9 @@ def build_final_delivery_capsule_export_pack(capsule: dict[str, Any]) -> dict[st
     return pack
 
 
-def build_final_delivery_capsule_export_pack_from_request(payload: dict[str, Any]) -> dict[str, Any]:
+def build_final_delivery_capsule_export_pack_from_request(
+    payload: dict[str, Any],
+) -> dict[str, Any]:
     safe_payload = deepcopy(payload or {})
     if isinstance(safe_payload.get("capsule"), dict):
         capsule = safe_payload["capsule"]
@@ -149,10 +166,14 @@ def build_final_delivery_capsule_export_pack_from_request(payload: dict[str, Any
     return build_final_delivery_capsule_export_pack(capsule)
 
 
-def build_final_delivery_capsule_export_pack_files(pack: dict[str, Any]) -> dict[str, bytes]:
+def build_final_delivery_capsule_export_pack_files(
+    pack: dict[str, Any],
+) -> dict[str, bytes]:
     safe_pack = deepcopy(pack or {})
     files = _payload_files(safe_pack)
-    files["manifest.json"] = canonical_json(safe_pack.get("manifest") or {}).encode("utf-8")
+    files["manifest.json"] = canonical_json(safe_pack.get("manifest") or {}).encode(
+        "utf-8"
+    )
     return {path: files[path] for path in REQUIRED_FILES}
 
 
@@ -168,5 +189,9 @@ def build_final_delivery_capsule_export_zip(pack: dict[str, Any]) -> bytes:
     return buffer.getvalue()
 
 
-def build_final_delivery_capsule_export_zip_from_request(payload: dict[str, Any]) -> bytes:
-    return build_final_delivery_capsule_export_zip(build_final_delivery_capsule_export_pack_from_request(payload))
+def build_final_delivery_capsule_export_zip_from_request(
+    payload: dict[str, Any],
+) -> bytes:
+    return build_final_delivery_capsule_export_zip(
+        build_final_delivery_capsule_export_pack_from_request(payload)
+    )

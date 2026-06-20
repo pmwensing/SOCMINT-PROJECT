@@ -6,7 +6,12 @@ from . import database
 from .case_closure_decision_v23_2 import latest_supervisor_closure_decision
 from .case_closure_readiness_review_v23_1 import latest_closure_readiness_review
 from .case_retention_assignment_v23_3 import latest_retention_assignment
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .dossier_final_export_package_v21_6 import _latest_export
 from .dossier_release_history_v22_6 import build_release_delivery_history
 
@@ -134,9 +139,14 @@ def build_case_archive_package(case_id: str) -> dict[str, Any]:
             "format": "socmint-case-archive-json",
             "media_type": "application/json",
             "archive_class": (assignment.get("disposition") or {}).get("archive_class"),
-            "retention_disposition": (assignment.get("disposition") or {}).get("disposition"),
-            "retention_expires_at": (assignment.get("disposition") or {}).get("retention_expires_at"),
-            "legal_hold": (assignment.get("disposition") or {}).get("legal_hold") is True,
+            "retention_disposition": (assignment.get("disposition") or {}).get(
+                "disposition"
+            ),
+            "retention_expires_at": (assignment.get("disposition") or {}).get(
+                "retention_expires_at"
+            ),
+            "legal_hold": (assignment.get("disposition") or {}).get("legal_hold")
+            is True,
             "package_version": VERSION,
         },
     }

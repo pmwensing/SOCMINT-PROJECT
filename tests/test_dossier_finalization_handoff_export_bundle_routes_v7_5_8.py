@@ -4,8 +4,12 @@ import io
 import zipfile
 
 from socmint.dashboard import create_app
-from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import build_handoff_index
-from socmint.dossier_finalization_handoff_export_bundle_routes_v7_5_8 import register_dossier_finalization_handoff_export_bundle_routes
+from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    build_handoff_index,
+)
+from socmint.dossier_finalization_handoff_export_bundle_routes_v7_5_8 import (
+    register_dossier_finalization_handoff_export_bundle_routes,
+)
 
 CSRF_TOKEN = "test-csrf-token"
 CSRF_HEADERS = {"X-CSRF-Token": CSRF_TOKEN}
@@ -31,8 +35,19 @@ def verified_report():
         "present_files": ["handoff_index.json", "manifest.json"],
         "missing_files": [],
         "unexpected_files": [],
-        "manifest": {"files": [{"path": "handoff_index.json", "content_type": "application/json", "size_bytes": 123, "sha256": "a" * 64}]},
-        "file_results": [{"path": "handoff_index.json", "hash_match": True, "size_match": True}],
+        "manifest": {
+            "files": [
+                {
+                    "path": "handoff_index.json",
+                    "content_type": "application/json",
+                    "size_bytes": 123,
+                    "sha256": "a" * 64,
+                }
+            ]
+        },
+        "file_results": [
+            {"path": "handoff_index.json", "hash_match": True, "size_match": True}
+        ],
         "failures": [],
         "warnings": [],
         "summary": {"status": "verified", "verified": True},
@@ -40,7 +55,9 @@ def verified_report():
 
 
 def archive_index():
-    return build_handoff_index(verified_report(), bundle_name="bundle-a", operator="analyst")
+    return build_handoff_index(
+        verified_report(), bundle_name="bundle-a", operator="analyst"
+    )
 
 
 def app_client():
@@ -73,7 +90,11 @@ def test_json_route_returns_export_bundle_metadata_from_wrapped_index():
 
 def test_raw_index_request_shape_works():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index/export", archive_index())
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index/export",
+        archive_index(),
+    )
 
     assert response.status_code == 200
     assert response.get_json()["recommended_action"] == "archive_ready"
@@ -106,7 +127,11 @@ def test_zip_route_contains_required_files():
 
 def test_csrf_token_is_used_in_route_tests():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index/export", {"index": archive_index()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index/export",
+        {"index": archive_index()},
+    )
 
     assert response.status_code == 200
 
@@ -119,7 +144,11 @@ def test_no_connector_execution_function_is_called(monkeypatch):
 
     monkeypatch.setattr(bundle_module, "execute_connector", explode, raising=False)
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index/export", {"index": archive_index()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index/export",
+        {"index": archive_index()},
+    )
 
     assert response.status_code == 200
     assert response.get_json()["recommended_action"] == "archive_ready"

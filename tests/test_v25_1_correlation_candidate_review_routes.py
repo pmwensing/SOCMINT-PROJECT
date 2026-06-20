@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -35,37 +37,39 @@ def test_v25_1_review_routes_and_workspace_ui(tmp_path, monkeypatch):
             "repeated_patterns": 0,
         },
         "correlations": {
-            "entities": [{
-                "correlation_id": "cross-case-entity-abc",
-                "category": "entity",
-                "match_value": "entity-42",
-                "display_values": ["entity-42"],
-                "case_ids": ["case-alpha", "case-bravo"],
-                "case_count": 2,
-                "occurrence_count": 2,
-                "occurrences": [
-                    {
-                        "case_id": "case-alpha",
-                        "record_id": 1,
-                        "source_action": "case_entity_observed",
-                        "field_path": "entity_id",
-                        "actor": "analyst-a",
-                        "occurred_at": "2026-06-16T02:00:00+00:00",
-                        "provenance_sha256": "a" * 64,
-                    },
-                    {
-                        "case_id": "case-bravo",
-                        "record_id": 2,
-                        "source_action": "case_entity_observed",
-                        "field_path": "entity_id",
-                        "actor": "analyst-b",
-                        "occurred_at": "2026-06-16T03:00:00+00:00",
-                        "provenance_sha256": "b" * 64,
-                    },
-                ],
-                "human_review_required": True,
-                "confirmed_match": False,
-            }],
+            "entities": [
+                {
+                    "correlation_id": "cross-case-entity-abc",
+                    "category": "entity",
+                    "match_value": "entity-42",
+                    "display_values": ["entity-42"],
+                    "case_ids": ["case-alpha", "case-bravo"],
+                    "case_count": 2,
+                    "occurrence_count": 2,
+                    "occurrences": [
+                        {
+                            "case_id": "case-alpha",
+                            "record_id": 1,
+                            "source_action": "case_entity_observed",
+                            "field_path": "entity_id",
+                            "actor": "analyst-a",
+                            "occurred_at": "2026-06-16T02:00:00+00:00",
+                            "provenance_sha256": "a" * 64,
+                        },
+                        {
+                            "case_id": "case-bravo",
+                            "record_id": 2,
+                            "source_action": "case_entity_observed",
+                            "field_path": "entity_id",
+                            "actor": "analyst-b",
+                            "occurred_at": "2026-06-16T03:00:00+00:00",
+                            "provenance_sha256": "b" * 64,
+                        },
+                    ],
+                    "human_review_required": True,
+                    "confirmed_match": False,
+                }
+            ],
             "identifiers": [],
             "infrastructure": [],
             "evidence": [],
@@ -83,16 +87,22 @@ def test_v25_1_review_routes_and_workspace_ui(tmp_path, monkeypatch):
         "correlation_record_created": False,
         "next_action": "review_cross_case_candidates",
     }
-    history = [{
-        "correlation_id": "cross-case-entity-abc",
-        "decision": "defer",
-        "reason": "Await another source.",
-        "reviewer": "reviewer-old",
-        "action_record_id": 7,
-    }]
+    history = [
+        {
+            "correlation_id": "cross-case-entity-abc",
+            "decision": "defer",
+            "reason": "Await another source.",
+            "reviewer": "reviewer-old",
+            "action_record_id": 7,
+        }
+    ]
 
-    monkeypatch.setattr(routes, "build_cross_case_intelligence_workspace", lambda **kwargs: workspace)
-    monkeypatch.setattr(routes, "correlation_review_history", lambda correlation_id: history)
+    monkeypatch.setattr(
+        routes, "build_cross_case_intelligence_workspace", lambda **kwargs: workspace
+    )
+    monkeypatch.setattr(
+        routes, "correlation_review_history", lambda correlation_id: history
+    )
     monkeypatch.setattr(
         routes,
         "review_correlation_candidate",
@@ -111,7 +121,12 @@ def test_v25_1_review_routes_and_workspace_ui(tmp_path, monkeypatch):
     )
 
     client = _app(tmp_path, monkeypatch).test_client()
-    assert client.get("/api/v1/cross-case-intelligence/cross-case-entity-abc/reviews").status_code == 401
+    assert (
+        client.get(
+            "/api/v1/cross-case-intelligence/cross-case-entity-abc/reviews"
+        ).status_code
+        == 401
+    )
 
     with client.session_transaction() as sess:
         sess["user"] = "reviewer-one"
@@ -174,12 +189,19 @@ def test_v25_1_blocked_review_returns_422(tmp_path, monkeypatch):
         headers={"X-CSRF-Token": "test-csrf"},
     )
     assert response.status_code == 422
-    assert response.get_json()["blockers"][0]["key"] == "correlation_review_reason_required"
+    assert (
+        response.get_json()["blockers"][0]["key"]
+        == "correlation_review_reason_required"
+    )
 
 
 def test_v25_1_release_note_client_and_no_migration():
-    note = Path("release/V25_1_CORRELATION_CANDIDATE_REVIEW_DECISION.md").read_text(encoding="utf-8")
-    script = Path("src/socmint/static/cross_case_correlation_review_v25_1.js").read_text(encoding="utf-8")
+    note = Path("release/V25_1_CORRELATION_CANDIDATE_REVIEW_DECISION.md").read_text(
+        encoding="utf-8"
+    )
+    script = Path(
+        "src/socmint/static/cross_case_correlation_review_v25_1.js"
+    ).read_text(encoding="utf-8")
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

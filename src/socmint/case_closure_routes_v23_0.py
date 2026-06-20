@@ -65,7 +65,9 @@ def register_case_closure_routes_v23_0(app):
             note=str(payload.get("note") or ""),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "review_recorded" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "review_recorded" else 422
 
     @app.post("/api/v1/case-closure/<case_id>/closure-decision")
     def api_case_closure_decision_post_v23_2(case_id: str):
@@ -80,7 +82,9 @@ def register_case_closure_routes_v23_0(app):
             note=str(payload.get("note") or ""),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "closure_decision_recorded" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "closure_decision_recorded" else 422
 
     @app.post("/api/v1/case-closure/<case_id>/retention-assignment")
     def api_case_retention_assignment_post_v23_3(case_id: str):
@@ -95,7 +99,9 @@ def register_case_closure_routes_v23_0(app):
             note=str(payload.get("note") or ""),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "retention_assignment_recorded" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "retention_assignment_recorded" else 422
 
     @app.post("/api/v1/case-closure/<case_id>/archive-package")
     def api_case_archive_package_post_v23_4(case_id: str):
@@ -106,6 +112,8 @@ def register_case_closure_routes_v23_0(app):
             actor=str(session.get("user") or "unknown"),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "archive_package_generated" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "archive_package_generated" else 422
 
     return app

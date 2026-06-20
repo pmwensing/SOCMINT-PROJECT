@@ -15,7 +15,9 @@ def subject_readiness_input(subject_id: int) -> ReadinessInput:
         if not subject:
             return ReadinessInput(subject_id=subject_id, subject_exists=False)
 
-        seed_count = session.query(db.SpineSeed).filter_by(subject_id=subject_id).count()
+        seed_count = (
+            session.query(db.SpineSeed).filter_by(subject_id=subject_id).count()
+        )
         observation_count = (
             session.query(db.SpineObservation).filter_by(subject_id=subject_id).count()
         )
@@ -32,7 +34,9 @@ def subject_readiness_input(subject_id: int) -> ReadinessInput:
             .filter_by(subject_id=subject_id, review_state="unreviewed")
             .count()
         )
-        report_count = int(full_report_export_history(subject_id, limit=1).get("count", 0))
+        report_count = int(
+            full_report_export_history(subject_id, limit=1).get("count", 0)
+        )
         return ReadinessInput(
             subject_id=subject_id,
             subject_exists=True,

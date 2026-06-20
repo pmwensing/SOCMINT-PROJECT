@@ -5,13 +5,25 @@ import json
 import zipfile
 from copy import deepcopy
 
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle_files
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle_from_verification_report
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle_zip
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import certificate_bundle_manifest
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle,
+)
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle_files,
+)
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle_from_verification_report,
+)
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle_zip,
+)
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    certificate_bundle_manifest,
+)
 from socmint.dossier_finalization_certificate_bundle_v7_5_5 import safe_bundle_name
-from socmint.dossier_finalization_certificate_v7_5_4 import build_verification_certificate
+from socmint.dossier_finalization_certificate_v7_5_4 import (
+    build_verification_certificate,
+)
 
 REQUIRED_FILES = {
     "README.md",
@@ -80,7 +92,9 @@ def test_builds_bundle_from_failed_v754_certificate():
 
 
 def test_builds_bundle_from_verification_report():
-    bundle = build_certificate_bundle_from_verification_report(verified_report(), bundle_name="Report Bundle", packet_name="packet-a")
+    bundle = build_certificate_bundle_from_verification_report(
+        verified_report(), bundle_name="Report Bundle", packet_name="packet-a"
+    )
 
     assert bundle["bundle_name"] == "report-bundle"
     assert bundle["certificate"]["packet_name"] == "packet-a"
@@ -88,18 +102,28 @@ def test_builds_bundle_from_verification_report():
 
 
 def test_produces_exactly_required_files():
-    files = build_certificate_bundle_files(build_certificate_bundle(valid_certificate()))
+    files = build_certificate_bundle_files(
+        build_certificate_bundle(valid_certificate())
+    )
 
     assert set(files) == REQUIRED_FILES
     assert b"SOCMINT v7.5.5 Certificate Bundle Export" in files["README.md"]
-    assert b"SOCMINT v7.5.4 Finalization Verification Certificate" in files["certificate.md"]
+    assert (
+        b"SOCMINT v7.5.4 Finalization Verification Certificate"
+        in files["certificate.md"]
+    )
 
 
 def test_manifest_contains_sha256_and_size_for_every_file():
-    files = build_certificate_bundle_files(build_certificate_bundle(valid_certificate()))
+    files = build_certificate_bundle_files(
+        build_certificate_bundle(valid_certificate())
+    )
     manifest = certificate_bundle_manifest(files)
 
-    assert manifest["schema"] == "socmint.v7_5_5.dossier_finalization_certificate_bundle_manifest"
+    assert (
+        manifest["schema"]
+        == "socmint.v7_5_5.dossier_finalization_certificate_bundle_manifest"
+    )
     assert manifest["file_count"] == len(files)
     for row in manifest["files"]:
         assert row["path"] in files
@@ -109,7 +133,9 @@ def test_manifest_contains_sha256_and_size_for_every_file():
 
 
 def test_zip_contains_all_required_files():
-    zip_bytes = build_certificate_bundle_zip(build_certificate_bundle(valid_certificate()))
+    zip_bytes = build_certificate_bundle_zip(
+        build_certificate_bundle(valid_certificate())
+    )
 
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as archive:
         assert set(archive.namelist()) == REQUIRED_FILES

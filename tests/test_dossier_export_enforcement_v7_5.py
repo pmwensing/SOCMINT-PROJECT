@@ -80,5 +80,8 @@ def test_attach_export_enforcement_adds_decision_block():
     payload = _passing_payload()
     enriched = attach_export_enforcement(payload, mode="final")
 
-    assert enriched["export_enforcement"]["schema"] == "socmint.v7_5.dossier_export_enforcement"
+    assert (
+        enriched["export_enforcement"]["schema"]
+        == "socmint.v7_5.dossier_export_enforcement"
+    )
     assert enriched["final_export_allowed"] is True

@@ -39,11 +39,13 @@ def analyst_launchpad(username: str, limit: int = 100) -> dict[str, Any]:
     connector_trust = workbench.get("connector_trust") or []
 
     review_count = _count(queues)
-    failed_jobs = [job for job in jobs.get("jobs", []) if job.get("status") == "failed"] if isinstance(jobs, dict) else []
+    failed_jobs = (
+        [job for job in jobs.get("jobs", []) if job.get("status") == "failed"]
+        if isinstance(jobs, dict)
+        else []
+    )
     low_trust_connectors = [
-        item
-        for item in connector_trust
-        if item.get("reliability_score", 1) < 0.5
+        item for item in connector_trust if item.get("reliability_score", 1) < 0.5
     ]
     plan = membership.get("plan", "free")
     tor_ready = bool(production.get("tor", {}).get("passed"))

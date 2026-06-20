@@ -20,5 +20,15 @@ def register_authenticity_integrity_routes(app) -> None:
     def api_authenticity_integrity_dashboard():
         return jsonify(integrity_dashboard_payload())
 
-    app.add_url_rule("/evidence/integrity", endpoint="authenticity_integrity_dashboard", view_func=authenticity_integrity_dashboard, methods=["GET"])
-    app.add_url_rule("/api/v1/evidence/integrity", endpoint="api_authenticity_integrity_dashboard", view_func=api_authenticity_integrity_dashboard, methods=["GET"])
+    app.add_url_rule(
+        "/evidence/integrity",
+        endpoint="authenticity_integrity_dashboard",
+        view_func=authenticity_integrity_dashboard,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/evidence/integrity",
+        endpoint="api_authenticity_integrity_dashboard",
+        view_func=api_authenticity_integrity_dashboard,
+        methods=["GET"],
+    )

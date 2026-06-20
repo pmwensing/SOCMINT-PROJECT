@@ -45,18 +45,28 @@ REQUIRED_ASSETS = (
 )
 
 REQUIRED_ROUTES = (
-    "/collection-operations", "/api/v1/collection-operations",
-    "/collection-operations/jobs", "/api/v1/collection-operations/jobs",
-    "/collection-operations/policies", "/api/v1/collection-operations/policies",
-    "/collection-operations/adapters", "/api/v1/collection-operations/adapters",
-    "/collection-operations/evidence", "/api/v1/collection-operations/evidence",
-    "/collection-operations/recovery", "/api/v1/collection-operations/recovery",
-    "/collection-operations/quality", "/api/v1/collection-operations/quality",
-    "/collection-operations/product-review", "/api/v1/collection-operations/product-review-checkpoint",
+    "/collection-operations",
+    "/api/v1/collection-operations",
+    "/collection-operations/jobs",
+    "/api/v1/collection-operations/jobs",
+    "/collection-operations/policies",
+    "/api/v1/collection-operations/policies",
+    "/collection-operations/adapters",
+    "/api/v1/collection-operations/adapters",
+    "/collection-operations/evidence",
+    "/api/v1/collection-operations/evidence",
+    "/collection-operations/recovery",
+    "/api/v1/collection-operations/recovery",
+    "/collection-operations/quality",
+    "/api/v1/collection-operations/quality",
+    "/collection-operations/product-review",
+    "/api/v1/collection-operations/product-review-checkpoint",
 )
 
 
-def build_collection_product_review(root: str | Path | None = None, *, routes: list[Any] | None = None) -> dict[str, Any]:
+def build_collection_product_review(
+    root: str | Path | None = None, *, routes: list[Any] | None = None
+) -> dict[str, Any]:
     root_path = Path(root) if root is not None else REPO_ROOT
     blockers: list[dict[str, str]] = []
 
@@ -76,7 +86,13 @@ def build_collection_product_review(root: str | Path | None = None, *, routes: l
     for route in routes or []:
         rule = str(getattr(route, "rule", route))
         methods = getattr(route, "methods", None)
-        method_tuple = tuple(sorted(method for method in (methods or {"UNKNOWN"}) if method not in {"HEAD", "OPTIONS"}))
+        method_tuple = tuple(
+            sorted(
+                method
+                for method in (methods or {"UNKNOWN"})
+                if method not in {"HEAD", "OPTIONS"}
+            )
+        )
         route_rules.add(rule)
         route_keys.append((rule, method_tuple))
 
@@ -90,7 +106,8 @@ def build_collection_product_review(root: str | Path | None = None, *, routes: l
     duplicate_routes = [
         {"route": rule, "methods": list(methods), "count": count}
         for (rule, methods), count in Counter(route_keys).items()
-        if count > 1 and rule.startswith(("/collection-operations", "/api/v1/collection-operations"))
+        if count > 1
+        and rule.startswith(("/collection-operations", "/api/v1/collection-operations"))
     ]
     if duplicate_routes:
         blockers.append({"key": "duplicate_v29_route", "detail": str(duplicate_routes)})
@@ -103,7 +120,9 @@ def build_collection_product_review(root: str | Path | None = None, *, routes: l
         if path.is_file() and "v29" in path.name.lower()
     )
     if migrations:
-        blockers.append({"key": "unexpected_v29_migration", "detail": ", ".join(migrations)})
+        blockers.append(
+            {"key": "unexpected_v29_migration", "detail": ", ".join(migrations)}
+        )
 
     journey = [
         {"step": "collection_operations", "route": "/collection-operations"},
@@ -116,13 +135,19 @@ def build_collection_product_review(root: str | Path | None = None, *, routes: l
     ]
 
     return {
-        "schema": SCHEMA, "version": VERSION,
+        "schema": SCHEMA,
+        "version": VERSION,
         "status": "ready_for_browser_e2e" if not blockers else "blocked",
         "ready": not blockers,
-        "module_checks": module_checks, "asset_checks": asset_checks,
-        "route_checks": route_checks, "duplicate_routes": duplicate_routes,
-        "migration_artifacts": migrations, "journey": journey,
-        "journey_step_count": len(journey), "blocker_count": len(blockers), "blockers": blockers,
+        "module_checks": module_checks,
+        "asset_checks": asset_checks,
+        "route_checks": route_checks,
+        "duplicate_routes": duplicate_routes,
+        "migration_artifacts": migrations,
+        "journey": journey,
+        "journey_step_count": len(journey),
+        "blocker_count": len(blockers),
+        "blockers": blockers,
         "administrator_authorization_validated": True,
         "unauthenticated_redirect_validated": True,
         "immutable_raw_evidence_validated": True,
@@ -133,5 +158,7 @@ def build_collection_product_review(root: str | Path | None = None, *, routes: l
         "automatic_retry_execution_unavailable_validated": True,
         "automatic_dossier_mutation_unavailable_validated": True,
         "v29_closed_when_browser_e2e_passes": True,
-        "next_action": "run_v29_browser_e2e" if not blockers else "resolve_v29_product_blockers",
+        "next_action": "run_v29_browser_e2e"
+        if not blockers
+        else "resolve_v29_product_blockers",
     }

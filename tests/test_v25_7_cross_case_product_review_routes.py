@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -14,8 +16,16 @@ def _app(tmp_path, monkeypatch):
 def test_v25_7_checkpoint_routes_require_login_and_report_ready(tmp_path, monkeypatch):
     client = _app(tmp_path, monkeypatch).test_client()
 
-    assert client.get("/api/v1/cross-case-intelligence/product-review-checkpoint").status_code == 401
-    assert client.get("/cross-case-intelligence/product-review").status_code in {302, 303}
+    assert (
+        client.get(
+            "/api/v1/cross-case-intelligence/product-review-checkpoint"
+        ).status_code
+        == 401
+    )
+    assert client.get("/cross-case-intelligence/product-review").status_code in {
+        302,
+        303,
+    }
 
     with client.session_transaction() as sess:
         sess["user"] = "analyst"
@@ -49,8 +59,12 @@ def test_v25_7_checkpoint_routes_require_login_and_report_ready(tmp_path, monkey
 
 
 def test_v25_7_release_note_script_and_no_migration():
-    note = Path("release/V25_7_PRODUCT_REVIEW_BROWSER_E2E_CHECKPOINT.md").read_text(encoding="utf-8")
-    script = Path("scripts/run_v25_7_cross_case_browser_e2e.py").read_text(encoding="utf-8")
+    note = Path("release/V25_7_PRODUCT_REVIEW_BROWSER_E2E_CHECKPOINT.md").read_text(
+        encoding="utf-8"
+    )
+    script = Path("scripts/run_v25_7_cross_case_browser_e2e.py").read_text(
+        encoding="utf-8"
+    )
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

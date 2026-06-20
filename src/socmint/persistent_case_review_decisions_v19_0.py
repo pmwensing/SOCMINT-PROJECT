@@ -119,7 +119,9 @@ def set_persistent_decision_review_state(
     if state not in REVIEW_STATES:
         return {
             "status": "blocked",
-            "blockers": [{"key": "unsupported_review_state", "detail": state or "missing"}],
+            "blockers": [
+                {"key": "unsupported_review_state", "detail": state or "missing"}
+            ],
             "next_action": "choose_supported_review_state",
         }
 
@@ -128,13 +130,20 @@ def set_persistent_decision_review_state(
     try:
         source = (
             session.query(database.AuditLog)
-            .filter_by(id=int(decision_record_id), action=AUDIT_ACTION, target_value=case_id)
+            .filter_by(
+                id=int(decision_record_id), action=AUDIT_ACTION, target_value=case_id
+            )
             .one_or_none()
         )
         if source is None:
             return {
                 "status": "blocked",
-                "blockers": [{"key": "decision_record_not_found", "detail": str(decision_record_id)}],
+                "blockers": [
+                    {
+                        "key": "decision_record_not_found",
+                        "detail": str(decision_record_id),
+                    }
+                ],
                 "next_action": "refresh_persistent_decision_history",
             }
         annotation = database.AuditLog(
@@ -162,7 +171,9 @@ def set_persistent_decision_review_state(
             "review_state": state,
             "reviewed_by": actor,
             "review_note": str(note or "").strip(),
-            "reviewed_at": annotation.created_at.isoformat() if annotation.created_at else None,
+            "reviewed_at": annotation.created_at.isoformat()
+            if annotation.created_at
+            else None,
             "annotation_record_id": annotation.id,
             "original_decision_mutated": False,
             "next_action": "refresh_persistent_decision_history",
@@ -207,7 +218,9 @@ def list_persistent_case_review_decisions(
                     "review_state": details.get("review_state") or "unreviewed",
                     "review_note": details.get("review_note") or "",
                     "reviewed_by": row.actor,
-                    "reviewed_at": row.created_at.isoformat() if row.created_at else None,
+                    "reviewed_at": row.created_at.isoformat()
+                    if row.created_at
+                    else None,
                     "annotation_record_id": row.id,
                 }
 
@@ -255,7 +268,9 @@ def list_persistent_case_review_decisions(
         safe_page = max(1, int(page))
         safe_page_size = max(1, min(int(page_size), 100))
         total_entries = len(entries)
-        page_count = max(1, ceil(total_entries / safe_page_size)) if total_entries else 0
+        page_count = (
+            max(1, ceil(total_entries / safe_page_size)) if total_entries else 0
+        )
         offset = (safe_page - 1) * safe_page_size
         page_entries = entries[offset : offset + safe_page_size]
         return {

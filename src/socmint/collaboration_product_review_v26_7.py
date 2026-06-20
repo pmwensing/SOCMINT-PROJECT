@@ -95,10 +95,13 @@ def build_collaboration_product_review(
     for route in routes or []:
         rule = str(getattr(route, "rule", route))
         methods = getattr(route, "methods", None)
-        method_tuple = tuple(sorted(
-            method for method in (methods or {"UNKNOWN"})
-            if method not in {"HEAD", "OPTIONS"}
-        ))
+        method_tuple = tuple(
+            sorted(
+                method
+                for method in (methods or {"UNKNOWN"})
+                if method not in {"HEAD", "OPTIONS"}
+            )
+        )
         route_rules.add(rule)
         route_keys.append((rule, method_tuple))
 
@@ -112,7 +115,8 @@ def build_collaboration_product_review(
     duplicate_routes = [
         {"route": rule, "methods": list(methods), "count": count}
         for (rule, methods), count in Counter(route_keys).items()
-        if count > 1 and rule.startswith(("/collaboration", "/cases/", "/api/v1/cases/"))
+        if count > 1
+        and rule.startswith(("/collaboration", "/cases/", "/api/v1/cases/"))
     ]
     if duplicate_routes:
         blockers.append({"key": "duplicate_v26_route", "detail": str(duplicate_routes)})
@@ -125,14 +129,22 @@ def build_collaboration_product_review(
         if path.is_file() and "v26" in path.name.lower()
     )
     if migrations:
-        blockers.append({"key": "unexpected_v26_migration", "detail": ", ".join(migrations)})
+        blockers.append(
+            {"key": "unexpected_v26_migration", "detail": ", ".join(migrations)}
+        )
 
     journey = [
         {"step": "collaboration_workspace", "route": "/collaboration"},
         {"step": "case_team_assignment", "route": "/cases/<case_id>/team"},
         {"step": "notes_and_mentions", "route": "/cases/<case_id>/collaboration-notes"},
-        {"step": "review_request_and_handoff", "route": "/cases/<case_id>/collaboration-requests"},
-        {"step": "responses_and_resolution", "route": "/cases/<case_id>/collaboration-responses"},
+        {
+            "step": "review_request_and_handoff",
+            "route": "/cases/<case_id>/collaboration-requests",
+        },
+        {
+            "step": "responses_and_resolution",
+            "route": "/cases/<case_id>/collaboration-responses",
+        },
         {"step": "team_workload_queue", "route": "/collaboration/my-work"},
         {"step": "collaboration_history", "route": "/collaboration/history"},
     ]
@@ -160,5 +172,7 @@ def build_collaboration_product_review(
         "source_records_mutated": False,
         "checkpoint_record_created": False,
         "v26_closed_when_browser_e2e_passes": True,
-        "next_action": "run_v26_browser_e2e" if not blockers else "resolve_v26_product_blockers",
+        "next_action": "run_v26_browser_e2e"
+        if not blockers
+        else "resolve_v26_product_blockers",
     }

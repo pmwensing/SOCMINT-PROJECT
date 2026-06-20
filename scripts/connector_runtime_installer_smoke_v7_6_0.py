@@ -15,7 +15,15 @@ from socmint.full_report_browser import register_full_report_browser_flow
 from socmint.full_report_history import register_full_report_history_routes
 from socmint.full_report_retention import register_full_report_retention_routes
 
-EXPECTED = {"sherlock", "maigret", "socialscan", "holehe", "h8mail", "phoneinfoga", "archivebox"}
+EXPECTED = {
+    "sherlock",
+    "maigret",
+    "socialscan",
+    "holehe",
+    "h8mail",
+    "phoneinfoga",
+    "archivebox",
+}
 
 
 def main() -> None:
@@ -46,7 +54,10 @@ def main() -> None:
 
         health = connector_runtime_health()
         assert health["schema"] == "socmint.connector_runtime.v7_6_0"
-        assert health["installer"]["script"] == "scripts/install_connector_runtime_v7_6_0.sh"
+        assert (
+            health["installer"]["script"]
+            == "scripts/install_connector_runtime_v7_6_0.sh"
+        )
         assert health["installer"]["scanner_compose"] == "docker-compose.scanners.yml"
         names = {item["name"] for item in health["connectors"]}
         assert EXPECTED.issubset(names)

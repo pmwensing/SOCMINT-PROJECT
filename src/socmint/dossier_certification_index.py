@@ -23,7 +23,9 @@ def _artifact_status(artifacts: list[dict[str, Any]]) -> dict[str, Any]:
         }
         for item in artifacts
     ]
-    missing_hashes = [item.get("filename") for item in attached if not item.get("hash_present")]
+    missing_hashes = [
+        item.get("filename") for item in attached if not item.get("hash_present")
+    ]
     return {
         "artifact_count": len(attached),
         "hash_count": sum(1 for item in attached if item.get("hash_present")),
@@ -67,11 +69,19 @@ def certification_index_entry(
             "recommended_bundle": None,
         }
 
-    bundle = export_certification_bundle(subject_id=subject_id, case_id=case_id, root=root)
-    summary = export_certification_summary(subject_id=subject_id, case_id=case_id, root=root)
+    bundle = export_certification_bundle(
+        subject_id=subject_id, case_id=case_id, root=root
+    )
+    summary = export_certification_summary(
+        subject_id=subject_id, case_id=case_id, root=root
+    )
     certified = bool(summary.get("certified"))
     blockers = list(summary.get("blockers", []))
-    recommended_bundle = str(Path(str(manifest.get("directory"))) / "manifest.json") if certified and manifest.get("directory") else None
+    recommended_bundle = (
+        str(Path(str(manifest.get("directory"))) / "manifest.json")
+        if certified and manifest.get("directory")
+        else None
+    )
 
     return {
         "schema": DOSSIER_CERTIFICATION_INDEX_SCHEMA,
@@ -99,7 +109,9 @@ def certification_index_entry(
     }
 
 
-def certification_index(case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def certification_index(
+    case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     entries = []
     for manifest in iter_export_manifests(root=root):
         if manifest.get("case_id") != case_id:
@@ -125,10 +137,18 @@ def certification_index(case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) ->
                 }
             )
             continue
-        entries.append(certification_index_entry(case_id=case_id, subject_id=str(subject_id), root=root))
+        entries.append(
+            certification_index_entry(
+                case_id=case_id, subject_id=str(subject_id), root=root
+            )
+        )
 
-    safe_entries = [entry for entry in entries if entry.get("safe_to_distribute") is True]
-    held_entries = [entry for entry in entries if entry.get("safe_to_distribute") is not True]
+    safe_entries = [
+        entry for entry in entries if entry.get("safe_to_distribute") is True
+    ]
+    held_entries = [
+        entry for entry in entries if entry.get("safe_to_distribute") is not True
+    ]
     return {
         "schema": DOSSIER_CERTIFICATION_INDEX_SCHEMA,
         "status": "ready",
@@ -142,7 +162,9 @@ def certification_index(case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) ->
     }
 
 
-def certification_index_summary(case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def certification_index_summary(
+    case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     index = certification_index(case_id=case_id, root=root)
     blocker_counts: dict[str, int] = {}
     for entry in index["entries"]:
@@ -158,12 +180,16 @@ def certification_index_summary(case_id: str, root: str | Path = DEFAULT_EXPORT_
         "safe_to_distribute_count": index["safe_to_distribute_count"],
         "hold_count": index["hold_count"],
         "blocker_counts": blocker_counts,
-        "safe_subjects": [entry.get("subject_id") for entry in index["safe_to_distribute"]],
+        "safe_subjects": [
+            entry.get("subject_id") for entry in index["safe_to_distribute"]
+        ],
         "held_subjects": [entry.get("subject_id") for entry in index["held"]],
     }
 
 
-def certification_index_markdown(case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> str:
+def certification_index_markdown(
+    case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> str:
     index = certification_index(case_id=case_id, root=root)
     summary = certification_index_summary(case_id=case_id, root=root)
     lines = [

@@ -74,9 +74,20 @@ def main() -> int:
                     headers={"X-CSRF-Token": "v989-csrf"},
                 )
                 ok = response.status_code == 200
-                print(("[PASS]" if ok else "[FAIL]"), "seed review", path, response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    "seed review",
+                    path,
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append((f"seed review {path}", response.status_code, response.get_data(as_text=True)[:1000]))
+                    failures.append(
+                        (
+                            f"seed review {path}",
+                            response.status_code,
+                            response.get_data(as_text=True)[:1000],
+                        )
+                    )
 
             package_name = "v9_8_9_zip_smoke_package"
             response = client.post(
@@ -86,9 +97,19 @@ def main() -> int:
             )
             package = response.get_json() if response.is_json else {}
             ok = response.status_code == 200 and package.get("version") == "9.8.8"
-            print(("[PASS]" if ok else "[FAIL]"), "POST build package", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "POST build package",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("POST build package", response.status_code, response.get_data(as_text=True)[:1500]))
+                failures.append(
+                    (
+                        "POST build package",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1500],
+                    )
+                )
 
             response = client.post(
                 f"/api/v1/product/release-package/{package_name}/zip",
@@ -102,9 +123,17 @@ def main() -> int:
                 and zip_path.exists()
                 and zip_path.suffix == ".zip"
             )
-            print(("[PASS]" if ok else "[FAIL]"), "POST zip package", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"), "POST zip package", response.status_code
+            )
             if not ok:
-                failures.append(("POST zip package", response.status_code, response.get_data(as_text=True)[:1500]))
+                failures.append(
+                    (
+                        "POST zip package",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1500],
+                    )
+                )
 
             if zip_path.exists():
                 with zipfile.ZipFile(zip_path) as zf:
@@ -120,8 +149,12 @@ def main() -> int:
                     "artifacts/release/V9_8_9_ZIP_EXCLUDED_ARTIFACT.md",
                     "artifacts/release/V9_8_9_ZIP_ARCHIVED_ARTIFACT.md",
                 }
-                has_metadata = any("product_artifact_metadata.json" in item for item in entries)
-                has_audit = any("product_artifact_review_audit.json" in item for item in entries)
+                has_metadata = any(
+                    "product_artifact_metadata.json" in item for item in entries
+                )
+                has_audit = any(
+                    "product_artifact_review_audit.json" in item for item in entries
+                )
 
                 ok = (
                     required_entries.issubset(entries)
@@ -129,31 +162,79 @@ def main() -> int:
                     and has_metadata
                     and has_audit
                 )
-                print(("[PASS]" if ok else "[FAIL]"), "zip contains selected package contents")
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    "zip contains selected package contents",
+                )
                 if not ok:
-                    failures.append(("zip contains selected package contents", 0, json.dumps(sorted(entries), indent=2)[:2500]))
+                    failures.append(
+                        (
+                            "zip contains selected package contents",
+                            0,
+                            json.dumps(sorted(entries), indent=2)[:2500],
+                        )
+                    )
 
             response = client.get("/api/v1/product/release-packages")
             payload = response.get_json() if response.is_json else {}
             packages = payload.get("packages", [])
-            found = any(item.get("package_name") == package_name and item.get("zip_exists") for item in packages)
-            ok = response.status_code == 200 and payload.get("version") == "9.8.9" and found
-            print(("[PASS]" if ok else "[FAIL]"), "GET package list", response.status_code)
+            found = any(
+                item.get("package_name") == package_name and item.get("zip_exists")
+                for item in packages
+            )
+            ok = (
+                response.status_code == 200
+                and payload.get("version") == "9.8.9"
+                and found
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"), "GET package list", response.status_code
+            )
             if not ok:
-                failures.append(("GET package list", response.status_code, response.get_data(as_text=True)[:1500]))
+                failures.append(
+                    (
+                        "GET package list",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1500],
+                    )
+                )
 
             response = client.get(f"/product/release-package/download/{package_name}")
             ok = response.status_code == 200 and response.data[:2] == b"PK"
-            print(("[PASS]" if ok else "[FAIL]"), "GET package ZIP download", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET package ZIP download",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET package ZIP download", response.status_code, response.get_data(as_text=True)[:1000]))
+                failures.append(
+                    (
+                        "GET package ZIP download",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1000],
+                    )
+                )
 
             response = client.get("/product/release-package")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Built Packages + ZIP Export" in body and "Release packages JSON" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET release package UI ZIP panel", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Built Packages + ZIP Export" in body
+                and "Release packages JSON" in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET release package UI ZIP panel",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET release package UI ZIP panel", response.status_code, body[:1500]))
+                failures.append(
+                    (
+                        "GET release package UI ZIP panel",
+                        response.status_code,
+                        body[:1500],
+                    )
+                )
 
             if failures:
                 for name, status, body in failures:

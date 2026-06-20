@@ -39,7 +39,9 @@ def beta_doc_status(root: str | Path = ".") -> dict[str, Any]:
         "schema": BETA_READINESS_SCHEMA,
         "docs": docs,
         "missing": [key for key, item in docs.items() if not item["present"]],
-        "status": "ready" if all(item["present"] for item in docs.values()) else "needs_review",
+        "status": "ready"
+        if all(item["present"] for item in docs.values())
+        else "needs_review",
     }
 
 

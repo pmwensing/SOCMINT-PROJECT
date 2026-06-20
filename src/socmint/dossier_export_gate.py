@@ -10,10 +10,15 @@ from .dossier_export_verification import export_verification_summary
 DOSSIER_EXPORT_GATE_SCHEMA = "socmint.dossier_export_gate.v10_10_0"
 
 
-def export_gate_report(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
-    verification = export_verification_report(subject_id=subject_id, case_id=case_id, root=root)
+def export_gate_report(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
+    verification = export_verification_report(
+        subject_id=subject_id, case_id=case_id, root=root
+    )
     checks = {
-        "artifact_hashes": verification.get("checks", {}).get("artifact_hashes") is True,
+        "artifact_hashes": verification.get("checks", {}).get("artifact_hashes")
+        is True,
         "manifest_index": verification.get("checks", {}).get("manifest_index") is True,
         "audit_coverage": verification.get("checks", {}).get("audit_coverage") is True,
     }
@@ -32,9 +37,13 @@ def export_gate_report(subject_id: str, case_id: str, root: str | Path = DEFAULT
     }
 
 
-def export_gate_summary(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def export_gate_summary(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     gate = export_gate_report(subject_id=subject_id, case_id=case_id, root=root)
-    verification = export_verification_summary(subject_id=subject_id, case_id=case_id, root=root)
+    verification = export_verification_summary(
+        subject_id=subject_id, case_id=case_id, root=root
+    )
     return {
         "schema": DOSSIER_EXPORT_GATE_SCHEMA,
         "status": gate["status"],
@@ -48,12 +57,16 @@ def export_gate_summary(subject_id: str, case_id: str, root: str | Path = DEFAUL
     }
 
 
-def export_gate_decision(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def export_gate_decision(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     summary = export_gate_summary(subject_id=subject_id, case_id=case_id, root=root)
     return {
         "schema": DOSSIER_EXPORT_GATE_SCHEMA,
         "decision": "allow" if summary["ready"] else "deny",
-        "reason": "all verification checks passed" if summary["ready"] else "verification blockers present",
+        "reason": "all verification checks passed"
+        if summary["ready"]
+        else "verification blockers present",
         "subject_id": subject_id,
         "case_id": case_id,
         "blockers": summary["blockers"],

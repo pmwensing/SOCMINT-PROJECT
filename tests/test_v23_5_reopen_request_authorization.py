@@ -97,7 +97,9 @@ def test_v23_5_requires_archive_and_supports_authorize_or_deny(tmp_path, monkeyp
     assert authorized["case_reopen_authorized"] is True
     assert authorized["case_reopened"] is True
     assert authorized["next_action"] == "resume_case_operations"
-    assert authorized["source"]["reopen_request_id"] == request_result["reopen_request_id"]
+    assert (
+        authorized["source"]["reopen_request_id"] == request_result["reopen_request_id"]
+    )
     assert authorized["source"]["archive_package_id"] == "case-archive-1"
     assert authorized["source"]["closure_decision_id"] == "closure-decision-1"
     assert authorized["reopen_request_mutated"] is False

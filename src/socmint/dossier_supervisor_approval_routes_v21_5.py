@@ -56,10 +56,14 @@ def register_dossier_supervisor_approval_routes_v21_5(app):
             return jsonify({"error": "login required"}), 401
         subject_id = _subject_id()
         if subject_id is None:
-            return jsonify({
-                "status": "blocked",
-                "blockers": [{"key": "subject_id_required_for_supervisor_approval"}],
-            }), 422
+            return jsonify(
+                {
+                    "status": "blocked",
+                    "blockers": [
+                        {"key": "subject_id_required_for_supervisor_approval"}
+                    ],
+                }
+            ), 422
         payload = request.get_json(silent=True) or {}
         result = record_supervisor_dossier_decision(
             case_id,
@@ -70,7 +74,9 @@ def register_dossier_supervisor_approval_routes_v21_5(app):
             ip_address=request.remote_addr,
         )
         return jsonify(result), 200 if result.get("status") in {
-            "approved", "returned", "held"
+            "approved",
+            "returned",
+            "held",
         } else 422
 
     return app

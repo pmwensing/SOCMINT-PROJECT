@@ -58,9 +58,17 @@ def main() -> None:
             page = client.get("/connectors/runtime")
             assert page.status_code == 200
             text = page.get_data(as_text=True)
-            assert "Missing connector repair" in text or payload["summary"]["missing"] == 0
-            assert "Native dependency diagnostics" in text or payload["native_dependencies"]["ready"]
-            assert "pkg-config cmake build-essential" in text or payload["native_dependencies"]["ready"]
+            assert (
+                "Missing connector repair" in text or payload["summary"]["missing"] == 0
+            )
+            assert (
+                "Native dependency diagnostics" in text
+                or payload["native_dependencies"]["ready"]
+            )
+            assert (
+                "pkg-config cmake build-essential" in text
+                or payload["native_dependencies"]["ready"]
+            )
             assert "PhoneInfoga" in text or "phoneinfoga" in text
 
         result = subprocess.run(

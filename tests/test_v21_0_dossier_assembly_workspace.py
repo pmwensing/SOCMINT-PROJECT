@@ -45,9 +45,7 @@ def _promoted(case_id="case-alpha"):
         actor="analyst",
     )
     decide_finding(case_id, proposal["finding_id"], "approve", actor="supervisor")
-    package = build_dossier_promotion_package(
-        case_id, actor="supervisor", promote=True
-    )
+    package = build_dossier_promotion_package(case_id, actor="supervisor", promote=True)
     return proposal, package
 
 
@@ -65,7 +63,9 @@ def test_v21_0_loads_promoted_v20_package_without_mutation(tmp_path, monkeypatch
     assert workspace["source_package_immutable"] is True
     assert workspace["source_findings_immutable"] is True
     assert before == after
-    assert workspace["sections"][2]["findings"][0]["finding_id"] == proposal["finding_id"]
+    assert (
+        workspace["sections"][2]["findings"][0]["finding_id"] == proposal["finding_id"]
+    )
 
 
 def test_v21_0_groups_findings_and_exposes_narrative_gaps(tmp_path, monkeypatch):
@@ -97,9 +97,7 @@ def test_v21_0_saves_immutable_arrangement_and_reloads_it(tmp_path, monkeypatch)
                 "identity_and_entities",
                 "key_findings",
             ],
-            "finding_sections": {
-                proposal["finding_id"]: "executive_summary"
-            },
+            "finding_sections": {proposal["finding_id"]: "executive_summary"},
             "narratives": {
                 "executive_summary": "The approved finding establishes ownership."
             },
@@ -119,10 +117,15 @@ def test_v21_0_saves_immutable_arrangement_and_reloads_it(tmp_path, monkeypatch)
 
     session = database.Session()
     try:
-        assert session.query(database.AuditLog).filter_by(
-            action=DOSSIER_ARRANGEMENT_ACTION,
-            target_value="case-alpha",
-        ).count() == 1
+        assert (
+            session.query(database.AuditLog)
+            .filter_by(
+                action=DOSSIER_ARRANGEMENT_ACTION,
+                target_value="case-alpha",
+            )
+            .count()
+            == 1
+        )
     finally:
         session.close()
 
@@ -137,7 +140,10 @@ def test_v21_0_exposes_existing_product_links(tmp_path, monkeypatch):
     assert links["case_findings_workspace"] == "/case-findings/case-alpha"
     assert links["case_delivery_workspace"] == "/case-delivery?case_id=case-alpha"
     assert links["dossier_readiness_api"] == "/api/v1/subjects/42/dossier/readiness"
-    assert links["claim_evidence_ledger_api"] == "/api/v1/subjects/42/claim-evidence-ledger"
+    assert (
+        links["claim_evidence_ledger_api"]
+        == "/api/v1/subjects/42/claim-evidence-ledger"
+    )
     assert links["export_manifest_draft"] == "/api/v1/subjects/42/export-manifest-draft"
     assert links["ultimate_dossier"] == "/spine/subjects/42/ultimate-dossier"
 

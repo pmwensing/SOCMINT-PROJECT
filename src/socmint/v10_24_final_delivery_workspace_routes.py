@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from flask import Response, jsonify, request
 
-from .v10_24_final_delivery_workspace import build_final_delivery_export_zip_from_request
+from .v10_24_final_delivery_workspace import (
+    build_final_delivery_export_zip_from_request,
+)
 from .v10_24_final_delivery_workspace import build_final_delivery_workspace_from_request
 
 

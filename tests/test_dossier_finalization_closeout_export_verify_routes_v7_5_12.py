@@ -4,9 +4,15 @@ import base64
 
 from flask import Flask
 
-from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import build_closeout_export_bundle
-from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import build_closeout_export_zip
-from socmint.dossier_finalization_closeout_export_verify_routes_v7_5_12 import register_dossier_finalization_closeout_export_verify_routes
+from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import (
+    build_closeout_export_bundle,
+)
+from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import (
+    build_closeout_export_zip,
+)
+from socmint.dossier_finalization_closeout_export_verify_routes_v7_5_12 import (
+    register_dossier_finalization_closeout_export_verify_routes,
+)
 from socmint.dossier_finalization_closeout_report_v7_5_10 import build_closeout_report
 
 
@@ -49,14 +55,19 @@ def test_verify_closeout_export_bundle_route():
 
     assert response.status_code == 200
     payload = response.get_json()
-    assert payload["schema"] == "socmint.v7_5_12.dossier_finalization_closeout_export_verification"
+    assert (
+        payload["schema"]
+        == "socmint.v7_5_12.dossier_finalization_closeout_export_verification"
+    )
     assert payload["status"] == "verified"
     assert payload["verified"] is True
 
 
 def test_verify_closeout_export_zip_route():
     client = app_client()
-    encoded = base64.b64encode(build_closeout_export_zip(closeout_bundle())).decode("ascii")
+    encoded = base64.b64encode(build_closeout_export_zip(closeout_bundle())).decode(
+        "ascii"
+    )
 
     response = client.post(
         "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report/export/verify-zip",

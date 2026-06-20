@@ -70,17 +70,29 @@ def import_audit() -> dict[str, Any]:
     for name in V12_MODULES:
         try:
             module = importlib.import_module(name)
-            rows.append({"module": name, "status": "pass", "path": getattr(module, "__file__", None)})
+            rows.append(
+                {
+                    "module": name,
+                    "status": "pass",
+                    "path": getattr(module, "__file__", None),
+                }
+            )
         except Exception as exc:
             rows.append({"module": name, "status": "fail", "error": str(exc)})
     failed = [row for row in rows if row["status"] != "pass"]
-    return {"schema": SCHEMA, "status": "pass" if not failed else "fail", "modules": rows, "failure_count": len(failed)}
+    return {
+        "schema": SCHEMA,
+        "status": "pass" if not failed else "fail",
+        "modules": rows,
+        "failure_count": len(failed),
+    }
 
 
 def route_audit(app: Any | None = None) -> dict[str, Any]:
     if app is None:
         try:
             from .wsgi import app as wsgi_app
+
             app = wsgi_app
         except Exception as exc:
             rows = [{"route": route, "status": "not_checked"} for route in V12_ROUTES]
@@ -94,35 +106,91 @@ def route_audit(app: Any | None = None) -> dict[str, Any]:
                 "note": "WSGI app import failed; route list preserved for RC diagnostics and marked review instead of crashing smoke.",
             }
     available = {rule.rule for rule in app.url_map.iter_rules()}
-    rows = [{"route": route, "status": "pass" if route in available else "missing"} for route in V12_ROUTES]
+    rows = [
+        {"route": route, "status": "pass" if route in available else "missing"}
+        for route in V12_ROUTES
+    ]
     missing = [row["route"] for row in rows if row["status"] != "pass"]
-    return {"schema": SCHEMA, "status": "pass" if not missing else "fail", "routes": rows, "missing": missing, "available_count": len(available)}
+    return {
+        "schema": SCHEMA,
+        "status": "pass" if not missing else "fail",
+        "routes": rows,
+        "missing": missing,
+        "available_count": len(available),
+    }
 
 
 def payload_audit() -> dict[str, Any]:
     checks = []
     try:
         release = production_release_check()
-        checks.append({"name": "production_release_check", "status": "pass" if release.get("guided_workflow") else "fail", "schema": release.get("schema"), "state": release.get("state")})
+        checks.append(
+            {
+                "name": "production_release_check",
+                "status": "pass" if release.get("guided_workflow") else "fail",
+                "schema": release.get("schema"),
+                "state": release.get("state"),
+            }
+        )
     except Exception as exc:
-        checks.append({"name": "production_release_check", "status": "fail", "error": str(exc)})
+        checks.append(
+            {"name": "production_release_check", "status": "fail", "error": str(exc)}
+        )
     try:
         summary = production_release_summary()
-        checks.append({"name": "production_release_summary", "status": "pass" if summary.get("guided_workflow") else "fail", "schema": summary.get("schema"), "version": summary.get("version")})
+        checks.append(
+            {
+                "name": "production_release_summary",
+                "status": "pass" if summary.get("guided_workflow") else "fail",
+                "schema": summary.get("schema"),
+                "version": summary.get("version"),
+            }
+        )
     except Exception as exc:
-        checks.append({"name": "production_release_summary", "status": "fail", "error": str(exc)})
+        checks.append(
+            {"name": "production_release_summary", "status": "fail", "error": str(exc)}
+        )
     try:
         command = command_center_payload()
-        checks.append({"name": "command_center_payload", "status": "pass" if command.get("guided_investigation") else "fail", "schema": command.get("schema"), "guided_readiness": command.get("summary", {}).get("guided_readiness")})
+        checks.append(
+            {
+                "name": "command_center_payload",
+                "status": "pass" if command.get("guided_investigation") else "fail",
+                "schema": command.get("schema"),
+                "guided_readiness": command.get("summary", {}).get("guided_readiness"),
+            }
+        )
     except Exception as exc:
-        checks.append({"name": "command_center_payload", "status": "fail", "error": str(exc)})
+        checks.append(
+            {"name": "command_center_payload", "status": "fail", "error": str(exc)}
+        )
     try:
         guided = guided_investigation_payload()
-        checks.append({"name": "guided_investigation_payload", "status": "pass" if guided.get("progress_rail") and guided.get("flow_map") else "fail", "schema": guided.get("schema"), "readiness": guided.get("readiness")})
+        checks.append(
+            {
+                "name": "guided_investigation_payload",
+                "status": "pass"
+                if guided.get("progress_rail") and guided.get("flow_map")
+                else "fail",
+                "schema": guided.get("schema"),
+                "readiness": guided.get("readiness"),
+            }
+        )
     except Exception as exc:
-        checks.append({"name": "guided_investigation_payload", "status": "fail", "error": str(exc)})
+        checks.append(
+            {
+                "name": "guided_investigation_payload",
+                "status": "fail",
+                "error": str(exc),
+            }
+        )
     failed = [row for row in checks if row.get("status") != "pass"]
-    return {"schema": SCHEMA, "status": "pass" if not failed else "fail", "checks": checks, "failure_count": len(failed)}
+    return {
+        "schema": SCHEMA,
+        "status": "pass" if not failed else "fail",
+        "checks": checks,
+        "failure_count": len(failed),
+    }
 
 
 def smoke_target_plan() -> dict[str, Any]:
@@ -141,20 +209,46 @@ def rc_regression_report(app: Any | None = None) -> dict[str, Any]:
     payloads = payload_audit()
     smokes = smoke_target_plan()
     checks = [
-        {"name": "import_audit", "status": imports["status"], "failure_count": imports.get("failure_count", 0)},
-        {"name": "route_audit", "status": routes["status"], "failure_count": len(routes.get("missing", []))},
-        {"name": "payload_audit", "status": payloads["status"], "failure_count": payloads.get("failure_count", 0)},
-        {"name": "smoke_target_plan", "status": "pass" if smokes.get("targets") else "fail", "failure_count": 0 if smokes.get("targets") else 1},
+        {
+            "name": "import_audit",
+            "status": imports["status"],
+            "failure_count": imports.get("failure_count", 0),
+        },
+        {
+            "name": "route_audit",
+            "status": routes["status"],
+            "failure_count": len(routes.get("missing", [])),
+        },
+        {
+            "name": "payload_audit",
+            "status": payloads["status"],
+            "failure_count": payloads.get("failure_count", 0),
+        },
+        {
+            "name": "smoke_target_plan",
+            "status": "pass" if smokes.get("targets") else "fail",
+            "failure_count": 0 if smokes.get("targets") else 1,
+        },
     ]
     fail_count = sum(1 for item in checks if item["status"] == "fail")
     review_count = sum(1 for item in checks if item["status"] == "review")
-    decision = "GO" if fail_count == 0 and review_count == 0 else "HOLD" if fail_count == 0 else "FAIL"
+    decision = (
+        "GO"
+        if fail_count == 0 and review_count == 0
+        else "HOLD"
+        if fail_count == 0
+        else "FAIL"
+    )
     return {
         "schema": SCHEMA,
         "generated_at": utc_now(),
         "version": "12.10",
         "decision": decision,
-        "status": "pass" if decision == "GO" else "hold" if decision == "HOLD" else "fail",
+        "status": "pass"
+        if decision == "GO"
+        else "hold"
+        if decision == "HOLD"
+        else "fail",
         "checks": checks,
         "import_audit": imports,
         "route_audit": routes,
@@ -183,12 +277,21 @@ def write_rc_report(root: str | None = None, app: Any | None = None) -> dict[str
         "",
     ]
     for check in report.get("checks", []):
-        lines.append(f"- `{check.get('status')}` — {check.get('name')} — failures `{check.get('failure_count')}`")
+        lines.append(
+            f"- `{check.get('status')}` — {check.get('name')} — failures `{check.get('failure_count')}`"
+        )
     lines.extend(["", "## Smoke Target Order", ""])
     for target in V12_SMOKE_TARGETS:
         lines.append(f"- `{target}`")
     md_path.write_text("\n".join(lines) + "\n")
-    return {"schema": SCHEMA, "json_path": str(json_path), "markdown_path": str(md_path), "decision": report.get("decision"), "status": report.get("status"), "report": report}
+    return {
+        "schema": SCHEMA,
+        "json_path": str(json_path),
+        "markdown_path": str(md_path),
+        "decision": report.get("decision"),
+        "status": report.get("status"),
+        "report": report,
+    }
 
 
 if __name__ == "__main__":

@@ -108,31 +108,66 @@ def register_portfolio_operations_routes_v24_0(app):
         if not session.get("user"):
             return jsonify({"error": "login required"}), 401
         payload = request.get_json(silent=True) or {}
-        result = record_escalation(case_id, confirmed=payload.get("confirmed") is True, supervisor=actor(), reason=str(payload.get("reason") or ""), note=str(payload.get("note") or ""), ip_address=request.remote_addr)
-        return jsonify(result), 200 if result.get("status") == "escalate_recorded" else 422
+        result = record_escalation(
+            case_id,
+            confirmed=payload.get("confirmed") is True,
+            supervisor=actor(),
+            reason=str(payload.get("reason") or ""),
+            note=str(payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "escalate_recorded" else 422
 
     @app.post("/api/v1/portfolio-operations/<case_id>/acknowledge")
     def api_portfolio_acknowledge_post_v24_4(case_id: str):
         if not session.get("user"):
             return jsonify({"error": "login required"}), 401
         payload = request.get_json(silent=True) or {}
-        result = acknowledge_escalation(case_id, confirmed=payload.get("confirmed") is True, supervisor=actor(), note=str(payload.get("note") or ""), ip_address=request.remote_addr)
-        return jsonify(result), 200 if result.get("status") == "acknowledge_recorded" else 422
+        result = acknowledge_escalation(
+            case_id,
+            confirmed=payload.get("confirmed") is True,
+            supervisor=actor(),
+            note=str(payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "acknowledge_recorded" else 422
 
     @app.post("/api/v1/portfolio-operations/<case_id>/reassign")
     def api_portfolio_reassign_post_v24_4(case_id: str):
         if not session.get("user"):
             return jsonify({"error": "login required"}), 401
         payload = request.get_json(silent=True) or {}
-        result = reassign_escalation(case_id, confirmed=payload.get("confirmed") is True, supervisor=actor(), assigned_reviewer=str(payload.get("assigned_reviewer") or ""), note=str(payload.get("note") or ""), ip_address=request.remote_addr)
-        return jsonify(result), 200 if result.get("status") == "reassign_recorded" else 422
+        result = reassign_escalation(
+            case_id,
+            confirmed=payload.get("confirmed") is True,
+            supervisor=actor(),
+            assigned_reviewer=str(payload.get("assigned_reviewer") or ""),
+            note=str(payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "reassign_recorded" else 422
 
     @app.post("/api/v1/portfolio-operations/<case_id>/resolve")
     def api_portfolio_resolve_post_v24_4(case_id: str):
         if not session.get("user"):
             return jsonify({"error": "login required"}), 401
         payload = request.get_json(silent=True) or {}
-        result = resolve_escalation(case_id, confirmed=payload.get("confirmed") is True, supervisor=actor(), resolution=str(payload.get("resolution") or ""), note=str(payload.get("note") or ""), ip_address=request.remote_addr)
-        return jsonify(result), 200 if result.get("status") == "resolve_recorded" else 422
+        result = resolve_escalation(
+            case_id,
+            confirmed=payload.get("confirmed") is True,
+            supervisor=actor(),
+            resolution=str(payload.get("resolution") or ""),
+            note=str(payload.get("note") or ""),
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "resolve_recorded" else 422
 
     return app

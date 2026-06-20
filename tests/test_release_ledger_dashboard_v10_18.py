@@ -7,7 +7,9 @@ from src.socmint.release_ledger_dashboard import release_ledger_dashboard_markdo
 from src.socmint.wsgi import app
 
 
-def _subject(subject_id="subject-ledger-dashboard-1", case_id="case-ledger-dashboard-1018"):
+def _subject(
+    subject_id="subject-ledger-dashboard-1", case_id="case-ledger-dashboard-1018"
+):
     return {
         "subject_id": subject_id,
         "display_name": "Ledger Dashboard Subject",
@@ -29,7 +31,9 @@ def _evidence():
 
 
 def _approved_export(subject_id: str):
-    persist_export_pack(_subject(subject_id), _evidence(), analyst_reviewed=True, audit=True)
+    persist_export_pack(
+        _subject(subject_id), _evidence(), analyst_reviewed=True, audit=True
+    )
     record_distribution_action(
         case_id="case-ledger-dashboard-1018",
         subject_id=subject_id,
@@ -56,7 +60,12 @@ def test_v10_18_dashboard_counts_released_ready_and_held(tmp_path, monkeypatch):
         actor="analyst",
     )
     _approved_export("subject-ledger-dashboard-ready")
-    persist_export_pack(_subject("subject-ledger-dashboard-held"), _evidence(), analyst_reviewed=True, audit=False)
+    persist_export_pack(
+        _subject("subject-ledger-dashboard-held"),
+        _evidence(),
+        analyst_reviewed=True,
+        audit=False,
+    )
 
     payload = release_ledger_dashboard("case-ledger-dashboard-1018")
 
@@ -106,7 +115,10 @@ def test_v10_18_release_ledger_dashboard_routes_are_registered():
 
     assert "/dossier/release-ledger-dashboard" in routes
     assert "/api/v1/dossier-builder/v3/release-ledger-dashboard/<case_id>" in routes
-    assert "/api/v1/dossier-builder/v3/release-ledger-dashboard/<case_id>/markdown" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/release-ledger-dashboard/<case_id>/markdown"
+        in routes
+    )
 
 
 def test_v10_18_release_ledger_dashboard_requires_login():

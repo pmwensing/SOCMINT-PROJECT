@@ -21,7 +21,9 @@ def sha256_file(path: str | Path) -> str:
     return digest.hexdigest()
 
 
-def verify_artifact_hashes(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def verify_artifact_hashes(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     manifest = load_export_manifest(subject_id=subject_id, case_id=case_id, root=root)
     scope = export_scope_matches(manifest, subject_id=subject_id, case_id=case_id)
     if scope["status"] != "pass":
@@ -63,7 +65,9 @@ def verify_artifact_hashes(subject_id: str, case_id: str, root: str | Path = DEF
         )
     return {
         "schema": DOSSIER_EXPORT_VERIFICATION_SCHEMA,
-        "status": "pass" if checks and all(item["match"] for item in checks) else "needs_review",
+        "status": "pass"
+        if checks and all(item["match"] for item in checks)
+        else "needs_review",
         "subject_id": subject_id,
         "case_id": case_id,
         "artifact_count": len(checks),
@@ -71,14 +75,22 @@ def verify_artifact_hashes(subject_id: str, case_id: str, root: str | Path = DEF
     }
 
 
-def verify_manifest_index(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def verify_manifest_index(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     manifest = load_export_manifest(subject_id=subject_id, case_id=case_id, root=root)
     index_entry = find_export_entry(case_id=case_id, subject_id=subject_id, root=root)
-    manifest_scope = export_scope_matches(manifest, subject_id=subject_id, case_id=case_id)
-    index_scope = export_scope_matches(index_entry, subject_id=subject_id, case_id=case_id)
+    manifest_scope = export_scope_matches(
+        manifest, subject_id=subject_id, case_id=case_id
+    )
+    index_scope = export_scope_matches(
+        index_entry, subject_id=subject_id, case_id=case_id
+    )
     manifest_present = manifest.get("status") != "missing"
     index_present = index_entry.get("status") != "missing"
-    artifact_count_match = len(manifest.get("artifacts", [])) == len(index_entry.get("artifacts", []))
+    artifact_count_match = len(manifest.get("artifacts", [])) == len(
+        index_entry.get("artifacts", [])
+    )
     subject_match = manifest.get("subject_id") == index_entry.get("subject_id")
     case_match = manifest.get("case_id") == index_entry.get("case_id")
     checks = {
@@ -105,7 +117,9 @@ def verify_manifest_index(subject_id: str, case_id: str, root: str | Path = DEFA
     }
 
 
-def verify_audit_coverage(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def verify_audit_coverage(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     summary = audit_summary(case_id=case_id, subject_id=subject_id, root=root)
     counts = summary.get("counts", {})
     has_export_event = counts.get("export_created", 0) > 0
@@ -122,9 +136,13 @@ def verify_audit_coverage(subject_id: str, case_id: str, root: str | Path = DEFA
     }
 
 
-def export_verification_report(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def export_verification_report(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     hashes = verify_artifact_hashes(subject_id=subject_id, case_id=case_id, root=root)
-    manifest_index = verify_manifest_index(subject_id=subject_id, case_id=case_id, root=root)
+    manifest_index = verify_manifest_index(
+        subject_id=subject_id, case_id=case_id, root=root
+    )
     audit = verify_audit_coverage(subject_id=subject_id, case_id=case_id, root=root)
     checks = {
         "artifact_hashes": hashes.get("status") == "pass",
@@ -143,8 +161,12 @@ def export_verification_report(subject_id: str, case_id: str, root: str | Path =
     }
 
 
-def export_verification_summary(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
-    report = export_verification_report(subject_id=subject_id, case_id=case_id, root=root)
+def export_verification_summary(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
+    report = export_verification_report(
+        subject_id=subject_id, case_id=case_id, root=root
+    )
     return {
         "schema": DOSSIER_EXPORT_VERIFICATION_SCHEMA,
         "status": report["status"],

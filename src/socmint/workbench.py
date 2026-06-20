@@ -51,8 +51,7 @@ def evaluate_policy(action: str, payload: dict | None = None, actor=None) -> dic
         if mode == "delete" and not retention_delete_enabled():
             allowed = False
             reasons.append(
-                "Delete retention mode requires "
-                "SOCMINT_RETENTION_DELETE_ENABLED=1."
+                "Delete retention mode requires SOCMINT_RETENTION_DELETE_ENABLED=1."
             )
 
     if not reasons:
@@ -267,12 +266,8 @@ def list_workbench_jobs_payload(limit=100):
                 "payload": _json_loads(job.payload_json),
                 "result": _json_loads(job.result_json),
                 "error": job.error,
-                "created_at": job.created_at.isoformat()
-                if job.created_at
-                else None,
-                "updated_at": job.updated_at.isoformat()
-                if job.updated_at
-                else None,
+                "created_at": job.created_at.isoformat() if job.created_at else None,
+                "updated_at": job.updated_at.isoformat() if job.updated_at else None,
             }
             for job in jobs
         ]

@@ -9,7 +9,12 @@ from .normalization_review_queue_v13 import loads_dict
 SCHEMA = "socmint.normalization_promote_confirmed.v13_15"
 
 
-def _payload(source: str, item_id: int, evidence_ref: str | None, extra: dict[str, Any] | None = None) -> dict[str, Any]:
+def _payload(
+    source: str,
+    item_id: int,
+    evidence_ref: str | None,
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     data = {
         "promoted_from": source,
         "source_id": item_id,
@@ -26,10 +31,21 @@ def promote_observation(observation_id: int) -> dict[str, Any]:
     try:
         item = session.query(db.SpineObservation).filter_by(id=observation_id).first()
         if not item:
-            return {"schema": SCHEMA, "kind": "observation", "id": observation_id, "status": "not_found"}
+            return {
+                "schema": SCHEMA,
+                "kind": "observation",
+                "id": observation_id,
+                "status": "not_found",
+            }
         payload = loads_dict(item.payload_json)
         if payload.get("review_state", "unreviewed") != "confirmed":
-            return {"schema": SCHEMA, "kind": "observation", "id": observation_id, "status": "skipped", "reason": "not_confirmed"}
+            return {
+                "schema": SCHEMA,
+                "kind": "observation",
+                "id": observation_id,
+                "status": "skipped",
+                "reason": "not_confirmed",
+            }
         subject_id = item.subject_id
         assertion_type = item.observation_type
         normalized_value = item.normalized_value
@@ -58,9 +74,20 @@ def promote_observation(observation_id: int) -> dict[str, Any]:
 def promote_account_discovery(discovery_id: int) -> dict[str, Any]:
     item = db.get_account_discovery(discovery_id)
     if not item:
-        return {"schema": SCHEMA, "kind": "account_discovery", "id": discovery_id, "status": "not_found"}
+        return {
+            "schema": SCHEMA,
+            "kind": "account_discovery",
+            "id": discovery_id,
+            "status": "not_found",
+        }
     if item.review_state != "confirmed":
-        return {"schema": SCHEMA, "kind": "account_discovery", "id": discovery_id, "status": "skipped", "reason": "not_confirmed"}
+        return {
+            "schema": SCHEMA,
+            "kind": "account_discovery",
+            "id": discovery_id,
+            "status": "skipped",
+            "reason": "not_confirmed",
+        }
     payload = json.loads(item.payload_json or "{}")
     assertion_id = db.upsert_spine_assertion(
         subject_id=item.subject_id,

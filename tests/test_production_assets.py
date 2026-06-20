@@ -32,7 +32,7 @@ def test_deployment_assets_document_hidden_service_mapping():
     assert "context: ./deploy/tor" in compose
     assert "network_mode: service:tor" in compose
     assert "/readyz" in compose
-    assert "profiles: [\"worker\"]" in compose
+    assert 'profiles: ["worker"]' in compose
     assert "SOCMINT_WORKER_INTERVAL" in compose
     assert "requirements.lock" in dockerfile
     assert "requirements.txt" not in dockerfile

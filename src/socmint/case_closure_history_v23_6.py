@@ -55,7 +55,9 @@ def build_case_closure_history(case_id: str) -> dict[str, Any]:
     retention = (latest.get("retention_assignment") or {}).get("details") or {}
     archive = (latest.get("archive_generation") or {}).get("details") or {}
     reopen_request = (latest.get("reopen_request") or {}).get("details") or {}
-    reopen_authorization = (latest.get("reopen_authorization") or {}).get("details") or {}
+    reopen_authorization = (latest.get("reopen_authorization") or {}).get(
+        "details"
+    ) or {}
 
     authorization_decision = reopen_authorization.get("decision")
     case_reopened = reopen_authorization.get("case_reopen_authorized") is True
@@ -70,7 +72,9 @@ def build_case_closure_history(case_id: str) -> dict[str, Any]:
     else:
         closure_state = "open"
 
-    archive_state = "generated" if archive.get("archive_package_id") else "not_generated"
+    archive_state = (
+        "generated" if archive.get("archive_package_id") else "not_generated"
+    )
     reopen_status = (
         "authorized"
         if authorization_decision == "authorize"
@@ -114,5 +118,7 @@ def build_case_closure_history(case_id: str) -> dict[str, Any]:
         "latest_events": latest,
         "source_records_mutated": False,
         "history_record_created": False,
-        "next_action": unresolved[0]["key"] if unresolved else "product_review_checkpoint",
+        "next_action": unresolved[0]["key"]
+        if unresolved
+        else "product_review_checkpoint",
     }

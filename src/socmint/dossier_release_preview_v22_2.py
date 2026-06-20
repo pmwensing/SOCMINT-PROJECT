@@ -4,7 +4,12 @@ import os
 from typing import Any
 
 from . import database
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .dossier_final_export_package_v21_6 import _latest_export
 from .dossier_release_authorization_v22_1 import latest_release_authorization
 
@@ -48,25 +53,33 @@ def _classify_text(text: str, explicit: str | None = None) -> dict[str, Any]:
 def _sections(export_package: dict[str, Any]) -> list[dict[str, Any]]:
     result = []
     for section in (export_package.get("dossier_content") or {}).get("sections") or []:
-        narrative = str(section.get("citation_ready_narrative") or section.get("narrative") or "")
+        narrative = str(
+            section.get("citation_ready_narrative") or section.get("narrative") or ""
+        )
         findings = list(section.get("findings") or [])
         combined = " ".join(
             [narrative]
-            + [str(item.get("citation_ready_text") or item.get("text") or "") for item in findings]
+            + [
+                str(item.get("citation_ready_text") or item.get("text") or "")
+                for item in findings
+            ]
         )
         classification = _classify_text(combined, section.get("classification"))
         redaction_confirmed = section.get("redaction_confirmed") is True
-        result.append({
-            "section_id": section.get("section_id"),
-            "title": section.get("title"),
-            "position": section.get("position"),
-            "narrative": narrative,
-            "findings": findings,
-            "finding_count": len(findings),
-            **classification,
-            "redaction_confirmed": redaction_confirmed,
-            "release_ready": not classification["redaction_required"] or redaction_confirmed,
-        })
+        result.append(
+            {
+                "section_id": section.get("section_id"),
+                "title": section.get("title"),
+                "position": section.get("position"),
+                "narrative": narrative,
+                "findings": findings,
+                "finding_count": len(findings),
+                **classification,
+                "redaction_confirmed": redaction_confirmed,
+                "release_ready": not classification["redaction_required"]
+                or redaction_confirmed,
+            }
+        )
     return result
 
 
@@ -82,7 +95,10 @@ def _attachments(export_package: dict[str, Any]) -> list[dict[str, Any]]:
             )
             if not key or key in attachments:
                 continue
-            text = " ".join(str(artifact.get(name) or "") for name in ("path", "name", "description"))
+            text = " ".join(
+                str(artifact.get(name) or "")
+                for name in ("path", "name", "description")
+            )
             classification = _classify_text(text, artifact.get("classification"))
             redaction_confirmed = artifact.get("redaction_confirmed") is True
             attachments[key] = {
@@ -93,7 +109,8 @@ def _attachments(export_package: dict[str, Any]) -> list[dict[str, Any]]:
                 "source_claim_id": citation.get("claim_id"),
                 **classification,
                 "redaction_confirmed": redaction_confirmed,
-                "release_ready": not classification["redaction_required"] or redaction_confirmed,
+                "release_ready": not classification["redaction_required"]
+                or redaction_confirmed,
             }
     return sorted(attachments.values(), key=lambda item: item["attachment_id"])
 
@@ -129,27 +146,35 @@ def build_release_package_preview(case_id: str) -> dict[str, Any]:
     if authorization is None:
         blockers.append({"key": "release_authorization_required"})
     if export_package and authorization:
-        if authorization.get("export_package_id") != export_package.get("export_package_id"):
+        if authorization.get("export_package_id") != export_package.get(
+            "export_package_id"
+        ):
             blockers.append({"key": "release_authorization_export_mismatch"})
-        if authorization.get("export_package_sha256") != export_package.get("export_package_sha256"):
+        if authorization.get("export_package_sha256") != export_package.get(
+            "export_package_sha256"
+        ):
             blockers.append({"key": "release_authorization_hash_mismatch"})
 
     sections = _sections(export_package or {})
     attachments = _attachments(export_package or {})
     for section in sections:
         if not section["release_ready"]:
-            blockers.append({
-                "key": "section_redaction_required",
-                "section_id": section["section_id"],
-                "matches": section["sensitivity_matches"],
-            })
+            blockers.append(
+                {
+                    "key": "section_redaction_required",
+                    "section_id": section["section_id"],
+                    "matches": section["sensitivity_matches"],
+                }
+            )
     for attachment in attachments:
         if not attachment["release_ready"]:
-            blockers.append({
-                "key": "attachment_redaction_required",
-                "attachment_id": attachment["attachment_id"],
-                "matches": attachment["sensitivity_matches"],
-            })
+            blockers.append(
+                {
+                    "key": "attachment_redaction_required",
+                    "attachment_id": attachment["attachment_id"],
+                    "matches": attachment["sensitivity_matches"],
+                }
+            )
 
     material = {
         "export_package_id": (export_package or {}).get("export_package_id"),
@@ -177,15 +202,21 @@ def build_release_package_preview(case_id: str) -> dict[str, Any]:
         "included_attachments": attachments,
         "section_count": len(sections),
         "attachment_count": len(attachments),
-        "restricted_section_count": sum(1 for item in sections if item["classification"] == "restricted"),
-        "restricted_attachment_count": sum(1 for item in attachments if item["classification"] == "restricted"),
+        "restricted_section_count": sum(
+            1 for item in sections if item["classification"] == "restricted"
+        ),
+        "restricted_attachment_count": sum(
+            1 for item in attachments if item["classification"] == "restricted"
+        ),
         "blocker_count": len(blockers),
         "blockers": blockers,
         "operator_acknowledgement_required": True,
         "transmission_performed": False,
         "source_export_mutated": False,
         "latest_preview": latest_release_preview(case_id),
-        "next_action": "acknowledge_release_preview" if ready else "resolve_redaction_and_sensitivity_blockers",
+        "next_action": "acknowledge_release_preview"
+        if ready
+        else "resolve_redaction_and_sensitivity_blockers",
     }
 
 
@@ -214,10 +245,16 @@ def acknowledge_release_package_preview(
         "preview_id": preview["preview_id"],
         "preview_sha256": preview["preview_sha256"],
         "release_ready": preview["release_ready"],
-        "export_package_id": (preview.get("export_package") or {}).get("export_package_id"),
-        "authorization_id": (preview.get("authorized_release") or {}).get("authorization_id"),
+        "export_package_id": (preview.get("export_package") or {}).get(
+            "export_package_id"
+        ),
+        "authorization_id": (preview.get("authorized_release") or {}).get(
+            "authorization_id"
+        ),
         "recipient_id": (preview.get("authorized_release") or {}).get("recipient_id"),
-        "delivery_channel": (preview.get("authorized_release") or {}).get("delivery_channel"),
+        "delivery_channel": (preview.get("authorized_release") or {}).get(
+            "delivery_channel"
+        ),
         "included_sections": preview["included_sections"],
         "included_attachments": preview["included_attachments"],
         "blockers": preview["blockers"],
@@ -245,7 +282,9 @@ def acknowledge_release_package_preview(
         session.close()
     return {
         **event,
-        "status": "acknowledged_ready" if preview["release_ready"] else "acknowledged_with_blockers",
+        "status": "acknowledged_ready"
+        if preview["release_ready"]
+        else "acknowledged_with_blockers",
         "preview_record_id": record_id,
         "acknowledged_by": operator,
         "acknowledged_at": acknowledged_at,

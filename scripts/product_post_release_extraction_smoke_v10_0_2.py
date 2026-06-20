@@ -49,7 +49,9 @@ def main() -> int:
         db.configure_database(os.environ["DATABASE_URL"])
 
         app = create_app()
-        app.config.update(TESTING=True, SECRET_KEY="v1002-post-release-extraction-smoke")
+        app.config.update(
+            TESTING=True, SECRET_KEY="v1002-post-release-extraction-smoke"
+        )
 
         with app.test_client() as client:
             with client.session_transaction() as session:
@@ -69,28 +71,68 @@ def main() -> int:
                 and "product_post_release.product_post_release_manifest"
                 in architecture.get("foundation", {}).get("extracted_modules", [])
             )
-            print(("[PASS]" if ok else "[FAIL]"), "v10 architecture includes post-release module", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "v10 architecture includes post-release module",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("v10 architecture includes post-release module", response.status_code, response.get_data(as_text=True)[:4000]))
+                failures.append(
+                    (
+                        "v10 architecture includes post-release module",
+                        response.status_code,
+                        response.get_data(as_text=True)[:4000],
+                    )
+                )
 
             # Build enough runtime chain to prove post-release route family is alive.
             response = client.post(
                 "/api/v1/product/final-gate/signoff",
-                json={"decision": "approve", "reason": "approve v10.0.2 extraction smoke"},
+                json={
+                    "decision": "approve",
+                    "reason": "approve v10.0.2 extraction smoke",
+                },
                 headers={"X-CSRF-Token": "v1002-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("gate", {}).get("gate_status") == "approved"
-            print(("[PASS]" if ok else "[FAIL]"), "approve final gate", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("gate", {}).get("gate_status") == "approved"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "approve final gate",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("approve final gate", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "approve final gate",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
-            client.post("/api/v1/product/final-gate/write", headers={"X-CSRF-Token": "v1002-csrf"})
+            client.post(
+                "/api/v1/product/final-gate/write",
+                headers={"X-CSRF-Token": "v1002-csrf"},
+            )
 
             package_root = Path("storage/product_packages/v10_0_2_post_release_package")
             package_root.mkdir(parents=True, exist_ok=True)
-            (package_root / "PACKAGE_MANIFEST.json").write_text(json.dumps({"selected_count": 1, "copied_artifact_count": 1, "metadata_file_count": 2}, indent=2))
+            (package_root / "PACKAGE_MANIFEST.json").write_text(
+                json.dumps(
+                    {
+                        "selected_count": 1,
+                        "copied_artifact_count": 1,
+                        "metadata_file_count": 2,
+                    },
+                    indent=2,
+                )
+            )
             (package_root / "PACKAGE_INDEX.md").write_text("# package index\n")
-            package_zip = Path("storage/product_packages/v10_0_2_post_release_package.zip")
+            package_zip = Path(
+                "storage/product_packages/v10_0_2_post_release_package.zip"
+            )
             with zipfile.ZipFile(package_zip, "w") as zf:
                 zf.writestr("PACKAGE_MANIFEST.json", "{}")
                 zf.writestr("PACKAGE_INDEX.md", "# index\n")
@@ -102,68 +144,187 @@ def main() -> int:
                 json={"release_name": release_name},
                 headers={"X-CSRF-Token": "v1002-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("status") == "published"
-            print(("[PASS]" if ok else "[FAIL]"), "publish final release", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("status") == "published"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "publish final release",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("publish final release", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "publish final release",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
-            response = client.post(f"/api/v1/product/final-release/archive/{release_name}/create", headers={"X-CSRF-Token": "v1002-csrf"})
-            ok = response.status_code == 200 and response.get_json().get("version") == "9.9.3"
-            print(("[PASS]" if ok else "[FAIL]"), "create archive", response.status_code)
+            response = client.post(
+                f"/api/v1/product/final-release/archive/{release_name}/create",
+                headers={"X-CSRF-Token": "v1002-csrf"},
+            )
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("version") == "9.9.3"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"), "create archive", response.status_code
+            )
             if not ok:
-                failures.append(("create archive", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "create archive",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
-            response = client.get(f"/api/v1/product/final-release/verify?release_name={release_name}")
-            ok = response.status_code == 200 and response.get_json().get("status") == "pass"
-            print(("[PASS]" if ok else "[FAIL]"), "verify final release", response.status_code)
+            response = client.get(
+                f"/api/v1/product/final-release/verify?release_name={release_name}"
+            )
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("status") == "pass"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "verify final release",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("verify final release", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "verify final release",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final-release/distribution/decision",
-                json={"decision": "ready", "release_name": release_name, "reason": "ready v10.0.2 smoke"},
+                json={
+                    "decision": "ready",
+                    "release_name": release_name,
+                    "reason": "ready v10.0.2 smoke",
+                },
                 headers={"X-CSRF-Token": "v1002-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("state", {}).get("ready") is True
-            print(("[PASS]" if ok else "[FAIL]"), "distribution ready", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("state", {}).get("ready") is True
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "distribution ready",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("distribution ready", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "distribution ready",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
-            response = client.post("/api/v1/product/final/write", json={"release_name": release_name}, headers={"X-CSRF-Token": "v1002-csrf"})
-            ok = response.status_code == 200 and response.get_json().get("status") == "ready"
-            print(("[PASS]" if ok else "[FAIL]"), "write final dashboard index", response.status_code)
+            response = client.post(
+                "/api/v1/product/final/write",
+                json={"release_name": release_name},
+                headers={"X-CSRF-Token": "v1002-csrf"},
+            )
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("status") == "ready"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write final dashboard index",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write final dashboard index", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "write final dashboard index",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final/handoff/build",
-                json={"release_name": release_name, "handoff_name": "v10_0_2_post_release_handoff"},
+                json={
+                    "release_name": release_name,
+                    "handoff_name": "v10_0_2_post_release_handoff",
+                },
                 headers={"X-CSRF-Token": "v1002-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("status") == "ready"
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("status") == "ready"
+            )
             print(("[PASS]" if ok else "[FAIL]"), "build handoff", response.status_code)
             if not ok:
-                failures.append(("build handoff", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "build handoff",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final/self-test/maintenance",
-                json={"decision": "safe_to_start_v10", "release_name": release_name, "reason": "safe v10.0.2 smoke"},
+                json={
+                    "decision": "safe_to_start_v10",
+                    "release_name": release_name,
+                    "reason": "safe v10.0.2 smoke",
+                },
                 headers={"X-CSRF-Token": "v1002-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("state", {}).get("safe_to_start_v10") is True
-            print(("[PASS]" if ok else "[FAIL]"), "self-test maintenance safe", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("state", {}).get("safe_to_start_v10")
+                is True
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "self-test maintenance safe",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("self-test maintenance safe", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "self-test maintenance safe",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final/v10-bootstrap/write",
                 json={"release_name": release_name},
                 headers={"X-CSRF-Token": "v1002-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("safe_to_start_v10") is True
-            print(("[PASS]" if ok else "[FAIL]"), "write v10 bootstrap manifests", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("safe_to_start_v10") is True
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write v10 bootstrap manifests",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write v10 bootstrap manifests", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "write v10 bootstrap manifests",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             post_release_routes = [
                 "/product/final-release/distribution",
@@ -181,19 +342,42 @@ def main() -> int:
             for route in post_release_routes:
                 response = client.get(f"{route}?release_name={release_name}")
                 ok = response.status_code == 200
-                print(("[PASS]" if ok else "[FAIL]"), f"post-release compat GET {route}", response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"post-release compat GET {route}",
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append((f"post-release compat GET {route}", response.status_code, response.get_data(as_text=True)[:1800]))
+                    failures.append(
+                        (
+                            f"post-release compat GET {route}",
+                            response.status_code,
+                            response.get_data(as_text=True)[:1800],
+                        )
+                    )
 
-            response = client.post("/api/v1/product/v10/architecture/write", headers={"X-CSRF-Token": "v1002-csrf"})
+            response = client.post(
+                "/api/v1/product/v10/architecture/write",
+                headers={"X-CSRF-Token": "v1002-csrf"},
+            )
             ok = (
                 response.status_code == 200
                 and Path("release/V10_0_0_PRODUCT_ARCHITECTURE_MANIFEST.json").exists()
                 and Path("release/V10_0_0_PRODUCT_ARCHITECTURE_MANIFEST.md").exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "write v10 architecture manifest", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write v10 architecture manifest",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write v10 architecture manifest", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "write v10 architecture manifest",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
             if failures:
                 for name, status, body in failures:

@@ -42,7 +42,9 @@ def test_v10_3_confidence_score_shape():
 
 
 def test_v10_3_build_dossier_payload_sections_and_preflight():
-    payload = build_dossier_payload(_sample_subject(), _sample_evidence(), analyst_reviewed=True)
+    payload = build_dossier_payload(
+        _sample_subject(), _sample_evidence(), analyst_reviewed=True
+    )
 
     assert payload["schema"] == "socmint.dossier_builder.v10_3_0"
     assert payload["subject"]["case_id"] == "case-123"
@@ -53,7 +55,9 @@ def test_v10_3_build_dossier_payload_sections_and_preflight():
 
 
 def test_v10_3_dossier_summary_counts_review_queue():
-    payload = build_dossier_payload(_sample_subject(), _sample_evidence(), analyst_reviewed=False)
+    payload = build_dossier_payload(
+        _sample_subject(), _sample_evidence(), analyst_reviewed=False
+    )
     summary = dossier_builder_summary(payload)
 
     assert summary["schema"] == "socmint.dossier_builder.v10_3_0"

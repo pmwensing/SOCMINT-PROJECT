@@ -8,7 +8,9 @@ from .case_delivery_handoff_package_v15_1 import canonical_json
 from .case_delivery_handoff_package_v15_1 import sha256_text
 
 
-OPERATOR_WORKFLOW_ACTION_RECEIPT_SCHEMA = "socmint.operator_workflow_action_receipt.v17_3"
+OPERATOR_WORKFLOW_ACTION_RECEIPT_SCHEMA = (
+    "socmint.operator_workflow_action_receipt.v17_3"
+)
 VERSION = "v17.3.0"
 
 

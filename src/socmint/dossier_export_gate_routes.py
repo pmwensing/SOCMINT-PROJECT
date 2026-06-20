@@ -10,7 +10,9 @@ from .dossier_export_gate import export_gate_report
 from .dossier_export_gate import export_gate_summary
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-EXPORT_BLOCKER_SCREENSHOT_MANIFEST = REPO_ROOT / "release/V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json"
+EXPORT_BLOCKER_SCREENSHOT_MANIFEST = (
+    REPO_ROOT / "release/V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json"
+)
 SCREENSHOT_MANIFEST_AUDIT_CASE_ID = "export-blocker-screenshots"
 SCREENSHOT_MANIFEST_AUDIT_SUBJECT_ID = "screenshot-manifest"
 
@@ -55,16 +57,30 @@ def register_dossier_export_gate_routes(app):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
         if not EXPORT_BLOCKER_SCREENSHOT_MANIFEST.exists():
-            return jsonify({"status": "missing", "manifest_path": str(EXPORT_BLOCKER_SCREENSHOT_MANIFEST)}), 404
-        return send_file(EXPORT_BLOCKER_SCREENSHOT_MANIFEST, mimetype="application/json")
+            return jsonify(
+                {
+                    "status": "missing",
+                    "manifest_path": str(EXPORT_BLOCKER_SCREENSHOT_MANIFEST),
+                }
+            ), 404
+        return send_file(
+            EXPORT_BLOCKER_SCREENSHOT_MANIFEST, mimetype="application/json"
+        )
 
     @app.get("/dossier/export-blockers/screenshot-manifest/download")
     def download_export_blocker_screenshot_manifest():
         if not _login_required():
             return jsonify({"error": "login required"}), 401
         if not EXPORT_BLOCKER_SCREENSHOT_MANIFEST.exists():
-            return jsonify({"status": "missing", "manifest_path": str(EXPORT_BLOCKER_SCREENSHOT_MANIFEST)}), 404
-        _audit_screenshot_manifest_download("/dossier/export-blockers/screenshot-manifest/download")
+            return jsonify(
+                {
+                    "status": "missing",
+                    "manifest_path": str(EXPORT_BLOCKER_SCREENSHOT_MANIFEST),
+                }
+            ), 404
+        _audit_screenshot_manifest_download(
+            "/dossier/export-blockers/screenshot-manifest/download"
+        )
         return send_file(
             EXPORT_BLOCKER_SCREENSHOT_MANIFEST,
             as_attachment=True,

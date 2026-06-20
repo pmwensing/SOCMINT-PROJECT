@@ -66,7 +66,9 @@ def test_export_preflight_blocks_single_source_claims():
     assert pack["status"] == "needs_review"
     summary = export_pack_summary(pack)
     assert "single_source_claims" in summary["blocker_codes"]
-    assert any(blocker["code"] == "single_source_claims" for blocker in summary["blockers"])
+    assert any(
+        blocker["code"] == "single_source_claims" for blocker in summary["blockers"]
+    )
 
 
 def test_export_preflight_blocks_contradictory_identity_claims():
@@ -95,15 +97,28 @@ def test_export_preflight_blocks_contradictory_identity_claims():
     )
 
     assert pack["status"] == "needs_review"
-    assert any(blocker["code"] == "contradictory_identity_claims" for blocker in pack["preflight"]["blockers"])
+    assert any(
+        blocker["code"] == "contradictory_identity_claims"
+        for blocker in pack["preflight"]["blockers"]
+    )
 
 
 def test_export_scope_allow_and_block_decisions_are_audited(tmp_path):
     result = persist_export_pack(
         _subject(),
         [
-            {"evidence_id": "ev-ok-1", "source": "public_profile", "confidence": 0.95, "artifact_id": "art-ok-1"},
-            {"evidence_id": "ev-ok-2", "source": "public_registry", "confidence": 0.91, "artifact_id": "art-ok-2"},
+            {
+                "evidence_id": "ev-ok-1",
+                "source": "public_profile",
+                "confidence": 0.95,
+                "artifact_id": "art-ok-1",
+            },
+            {
+                "evidence_id": "ev-ok-2",
+                "source": "public_registry",
+                "confidence": 0.91,
+                "artifact_id": "art-ok-2",
+            },
         ],
         analyst_reviewed=True,
         root=tmp_path,

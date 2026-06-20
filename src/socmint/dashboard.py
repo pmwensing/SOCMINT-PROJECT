@@ -492,7 +492,9 @@ def cases_view():
             actor=session.get("user"),
         )
         audit("case_create", details={"case_key": result["case_key"]})
-        return redirect(url_for("dashboard.case_detail_view", case_key=result["case_key"]))
+        return redirect(
+            url_for("dashboard.case_detail_view", case_key=result["case_key"])
+        )
     return render_template("cases.html", cases=high_end_list_cases())
 
 
@@ -618,7 +620,11 @@ def api_high_end_workbench():
 @run_required
 def api_high_end_capture():
     payload = request.get_json(silent=True) or {}
-    capture_fn = capture_browser_snapshot if payload.get("mode") == "browser" else capture_snapshot
+    capture_fn = (
+        capture_browser_snapshot
+        if payload.get("mode") == "browser"
+        else capture_snapshot
+    )
     kwargs = {
         "case_key": payload.get("case_key"),
         "subject_id": payload.get("subject_id"),
@@ -757,7 +763,9 @@ def api_jobs_requeue(job_id):
 @admin_required
 def api_jobs_cancel(job_id):
     payload = request.get_json(silent=True) or {}
-    result = cancel_scan_job(job_id, reason=payload.get("reason") or "Canceled by operator.")
+    result = cancel_scan_job(
+        job_id, reason=payload.get("reason") or "Canceled by operator."
+    )
     audit("scan_job_cancel", details=result)
     return jsonify(result), 202
 
@@ -982,7 +990,6 @@ def media_file(media_id, filename):
     return send_from_directory(stored_directory, filename)
 
 
-
 @dashboard_bp.route("/spine", methods=["GET", "POST"])
 @run_required
 def spine_subjects():
@@ -1065,7 +1072,6 @@ def api_spine_run(subject_id):
 @login_required
 def api_spine_dossier(subject_id):
     return jsonify(build_dossier(subject_id))
-
 
 
 @dashboard_bp.route("/spine/assertions/<int:assertion_id>")
@@ -1201,7 +1207,6 @@ def api_spine_account_discovery_review(discovery_id):
     )
 
 
-
 @dashboard_bp.route("/spine/<int:subject_id>/graph")
 @login_required
 def spine_graph_view(subject_id):
@@ -1250,7 +1255,6 @@ def spine_merge_candidate_review(candidate_id):
     except Exception as exc:
         flash(str(exc), "error")
     return redirect(request.referrer or url_for("dashboard.spine_subjects"))
-
 
 
 @dashboard_bp.route("/spine/<int:subject_id>/media-profiles")
@@ -1313,9 +1317,7 @@ def spine_media_profile_run(subject_id):
     )
 
 
-@dashboard_bp.route(
-    "/api/v1/spine/subjects/<int:subject_id>/media-profiles"
-)
+@dashboard_bp.route("/api/v1/spine/subjects/<int:subject_id>/media-profiles")
 @login_required
 def api_spine_media_profiles(subject_id):
     payload = media_profile_payload(subject_id)
@@ -1339,8 +1341,7 @@ def api_spine_enrichment_review():
 
 
 @dashboard_bp.route(
-    "/api/v1/spine/enrichments/<int:enrichment_id>/findings/"
-    "<int:finding_index>/review",
+    "/api/v1/spine/enrichments/<int:enrichment_id>/findings/<int:finding_index>/review",
     methods=["POST"],
 )
 @run_required
@@ -1355,7 +1356,6 @@ def api_spine_enrichment_finding_review(enrichment_id, finding_index):
     )
     audit("spine_enrichment_finding_review", details=result)
     return jsonify(result), 202
-
 
 
 @dashboard_bp.route("/spine/<int:subject_id>/contradictions")
@@ -1425,7 +1425,6 @@ def api_spine_contradictions_run(subject_id):
     return jsonify(detect_subject_contradictions(subject_id)), 202
 
 
-
 @dashboard_bp.route("/spine/<int:subject_id>/exports")
 @login_required
 def spine_exports_view(subject_id):
@@ -1485,7 +1484,6 @@ def api_spine_exports_run(subject_id):
     formats = payload.get("formats") or ["json", "html", "pdf"]
     result = run_dossier_export(subject_id, formats=formats)
     return jsonify(result), 202
-
 
 
 @dashboard_bp.route("/workbench/jobs", methods=["GET", "POST"])
@@ -1629,26 +1627,6 @@ def api_workbench_retention_run():
     return jsonify(result), 202
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @dashboard_bp.route("/api/v1/spine/subjects/<int:subject_id>/dossier-v2")
 @login_required
 def api_subject_dossier_v2(subject_id):
@@ -1686,9 +1664,7 @@ def subject_dossier_v2_view(subject_id):
 def subject_dossier_v2_export_run(subject_id):
     result = export_full_entity_dossier_v2(subject_id)
     flash("Dossier v2 export complete: " + str(result.get("zip_path")), "success")
-    return redirect(
-        url_for("dashboard.subject_dossier_v2_view", subject_id=subject_id)
-    )
+    return redirect(url_for("dashboard.subject_dossier_v2_view", subject_id=subject_id))
 
 
 @dashboard_bp.route(
@@ -1703,6 +1679,7 @@ def subject_dossier_v2_download(subject_id, name):
         as_attachment=True,
         download_name=path.name,
     )
+
 
 @dashboard_bp.route("/evidence/integrity")
 @login_required
@@ -1773,6 +1750,7 @@ def evidence_integrity_pack_download(name):
         as_attachment=True,
         download_name=path.name,
     )
+
 
 @dashboard_bp.route("/evidence/custody")
 @login_required
@@ -1849,6 +1827,7 @@ def api_evidence_custody_report():
     evidence_id = request.args.get("evidence_id")
     return jsonify(chain_of_custody_report(evidence_id=evidence_id))
 
+
 @dashboard_bp.route("/evidence/links")
 @login_required
 def evidence_links_view():
@@ -1924,6 +1903,7 @@ def evidence_links_add_form():
 def api_review_item_attachment_map():
     export_manifest_name = request.args.get("export_manifest_name")
     return jsonify(review_item_attachment_map(export_manifest_name))
+
 
 @dashboard_bp.route("/evidence/intake")
 @login_required
@@ -2046,6 +2026,7 @@ def api_export_attachment_zip():
     audit("export_attachment_zip", details=result)
     return jsonify(result), 202
 
+
 @dashboard_bp.route("/reports/export-center")
 @login_required
 def report_export_center_view():
@@ -2104,13 +2085,10 @@ def report_review_gated_export_run():
     )
     manifest = result.get("manifest", {})
     flash(
-        "Review-gated export complete: "
-        + str(manifest.get("manifest_path", "")),
+        "Review-gated export complete: " + str(manifest.get("manifest_path", "")),
         "success",
     )
     return redirect(url_for("dashboard.report_export_center_view"))
-
-
 
 
 @dashboard_bp.route("/reports/export-center/manifests/<path:name>")
@@ -2139,8 +2117,6 @@ def report_export_artifact_download(name):
         as_attachment=True,
         download_name=path.name,
     )
-
-
 
 
 @dashboard_bp.route("/api/v1/reports/export-center/zip", methods=["POST"])
@@ -2197,6 +2173,7 @@ def report_export_bundle_download(name):
         as_attachment=True,
         download_name=path.name,
     )
+
 
 @dashboard_bp.route("/reports/review")
 @login_required
@@ -2360,7 +2337,6 @@ def create_app(database_url=None):
     except Exception as exc:
         app.logger.warning("failed to register product_v10 blueprint: %s", exc)
 
-
     return app
 
 
@@ -2402,12 +2378,12 @@ def api_report_review_audit():
     return jsonify(review_audit_payload(item_id=item_id, batch_id=batch_id))
 
 
-
 # ---- v9.8.1 Product Release Hardening + Route/UI Wiring ----
 @dashboard_bp.route("/api/v1/product/build-status")
 @login_required
 def api_v981_product_build_status():
     from .product_control_center import build_status
+
     return jsonify(build_status())
 
 
@@ -2415,6 +2391,7 @@ def api_v981_product_build_status():
 @login_required
 def api_v981_product_release_readiness():
     from .product_control_center import release_readiness
+
     return jsonify(release_readiness())
 
 
@@ -2422,6 +2399,7 @@ def api_v981_product_release_readiness():
 @login_required
 def api_v981_product_smoke_summary():
     from .product_control_center import smoke_summary
+
     return jsonify(smoke_summary())
 
 
@@ -2429,6 +2407,7 @@ def api_v981_product_smoke_summary():
 @login_required
 def api_v981_product_system_health():
     from .product_control_center import system_health
+
     return jsonify(system_health())
 
 
@@ -2436,6 +2415,7 @@ def api_v981_product_system_health():
 @admin_required
 def api_v981_product_write_reports():
     from .product_control_center import write_product_reports
+
     return jsonify(write_product_reports())
 
 
@@ -2443,6 +2423,7 @@ def api_v981_product_write_reports():
 @login_required
 def api_v981_dossier_quality_gate(subject_id):
     from .dossier_quality_gate import dossier_quality_gate
+
     return jsonify(dossier_quality_gate(subject_id))
 
 
@@ -2450,13 +2431,19 @@ def api_v981_dossier_quality_gate(subject_id):
 @login_required
 def api_v981_dossier_traceability(subject_id):
     from .dossier_traceability import evidence_to_dossier_traceability
+
     return jsonify(evidence_to_dossier_traceability(subject_id))
 
 
 @dashboard_bp.route("/product/build-control")
 @login_required
 def product_build_control_center():
-    from .product_control_center import build_status, release_readiness, smoke_summary, system_health
+    from .product_control_center import (
+        build_status,
+        release_readiness,
+        smoke_summary,
+        system_health,
+    )
 
     return render_template(
         "product_build_control.html",
@@ -2465,15 +2452,21 @@ def product_build_control_center():
         smoke=smoke_summary(),
         health=system_health(),
     )
-# ---- end v9.8.1 product routes ----
 
+
+# ---- end v9.8.1 product routes ----
 
 
 # ---- v9.8.2 Product Control Operator UX Routes ----
 @dashboard_bp.route("/product/operator-runbook")
 @login_required
 def product_operator_runbook():
-    from .product_control_center import build_status, release_readiness, smoke_summary, system_health
+    from .product_control_center import (
+        build_status,
+        release_readiness,
+        smoke_summary,
+        system_health,
+    )
 
     return render_template(
         "product_operator_runbook.html",
@@ -2487,7 +2480,12 @@ def product_operator_runbook():
 @dashboard_bp.route("/api/v1/product/operator-runbook")
 @login_required
 def api_v982_product_operator_runbook():
-    from .product_control_center import build_status, release_readiness, smoke_summary, system_health
+    from .product_control_center import (
+        build_status,
+        release_readiness,
+        smoke_summary,
+        system_health,
+    )
 
     return jsonify(
         {
@@ -2514,8 +2512,9 @@ def api_v982_product_operator_runbook():
             "health": system_health(),
         }
     )
-# ---- end v9.8.2 product UX routes ----
 
+
+# ---- end v9.8.2 product UX routes ----
 
 
 # ---- v9.8.3 Product Control Runtime Actions ----
@@ -2523,7 +2522,12 @@ def _v983_product_runtime_snapshot(actor=None):
     from datetime import datetime, timezone
     from pathlib import Path
 
-    from .product_control_center import build_status, release_readiness, smoke_summary, system_health
+    from .product_control_center import (
+        build_status,
+        release_readiness,
+        smoke_summary,
+        system_health,
+    )
 
     snapshot = {
         "status": "ok",
@@ -2640,8 +2644,9 @@ def product_action_export_control_snapshot():
 def product_action_refresh_readiness():
     flash("Product readiness refreshed.", "success")
     return redirect(url_for("dashboard.product_build_control_center"))
-# ---- end v9.8.3 product runtime actions ----
 
+
+# ---- end v9.8.3 product runtime actions ----
 
 
 # ---- v9.8.4 Product Control Runtime History + Artifact Browser ----
@@ -2742,7 +2747,11 @@ def _v984_safe_artifact_path(relpath):
         abort(404)
 
     resolved = full.resolve()
-    if not any(str(resolved).startswith(str(root.resolve())) for root in allowed_roots if root.exists()):
+    if not any(
+        str(resolved).startswith(str(root.resolve()))
+        for root in allowed_roots
+        if root.exists()
+    ):
         abort(404)
 
     return full
@@ -2814,8 +2823,9 @@ def product_artifact_download(relpath):
         as_attachment=True,
         download_name=artifact.name,
     )
-# ---- end v9.8.4 product artifacts ----
 
+
+# ---- end v9.8.4 product artifacts ----
 
 
 # ---- v9.8.5 Product Artifact Review + Pin/Archive Controls ----
@@ -2881,7 +2891,9 @@ def _v985_apply_artifact_review_state(artifacts):
     return artifacts
 
 
-def _v985_update_artifact_review(path, reviewed=None, important=None, archived=None, note=None, actor=None):
+def _v985_update_artifact_review(
+    path, reviewed=None, important=None, archived=None, note=None, actor=None
+):
     from datetime import datetime, timezone
 
     _v984_safe_artifact_path(path)
@@ -2930,13 +2942,19 @@ def _v985_filter_artifacts(artifacts):
 
     if reviewed is not None:
         expected = _v985_bool_value(reviewed)
-        artifacts = [item for item in artifacts if bool(item.get("reviewed")) == expected]
+        artifacts = [
+            item for item in artifacts if bool(item.get("reviewed")) == expected
+        ]
     if important is not None:
         expected = _v985_bool_value(important)
-        artifacts = [item for item in artifacts if bool(item.get("important")) == expected]
+        artifacts = [
+            item for item in artifacts if bool(item.get("important")) == expected
+        ]
     if archived is not None:
         expected = _v985_bool_value(archived)
-        artifacts = [item for item in artifacts if bool(item.get("archived")) == expected]
+        artifacts = [
+            item for item in artifacts if bool(item.get("archived")) == expected
+        ]
 
     return artifacts
 
@@ -2985,8 +3003,9 @@ def product_artifact_review_action():
     audit("product_artifact_review_update", details=result)
     flash("Artifact review state updated.", "success")
     return redirect(url_for("dashboard.product_artifacts_view"))
-# ---- end v9.8.5 artifact review controls ----
 
+
+# ---- end v9.8.5 artifact review controls ----
 
 
 # ---- v9.8.6 Product Artifact Review Audit Trail ----
@@ -3023,7 +3042,9 @@ def _v986_save_artifact_audit(data):
     return data
 
 
-def _v986_append_artifact_audit_event(path, actor, before, after, action="artifact_review_update"):
+def _v986_append_artifact_audit_event(
+    path, actor, before, after, action="artifact_review_update"
+):
     from datetime import datetime, timezone
     from uuid import uuid4
 
@@ -3061,7 +3082,9 @@ def _v986_events_for_artifact(path=None):
     return events
 
 
-def _v985_update_artifact_review(path, reviewed=None, important=None, archived=None, note=None, actor=None):
+def _v985_update_artifact_review(
+    path, reviewed=None, important=None, archived=None, note=None, actor=None
+):
     from copy import deepcopy
     from datetime import datetime, timezone
 
@@ -3147,19 +3170,16 @@ def product_artifact_audit_view(relpath):
         },
         events=events,
     )
-# ---- end v9.8.6 product artifact audit trail ----
 
+
+# ---- end v9.8.6 product artifact audit trail ----
 
 
 # ---- v9.8.7 Product Artifact Evidence Chain + Export Manifest ----
 def _v987_artifact_audit_summary(path):
     events = _v986_events_for_artifact(path)
     changed_fields = sorted(
-        {
-            field
-            for event in events
-            for field in event.get("changed_fields", [])
-        }
+        {field for event in events for field in event.get("changed_fields", [])}
     )
     latest = events[-1] if events else None
     return {
@@ -3236,10 +3256,18 @@ def _v987_export_manifest_payload(include_archived=False, actor=None):
         "count": len(artifacts),
         "artifacts": artifacts,
         "summary": {
-            "reviewed": sum(1 for item in artifacts if item["selection_reason"]["reviewed"]),
-            "important": sum(1 for item in artifacts if item["selection_reason"]["important"]),
-            "archived": sum(1 for item in artifacts if item["selection_reason"]["archived"]),
-            "audit_events": sum(item["audit_summary"]["event_count"] for item in artifacts),
+            "reviewed": sum(
+                1 for item in artifacts if item["selection_reason"]["reviewed"]
+            ),
+            "important": sum(
+                1 for item in artifacts if item["selection_reason"]["important"]
+            ),
+            "archived": sum(
+                1 for item in artifacts if item["selection_reason"]["archived"]
+            ),
+            "audit_events": sum(
+                item["audit_summary"]["event_count"] for item in artifacts
+            ),
         },
     }
 
@@ -3247,7 +3275,9 @@ def _v987_export_manifest_payload(include_archived=False, actor=None):
 def _v987_write_export_manifest(include_archived=False, actor=None):
     from pathlib import Path
 
-    payload = _v987_export_manifest_payload(include_archived=include_archived, actor=actor)
+    payload = _v987_export_manifest_payload(
+        include_archived=include_archived, actor=actor
+    )
 
     release_dir = Path("release")
     release_dir.mkdir(exist_ok=True)
@@ -3321,7 +3351,10 @@ def api_v987_write_artifact_export_manifest():
         include_archived=include_archived,
         actor=session.get("user"),
     )
-    audit("product_artifact_export_manifest_write", details=result.get("artifacts_written"))
+    audit(
+        "product_artifact_export_manifest_write",
+        details=result.get("artifacts_written"),
+    )
     return jsonify(result)
 
 
@@ -3348,11 +3381,15 @@ def product_artifact_export_manifest_write():
         include_archived=include_archived,
         actor=session.get("user"),
     )
-    audit("product_artifact_export_manifest_write", details=result.get("artifacts_written"))
+    audit(
+        "product_artifact_export_manifest_write",
+        details=result.get("artifacts_written"),
+    )
     flash("Product artifact export manifest written.", "success")
     return redirect(url_for("dashboard.product_artifact_export_manifest_view"))
-# ---- end v9.8.7 product artifact evidence chain ----
 
+
+# ---- end v9.8.7 product artifact evidence chain ----
 
 
 # ---- v9.8.8 Product Release Package Builder ----
@@ -3445,7 +3482,9 @@ def _v988_build_release_package(package_name=None, include_archived=False, actor
         "source_manifest": manifest,
     }
 
-    (package_root / "PACKAGE_MANIFEST.json").write_text(json.dumps(package_manifest, indent=2, sort_keys=True))
+    (package_root / "PACKAGE_MANIFEST.json").write_text(
+        json.dumps(package_manifest, indent=2, sort_keys=True)
+    )
 
     index_lines = [
         "# Product Release Package",
@@ -3482,7 +3521,9 @@ def _v988_build_release_package(package_name=None, include_archived=False, actor
     (package_root / "PACKAGE_INDEX.md").write_text("\n".join(index_lines))
 
     package_manifest["package_index"] = (package_root / "PACKAGE_INDEX.md").as_posix()
-    package_manifest["package_manifest"] = (package_root / "PACKAGE_MANIFEST.json").as_posix()
+    package_manifest["package_manifest"] = (
+        package_root / "PACKAGE_MANIFEST.json"
+    ).as_posix()
 
     release_dir = Path("release")
     release_dir.mkdir(exist_ok=True)
@@ -3571,8 +3612,9 @@ def product_release_package_build():
     audit("product_release_package_build", details=result.get("release_artifacts"))
     flash("Product release package built.", "success")
     return redirect(url_for("dashboard.product_release_package_view"))
-# ---- end v9.8.8 product release package builder ----
 
+
+# ---- end v9.8.8 product release package builder ----
 
 
 # ---- v9.8.9 Product Release Package ZIP Export + Download ----
@@ -3627,18 +3669,26 @@ def _v989_list_release_packages():
             {
                 "package_name": path.name,
                 "package_path": path.as_posix(),
-                "manifest_path": manifest_path.as_posix() if manifest_path.exists() else None,
+                "manifest_path": manifest_path.as_posix()
+                if manifest_path.exists()
+                else None,
                 "index_path": index_path.as_posix() if index_path.exists() else None,
                 "zip_path": zip_path.as_posix() if zip_path.exists() else None,
                 "zip_exists": zip_path.exists(),
                 "zip_size_bytes": zip_path.stat().st_size if zip_path.exists() else 0,
-                "zip_download_url": f"/product/release-package/download/{path.name}" if zip_path.exists() else None,
+                "zip_download_url": f"/product/release-package/download/{path.name}"
+                if zip_path.exists()
+                else None,
                 "selected_count": manifest.get("selected_count", 0),
                 "copied_artifact_count": manifest.get("copied_artifact_count", 0),
                 "metadata_file_count": manifest.get("metadata_file_count", 0),
                 "generated_at": manifest.get("generated_at"),
-                "modified_at": datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat(),
-                "zip_entries": zipfile.ZipFile(zip_path).namelist() if zip_path.exists() else [],
+                "modified_at": datetime.fromtimestamp(
+                    path.stat().st_mtime, timezone.utc
+                ).isoformat(),
+                "zip_entries": zipfile.ZipFile(zip_path).namelist()
+                if zip_path.exists()
+                else [],
             }
         )
 
@@ -3691,7 +3741,9 @@ def api_v989_release_packages():
     )
 
 
-@dashboard_bp.route("/api/v1/product/release-package/<package_name>/zip", methods=["POST"])
+@dashboard_bp.route(
+    "/api/v1/product/release-package/<package_name>/zip", methods=["POST"]
+)
 @admin_required
 def api_v989_zip_release_package(package_name):
     result = _v989_zip_release_package(package_name)
@@ -3726,8 +3778,9 @@ def product_release_package_download(package_name):
         as_attachment=True,
         download_name=zip_path.name,
     )
-# ---- end v9.8.9 product release package ZIP export ----
 
+
+# ---- end v9.8.9 product release package ZIP export ----
 
 
 # ---- v9.9.0 Product Release Candidate Console ----
@@ -3795,8 +3848,12 @@ def _v990_rc_stage_status():
                 **stage,
                 "status": status,
                 "artifact_exists": artifact_exists,
-                "artifact_view_url": f"/product/artifacts/view/{stage['artifact']}" if artifact_exists else None,
-                "artifact_download_url": f"/product/artifacts/download/{stage['artifact']}" if artifact_exists else None,
+                "artifact_view_url": f"/product/artifacts/view/{stage['artifact']}"
+                if artifact_exists
+                else None,
+                "artifact_download_url": f"/product/artifacts/download/{stage['artifact']}"
+                if artifact_exists
+                else None,
             }
         )
     return stages
@@ -3828,12 +3885,16 @@ def _v990_build_rc_manifest(actor=None):
     packages = []
 
     try:
-        export_manifest = _v987_export_manifest_payload(include_archived=False, actor=actor)
+        export_manifest = _v987_export_manifest_payload(
+            include_archived=False, actor=actor
+        )
     except Exception as exc:
         export_manifest = {"status": "warn", "error": str(exc)}
 
     try:
-        package_preview = _v987_export_manifest_payload(include_archived=False, actor=actor)
+        package_preview = _v987_export_manifest_payload(
+            include_archived=False, actor=actor
+        )
     except Exception as exc:
         package_preview = {"status": "warn", "error": str(exc)}
 
@@ -3857,8 +3918,12 @@ def _v990_build_rc_manifest(actor=None):
             ),
         },
         "summary": summary,
-        "export_manifest_summary": export_manifest.get("summary") if isinstance(export_manifest, dict) else None,
-        "package_preview_count": package_preview.get("count") if isinstance(package_preview, dict) else None,
+        "export_manifest_summary": export_manifest.get("summary")
+        if isinstance(export_manifest, dict)
+        else None,
+        "package_preview_count": package_preview.get("count")
+        if isinstance(package_preview, dict)
+        else None,
         "built_package_count": len(packages),
         "packages": packages,
     }
@@ -3918,7 +3983,10 @@ def api_v990_release_candidate():
 @admin_required
 def api_v990_release_candidate_write():
     manifest = _v990_build_rc_manifest(actor=session.get("user"))
-    audit("product_release_candidate_manifest_write", details=manifest.get("artifacts_written"))
+    audit(
+        "product_release_candidate_manifest_write",
+        details=manifest.get("artifacts_written"),
+    )
     return jsonify(manifest)
 
 
@@ -3933,11 +4001,15 @@ def product_release_candidate_console():
 @admin_required
 def product_release_candidate_write():
     manifest = _v990_build_rc_manifest(actor=session.get("user"))
-    audit("product_release_candidate_manifest_write", details=manifest.get("artifacts_written"))
+    audit(
+        "product_release_candidate_manifest_write",
+        details=manifest.get("artifacts_written"),
+    )
     flash("Release candidate manifest written.", "success")
     return redirect(url_for("dashboard.product_release_candidate_console"))
-# ---- end v9.9.0 product release candidate console ----
 
+
+# ---- end v9.9.0 product release candidate console ----
 
 
 # ---- v9.9.1 Release Candidate Sign-Off + Final Product Gate ----
@@ -4080,7 +4152,9 @@ def _v991_final_gate_payload(actor=None):
         "rc_summary": rc_manifest.get("summary"),
         "signoff": signoff,
         "audit_event_count": len(audit_data.get("events", [])),
-        "latest_audit_event": audit_data.get("events", [])[-1] if audit_data.get("events") else None,
+        "latest_audit_event": audit_data.get("events", [])[-1]
+        if audit_data.get("events")
+        else None,
         "recommended_next_action": recommended,
     }
 
@@ -4237,7 +4311,9 @@ def api_v991_signoff_audit():
 @admin_required
 def api_v991_write_final_gate():
     manifest = _v991_write_final_gate_manifest(actor=session.get("user"))
-    audit("product_final_gate_manifest_write", details=manifest.get("artifacts_written"))
+    audit(
+        "product_final_gate_manifest_write", details=manifest.get("artifacts_written")
+    )
     return jsonify(manifest)
 
 
@@ -4252,7 +4328,10 @@ def api_v991_signoff_decision():
         actor=session.get("user"),
         reason=reason,
     )
-    audit("product_final_gate_signoff", details={"decision": decision, "result_status": result.get("status")})
+    audit(
+        "product_final_gate_signoff",
+        details={"decision": decision, "result_status": result.get("status")},
+    )
     return jsonify(result)
 
 
@@ -4272,7 +4351,9 @@ def product_final_gate_view():
 @admin_required
 def product_final_gate_write():
     manifest = _v991_write_final_gate_manifest(actor=session.get("user"))
-    audit("product_final_gate_manifest_write", details=manifest.get("artifacts_written"))
+    audit(
+        "product_final_gate_manifest_write", details=manifest.get("artifacts_written")
+    )
     flash("Final product gate manifest written.", "success")
     return redirect(url_for("dashboard.product_final_gate_view"))
 
@@ -4292,8 +4373,9 @@ def product_final_gate_signoff():
     else:
         flash("Final gate decision recorded.", "success")
     return redirect(url_for("dashboard.product_final_gate_view"))
-# ---- end v9.9.1 release candidate sign-off gate ----
 
+
+# ---- end v9.9.1 release candidate sign-off gate ----
 
 
 # ---- v9.9.2 Final Release Publisher + Release Notes Pack ----
@@ -4325,14 +4407,18 @@ def _v992_final_release_preview(actor=None):
 
     gate = _v991_final_gate_payload(actor=actor)
     rc_manifest = _v992_load_json_file("release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json")
-    final_gate_manifest = _v992_load_json_file("release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json")
+    final_gate_manifest = _v992_load_json_file(
+        "release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json"
+    )
     packages = []
     try:
         packages = _v989_list_release_packages()
     except Exception:
         packages = []
 
-    final_gate_approved = gate.get("gate_status") == "approved" and bool(gate.get("signoff", {}).get("approved"))
+    final_gate_approved = gate.get("gate_status") == "approved" and bool(
+        gate.get("signoff", {}).get("approved")
+    )
     can_publish = final_gate_approved and gate.get("rc_status") == "pass"
 
     checklist = [
@@ -4479,7 +4565,13 @@ def _v992_publish_final_release(release_name=None, actor=None):
             dest = root / "evidence" / src
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(p, dest)
-            copied_files.append({"source": src, "package_path": dest.as_posix(), "size_bytes": dest.stat().st_size})
+            copied_files.append(
+                {
+                    "source": src,
+                    "package_path": dest.as_posix(),
+                    "size_bytes": dest.stat().st_size,
+                }
+            )
 
     package_zips = []
     for package in preview.get("packages", []):
@@ -4490,7 +4582,13 @@ def _v992_publish_final_release(release_name=None, actor=None):
                 dest = root / "packages" / p.name
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(p, dest)
-                package_zips.append({"source": p.as_posix(), "package_path": dest.as_posix(), "size_bytes": dest.stat().st_size})
+                package_zips.append(
+                    {
+                        "source": p.as_posix(),
+                        "package_path": dest.as_posix(),
+                        "size_bytes": dest.stat().st_size,
+                    }
+                )
 
     publish_manifest = {
         "status": "published",
@@ -4509,8 +4607,12 @@ def _v992_publish_final_release(release_name=None, actor=None):
     }
 
     (root / "RELEASE_NOTES.md").write_text(notes)
-    (root / "FINAL_RELEASE_CHECKLIST.json").write_text(json.dumps(preview.get("checklist"), indent=2, sort_keys=True))
-    (root / "PUBLISH_MANIFEST.json").write_text(json.dumps(publish_manifest, indent=2, sort_keys=True))
+    (root / "FINAL_RELEASE_CHECKLIST.json").write_text(
+        json.dumps(preview.get("checklist"), indent=2, sort_keys=True)
+    )
+    (root / "PUBLISH_MANIFEST.json").write_text(
+        json.dumps(publish_manifest, indent=2, sort_keys=True)
+    )
 
     release_dir = Path("release")
     release_dir.mkdir(exist_ok=True)
@@ -4519,7 +4621,9 @@ def _v992_publish_final_release(release_name=None, actor=None):
     latest_manifest = release_dir / "V9_9_2_FINAL_RELEASE_PUBLISH_MANIFEST.json"
 
     latest_notes.write_text(notes)
-    latest_checklist.write_text(json.dumps(preview.get("checklist"), indent=2, sort_keys=True))
+    latest_checklist.write_text(
+        json.dumps(preview.get("checklist"), indent=2, sort_keys=True)
+    )
     latest_manifest.write_text(json.dumps(publish_manifest, indent=2, sort_keys=True))
 
     publish_manifest["artifacts_written"] = {
@@ -4543,8 +4647,13 @@ def api_v992_final_release_preview():
 def api_v992_final_release_publish():
     payload = request.get_json(silent=True) or request.form
     release_name = payload.get("release_name") or None
-    result = _v992_publish_final_release(release_name=release_name, actor=session.get("user"))
-    audit("product_final_release_publish", details={"status": result.get("status"), "release_name": release_name})
+    result = _v992_publish_final_release(
+        release_name=release_name, actor=session.get("user")
+    )
+    audit(
+        "product_final_release_publish",
+        details={"status": result.get("status"), "release_name": release_name},
+    )
     return jsonify(result)
 
 
@@ -4559,19 +4668,23 @@ def product_final_release_view():
 @admin_required
 def product_final_release_publish():
     release_name = request.form.get("release_name") or None
-    result = _v992_publish_final_release(release_name=release_name, actor=session.get("user"))
+    result = _v992_publish_final_release(
+        release_name=release_name, actor=session.get("user")
+    )
     if result.get("status") == "published":
         flash("Final release notes pack published.", "success")
     else:
         flash("Final release blocked until final gate approval.", "error")
     return redirect(url_for("dashboard.product_final_release_view"))
-# ---- end v9.9.2 final release publisher ----
 
+
+# ---- end v9.9.2 final release publisher ----
 
 
 # ---- v9.9.3 Final Release Archive + Integrity Seal ----
 def _v993_final_releases_root():
     from pathlib import Path
+
     root = Path("storage/final_releases")
     root.mkdir(parents=True, exist_ok=True)
     return root
@@ -4579,6 +4692,7 @@ def _v993_final_releases_root():
 
 def _v993_archives_root():
     from pathlib import Path
+
     root = Path("storage/final_release_archives")
     root.mkdir(parents=True, exist_ok=True)
     return root
@@ -4595,6 +4709,7 @@ def _v993_safe_final_release_dir(release_name):
 
 def _v993_sha256_file(path):
     import hashlib
+
     h = hashlib.sha256()
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
@@ -4604,6 +4719,7 @@ def _v993_sha256_file(path):
 
 def _v993_list_final_releases():
     from datetime import datetime, timezone
+
     root = _v993_final_releases_root()
     releases = []
     for path in sorted(root.iterdir()):
@@ -4624,21 +4740,35 @@ def _v993_list_final_releases():
             {
                 "release_name": release_name,
                 "release_path": path.as_posix(),
-                "publish_manifest_path": publish_manifest_path.as_posix() if publish_manifest_path.exists() else None,
-                "integrity_manifest_path": integrity_path.as_posix() if integrity_path.exists() else None,
+                "publish_manifest_path": publish_manifest_path.as_posix()
+                if publish_manifest_path.exists()
+                else None,
+                "integrity_manifest_path": integrity_path.as_posix()
+                if integrity_path.exists()
+                else None,
                 "integrity_manifest_exists": integrity_path.exists(),
                 "archive_zip_path": zip_path.as_posix() if zip_path.exists() else None,
                 "archive_tar_path": tar_path.as_posix() if tar_path.exists() else None,
                 "archive_zip_exists": zip_path.exists(),
                 "archive_tar_exists": tar_path.exists(),
-                "archive_zip_size_bytes": zip_path.stat().st_size if zip_path.exists() else 0,
-                "archive_tar_size_bytes": tar_path.stat().st_size if tar_path.exists() else 0,
-                "download_zip_url": f"/product/final-release/archive/download/{release_name}.zip" if zip_path.exists() else None,
-                "download_tar_url": f"/product/final-release/archive/download/{release_name}.tar.gz" if tar_path.exists() else None,
+                "archive_zip_size_bytes": zip_path.stat().st_size
+                if zip_path.exists()
+                else 0,
+                "archive_tar_size_bytes": tar_path.stat().st_size
+                if tar_path.exists()
+                else 0,
+                "download_zip_url": f"/product/final-release/archive/download/{release_name}.zip"
+                if zip_path.exists()
+                else None,
+                "download_tar_url": f"/product/final-release/archive/download/{release_name}.tar.gz"
+                if tar_path.exists()
+                else None,
                 "status": publish_manifest.get("status"),
                 "actor": publish_manifest.get("actor"),
                 "published_at": publish_manifest.get("published_at"),
-                "modified_at": datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat(),
+                "modified_at": datetime.fromtimestamp(
+                    path.stat().st_mtime, timezone.utc
+                ).isoformat(),
             }
         )
     releases.sort(key=lambda item: item.get("modified_at") or "", reverse=True)
@@ -4648,6 +4778,7 @@ def _v993_list_final_releases():
 def _v993_build_integrity_manifest(release_name):
     from datetime import datetime, timezone
     from pathlib import Path
+
     release_dir = _v993_safe_final_release_dir(release_name)
     files = []
     for path in sorted(release_dir.rglob("*")):
@@ -4656,7 +4787,13 @@ def _v993_build_integrity_manifest(release_name):
         rel = path.relative_to(release_dir).as_posix()
         if rel == "INTEGRITY_MANIFEST.json":
             continue
-        files.append({"path": rel, "size_bytes": path.stat().st_size, "sha256": _v993_sha256_file(path)})
+        files.append(
+            {
+                "path": rel,
+                "size_bytes": path.stat().st_size,
+                "sha256": _v993_sha256_file(path),
+            }
+        )
     manifest = {
         "status": "ok",
         "version": "9.9.3",
@@ -4667,11 +4804,24 @@ def _v993_build_integrity_manifest(release_name):
         "files": files,
         "required_presence": {
             "release_notes": any(item["path"] == "RELEASE_NOTES.md" for item in files),
-            "checklist": any(item["path"] == "FINAL_RELEASE_CHECKLIST.json" for item in files),
-            "publish_manifest": any(item["path"] == "PUBLISH_MANIFEST.json" for item in files),
-            "rc_manifest": any(item["path"].endswith("V9_9_0_RELEASE_CANDIDATE_MANIFEST.json") for item in files),
-            "final_gate_manifest": any(item["path"].endswith("V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json") for item in files),
-            "signoff_audit": any(item["path"].endswith("release_candidate_signoff_audit.json") for item in files),
+            "checklist": any(
+                item["path"] == "FINAL_RELEASE_CHECKLIST.json" for item in files
+            ),
+            "publish_manifest": any(
+                item["path"] == "PUBLISH_MANIFEST.json" for item in files
+            ),
+            "rc_manifest": any(
+                item["path"].endswith("V9_9_0_RELEASE_CANDIDATE_MANIFEST.json")
+                for item in files
+            ),
+            "final_gate_manifest": any(
+                item["path"].endswith("V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json")
+                for item in files
+            ),
+            "signoff_audit": any(
+                item["path"].endswith("release_candidate_signoff_audit.json")
+                for item in files
+            ),
             "package_zip": any(item["path"].endswith(".zip") for item in files),
         },
     }
@@ -4691,6 +4841,7 @@ def _v993_create_final_release_archives(release_name):
     import zipfile
     from datetime import datetime, timezone
     from pathlib import Path
+
     release_dir = _v993_safe_final_release_dir(release_name)
     integrity = _v993_build_integrity_manifest(release_dir.name)
     archives_root = _v993_archives_root()
@@ -4736,19 +4887,21 @@ def _v993_create_final_release_archives(release_name):
     latest_md = Path("release/V9_9_3_FINAL_RELEASE_ARCHIVE_SEAL.md")
     latest_json.write_text(json.dumps(seal, indent=2, sort_keys=True))
     latest_md.write_text(
-        "\n".join([
-            "# v9.9.3 Final Release Archive Integrity Seal",
-            "",
-            f"Release: {release_dir.name}",
-            f"Generated: {seal['generated_at']}",
-            f"ZIP: `{seal['archive_zip_path']}`",
-            f"ZIP SHA256: `{seal['archive_zip_sha256']}`",
-            f"TAR: `{seal['archive_tar_path']}`",
-            f"TAR SHA256: `{seal['archive_tar_sha256']}`",
-            f"Integrity manifest: `{integrity.get('integrity_manifest_path')}`",
-            f"Required all present: {integrity.get('required_all_present')}",
-            "",
-        ])
+        "\n".join(
+            [
+                "# v9.9.3 Final Release Archive Integrity Seal",
+                "",
+                f"Release: {release_dir.name}",
+                f"Generated: {seal['generated_at']}",
+                f"ZIP: `{seal['archive_zip_path']}`",
+                f"ZIP SHA256: `{seal['archive_zip_sha256']}`",
+                f"TAR: `{seal['archive_tar_path']}`",
+                f"TAR SHA256: `{seal['archive_tar_sha256']}`",
+                f"Integrity manifest: `{integrity.get('integrity_manifest_path')}`",
+                f"Required all present: {integrity.get('required_all_present')}",
+                "",
+            ]
+        )
     )
     seal["artifacts_written"] = {
         "archive_seal_json": latest_json.as_posix(),
@@ -4762,7 +4915,14 @@ def _v993_create_final_release_archives(release_name):
 @login_required
 def api_v993_final_release_archives():
     releases = _v993_list_final_releases()
-    return jsonify({"status": "ok", "version": "9.9.3", "count": len(releases), "releases": releases})
+    return jsonify(
+        {
+            "status": "ok",
+            "version": "9.9.3",
+            "count": len(releases),
+            "releases": releases,
+        }
+    )
 
 
 @dashboard_bp.route("/api/v1/product/final-release/archive/<release_name>")
@@ -4770,10 +4930,19 @@ def api_v993_final_release_archives():
 def api_v993_final_release_archive_preview(release_name):
     release_dir = _v993_safe_final_release_dir(release_name)
     integrity = _v993_build_integrity_manifest(release_dir.name)
-    return jsonify({"status": "ok", "version": "9.9.3", "release_name": release_dir.name, "integrity": integrity})
+    return jsonify(
+        {
+            "status": "ok",
+            "version": "9.9.3",
+            "release_name": release_dir.name,
+            "integrity": integrity,
+        }
+    )
 
 
-@dashboard_bp.route("/api/v1/product/final-release/archive/<release_name>/create", methods=["POST"])
+@dashboard_bp.route(
+    "/api/v1/product/final-release/archive/<release_name>/create", methods=["POST"]
+)
 @admin_required
 def api_v993_create_final_release_archive(release_name):
     seal = _v993_create_final_release_archives(release_name)
@@ -4788,7 +4957,9 @@ def product_final_release_archive_view():
     return render_template("product_final_release_archive.html", releases=releases)
 
 
-@dashboard_bp.route("/product/final-release/archive/<release_name>/create", methods=["POST"])
+@dashboard_bp.route(
+    "/product/final-release/archive/<release_name>/create", methods=["POST"]
+)
 @admin_required
 def product_final_release_archive_create(release_name):
     seal = _v993_create_final_release_archives(release_name)
@@ -4802,6 +4973,7 @@ def product_final_release_archive_create(release_name):
 def product_final_release_archive_download(filename):
     from flask import send_file
     from pathlib import Path
+
     root = _v993_archives_root().resolve()
     requested = Path(filename)
     if requested.is_absolute() or ".." in requested.parts:
@@ -4812,8 +4984,9 @@ def product_final_release_archive_download(filename):
     if not (path.name.endswith(".zip") or path.name.endswith(".tar.gz")):
         abort(404)
     return send_file(path, as_attachment=True, download_name=path.name)
-# ---- end v9.9.3 final release archive integrity seal ----
 
+
+# ---- end v9.9.3 final release archive integrity seal ----
 
 
 # ---- v9.9.4 Final Release Verification Console ----
@@ -4843,7 +5016,11 @@ def _v994_verify_final_release(release_name=None):
 
     releases = _v993_list_final_releases()
     if release_name:
-        releases = [item for item in releases if item.get("release_name") == _v988_package_slug(release_name)]
+        releases = [
+            item
+            for item in releases
+            if item.get("release_name") == _v988_package_slug(release_name)
+        ]
 
     if not releases:
         return {
@@ -4888,17 +5065,27 @@ def _v994_verify_final_release(release_name=None):
         )
 
     publish_manifest = _v992_load_json_file(release_dir / "PUBLISH_MANIFEST.json")
-    final_gate = publish_manifest.get("final_gate", {}) if isinstance(publish_manifest, dict) else {}
+    final_gate = (
+        publish_manifest.get("final_gate", {})
+        if isinstance(publish_manifest, dict)
+        else {}
+    )
     add_check(
         "publish_manifest_published",
         "Publish manifest status is published",
-        isinstance(publish_manifest, dict) and publish_manifest.get("status") == "published",
-        {"status": publish_manifest.get("status") if isinstance(publish_manifest, dict) else None},
+        isinstance(publish_manifest, dict)
+        and publish_manifest.get("status") == "published",
+        {
+            "status": publish_manifest.get("status")
+            if isinstance(publish_manifest, dict)
+            else None
+        },
     )
     add_check(
         "final_gate_approved",
         "Final gate is approved",
-        final_gate.get("gate_status") == "approved" and final_gate.get("signoff", {}).get("approved") is True,
+        final_gate.get("gate_status") == "approved"
+        and final_gate.get("signoff", {}).get("approved") is True,
         {
             "gate_status": final_gate.get("gate_status"),
             "approved": final_gate.get("signoff", {}).get("approved"),
@@ -4918,7 +5105,8 @@ def _v994_verify_final_release(release_name=None):
         add_check(
             "integrity_required_presence",
             "Integrity manifest confirms required evidence presence",
-            integrity.get("required_all_present") is True and all(required_presence.values()),
+            integrity.get("required_all_present") is True
+            and all(required_presence.values()),
             {"required_presence": required_presence},
         )
 
@@ -4926,7 +5114,9 @@ def _v994_verify_final_release(release_name=None):
         for item in integrity.get("files", []):
             path = release_dir / item.get("path", "")
             expected = item.get("sha256")
-            actual = _v993_sha256_file(path) if path.exists() and path.is_file() else None
+            actual = (
+                _v993_sha256_file(path) if path.exists() and path.is_file() else None
+            )
             if actual != expected:
                 checksum_failures.append(
                     {
@@ -4939,7 +5129,10 @@ def _v994_verify_final_release(release_name=None):
             "integrity_file_checksums",
             "All integrity-manifest file SHA256 checks match",
             not checksum_failures,
-            {"failure_count": len(checksum_failures), "failures": checksum_failures[:10]},
+            {
+                "failure_count": len(checksum_failures),
+                "failures": checksum_failures[:10],
+            },
         )
 
     zip_path = Path(release.get("archive_zip_path") or "")
@@ -4949,8 +5142,18 @@ def _v994_verify_final_release(release_name=None):
     if not tar_path.exists():
         tar_path = _v993_archives_root() / f"{release_name}.tar.gz"
 
-    add_check("archive_zip_exists", "Archive ZIP exists", zip_path.exists() and zip_path.is_file(), {"path": zip_path.as_posix()})
-    add_check("archive_tar_exists", "Archive TAR.GZ exists", tar_path.exists() and tar_path.is_file(), {"path": tar_path.as_posix()})
+    add_check(
+        "archive_zip_exists",
+        "Archive ZIP exists",
+        zip_path.exists() and zip_path.is_file(),
+        {"path": zip_path.as_posix()},
+    )
+    add_check(
+        "archive_tar_exists",
+        "Archive TAR.GZ exists",
+        tar_path.exists() and tar_path.is_file(),
+        {"path": tar_path.as_posix()},
+    )
 
     seal = _v992_load_json_file("release/V9_9_3_FINAL_RELEASE_ARCHIVE_SEAL.json")
     if isinstance(seal, dict) and seal.get("release_name") == release_name:
@@ -4960,8 +5163,16 @@ def _v994_verify_final_release(release_name=None):
         expected_zip = None
         expected_tar = None
 
-    zip_sha = _v993_sha256_file(zip_path) if zip_path.exists() and zip_path.is_file() else None
-    tar_sha = _v993_sha256_file(tar_path) if tar_path.exists() and tar_path.is_file() else None
+    zip_sha = (
+        _v993_sha256_file(zip_path)
+        if zip_path.exists() and zip_path.is_file()
+        else None
+    )
+    tar_sha = (
+        _v993_sha256_file(tar_path)
+        if tar_path.exists() and tar_path.is_file()
+        else None
+    )
 
     add_check(
         "archive_zip_checksum",
@@ -4995,8 +5206,12 @@ def _v994_verify_final_release(release_name=None):
         "zip_required_files",
         "ZIP contains required final release files",
         zip_required.issubset(zip_entries)
-        and any("V9_9_0_RELEASE_CANDIDATE_MANIFEST.json" in item for item in zip_entries)
-        and any("V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json" in item for item in zip_entries)
+        and any(
+            "V9_9_0_RELEASE_CANDIDATE_MANIFEST.json" in item for item in zip_entries
+        )
+        and any(
+            "V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json" in item for item in zip_entries
+        )
         and any("release_candidate_signoff_audit.json" in item for item in zip_entries)
         and any(item.endswith(".zip") for item in zip_entries),
         {"entry_count": len(zip_entries)},
@@ -5005,8 +5220,12 @@ def _v994_verify_final_release(release_name=None):
         "tar_required_files",
         "TAR.GZ contains required final release files",
         zip_required.issubset(tar_entries)
-        and any("V9_9_0_RELEASE_CANDIDATE_MANIFEST.json" in item for item in tar_entries)
-        and any("V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json" in item for item in tar_entries)
+        and any(
+            "V9_9_0_RELEASE_CANDIDATE_MANIFEST.json" in item for item in tar_entries
+        )
+        and any(
+            "V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json" in item for item in tar_entries
+        )
         and any("release_candidate_signoff_audit.json" in item for item in tar_entries)
         and any(item.endswith(".zip") for item in tar_entries),
         {"entry_count": len(tar_entries)},
@@ -5044,7 +5263,9 @@ def _v994_verify_final_release(release_name=None):
         "archive_tar_path": tar_path.as_posix(),
         "download_zip_url": f"/product/final-release/archive/download/{release_name}.zip",
         "download_tar_url": f"/product/final-release/archive/download/{release_name}.tar.gz",
-        "recommended_next_action": "Final release verified." if status == "pass" else "Fix failed final release verification checks.",
+        "recommended_next_action": "Final release verified."
+        if status == "pass"
+        else "Fix failed final release verification checks.",
     }
 
     release_dir_latest = Path("release")
@@ -5080,7 +5301,10 @@ def _v994_verify_final_release(release_name=None):
             ]
         )
     latest_md.write_text("\n".join(rows))
-    result["artifacts_written"] = {"json": latest_json.as_posix(), "markdown": latest_md.as_posix()}
+    result["artifacts_written"] = {
+        "json": latest_json.as_posix(),
+        "markdown": latest_md.as_posix(),
+    }
     return result
 
 
@@ -5102,8 +5326,9 @@ def product_final_release_verify_view():
         verification=verification,
         releases=releases,
     )
-# ---- end v9.9.4 final release verification console ----
 
+
+# ---- end v9.9.4 final release verification console ----
 
 
 # ---- v9.9.5 Final Release Lock + Distribution Readiness ----
@@ -5160,7 +5385,9 @@ def _v995_load_distribution_state():
 
 def _v995_save_distribution_state(state):
     state["version"] = "9.9.5"
-    _v995_distribution_state_path().write_text(json.dumps(state, indent=2, sort_keys=True))
+    _v995_distribution_state_path().write_text(
+        json.dumps(state, indent=2, sort_keys=True)
+    )
     return state
 
 
@@ -5184,11 +5411,15 @@ def _v995_load_distribution_audit():
 
 def _v995_save_distribution_audit(data):
     data["version"] = "9.9.5"
-    _v995_distribution_audit_path().write_text(json.dumps(data, indent=2, sort_keys=True))
+    _v995_distribution_audit_path().write_text(
+        json.dumps(data, indent=2, sort_keys=True)
+    )
     return data
 
 
-def _v995_append_distribution_audit(action, actor, before, after, verification_status, reason=""):
+def _v995_append_distribution_audit(
+    action, actor, before, after, verification_status, reason=""
+):
     from datetime import datetime, timezone
     from uuid import uuid4
 
@@ -5231,11 +5462,15 @@ def _v995_distribution_payload(release_name=None, actor=None):
     elif locked and not ready:
         distribution_status = "locked"
         can_mark_ready = True
-        recommended = "Release is locked. Mark ready when distribution review is complete."
+        recommended = (
+            "Release is locked. Mark ready when distribution review is complete."
+        )
     else:
         distribution_status = "verified"
         can_mark_ready = True
-        recommended = "Final release verification passed. Lock and mark ready when approved."
+        recommended = (
+            "Final release verification passed. Lock and mark ready when approved."
+        )
 
     return {
         "status": "ok",
@@ -5249,7 +5484,9 @@ def _v995_distribution_payload(release_name=None, actor=None):
         "verification": verification,
         "state": state,
         "audit_event_count": len(audit_data.get("events", [])),
-        "latest_audit_event": audit_data.get("events", [])[-1] if audit_data.get("events") else None,
+        "latest_audit_event": audit_data.get("events", [])[-1]
+        if audit_data.get("events")
+        else None,
         "recommended_next_action": recommended,
     }
 
@@ -5303,7 +5540,9 @@ def _v995_write_distribution_readiness_report(release_name=None, actor=None):
     return payload
 
 
-def _v995_apply_distribution_decision(decision, release_name=None, actor=None, reason=""):
+def _v995_apply_distribution_decision(
+    decision, release_name=None, actor=None, reason=""
+):
     from copy import deepcopy
     from datetime import datetime, timezone
     from pathlib import Path
@@ -5324,7 +5563,8 @@ def _v995_apply_distribution_decision(decision, release_name=None, actor=None, r
             before=before,
             after=after,
             verification_status=verification_status,
-            reason=reason or "Distribution decision denied because final verification is not passing.",
+            reason=reason
+            or "Distribution decision denied because final verification is not passing.",
         )
         return {
             "status": "blocked",
@@ -5332,7 +5572,9 @@ def _v995_apply_distribution_decision(decision, release_name=None, actor=None, r
             "decision": decision,
             "reason": "Final release verification must be pass before lock or ready.",
             "audit_event": event,
-            "distribution": _v995_distribution_payload(release_name=release_name, actor=actor),
+            "distribution": _v995_distribution_payload(
+                release_name=release_name, actor=actor
+            ),
         }
 
     if decision == "lock":
@@ -5397,7 +5639,9 @@ def _v995_apply_distribution_decision(decision, release_name=None, actor=None, r
         verification_status=verification_status,
         reason=after.get("reason", ""),
     )
-    report = _v995_write_distribution_readiness_report(release_name=release_name, actor=actor)
+    report = _v995_write_distribution_readiness_report(
+        release_name=release_name, actor=actor
+    )
     return {
         "status": "ok",
         "version": "9.9.5",
@@ -5412,7 +5656,9 @@ def _v995_apply_distribution_decision(decision, release_name=None, actor=None, r
 @login_required
 def api_v995_distribution():
     release_name = request.args.get("release_name")
-    return jsonify(_v995_distribution_payload(release_name=release_name, actor=session.get("user")))
+    return jsonify(
+        _v995_distribution_payload(release_name=release_name, actor=session.get("user"))
+    )
 
 
 @dashboard_bp.route("/api/v1/product/final-release/distribution/audit")
@@ -5430,17 +5676,25 @@ def api_v995_distribution_audit():
     )
 
 
-@dashboard_bp.route("/api/v1/product/final-release/distribution/write", methods=["POST"])
+@dashboard_bp.route(
+    "/api/v1/product/final-release/distribution/write", methods=["POST"]
+)
 @admin_required
 def api_v995_distribution_write():
     payload = request.get_json(silent=True) or request.form
     release_name = payload.get("release_name") or None
-    report = _v995_write_distribution_readiness_report(release_name=release_name, actor=session.get("user"))
-    audit("product_distribution_readiness_write", details=report.get("artifacts_written"))
+    report = _v995_write_distribution_readiness_report(
+        release_name=release_name, actor=session.get("user")
+    )
+    audit(
+        "product_distribution_readiness_write", details=report.get("artifacts_written")
+    )
     return jsonify(report)
 
 
-@dashboard_bp.route("/api/v1/product/final-release/distribution/decision", methods=["POST"])
+@dashboard_bp.route(
+    "/api/v1/product/final-release/distribution/decision", methods=["POST"]
+)
 @admin_required
 def api_v995_distribution_decision():
     payload = request.get_json(silent=True) or request.form
@@ -5450,7 +5704,10 @@ def api_v995_distribution_decision():
         actor=session.get("user"),
         reason=payload.get("reason", ""),
     )
-    audit("product_distribution_decision", details={"decision": payload.get("decision"), "status": result.get("status")})
+    audit(
+        "product_distribution_decision",
+        details={"decision": payload.get("decision"), "status": result.get("status")},
+    )
     return jsonify(result)
 
 
@@ -5458,7 +5715,9 @@ def api_v995_distribution_decision():
 @login_required
 def product_final_release_distribution_view():
     release_name = request.args.get("release_name")
-    distribution = _v995_distribution_payload(release_name=release_name, actor=session.get("user"))
+    distribution = _v995_distribution_payload(
+        release_name=release_name, actor=session.get("user")
+    )
     audit_data = _v995_load_distribution_audit()
     releases = _v993_list_final_releases()
     return render_template(
@@ -5473,8 +5732,12 @@ def product_final_release_distribution_view():
 @admin_required
 def product_final_release_distribution_write():
     release_name = request.form.get("release_name") or None
-    report = _v995_write_distribution_readiness_report(release_name=release_name, actor=session.get("user"))
-    audit("product_distribution_readiness_write", details=report.get("artifacts_written"))
+    report = _v995_write_distribution_readiness_report(
+        release_name=release_name, actor=session.get("user")
+    )
+    audit(
+        "product_distribution_readiness_write", details=report.get("artifacts_written")
+    )
     flash("Distribution readiness report written.", "success")
     return redirect(url_for("dashboard.product_final_release_distribution_view"))
 
@@ -5492,12 +5755,16 @@ def product_final_release_distribution_decision():
         reason=reason,
     )
     if result.get("status") == "blocked":
-        flash("Distribution action blocked because final verification is not passing.", "error")
+        flash(
+            "Distribution action blocked because final verification is not passing.",
+            "error",
+        )
     else:
         flash("Distribution decision recorded.", "success")
     return redirect(url_for("dashboard.product_final_release_distribution_view"))
-# ---- end v9.9.5 final release distribution readiness ----
 
+
+# ---- end v9.9.5 final release distribution readiness ----
 
 
 # ---- v9.9.6 Final Product Release Dashboard + Version Freeze ----
@@ -5521,7 +5788,9 @@ def _v996_final_release_index_paths():
 def _v996_final_dashboard_payload(actor=None, release_name=None):
     from datetime import datetime, timezone
 
-    rc_manifest = _v992_load_json_file("release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json") or {}
+    rc_manifest = (
+        _v992_load_json_file("release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json") or {}
+    )
     final_gate = _v991_final_gate_payload(actor=actor)
     archives = _v993_list_final_releases()
 
@@ -5530,19 +5799,27 @@ def _v996_final_dashboard_payload(actor=None, release_name=None):
     elif archives:
         release_name = archives[0].get("release_name")
 
-    verification = _v994_verify_final_release(release_name=release_name) if release_name else {
-        "status": "fail",
-        "release_name": None,
-        "failures": ["no_release"],
-        "checks_total": 0,
-        "checks_passed": 0,
-    }
-    distribution = _v995_distribution_payload(release_name=release_name, actor=actor) if release_name else {
-        "distribution_status": "blocked",
-        "verification_status": "fail",
-        "state": {},
-        "recommended_next_action": "Publish and verify a final release first.",
-    }
+    verification = (
+        _v994_verify_final_release(release_name=release_name)
+        if release_name
+        else {
+            "status": "fail",
+            "release_name": None,
+            "failures": ["no_release"],
+            "checks_total": 0,
+            "checks_passed": 0,
+        }
+    )
+    distribution = (
+        _v995_distribution_payload(release_name=release_name, actor=actor)
+        if release_name
+        else {
+            "distribution_status": "blocked",
+            "verification_status": "fail",
+            "state": {},
+            "recommended_next_action": "Publish and verify a final release first.",
+        }
+    )
 
     archive = None
     for item in archives:
@@ -5572,7 +5849,9 @@ def _v996_final_dashboard_payload(actor=None, release_name=None):
         "archive": {
             "zip_exists": archive.get("archive_zip_exists") if archive else False,
             "tar_exists": archive.get("archive_tar_exists") if archive else False,
-            "integrity_manifest_exists": archive.get("integrity_manifest_exists") if archive else False,
+            "integrity_manifest_exists": archive.get("integrity_manifest_exists")
+            if archive
+            else False,
         },
         "verification": {
             "status": verification.get("status"),
@@ -5641,7 +5920,9 @@ def _v996_write_final_product_release_index(actor=None, release_name=None):
     paths = _v996_final_release_index_paths()
 
     paths["json"].write_text(json.dumps(payload, indent=2, sort_keys=True))
-    _v996_version_freeze_path().write_text(json.dumps(payload.get("version_freeze", {}), indent=2, sort_keys=True))
+    _v996_version_freeze_path().write_text(
+        json.dumps(payload.get("version_freeze", {}), indent=2, sort_keys=True)
+    )
 
     chain = payload.get("chain", {})
     rows = [
@@ -5682,7 +5963,11 @@ def _v996_write_final_product_release_index(actor=None, release_name=None):
 @login_required
 def api_v996_final_product_dashboard():
     release_name = request.args.get("release_name")
-    return jsonify(_v996_final_dashboard_payload(actor=session.get("user"), release_name=release_name))
+    return jsonify(
+        _v996_final_dashboard_payload(
+            actor=session.get("user"), release_name=release_name
+        )
+    )
 
 
 @dashboard_bp.route("/api/v1/product/final/write", methods=["POST"])
@@ -5690,7 +5975,9 @@ def api_v996_final_product_dashboard():
 def api_v996_final_product_write():
     payload = request.get_json(silent=True) or request.form
     release_name = payload.get("release_name") or None
-    result = _v996_write_final_product_release_index(actor=session.get("user"), release_name=release_name)
+    result = _v996_write_final_product_release_index(
+        actor=session.get("user"), release_name=release_name
+    )
     audit("product_final_release_index_write", details=result.get("artifacts_written"))
     return jsonify(result)
 
@@ -5699,7 +5986,9 @@ def api_v996_final_product_write():
 @login_required
 def product_final_dashboard_view():
     release_name = request.args.get("release_name")
-    payload = _v996_final_dashboard_payload(actor=session.get("user"), release_name=release_name)
+    payload = _v996_final_dashboard_payload(
+        actor=session.get("user"), release_name=release_name
+    )
     return render_template("product_final.html", payload=payload)
 
 
@@ -5707,12 +5996,15 @@ def product_final_dashboard_view():
 @admin_required
 def product_final_dashboard_write():
     release_name = request.form.get("release_name") or None
-    result = _v996_write_final_product_release_index(actor=session.get("user"), release_name=release_name)
+    result = _v996_write_final_product_release_index(
+        actor=session.get("user"), release_name=release_name
+    )
     audit("product_final_release_index_write", details=result.get("artifacts_written"))
     flash("Final product release index and version freeze written.", "success")
     return redirect(url_for("dashboard.product_final_dashboard_view"))
-# ---- end v9.9.6 final product release dashboard ----
 
+
+# ---- end v9.9.6 final product release dashboard ----
 
 
 # ---- v9.9.7 Product Release Closeout + Operator Handoff Pack ----
@@ -5723,7 +6015,9 @@ def _v997_handoff_root(handoff_name=None):
     base = Path("storage/final_handoff")
     base.mkdir(parents=True, exist_ok=True)
     if not handoff_name:
-        handoff_name = "v9_9_7_handoff_" + datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        handoff_name = "v9_9_7_handoff_" + datetime.now(timezone.utc).strftime(
+            "%Y%m%d_%H%M%S"
+        )
     return base / _v988_package_slug(handoff_name)
 
 
@@ -5832,7 +6126,9 @@ def _v997_handoff_preview(actor=None, release_name=None):
     from datetime import datetime, timezone
     from pathlib import Path
 
-    final_payload = _v996_final_dashboard_payload(actor=actor, release_name=release_name)
+    final_payload = _v996_final_dashboard_payload(
+        actor=actor, release_name=release_name
+    )
     sources = []
     missing = []
 
@@ -5849,7 +6145,9 @@ def _v997_handoff_preview(actor=None, release_name=None):
             missing.append(item["key"])
 
     return {
-        "status": "ready" if final_payload.get("status") == "ready" and not missing else "blocked",
+        "status": "ready"
+        if final_payload.get("status") == "ready" and not missing
+        else "blocked",
         "version": "9.9.7",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "actor": actor,
@@ -5946,7 +6244,9 @@ def _v997_build_handoff_pack(handoff_name=None, actor=None, release_name=None):
         "",
     ]
     for item in checklist:
-        notes.append(f"- [x] {item['version']} — {item['label']} — `{item['package_path']}`")
+        notes.append(
+            f"- [x] {item['version']} — {item['label']} — `{item['package_path']}`"
+        )
 
     notes.extend(
         [
@@ -5962,7 +6262,9 @@ def _v997_build_handoff_pack(handoff_name=None, actor=None, release_name=None):
         ]
     )
 
-    (root / "HANDOFF_MANIFEST.json").write_text(json.dumps(manifest, indent=2, sort_keys=True))
+    (root / "HANDOFF_MANIFEST.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True)
+    )
     (root / "PRINTABLE_HANDOFF_CHECKLIST.md").write_text("\n".join(notes))
     (root / "README.md").write_text("\n".join(notes))
 
@@ -6011,7 +6313,9 @@ def _v997_build_handoff_pack(handoff_name=None, actor=None, release_name=None):
 @login_required
 def api_v997_handoff_preview():
     release_name = request.args.get("release_name")
-    return jsonify(_v997_handoff_preview(actor=session.get("user"), release_name=release_name))
+    return jsonify(
+        _v997_handoff_preview(actor=session.get("user"), release_name=release_name)
+    )
 
 
 @dashboard_bp.route("/api/v1/product/final/handoff/build", methods=["POST"])
@@ -6031,7 +6335,9 @@ def api_v997_handoff_build():
 @login_required
 def product_final_handoff_view():
     release_name = request.args.get("release_name")
-    preview = _v997_handoff_preview(actor=session.get("user"), release_name=release_name)
+    preview = _v997_handoff_preview(
+        actor=session.get("user"), release_name=release_name
+    )
     return render_template("product_final_handoff.html", preview=preview)
 
 
@@ -6047,10 +6353,14 @@ def product_final_handoff_build():
     if result.get("status") == "ready":
         flash("Operator handoff pack built.", "success")
     else:
-        flash("Operator handoff pack blocked until all required artifacts are present and final dashboard is ready.", "error")
+        flash(
+            "Operator handoff pack blocked until all required artifacts are present and final dashboard is ready.",
+            "error",
+        )
     return redirect(url_for("dashboard.product_final_handoff_view"))
-# ---- end v9.9.7 product release closeout handoff ----
 
+
+# ---- end v9.9.7 product release closeout handoff ----
 
 
 # ---- v9.9.8 Final Release Self-Test + Post-Release Maintenance Gate ----
@@ -6103,7 +6413,9 @@ def _v998_load_maintenance_state():
 
 def _v998_save_maintenance_state(state):
     state["version"] = "9.9.8"
-    _v998_maintenance_state_path().write_text(json.dumps(state, indent=2, sort_keys=True))
+    _v998_maintenance_state_path().write_text(
+        json.dumps(state, indent=2, sort_keys=True)
+    )
     return state
 
 
@@ -6127,11 +6439,15 @@ def _v998_load_maintenance_audit():
 
 def _v998_save_maintenance_audit(data):
     data["version"] = "9.9.8"
-    _v998_maintenance_audit_path().write_text(json.dumps(data, indent=2, sort_keys=True))
+    _v998_maintenance_audit_path().write_text(
+        json.dumps(data, indent=2, sort_keys=True)
+    )
     return data
 
 
-def _v998_append_maintenance_audit(action, actor, before, after, self_test_status, reason=""):
+def _v998_append_maintenance_audit(
+    action, actor, before, after, self_test_status, reason=""
+):
     from datetime import datetime, timezone
     from uuid import uuid4
 
@@ -6168,20 +6484,29 @@ def _v998_final_self_test_payload(actor=None, release_name=None):
             }
         )
 
-    rc_manifest = _v992_load_json_file("release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json") or {}
+    rc_manifest = (
+        _v992_load_json_file("release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json") or {}
+    )
     add_check(
         "release_candidate",
         "Release candidate manifest status is pass",
         rc_manifest.get("status") == "pass",
-        {"status": rc_manifest.get("status"), "artifact": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json"},
+        {
+            "status": rc_manifest.get("status"),
+            "artifact": "release/V9_9_0_RELEASE_CANDIDATE_MANIFEST.json",
+        },
     )
 
     final_gate = _v991_final_gate_payload(actor=actor)
     add_check(
         "final_gate",
         "Final gate is approved",
-        final_gate.get("gate_status") == "approved" and final_gate.get("signoff", {}).get("approved") is True,
-        {"gate_status": final_gate.get("gate_status"), "approved": final_gate.get("signoff", {}).get("approved")},
+        final_gate.get("gate_status") == "approved"
+        and final_gate.get("signoff", {}).get("approved") is True,
+        {
+            "gate_status": final_gate.get("gate_status"),
+            "approved": final_gate.get("signoff", {}).get("approved"),
+        },
     )
 
     archives = _v993_list_final_releases()
@@ -6206,7 +6531,11 @@ def _v998_final_self_test_payload(actor=None, release_name=None):
         {"release_name": release_name, "archive": archive},
     )
 
-    verification = _v994_verify_final_release(release_name=release_name) if release_name else {"status": "fail", "failures": ["no_release"]}
+    verification = (
+        _v994_verify_final_release(release_name=release_name)
+        if release_name
+        else {"status": "fail", "failures": ["no_release"]}
+    )
     add_check(
         "verification",
         "Final release verification status is pass",
@@ -6219,14 +6548,19 @@ def _v998_final_self_test_payload(actor=None, release_name=None):
         },
     )
 
-    distribution = _v995_distribution_payload(release_name=release_name, actor=actor) if release_name else {
-        "distribution_status": "blocked",
-        "state": {},
-    }
+    distribution = (
+        _v995_distribution_payload(release_name=release_name, actor=actor)
+        if release_name
+        else {
+            "distribution_status": "blocked",
+            "state": {},
+        }
+    )
     add_check(
         "distribution",
         "Distribution readiness status is ready",
-        distribution.get("distribution_status") == "ready" and distribution.get("state", {}).get("ready") is True,
+        distribution.get("distribution_status") == "ready"
+        and distribution.get("state", {}).get("ready") is True,
         {
             "distribution_status": distribution.get("distribution_status"),
             "ready": distribution.get("state", {}).get("ready"),
@@ -6234,15 +6568,27 @@ def _v998_final_self_test_payload(actor=None, release_name=None):
         },
     )
 
-    final_dashboard = _v996_final_dashboard_payload(actor=actor, release_name=release_name) if release_name else {"status": "not_ready"}
+    final_dashboard = (
+        _v996_final_dashboard_payload(actor=actor, release_name=release_name)
+        if release_name
+        else {"status": "not_ready"}
+    )
     add_check(
         "final_dashboard",
         "Final product dashboard status is ready",
-        final_dashboard.get("status") == "ready" and final_dashboard.get("distribution_ready") is True,
-        {"status": final_dashboard.get("status"), "distribution_ready": final_dashboard.get("distribution_ready")},
+        final_dashboard.get("status") == "ready"
+        and final_dashboard.get("distribution_ready") is True,
+        {
+            "status": final_dashboard.get("status"),
+            "distribution_ready": final_dashboard.get("distribution_ready"),
+        },
     )
 
-    handoff = _v997_handoff_preview(actor=actor, release_name=release_name) if release_name else {"status": "blocked"}
+    handoff = (
+        _v997_handoff_preview(actor=actor, release_name=release_name)
+        if release_name
+        else {"status": "blocked"}
+    )
     add_check(
         "operator_handoff",
         "Operator handoff pack preview is ready",
@@ -6257,13 +6603,18 @@ def _v998_final_self_test_payload(actor=None, release_name=None):
         },
     )
 
-    handoff_manifest = _v992_load_json_file("release/V9_9_7_OPERATOR_HANDOFF_MANIFEST.json") or {}
+    handoff_manifest = (
+        _v992_load_json_file("release/V9_9_7_OPERATOR_HANDOFF_MANIFEST.json") or {}
+    )
     add_check(
         "operator_handoff_manifest",
         "Operator handoff manifest artifact exists and is ready",
         Path("release/V9_9_7_OPERATOR_HANDOFF_MANIFEST.json").exists()
         and handoff_manifest.get("status") == "ready",
-        {"status": handoff_manifest.get("status"), "artifact": "release/V9_9_7_OPERATOR_HANDOFF_MANIFEST.json"},
+        {
+            "status": handoff_manifest.get("status"),
+            "artifact": "release/V9_9_7_OPERATOR_HANDOFF_MANIFEST.json",
+        },
     )
 
     maintenance = _v998_load_maintenance_state()
@@ -6348,11 +6699,16 @@ def _v998_write_post_release_maintenance_report(actor=None, release_name=None):
     )
 
     md_path.write_text("\n".join(rows))
-    payload["artifacts_written"] = {"json": json_path.as_posix(), "markdown": md_path.as_posix()}
+    payload["artifacts_written"] = {
+        "json": json_path.as_posix(),
+        "markdown": md_path.as_posix(),
+    }
     return payload
 
 
-def _v998_apply_maintenance_decision(decision, actor=None, release_name=None, reason=""):
+def _v998_apply_maintenance_decision(
+    decision, actor=None, release_name=None, reason=""
+):
     from copy import deepcopy
     from datetime import datetime, timezone
 
@@ -6363,7 +6719,9 @@ def _v998_apply_maintenance_decision(decision, actor=None, release_name=None, re
     if decision not in {"safe_to_start_v10", "block_v10", "reset"}:
         abort(400)
 
-    if decision == "safe_to_start_v10" and not self_test.get("safe_to_start_v10_allowed"):
+    if decision == "safe_to_start_v10" and not self_test.get(
+        "safe_to_start_v10_allowed"
+    ):
         after = deepcopy(before)
         event = _v998_append_maintenance_audit(
             action="safe_to_start_v10_denied",
@@ -6371,7 +6729,8 @@ def _v998_apply_maintenance_decision(decision, actor=None, release_name=None, re
             before=before,
             after=after,
             self_test_status=self_test.get("status"),
-            reason=reason or "v10 readiness denied because final self-test or v9.9.7 handoff is not ready.",
+            reason=reason
+            or "v10 readiness denied because final self-test or v9.9.7 handoff is not ready.",
         )
         return {
             "status": "blocked",
@@ -6388,7 +6747,8 @@ def _v998_apply_maintenance_decision(decision, actor=None, release_name=None, re
             "safe_to_start_v10": True,
             "decision": "safe_to_start_v10",
             "actor": actor,
-            "reason": reason or "v9.9.x final release self-test passed and handoff is ready.",
+            "reason": reason
+            or "v9.9.x final release self-test passed and handoff is ready.",
             "release_name": self_test.get("release_name"),
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -6422,7 +6782,9 @@ def _v998_apply_maintenance_decision(decision, actor=None, release_name=None, re
         self_test_status=self_test.get("status"),
         reason=after.get("reason", ""),
     )
-    report = _v998_write_post_release_maintenance_report(actor=actor, release_name=release_name)
+    report = _v998_write_post_release_maintenance_report(
+        actor=actor, release_name=release_name
+    )
     return {
         "status": "ok",
         "version": "9.9.8",
@@ -6437,7 +6799,11 @@ def _v998_apply_maintenance_decision(decision, actor=None, release_name=None, re
 @login_required
 def api_v998_final_self_test():
     release_name = request.args.get("release_name")
-    return jsonify(_v998_final_self_test_payload(actor=session.get("user"), release_name=release_name))
+    return jsonify(
+        _v998_final_self_test_payload(
+            actor=session.get("user"), release_name=release_name
+        )
+    )
 
 
 @dashboard_bp.route("/api/v1/product/final/self-test/write", methods=["POST"])
@@ -6445,8 +6811,13 @@ def api_v998_final_self_test():
 def api_v998_final_self_test_write():
     payload = request.get_json(silent=True) or request.form
     release_name = payload.get("release_name") or None
-    report = _v998_write_post_release_maintenance_report(actor=session.get("user"), release_name=release_name)
-    audit("product_post_release_maintenance_write", details=report.get("artifacts_written"))
+    report = _v998_write_post_release_maintenance_report(
+        actor=session.get("user"), release_name=release_name
+    )
+    audit(
+        "product_post_release_maintenance_write",
+        details=report.get("artifacts_written"),
+    )
     return jsonify(report)
 
 
@@ -6460,7 +6831,10 @@ def api_v998_maintenance_decision():
         release_name=payload.get("release_name") or None,
         reason=payload.get("reason", ""),
     )
-    audit("product_post_release_maintenance_decision", details={"decision": payload.get("decision"), "status": result.get("status")})
+    audit(
+        "product_post_release_maintenance_decision",
+        details={"decision": payload.get("decision"), "status": result.get("status")},
+    )
     return jsonify(result)
 
 
@@ -6483,7 +6857,9 @@ def api_v998_maintenance_audit():
 @login_required
 def product_final_self_test_view():
     release_name = request.args.get("release_name")
-    self_test = _v998_final_self_test_payload(actor=session.get("user"), release_name=release_name)
+    self_test = _v998_final_self_test_payload(
+        actor=session.get("user"), release_name=release_name
+    )
     audit_data = _v998_load_maintenance_audit()
     return render_template(
         "product_final_self_test.html",
@@ -6496,8 +6872,13 @@ def product_final_self_test_view():
 @admin_required
 def product_final_self_test_write():
     release_name = request.form.get("release_name") or None
-    report = _v998_write_post_release_maintenance_report(actor=session.get("user"), release_name=release_name)
-    audit("product_post_release_maintenance_write", details=report.get("artifacts_written"))
+    report = _v998_write_post_release_maintenance_report(
+        actor=session.get("user"), release_name=release_name
+    )
+    audit(
+        "product_post_release_maintenance_write",
+        details=report.get("artifacts_written"),
+    )
     flash("Post-release maintenance report written.", "success")
     return redirect(url_for("dashboard.product_final_self_test_view"))
 
@@ -6513,12 +6894,16 @@ def product_final_self_test_maintenance():
         reason=request.form.get("reason", ""),
     )
     if result.get("status") == "blocked":
-        flash("v10 readiness blocked until v9.9.7 handoff and final self-test are ready.", "error")
+        flash(
+            "v10 readiness blocked until v9.9.7 handoff and final self-test are ready.",
+            "error",
+        )
     else:
         flash("Post-release maintenance gate decision recorded.", "success")
     return redirect(url_for("dashboard.product_final_self_test_view"))
-# ---- end v9.9.8 final release self-test maintenance gate ----
 
+
+# ---- end v9.9.8 final release self-test maintenance gate ----
 
 
 # ---- v9.9.9 Final v9 Line Closure + v10 Bootstrap Gate ----
@@ -6599,7 +6984,9 @@ def _v999_save_bootstrap_audit(data):
     return data
 
 
-def _v999_append_bootstrap_audit(action, actor, before, after, safe_to_start_v10, reason=""):
+def _v999_append_bootstrap_audit(
+    action, actor, before, after, safe_to_start_v10, reason=""
+):
     from datetime import datetime, timezone
     from uuid import uuid4
 
@@ -6665,7 +7052,11 @@ def _v999_closure_payload(actor=None, release_name=None):
         and not missing
     )
 
-    status = "closed" if safe_to_start_v10 and state.get("v9_closed") else ("ready" if safe_to_start_v10 else "blocked")
+    status = (
+        "closed"
+        if safe_to_start_v10 and state.get("v9_closed")
+        else ("ready" if safe_to_start_v10 else "blocked")
+    )
 
     return {
         "status": status,
@@ -6728,11 +7119,15 @@ def _v999_write_closure_and_bootstrap_manifests(actor=None, release_name=None):
         "",
     ]
     for item in payload.get("artifacts", []):
-        closure_rows.append(f"- {'PRESENT' if item['exists'] else 'MISSING'} `{item['path']}` sha256=`{item.get('sha256')}`")
+        closure_rows.append(
+            f"- {'PRESENT' if item['exists'] else 'MISSING'} `{item['path']}` sha256=`{item.get('sha256')}`"
+        )
     closure_md.write_text("\n".join(closure_rows))
 
     bootstrap = {
-        "status": "ready" if payload.get("v10_bootstrap_ready") else ("allowed" if payload.get("safe_to_start_v10") else "blocked"),
+        "status": "ready"
+        if payload.get("v10_bootstrap_ready")
+        else ("allowed" if payload.get("safe_to_start_v10") else "blocked"),
         "version": "9.9.9",
         "generated_at": payload["generated_at"],
         "release_name": payload.get("release_name"),
@@ -6785,10 +7180,17 @@ def _v999_apply_bootstrap_decision(decision, actor=None, release_name=None, reas
     before = deepcopy(_v999_load_bootstrap_state())
     decision = str(decision or "").strip().lower()
 
-    if decision not in {"close_v9", "approve_v10_bootstrap", "block_v10_bootstrap", "reset"}:
+    if decision not in {
+        "close_v9",
+        "approve_v10_bootstrap",
+        "block_v10_bootstrap",
+        "reset",
+    }:
         abort(400)
 
-    if decision in {"close_v9", "approve_v10_bootstrap"} and not payload.get("safe_to_start_v10"):
+    if decision in {"close_v9", "approve_v10_bootstrap"} and not payload.get(
+        "safe_to_start_v10"
+    ):
         after = deepcopy(before)
         event = _v999_append_bootstrap_audit(
             action=f"{decision}_denied",
@@ -6796,7 +7198,8 @@ def _v999_apply_bootstrap_decision(decision, actor=None, release_name=None, reas
             before=before,
             after=after,
             safe_to_start_v10=False,
-            reason=reason or "Denied because v9.9.8 safe-to-start-v10 gate is not true.",
+            reason=reason
+            or "Denied because v9.9.8 safe-to-start-v10 gate is not true.",
         )
         return {
             "status": "blocked",
@@ -6820,8 +7223,12 @@ def _v999_apply_bootstrap_decision(decision, actor=None, release_name=None, reas
             "reason": reason or "v9.9.x line closed.",
             "release_name": payload.get("release_name"),
             "updated_at": datetime.now(timezone.utc).isoformat(),
-            "closure_manifest_sha256": _v993_sha256_file(closure_manifest) if closure_manifest.exists() else None,
-            "bootstrap_manifest_sha256": _v993_sha256_file(bootstrap_manifest) if bootstrap_manifest.exists() else None,
+            "closure_manifest_sha256": _v993_sha256_file(closure_manifest)
+            if closure_manifest.exists()
+            else None,
+            "bootstrap_manifest_sha256": _v993_sha256_file(bootstrap_manifest)
+            if bootstrap_manifest.exists()
+            else None,
         }
     elif decision == "approve_v10_bootstrap":
         after = {
@@ -6833,8 +7240,12 @@ def _v999_apply_bootstrap_decision(decision, actor=None, release_name=None, reas
             "reason": reason or "v9.9.x closed and v10 bootstrap approved.",
             "release_name": payload.get("release_name"),
             "updated_at": datetime.now(timezone.utc).isoformat(),
-            "closure_manifest_sha256": _v993_sha256_file(closure_manifest) if closure_manifest.exists() else before.get("closure_manifest_sha256"),
-            "bootstrap_manifest_sha256": _v993_sha256_file(bootstrap_manifest) if bootstrap_manifest.exists() else before.get("bootstrap_manifest_sha256"),
+            "closure_manifest_sha256": _v993_sha256_file(closure_manifest)
+            if closure_manifest.exists()
+            else before.get("closure_manifest_sha256"),
+            "bootstrap_manifest_sha256": _v993_sha256_file(bootstrap_manifest)
+            if bootstrap_manifest.exists()
+            else before.get("bootstrap_manifest_sha256"),
         }
     elif decision == "block_v10_bootstrap":
         after = {
@@ -6872,7 +7283,9 @@ def _v999_apply_bootstrap_decision(decision, actor=None, release_name=None, reas
         safe_to_start_v10=payload.get("safe_to_start_v10"),
         reason=after.get("reason", ""),
     )
-    manifests = _v999_write_closure_and_bootstrap_manifests(actor=actor, release_name=release_name)
+    manifests = _v999_write_closure_and_bootstrap_manifests(
+        actor=actor, release_name=release_name
+    )
     return {
         "status": "ok",
         "version": "9.9.9",
@@ -6887,7 +7300,9 @@ def _v999_apply_bootstrap_decision(decision, actor=None, release_name=None, reas
 @login_required
 def api_v999_v10_bootstrap():
     release_name = request.args.get("release_name")
-    return jsonify(_v999_closure_payload(actor=session.get("user"), release_name=release_name))
+    return jsonify(
+        _v999_closure_payload(actor=session.get("user"), release_name=release_name)
+    )
 
 
 @dashboard_bp.route("/api/v1/product/final/v10-bootstrap/write", methods=["POST"])
@@ -6898,7 +7313,10 @@ def api_v999_v10_bootstrap_write():
         actor=session.get("user"),
         release_name=payload.get("release_name") or None,
     )
-    audit("product_v9_closure_v10_bootstrap_write", details=result.get("artifacts_written"))
+    audit(
+        "product_v9_closure_v10_bootstrap_write",
+        details=result.get("artifacts_written"),
+    )
     return jsonify(result)
 
 
@@ -6912,7 +7330,10 @@ def api_v999_v10_bootstrap_decision():
         release_name=payload.get("release_name") or None,
         reason=payload.get("reason", ""),
     )
-    audit("product_v10_bootstrap_decision", details={"decision": payload.get("decision"), "status": result.get("status")})
+    audit(
+        "product_v10_bootstrap_decision",
+        details={"decision": payload.get("decision"), "status": result.get("status")},
+    )
     return jsonify(result)
 
 
@@ -6935,7 +7356,9 @@ def api_v999_v10_bootstrap_audit():
 @login_required
 def product_v10_bootstrap_view():
     release_name = request.args.get("release_name")
-    payload = _v999_closure_payload(actor=session.get("user"), release_name=release_name)
+    payload = _v999_closure_payload(
+        actor=session.get("user"), release_name=release_name
+    )
     audit_data = _v999_load_bootstrap_audit()
     return render_template(
         "product_v10_bootstrap.html",
@@ -6951,7 +7374,10 @@ def product_v10_bootstrap_write():
         actor=session.get("user"),
         release_name=request.form.get("release_name") or None,
     )
-    audit("product_v9_closure_v10_bootstrap_write", details=result.get("artifacts_written"))
+    audit(
+        "product_v9_closure_v10_bootstrap_write",
+        details=result.get("artifacts_written"),
+    )
     flash("v9 closure and v10 bootstrap manifests written.", "success")
     return redirect(url_for("dashboard.product_v10_bootstrap_view"))
 
@@ -6970,4 +7396,6 @@ def product_v10_bootstrap_decision():
     else:
         flash("v10 bootstrap decision recorded.", "success")
     return redirect(url_for("dashboard.product_v10_bootstrap_view"))
+
+
 # ---- end v9.9.9 final v9 line closure v10 bootstrap gate ----

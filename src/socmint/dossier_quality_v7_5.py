@@ -22,7 +22,9 @@ def _has_evidence_refs(item: dict[str, Any]) -> bool:
     refs = item.get("evidence_refs") or item.get("evidence_ids") or []
     if refs:
         return True
-    return bool(item.get("evidence_id") or item.get("artifact_id") or item.get("source_ref"))
+    return bool(
+        item.get("evidence_id") or item.get("artifact_id") or item.get("source_ref")
+    )
 
 
 def _has_source(item: dict[str, Any]) -> bool:

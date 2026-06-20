@@ -23,9 +23,25 @@ REQUIRED_FILES = {
 def base_payload():
     return {
         "quality_gate": {"status": "pass", "finding_count": 0},
-        "export_enforcement": {"status": "allowed", "allowed": True, "final_export_blocked": False},
-        "evidence_manifest": {"status": "pass", "appendix_summary": {"missing_ref_count": 0, "missing_hash_count": 0, "missing_source_count": 0}},
-        "identity_confidence": {"status": "pass", "contradiction_count": 0, "low_confidence_count": 0, "needs_review_count": 0},
+        "export_enforcement": {
+            "status": "allowed",
+            "allowed": True,
+            "final_export_blocked": False,
+        },
+        "evidence_manifest": {
+            "status": "pass",
+            "appendix_summary": {
+                "missing_ref_count": 0,
+                "missing_hash_count": 0,
+                "missing_source_count": 0,
+            },
+        },
+        "identity_confidence": {
+            "status": "pass",
+            "contradiction_count": 0,
+            "low_confidence_count": 0,
+            "needs_review_count": 0,
+        },
         "connector_compliance": {"status": "pass", "finding_count": 0},
         "policy_coverage": {"status": "pass", "finding_count": 0},
     }
@@ -53,7 +69,9 @@ def test_produces_required_files():
 
     assert set(files) == REQUIRED_FILES
     assert b"SOCMINT v7.5.2 Finalization Export Packet" in files["README.md"]
-    assert b"SOCMINT v7.5.1 Dossier Finalization Packet" in files["finalization_packet.md"]
+    assert (
+        b"SOCMINT v7.5.1 Dossier Finalization Packet" in files["finalization_packet.md"]
+    )
 
 
 def test_manifest_contains_sha256_and_size_for_every_file():
@@ -81,7 +99,10 @@ def test_zip_contains_all_required_files():
 
 
 def test_safe_package_name_strips_unsafe_path_characters():
-    assert safe_package_name("../Bad Name/With Spaces!!.zip") == "bad-name-with-spaces-.zip"
+    assert (
+        safe_package_name("../Bad Name/With Spaces!!.zip")
+        == "bad-name-with-spaces-.zip"
+    )
     assert safe_package_name("../../") == "socmint-v7.5.2-finalization-export"
 
 
@@ -97,7 +118,11 @@ def test_input_dossier_payload_is_not_mutated():
 def test_blocked_finalization_can_still_produce_review_export_packet():
     payload = base_payload()
     payload["quality_gate"] = {"status": "fail", "finding_count": 1}
-    payload["export_enforcement"] = {"status": "blocked", "allowed": False, "final_export_blocked": True}
+    payload["export_enforcement"] = {
+        "status": "blocked",
+        "allowed": False,
+        "final_export_blocked": True,
+    }
 
     packet = build_finalization_export_packet(payload)
     files = build_finalization_export_files(packet)

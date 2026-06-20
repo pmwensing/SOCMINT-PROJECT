@@ -34,6 +34,9 @@ stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 json_path = REPORT_ROOT / f"socmint_v12_10_20_release_mount_contract_gate_{stamp}.json"
 md_path = REPORT_ROOT / f"socmint_v12_10_20_release_mount_contract_gate_{stamp}.md"
 json_path.write_text(json.dumps(report, indent=2, sort_keys=True))
-md_path.write_text("# SOCMINT v12.10.20 Release Mount Contract Gate\n\n" + f"- Status: `{report['status']}`\n- Decision: `{report['decision']}`\n")
+md_path.write_text(
+    "# SOCMINT v12.10.20 Release Mount Contract Gate\n\n"
+    + f"- Status: `{report['status']}`\n- Decision: `{report['decision']}`\n"
+)
 print(json.dumps(report, indent=2, sort_keys=True))
 sys.exit(0 if ok else 1)

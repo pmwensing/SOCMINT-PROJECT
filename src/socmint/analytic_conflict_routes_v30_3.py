@@ -3,7 +3,11 @@ from __future__ import annotations
 from flask import jsonify, request, session
 
 from .analytic_confidence_routes_v30_4 import register_analytic_confidence_routes_v30_4
-from .analytic_conflict_v30_3 import current_conflicts, record_conflict, resolve_conflict
+from .analytic_conflict_v30_3 import (
+    current_conflicts,
+    record_conflict,
+    resolve_conflict,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 

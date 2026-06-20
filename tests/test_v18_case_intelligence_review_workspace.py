@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.socmint.case_intelligence_review_routes_v18 import register_case_intelligence_review_routes_v18
+from src.socmint.case_intelligence_review_routes_v18 import (
+    register_case_intelligence_review_routes_v18,
+)
 from src.socmint.case_intelligence_review_workspace_v18 import (
     CASE_INTELLIGENCE_REVIEW_WORKSPACE_SCHEMA,
     append_case_review_history,
@@ -24,21 +26,49 @@ def _payload():
         "title": "Case Alpha",
         "evidence": [{"evidence_id": "ev-1", "source": "capture"}],
         "claims": [
-            {"id": "cl-1", "text": "Supported claim", "status": "supported", "evidence_ids": ["ev-1"]},
-            {"id": "cl-2", "text": "Open claim", "status": "review", "evidence_ids": ["missing"]},
+            {
+                "id": "cl-1",
+                "text": "Supported claim",
+                "status": "supported",
+                "evidence_ids": ["ev-1"],
+            },
+            {
+                "id": "cl-2",
+                "text": "Open claim",
+                "status": "review",
+                "evidence_ids": ["missing"],
+            },
         ],
-        "identities": [{"id": "id-1", "name": "Candidate", "confidence": 0.55, "status": "candidate"}],
-        "entities": [{"id": "en-1", "name": "Resolved org", "confidence": 0.94, "status": "resolved"}],
+        "identities": [
+            {
+                "id": "id-1",
+                "name": "Candidate",
+                "confidence": 0.55,
+                "status": "candidate",
+            }
+        ],
+        "entities": [
+            {
+                "id": "en-1",
+                "name": "Resolved org",
+                "confidence": 0.94,
+                "status": "resolved",
+            }
+        ],
         "timeline": [
             {"id": "t-2", "occurred_at": "2026-02-02T00:00:00Z", "event": "Second"},
             {"id": "t-1", "occurred_at": "2026-01-01T00:00:00Z", "event": "First"},
         ],
-        "contradictions": [{"id": "cx-1", "summary": "Date conflict", "status": "open"}],
+        "contradictions": [
+            {"id": "cx-1", "summary": "Date conflict", "status": "open"}
+        ],
     }
 
 
 def test_v18_workspace_combines_all_review_panels():
-    result = build_case_intelligence_review_workspace("case-alpha", _payload(), operator="analyst")
+    result = build_case_intelligence_review_workspace(
+        "case-alpha", _payload(), operator="analyst"
+    )
     assert result["schema"] == CASE_INTELLIGENCE_REVIEW_WORKSPACE_SCHEMA
     assert result["summary"]["evidence_count"] == 1
     assert result["summary"]["claim_count"] == 2
@@ -50,7 +80,14 @@ def test_v18_workspace_combines_all_review_panels():
 
 
 def test_v18_summary_cards_mark_clean_case_ready():
-    payload = {"evidence": [], "claims": [], "identities": [], "entities": [], "timeline": [], "contradictions": []}
+    payload = {
+        "evidence": [],
+        "claims": [],
+        "identities": [],
+        "entities": [],
+        "timeline": [],
+        "contradictions": [],
+    }
     result = build_case_intelligence_review_workspace("case-clean", payload)
     assert result["status"] == "ready_for_analyst_decision"
     assert result["next_action"] == "record_analyst_decision"
@@ -64,14 +101,18 @@ def test_v18_decision_actions_and_session_history():
         recorded_at="2026-06-12T23:30:00+00:00",
     )
     history = append_case_review_history([], decision)
-    workspace = build_case_intelligence_review_workspace("case-alpha", {}, history=history, operator="analyst")
+    workspace = build_case_intelligence_review_workspace(
+        "case-alpha", {}, history=history, operator="analyst"
+    )
     assert decision["status"] == "recorded"
     assert workspace["review_history"]["entry_count"] == 1
     assert workspace["review_history"]["entries"][0]["decision"] == "approve_review"
 
 
 def test_v18_unsupported_decision_is_blocked():
-    result = record_case_review_decision("case-alpha", {"decision": "delete_case"}, operator="analyst")
+    result = record_case_review_decision(
+        "case-alpha", {"decision": "delete_case"}, operator="analyst"
+    )
     assert result["status"] == "blocked"
     assert result["blockers"][0]["key"] == "unsupported_decision"
 

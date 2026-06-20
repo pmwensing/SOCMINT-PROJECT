@@ -35,8 +35,15 @@ def test_v10_13_dashboard_payload_empty_without_case():
 
 def test_v10_13_dashboard_payload_summarizes_case_exports(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    persist_export_pack(_subject("subject-cert-ui-safe"), _evidence(), analyst_reviewed=True, audit=True)
-    persist_export_pack(_subject("subject-cert-ui-held"), _evidence(), analyst_reviewed=True, audit=False)
+    persist_export_pack(
+        _subject("subject-cert-ui-safe"), _evidence(), analyst_reviewed=True, audit=True
+    )
+    persist_export_pack(
+        _subject("subject-cert-ui-held"),
+        _evidence(),
+        analyst_reviewed=True,
+        audit=False,
+    )
 
     payload = _dashboard_payload(case_id="case-cert-ui-1013")
 
@@ -49,9 +56,16 @@ def test_v10_13_dashboard_payload_summarizes_case_exports(tmp_path, monkeypatch)
 
 def test_v10_13_dashboard_payload_focuses_subject(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    persist_export_pack(_subject("subject-cert-ui-focus"), _evidence(), analyst_reviewed=True, audit=True)
+    persist_export_pack(
+        _subject("subject-cert-ui-focus"),
+        _evidence(),
+        analyst_reviewed=True,
+        audit=True,
+    )
 
-    payload = _dashboard_payload(case_id="case-cert-ui-1013", subject_id="subject-cert-ui-focus")
+    payload = _dashboard_payload(
+        case_id="case-cert-ui-1013", subject_id="subject-cert-ui-focus"
+    )
 
     assert payload["entry"]["subject_id"] == "subject-cert-ui-focus"
     assert payload["entry"]["safe_to_distribute"] is True

@@ -100,7 +100,9 @@ def _validate_connector(connector: dict[str, Any], index: int) -> list[dict[str,
     return findings
 
 
-def build_connector_compliance_report(connectors: list[dict[str, Any]] | None) -> dict[str, Any]:
+def build_connector_compliance_report(
+    connectors: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
     connectors = connectors or []
     findings: list[dict[str, Any]] = []
     risk_counts: Counter[str] = Counter()
@@ -141,5 +143,7 @@ def build_connector_compliance_report(connectors: list[dict[str, Any]] | None) -
 def assert_connector_compliance(connectors: list[dict[str, Any]] | None) -> None:
     report = build_connector_compliance_report(connectors)
     if report["status"] != "pass":
-        details = "; ".join(f"{item['connector']}:{item['check']}" for item in report["findings"])
+        details = "; ".join(
+            f"{item['connector']}:{item['check']}" for item in report["findings"]
+        )
         raise AssertionError(f"v7.5 connector compliance failed: {details}")

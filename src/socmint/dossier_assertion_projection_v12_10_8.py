@@ -9,10 +9,16 @@ PIPELINE_STAGE = "dossier_assertion_projection"
 
 
 def _alias_lookup(alias_graph: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    return {alias.get("alias_id"): alias for alias in alias_graph.get("aliases", []) or [] if alias.get("alias_id")}
+    return {
+        alias.get("alias_id"): alias
+        for alias in alias_graph.get("aliases", []) or []
+        if alias.get("alias_id")
+    }
 
 
-def _supporting_evidence_refs(alias_ids: list[str], aliases: dict[str, dict[str, Any]]) -> list[str]:
+def _supporting_evidence_refs(
+    alias_ids: list[str], aliases: dict[str, dict[str, Any]]
+) -> list[str]:
     refs: list[str] = []
     for alias_id in alias_ids:
         for ref in aliases.get(alias_id, {}).get("evidence_refs") or []:
@@ -21,12 +27,16 @@ def _supporting_evidence_refs(alias_ids: list[str], aliases: dict[str, dict[str,
     return refs
 
 
-def _supporting_alias_types(alias_ids: list[str], aliases: dict[str, dict[str, Any]]) -> list[str]:
+def _supporting_alias_types(
+    alias_ids: list[str], aliases: dict[str, dict[str, Any]]
+) -> list[str]:
     types = {aliases.get(alias_id, {}).get("alias_type") for alias_id in alias_ids}
     return sorted(item for item in types if item)
 
 
-def build_dossier_assertion_projection(identity_links: dict[str, Any], alias_graph: dict[str, Any]) -> dict[str, Any]:
+def build_dossier_assertion_projection(
+    identity_links: dict[str, Any], alias_graph: dict[str, Any]
+) -> dict[str, Any]:
     aliases = _alias_lookup(alias_graph)
     projections: list[dict[str, Any]] = []
     for link in identity_links.get("hypotheses", []) or []:
@@ -50,7 +60,8 @@ def build_dossier_assertion_projection(identity_links: dict[str, Any], alias_gra
                 "hypothesis_id": link.get("hypothesis_id"),
                 "candidate_id": link.get("candidate_id"),
                 "assertion_type": "same_entity_profile",
-                "assertion_value": link.get("profile_url") or f"{link.get('platform')}/{link.get('username')}",
+                "assertion_value": link.get("profile_url")
+                or f"{link.get('platform')}/{link.get('username')}",
                 "decision": decision,
                 "status": status,
                 "dossier_ready": ready,
@@ -74,7 +85,9 @@ def build_dossier_assertion_projection(identity_links: dict[str, Any], alias_gra
     }
 
 
-def export_dossier_assertion_projection_report(payload: dict[str, Any], fmt: str = "json") -> tuple[str, str, str]:
+def export_dossier_assertion_projection_report(
+    payload: dict[str, Any], fmt: str = "json"
+) -> tuple[str, str, str]:
     fmt = (fmt or "json").lower().strip()
     if fmt in {"md", "markdown"}:
         lines = [
@@ -104,4 +117,8 @@ def export_dossier_assertion_projection_report(payload: dict[str, Any], fmt: str
                 ]
             )
         return "text/markdown", "dossier-assertion-projection.md", "\n".join(lines)
-    return "application/json", "dossier-assertion-projection.json", json.dumps(payload, indent=2, sort_keys=True)
+    return (
+        "application/json",
+        "dossier-assertion-projection.json",
+        json.dumps(payload, indent=2, sort_keys=True),
+    )

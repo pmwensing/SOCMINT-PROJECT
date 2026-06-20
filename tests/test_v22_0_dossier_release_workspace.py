@@ -23,14 +23,16 @@ def _export():
 
 
 def _recipients():
-    return [{
-        "recipient_id": "recipient-1",
-        "display_name": "Authorized Recipient",
-        "organization": "Example Agency",
-        "role": "case officer",
-        "authorized": True,
-        "allowed_channels": ["secure_portal", "encrypted_email"],
-    }]
+    return [
+        {
+            "recipient_id": "recipient-1",
+            "display_name": "Authorized Recipient",
+            "organization": "Example Agency",
+            "role": "case officer",
+            "authorized": True,
+            "allowed_channels": ["secure_portal", "encrypted_email"],
+        }
+    ]
 
 
 def test_v22_0_loads_export_and_previews_ready_selection(monkeypatch):
@@ -48,7 +50,9 @@ def test_v22_0_loads_export_and_previews_ready_selection(monkeypatch):
     assert result["approval_state"]["approval_id"] == "approval-1"
     assert len(result["integrity_state"]) == 6
     assert result["transmission_performed"] is False
-    assert result["case_delivery_workspace"]["href"] == "/case-delivery?case_id=case-alpha"
+    assert (
+        result["case_delivery_workspace"]["href"] == "/case-delivery?case_id=case-alpha"
+    )
     assert result["case_delivery_workspace"]["handoff_context"] == {
         "export_package_id": "dossier-export-1",
         "export_package_sha256": "a" * 64,
@@ -61,7 +65,10 @@ def test_v22_0_exposes_release_blockers(monkeypatch):
     monkeypatch.setattr(service, "_latest_export", lambda case_id: None)
     missing = service.build_dossier_release_workspace("case-alpha", recipients=[])
     keys = {item["key"] for item in missing["blockers"]}
-    assert keys == {"generated_v21_export_required", "authorized_recipient_catalog_empty"}
+    assert keys == {
+        "generated_v21_export_required",
+        "authorized_recipient_catalog_empty",
+    }
     assert missing["release_ready"] is False
 
     monkeypatch.setattr(service, "_latest_export", lambda case_id: _export())

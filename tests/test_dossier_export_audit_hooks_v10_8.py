@@ -51,7 +51,9 @@ def test_v10_8_persist_export_pack_auto_writes_export_created_audit(tmp_path):
 
 
 def test_v10_8_load_export_manifest_can_auto_write_manifest_read_audit(tmp_path):
-    persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False)
+    persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False
+    )
     manifest = load_export_manifest(
         "subject-hooks-108",
         "case-hooks-108",
@@ -67,7 +69,9 @@ def test_v10_8_load_export_manifest_can_auto_write_manifest_read_audit(tmp_path)
 
 
 def test_v10_8_resolve_download_ready_auto_writes_download_resolved_audit(tmp_path):
-    persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False)
+    persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False
+    )
     resolved = resolve_export_download_path(
         "case-hooks-108",
         "subject-hooks-108",

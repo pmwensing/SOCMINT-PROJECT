@@ -4,14 +4,25 @@ from typing import Any
 
 from . import database
 from .corroboration_claim_v30_1 import find_claim
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 
 SCHEMA = "socmint.analytic_conflict.v30_3"
 VERSION = "v30.3.0"
 CREATE_ACTION = "analytic_conflict_recorded"
 RESOLVE_ACTION = "analytic_conflict_resolved"
 CONFLICT_TYPES = ("contradiction", "analyst_disagreement")
-RESOLUTIONS = ("unresolved", "both_retained", "claim_a_preferred", "claim_b_preferred", "insufficient_evidence")
+RESOLUTIONS = (
+    "unresolved",
+    "both_retained",
+    "claim_a_preferred",
+    "claim_b_preferred",
+    "insufficient_evidence",
+)
 
 
 def blocked(key: str) -> dict[str, Any]:
@@ -64,30 +75,62 @@ def current_conflicts() -> list[dict[str, Any]]:
             current[conflict_id]["resolution"] = event.get("resolution")
             current[conflict_id]["resolution_reason"] = event.get("reason")
             current[conflict_id]["resolved_by"] = event.get("actor")
-            current[conflict_id]["resolution_event_sha256"] = event.get("resolution_event_sha256")
+            current[conflict_id]["resolution_event_sha256"] = event.get(
+                "resolution_event_sha256"
+            )
     for conflict_id, item in current.items():
         item["history"] = histories.get(conflict_id, [])
     return sorted(current.values(), key=lambda item: str(item.get("conflict_id")))
 
 
 def find_conflict(conflict_id: str) -> dict[str, Any] | None:
-    return next((item for item in current_conflicts() if item.get("conflict_id") == conflict_id), None)
+    return next(
+        (
+            item
+            for item in current_conflicts()
+            if item.get("conflict_id") == conflict_id
+        ),
+        None,
+    )
 
 
-def _record(action: str, actor: str, target: str, event: dict[str, Any], ip_address: str | None) -> dict[str, Any]:
+def _record(
+    action: str, actor: str, target: str, event: dict[str, Any], ip_address: str | None
+) -> dict[str, Any]:
     _ensure_storage()
     session = database.Session()
     try:
-        row = database.AuditLog(actor=actor, action=action, target_value=target, ip_address=ip_address, details=_canonical(event))
+        row = database.AuditLog(
+            actor=actor,
+            action=action,
+            target_value=target,
+            ip_address=ip_address,
+            details=_canonical(event),
+        )
         session.add(row)
         session.commit()
         session.refresh(row)
-        return {**event, "audit_record_id": row.id, "actor": actor, "recorded_at": row.created_at.isoformat() if row.created_at else None}
+        return {
+            **event,
+            "audit_record_id": row.id,
+            "actor": actor,
+            "recorded_at": row.created_at.isoformat() if row.created_at else None,
+        }
     finally:
         session.close()
 
 
-def record_conflict(*, actor: str, conflict_type: str, claim_a_id: str, claim_b_id: str, disagreement_basis: str, reason: str, confirmed: bool, ip_address: str | None = None) -> dict[str, Any]:
+def record_conflict(
+    *,
+    actor: str,
+    conflict_type: str,
+    claim_a_id: str,
+    claim_b_id: str,
+    disagreement_basis: str,
+    reason: str,
+    confirmed: bool,
+    ip_address: str | None = None,
+) -> dict[str, Any]:
     conflict_type = str(conflict_type or "").strip()
     claim_a_id = str(claim_a_id or "").strip()
     claim_b_id = str(claim_b_id or "").strip()
@@ -107,7 +150,9 @@ def record_conflict(*, actor: str, conflict_type: str, claim_a_id: str, claim_b_
     claim_b = find_claim(claim_b_id)
     if claim_a is None or claim_b is None:
         return blocked("corroboration_claim_required")
-    if claim_a.get("case_id") != claim_b.get("case_id") or claim_a.get("entity_id") != claim_b.get("entity_id"):
+    if claim_a.get("case_id") != claim_b.get("case_id") or claim_a.get(
+        "entity_id"
+    ) != claim_b.get("entity_id"):
         return blocked("claim_context_mismatch")
     if conflict_type == "contradiction":
         if claim_a.get("claim_type") != claim_b.get("claim_type"):
@@ -155,10 +200,22 @@ def record_conflict(*, actor: str, conflict_type: str, claim_a_id: str, claim_b_
     }
     event["conflict_event_sha256"] = _sha(event)
     result = _record(CREATE_ACTION, actor, conflict_id, event, ip_address)
-    return {**result, "status": "analytic_conflict_recorded", "next_action": "review_conflict_resolution"}
+    return {
+        **result,
+        "status": "analytic_conflict_recorded",
+        "next_action": "review_conflict_resolution",
+    }
 
 
-def resolve_conflict(*, actor: str, conflict_id: str, resolution: str, reason: str, confirmed: bool, ip_address: str | None = None) -> dict[str, Any]:
+def resolve_conflict(
+    *,
+    actor: str,
+    conflict_id: str,
+    resolution: str,
+    reason: str,
+    confirmed: bool,
+    ip_address: str | None = None,
+) -> dict[str, Any]:
     conflict = find_conflict(conflict_id)
     resolution = str(resolution or "").strip()
     reason = str(reason or "").strip()
@@ -194,4 +251,8 @@ def resolve_conflict(*, actor: str, conflict_id: str, resolution: str, reason: s
     }
     event["resolution_event_sha256"] = _sha(event)
     result = _record(RESOLVE_ACTION, actor, conflict_id, event, ip_address)
-    return {**result, "status": "analytic_conflict_resolved", "next_action": "assess_confidence_and_explainability"}
+    return {
+        **result,
+        "status": "analytic_conflict_resolved",
+        "next_action": "assess_confidence_and_explainability",
+    }

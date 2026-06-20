@@ -74,7 +74,10 @@ def test_export_blocker_manifest_download_writes_audit_event(tmp_path, monkeypat
     assert response.status_code == 200
     assert events[-1]["action"] == "screenshot_manifest_downloaded"
     assert events[-1]["actor"] == "operator"
-    assert events[-1]["detail"]["route"] == "/dossier/export-blockers/screenshot-manifest/download"
+    assert (
+        events[-1]["detail"]["route"]
+        == "/dossier/export-blockers/screenshot-manifest/download"
+    )
 
 
 def test_export_blockers_ui_links_to_manifest_routes():
@@ -96,7 +99,10 @@ def test_dedicated_screenshot_workflow_is_available():
     assert "Export Blocker Screenshots" in source
     assert "Start local runtime" in source
     assert "python -m gunicorn --bind 127.0.0.1:5000 src.socmint.wsgi:app" in source
-    assert "make export-blocker-runtime-screenshots PYTHON=python SCREENSHOT_PYTHON=python" in source
+    assert (
+        "make export-blocker-runtime-screenshots PYTHON=python SCREENSHOT_PYTHON=python"
+        in source
+    )
     assert "pip install playwright" in source
     assert "actions/upload-artifact@v6" in source
     assert "if-no-files-found: error" in source

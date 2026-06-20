@@ -60,7 +60,11 @@ def build_drift_report(app=None) -> dict[str, Any]:
     missing_tables = [name for name in REQUIRED_V7_5_TABLES if name not in tables]
     available_tables = [name for name in REQUIRED_V7_5_TABLES if name in tables]
 
-    routes = sorted(str(rule.rule) for rule in app.url_map.iter_rules()) if app is not None else []
+    routes = (
+        sorted(str(rule.rule) for rule in app.url_map.iter_rules())
+        if app is not None
+        else []
+    )
     route_set = set(routes)
     missing_routes = [rule for rule in REQUIRED_V7_5_ROUTES if rule not in route_set]
     available_routes = [rule for rule in REQUIRED_V7_5_ROUTES if rule in route_set]

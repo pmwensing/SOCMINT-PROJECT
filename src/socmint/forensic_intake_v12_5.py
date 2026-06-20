@@ -29,10 +29,32 @@ DROPZONE_NAMES = [
     "quarantine",
 ]
 
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tif", ".tiff", ".heic"}
+IMAGE_EXTENSIONS = {
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".webp",
+    ".bmp",
+    ".tif",
+    ".tiff",
+    ".heic",
+}
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg"}
-DOCUMENT_EXTENSIONS = {".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".csv", ".xls", ".xlsx", ".ppt", ".pptx"}
+DOCUMENT_EXTENSIONS = {
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".txt",
+    ".rtf",
+    ".odt",
+    ".csv",
+    ".xls",
+    ".xlsx",
+    ".ppt",
+    ".pptx",
+}
 CHAT_EXTENSIONS = {".json", ".html", ".htm", ".xml"}
 EMAIL_EXTENSIONS = {".eml", ".mbox", ".msg", ".pst"}
 
@@ -70,7 +92,13 @@ def ensure_dropzones(root: str | None = None) -> dict[str, Any]:
         paths[name] = str(path)
     vault_root(root).mkdir(parents=True, exist_ok=True)
     manifests_root(root).mkdir(parents=True, exist_ok=True)
-    return {"schema": SCHEMA, "created_at": utc_now(), "dropzones": paths, "vault": str(vault_root(root)), "manifests": str(manifests_root(root))}
+    return {
+        "schema": SCHEMA,
+        "created_at": utc_now(),
+        "dropzones": paths,
+        "vault": str(vault_root(root)),
+        "manifests": str(manifests_root(root)),
+    }
 
 
 def sha256_file(path: Path) -> str:
@@ -99,7 +127,19 @@ def file_kind(path: Path) -> str:
 
 
 def preservation_subdir(kind: str) -> str:
-    return kind if kind in {"image", "video", "audio", "document", "email_export", "chat_or_structured_export"} else "unknown"
+    return (
+        kind
+        if kind
+        in {
+            "image",
+            "video",
+            "audio",
+            "document",
+            "email_export",
+            "chat_or_structured_export",
+        }
+        else "unknown"
+    )
 
 
 def probe_tool(name: str) -> bool:
@@ -108,12 +148,26 @@ def probe_tool(name: str) -> bool:
 
 def safe_subprocess(command: list[str], timeout: int = 20) -> dict[str, Any]:
     try:
-        result = subprocess.run(command, capture_output=True, text=True, timeout=timeout, check=False)
-        return {"available": True, "command": command, "returncode": result.returncode, "stdout": result.stdout[:8000], "stderr": result.stderr[:4000]}
+        result = subprocess.run(
+            command, capture_output=True, text=True, timeout=timeout, check=False
+        )
+        return {
+            "available": True,
+            "command": command,
+            "returncode": result.returncode,
+            "stdout": result.stdout[:8000],
+            "stderr": result.stderr[:4000],
+        }
     except FileNotFoundError:
         return {"available": False, "command": command, "error": "tool not installed"}
     except subprocess.TimeoutExpired as exc:
-        return {"available": True, "command": command, "error": "timeout", "stdout": (exc.stdout or "")[:8000], "stderr": (exc.stderr or "")[:4000]}
+        return {
+            "available": True,
+            "command": command,
+            "error": "timeout",
+            "stdout": (exc.stdout or "")[:8000],
+            "stderr": (exc.stderr or "")[:4000],
+        }
 
 
 def extract_metadata(path: Path, kind: str) -> dict[str, Any]:
@@ -130,20 +184,50 @@ def extract_metadata(path: Path, kind: str) -> dict[str, Any]:
         "kind": kind,
     }
     if kind in {"image", "video", "audio", "document"} and probe_tool("exiftool"):
-        metadata["exiftool"] = safe_subprocess(["exiftool", "-json", str(path)], timeout=30)
+        metadata["exiftool"] = safe_subprocess(
+            ["exiftool", "-json", str(path)], timeout=30
+        )
     if kind in {"video", "audio"} and probe_tool("ffprobe"):
-        metadata["ffprobe"] = safe_subprocess(["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", str(path)], timeout=30)
+        metadata["ffprobe"] = safe_subprocess(
+            [
+                "ffprobe",
+                "-v",
+                "quiet",
+                "-print_format",
+                "json",
+                "-show_format",
+                "-show_streams",
+                str(path),
+            ],
+            timeout=30,
+        )
     return metadata
 
 
 def analysis_hooks(path: Path, kind: str) -> dict[str, Any]:
-    hooks: dict[str, Any] = {"ocr": {"status": "not_applicable"}, "transcription": {"status": "not_applicable"}}
+    hooks: dict[str, Any] = {
+        "ocr": {"status": "not_applicable"},
+        "transcription": {"status": "not_applicable"},
+    }
     if kind in {"image", "document"}:
-        hooks["ocr"] = {"status": "available" if probe_tool("tesseract") else "not_installed", "tool": "tesseract", "note": "v12.5 records OCR readiness; full OCR extraction is enabled when tesseract is installed."}
+        hooks["ocr"] = {
+            "status": "available" if probe_tool("tesseract") else "not_installed",
+            "tool": "tesseract",
+            "note": "v12.5 records OCR readiness; full OCR extraction is enabled when tesseract is installed.",
+        }
     if kind in {"video", "audio"}:
-        hooks["transcription"] = {"status": "available" if (probe_tool("whisper") or probe_tool("whisperx")) else "not_installed", "tool": "whisper/whisperx", "note": "v12.5 records transcription readiness; full transcript generation is enabled when speech tooling is installed."}
+        hooks["transcription"] = {
+            "status": "available"
+            if (probe_tool("whisper") or probe_tool("whisperx"))
+            else "not_installed",
+            "tool": "whisper/whisperx",
+            "note": "v12.5 records transcription readiness; full transcript generation is enabled when speech tooling is installed.",
+        }
     if kind == "video":
-        hooks["frame_extraction"] = {"status": "available" if probe_tool("ffmpeg") else "not_installed", "tool": "ffmpeg"}
+        hooks["frame_extraction"] = {
+            "status": "available" if probe_tool("ffmpeg") else "not_installed",
+            "tool": "ffmpeg",
+        }
     return hooks
 
 
@@ -174,11 +258,16 @@ class PreservedEvidence:
 
     def as_dict(self) -> dict[str, Any]:
         item = asdict(self)
-        item["custody"] = [asdict(event) if hasattr(event, "__dataclass_fields__") else event for event in self.custody]
+        item["custody"] = [
+            asdict(event) if hasattr(event, "__dataclass_fields__") else event
+            for event in self.custody
+        ]
         return item
 
 
-def preserve_file(path: Path, actor: str = "system", root: str | None = None, source: str = "dropzone") -> PreservedEvidence:
+def preserve_file(
+    path: Path, actor: str = "system", root: str | None = None, source: str = "dropzone"
+) -> PreservedEvidence:
     if not path.exists() or not path.is_file():
         raise FileNotFoundError(str(path))
     original_sha = sha256_file(path)
@@ -194,9 +283,27 @@ def preserve_file(path: Path, actor: str = "system", root: str | None = None, so
     analysis = analysis_hooks(preserved_path, kind)
     mime, _ = mimetypes.guess_type(str(path))
     custody = [
-        CustodyEvent(utc_now(), "hash_original", actor, original_sha, {"source_path": str(path), "source": source}),
-        CustodyEvent(utc_now(), "preserve_original_copy", actor, preserved_sha, {"preserved_path": str(preserved_path)}),
-        CustodyEvent(utc_now(), "verify_preserved_hash", actor, preserved_sha, {"verified": preserved_sha == original_sha}),
+        CustodyEvent(
+            utc_now(),
+            "hash_original",
+            actor,
+            original_sha,
+            {"source_path": str(path), "source": source},
+        ),
+        CustodyEvent(
+            utc_now(),
+            "preserve_original_copy",
+            actor,
+            preserved_sha,
+            {"preserved_path": str(preserved_path)},
+        ),
+        CustodyEvent(
+            utc_now(),
+            "verify_preserved_hash",
+            actor,
+            preserved_sha,
+            {"verified": preserved_sha == original_sha},
+        ),
     ]
     return PreservedEvidence(
         evidence_id=evidence_id,
@@ -232,7 +339,9 @@ def _iter_intake_files(root: str | None = None) -> list[Path]:
     return sorted(files)
 
 
-def write_manifest(items: list[PreservedEvidence], root: str | None = None) -> dict[str, Any]:
+def write_manifest(
+    items: list[PreservedEvidence], root: str | None = None
+) -> dict[str, Any]:
     out = manifests_root(root)
     out.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
@@ -245,9 +354,17 @@ def write_manifest(items: list[PreservedEvidence], root: str | None = None) -> d
         "item_count": len(items),
         "items": [item.as_dict() for item in items],
         "court_safe_summary": {
-            "hash_verified": sum(1 for item in items if item.court_safe.get("hash_verified")),
-            "immutable_originals": sum(1 for item in items if item.court_safe.get("immutable_original_preserved")),
-            "evidence_grade": sum(1 for item in items if item.court_safe.get("evidence_grade")),
+            "hash_verified": sum(
+                1 for item in items if item.court_safe.get("hash_verified")
+            ),
+            "immutable_originals": sum(
+                1
+                for item in items
+                if item.court_safe.get("immutable_original_preserved")
+            ),
+            "evidence_grade": sum(
+                1 for item in items if item.court_safe.get("evidence_grade")
+            ),
         },
     }
     custody = {
@@ -258,20 +375,39 @@ def write_manifest(items: list[PreservedEvidence], root: str | None = None) -> d
     manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
     custody_path.write_text(json.dumps(custody, indent=2, sort_keys=True))
     with csv_path.open("w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["evidence_id", "kind", "mime_type", "size_bytes", "original_sha256", "preserved_sha256", "preserved_path", "hash_verified"])
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "evidence_id",
+                "kind",
+                "mime_type",
+                "size_bytes",
+                "original_sha256",
+                "preserved_sha256",
+                "preserved_path",
+                "hash_verified",
+            ],
+        )
         writer.writeheader()
         for item in items:
-            writer.writerow({
-                "evidence_id": item.evidence_id,
-                "kind": item.kind,
-                "mime_type": item.mime_type,
-                "size_bytes": item.size_bytes,
-                "original_sha256": item.original_sha256,
-                "preserved_sha256": item.preserved_sha256,
-                "preserved_path": item.preserved_path,
-                "hash_verified": item.court_safe.get("hash_verified"),
-            })
-    return {"manifest": payload, "manifest_path": str(manifest_path), "custody_path": str(custody_path), "csv_path": str(csv_path)}
+            writer.writerow(
+                {
+                    "evidence_id": item.evidence_id,
+                    "kind": item.kind,
+                    "mime_type": item.mime_type,
+                    "size_bytes": item.size_bytes,
+                    "original_sha256": item.original_sha256,
+                    "preserved_sha256": item.preserved_sha256,
+                    "preserved_path": item.preserved_path,
+                    "hash_verified": item.court_safe.get("hash_verified"),
+                }
+            )
+    return {
+        "manifest": payload,
+        "manifest_path": str(manifest_path),
+        "custody_path": str(custody_path),
+        "csv_path": str(csv_path),
+    }
 
 
 def ingest_dropzones(actor: str = "system", root: str | None = None) -> dict[str, Any]:
@@ -301,7 +437,11 @@ def intake_dashboard_payload(root: str | None = None) -> dict[str, Any]:
     ensure_dropzones(root)
     pending = _iter_intake_files(root)
     latest_manifest = None
-    manifests = sorted(manifests_root(root).glob("forensic_preservation_manifest_*.json")) if manifests_root(root).exists() else []
+    manifests = (
+        sorted(manifests_root(root).glob("forensic_preservation_manifest_*.json"))
+        if manifests_root(root).exists()
+        else []
+    )
     if manifests:
         try:
             latest_manifest = json.loads(manifests[-1].read_text())
@@ -312,7 +452,14 @@ def intake_dashboard_payload(root: str | None = None) -> dict[str, Any]:
         "generated_at": utc_now(),
         "dropzones": ensure_dropzones(root),
         "pending_count": len(pending),
-        "pending_files": [{"path": str(path), "kind": file_kind(path), "size_bytes": path.stat().st_size} for path in pending[:100]],
+        "pending_files": [
+            {
+                "path": str(path),
+                "kind": file_kind(path),
+                "size_bytes": path.stat().st_size,
+            }
+            for path in pending[:100]
+        ],
         "latest_manifest": latest_manifest,
         "tool_readiness": {
             "exiftool": probe_tool("exiftool"),

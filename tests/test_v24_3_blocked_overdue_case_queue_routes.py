@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -18,7 +20,16 @@ def test_v24_3_queue_api_and_dashboard(tmp_path, monkeypatch):
         "schema": "socmint.portfolio_operations_dashboard.v24_0",
         "version": "v24.0.0",
         "status": "ready",
-        "counts": {"total": 0, "active": 0, "blocked": 0, "delivered": 0, "closed": 0, "archived": 0, "reopened": 0, "unstarted": 0},
+        "counts": {
+            "total": 0,
+            "active": 0,
+            "blocked": 0,
+            "delivered": 0,
+            "closed": 0,
+            "archived": 0,
+            "reopened": 0,
+            "unstarted": 0,
+        },
         "stage_counts": {},
         "cases": [],
         "blocked_cases": [],
@@ -44,13 +55,29 @@ def test_v24_3_queue_api_and_dashboard(tmp_path, monkeypatch):
         "version": "v24.2.0",
         "status": "balanced",
         "generated_at": "2026-06-15T18:00:00+00:00",
-        "counts": {"total_decisions": 0, "active_workload": 0, "assigned_active": 0, "unassigned_active": 0, "reviewer_count": 0},
+        "counts": {
+            "total_decisions": 0,
+            "active_workload": 0,
+            "assigned_active": 0,
+            "unassigned_active": 0,
+            "reviewer_count": 0,
+        },
         "review_state_counts": {},
         "reviewers": [],
         "entries": [],
         "unassigned_work": [],
-        "workload_balance": {"minimum_active_workload": 0, "maximum_active_workload": 0, "average_active_workload": 0.0, "workload_spread": 0, "imbalanced": False, "overloaded_threshold": 0},
-        "links": {"supervisor_queue": "/case-intelligence-review/supervisor-queue", "reviewer_queue": "/case-intelligence-review/my-assignments"},
+        "workload_balance": {
+            "minimum_active_workload": 0,
+            "maximum_active_workload": 0,
+            "average_active_workload": 0.0,
+            "workload_spread": 0,
+            "imbalanced": False,
+            "overloaded_threshold": 0,
+        },
+        "links": {
+            "supervisor_queue": "/case-intelligence-review/supervisor-queue",
+            "reviewer_queue": "/case-intelligence-review/my-assignments",
+        },
         "source_assignments_mutated": False,
         "workload_record_created": False,
         "next_action": "monitor_reviewer_workload",
@@ -60,43 +87,58 @@ def test_v24_3_queue_api_and_dashboard(tmp_path, monkeypatch):
         "version": "v24.3.0",
         "status": "attention_required",
         "thresholds": {"stage_overdue_hours": 72.0, "assignment_overdue_hours": 48.0},
-        "counts": {"total": 1, "critical": 1, "high": 0, "medium": 0, "low": 0, "blocked": 1, "stage_overdue": 1, "assignment_overdue": 1},
-        "queue": [{
-            "case_id": "case-alpha",
-            "severity": "critical",
-            "severity_rank": 4,
-            "current_stage": "closure_review",
-            "stage_age_hours": 160.0,
-            "stage_overdue": True,
-            "stage_overdue_by_hours": 88.0,
-            "assignment_age_hours": 100.0,
-            "assignment_overdue": True,
-            "assignment_overdue_by_hours": 52.0,
-            "blocked": True,
-            "blocking_reason": "delivery_acknowledgement_required",
-            "blockers": [{"key": "delivery_acknowledgement_required"}],
-            "owner": "owner-a",
-            "assigned_reviewers": ["alice"],
-            "active_assignment_count": 1,
-            "review_states": ["unreviewed"],
-            "next_expected_action": "resolve_blocking_reason",
-            "remediation_links": {
-                "case_review": "/case-intelligence-review/case-alpha",
-                "dossier_assembly": "/dossier-assembly/case-alpha",
-                "closure_workspace": "/case-closure/case-alpha",
-                "closure_history": "/case-closure/case-alpha/history",
-                "supervisor_queue": "/case-intelligence-review/supervisor-queue?case_id=case-alpha",
-                "reviewer_queue": "/case-intelligence-review/my-assignments",
-            },
-        }],
+        "counts": {
+            "total": 1,
+            "critical": 1,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "blocked": 1,
+            "stage_overdue": 1,
+            "assignment_overdue": 1,
+        },
+        "queue": [
+            {
+                "case_id": "case-alpha",
+                "severity": "critical",
+                "severity_rank": 4,
+                "current_stage": "closure_review",
+                "stage_age_hours": 160.0,
+                "stage_overdue": True,
+                "stage_overdue_by_hours": 88.0,
+                "assignment_age_hours": 100.0,
+                "assignment_overdue": True,
+                "assignment_overdue_by_hours": 52.0,
+                "blocked": True,
+                "blocking_reason": "delivery_acknowledgement_required",
+                "blockers": [{"key": "delivery_acknowledgement_required"}],
+                "owner": "owner-a",
+                "assigned_reviewers": ["alice"],
+                "active_assignment_count": 1,
+                "review_states": ["unreviewed"],
+                "next_expected_action": "resolve_blocking_reason",
+                "remediation_links": {
+                    "case_review": "/case-intelligence-review/case-alpha",
+                    "dossier_assembly": "/dossier-assembly/case-alpha",
+                    "closure_workspace": "/case-closure/case-alpha",
+                    "closure_history": "/case-closure/case-alpha/history",
+                    "supervisor_queue": "/case-intelligence-review/supervisor-queue?case_id=case-alpha",
+                    "reviewer_queue": "/case-intelligence-review/my-assignments",
+                },
+            }
+        ],
         "source_records_mutated": False,
         "queue_record_created": False,
         "next_action": "remediate_highest_priority_case",
     }
 
-    monkeypatch.setattr(routes, "build_portfolio_operations_dashboard", lambda: portfolio)
+    monkeypatch.setattr(
+        routes, "build_portfolio_operations_dashboard", lambda: portfolio
+    )
     monkeypatch.setattr(routes, "build_case_status_stage_overview", lambda: stage)
-    monkeypatch.setattr(routes, "build_workload_assignment_monitoring", lambda: workload)
+    monkeypatch.setattr(
+        routes, "build_workload_assignment_monitoring", lambda: workload
+    )
     monkeypatch.setattr(routes, "build_blocked_overdue_case_queue", lambda: blocked)
 
     client = _app(tmp_path, monkeypatch).test_client()
@@ -121,7 +163,9 @@ def test_v24_3_queue_api_and_dashboard(tmp_path, monkeypatch):
 
 
 def test_v24_3_release_note_and_no_migration():
-    note = Path("release/V24_3_BLOCKED_OVERDUE_CASE_QUEUE.md").read_text(encoding="utf-8")
+    note = Path("release/V24_3_BLOCKED_OVERDUE_CASE_QUEUE.md").read_text(
+        encoding="utf-8"
+    )
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

@@ -46,7 +46,9 @@ def _build_from_request() -> dict:
 def _blocked_response(payload: dict):
     decision = payload.get("export_enforcement") or {}
     if decision.get("allowed") is False:
-        return jsonify({"error": export_block_message(decision), "export_enforcement": decision}), 409
+        return jsonify(
+            {"error": export_block_message(decision), "export_enforcement": decision}
+        ), 409
     return None
 
 
@@ -71,6 +73,8 @@ def register_entity_profile_intelligence_routes(app):
         blocked = _blocked_response(payload)
         if blocked:
             return blocked
-        return Response(entity_profile_intelligence_markdown(payload), mimetype="text/markdown")
+        return Response(
+            entity_profile_intelligence_markdown(payload), mimetype="text/markdown"
+        )
 
     return app

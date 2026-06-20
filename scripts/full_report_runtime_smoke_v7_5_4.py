@@ -105,15 +105,22 @@ def main() -> None:
             html_response = client.get(open_response.headers["Location"])
             assert html_response.status_code == 200
             assert "text/html" in html_response.headers.get("Content-Type", "")
-            assert "Full Entity Profile Dossier v2" in html_response.get_data(as_text=True)
+            assert "Full Entity Profile Dossier v2" in html_response.get_data(
+                as_text=True
+            )
 
             manifest_response = client.get(
                 f"/spine/subjects/{subject_id}/full-report/artifact"
                 f"?name={latest['manifest_name']}"
             )
             assert manifest_response.status_code == 200
-            assert "application/json" in manifest_response.headers.get("Content-Type", "")
-            assert "socmint.full_entity_profile_dossier_manifest.v7_5_1" in manifest_response.get_data(as_text=True)
+            assert "application/json" in manifest_response.headers.get(
+                "Content-Type", ""
+            )
+            assert (
+                "socmint.full_entity_profile_dossier_manifest.v7_5_1"
+                in manifest_response.get_data(as_text=True)
+            )
 
         print("v7.5.4 runtime smoke passed")
 

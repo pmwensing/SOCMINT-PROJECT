@@ -17,7 +17,10 @@ def test_real_world_audit_payload_shape_and_value_plan():
 
     assert payload["schema"] == "socmint.v12_10_22.real_world_audit"
     assert payload["version"]["version"] == "12.10.21"
-    assert payload["value_assessment"]["highest_value_center"] == "Full Entity Profile Dossier Builder"
+    assert (
+        payload["value_assessment"]["highest_value_center"]
+        == "Full Entity Profile Dossier Builder"
+    )
     assert "build_plan" in payload
     assert payload["build_plan"][0]["phase"] == "repair_first"
     assert isinstance(payload["what_works"], list)

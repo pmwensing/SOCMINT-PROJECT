@@ -10,11 +10,19 @@ from datetime import UTC, datetime
 from typing import Any
 
 from .dossier_finalization_certificate_handoff_index_v7_5_7 import build_handoff_index
-from .dossier_finalization_certificate_handoff_index_v7_5_7 import render_handoff_index_markdown
-from .dossier_finalization_certificate_handoff_index_v7_5_7 import summarize_handoff_index
+from .dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    render_handoff_index_markdown,
+)
+from .dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    summarize_handoff_index,
+)
 
-HANDOFF_EXPORT_BUNDLE_SCHEMA = "socmint.v7_5_8.dossier_finalization_handoff_export_bundle"
-HANDOFF_EXPORT_MANIFEST_SCHEMA = "socmint.v7_5_8.dossier_finalization_handoff_export_manifest"
+HANDOFF_EXPORT_BUNDLE_SCHEMA = (
+    "socmint.v7_5_8.dossier_finalization_handoff_export_bundle"
+)
+HANDOFF_EXPORT_MANIFEST_SCHEMA = (
+    "socmint.v7_5_8.dossier_finalization_handoff_export_manifest"
+)
 APPROVED_LINE = "v7.5.8"
 DEFAULT_BUNDLE_NAME = "socmint-v7.5.8-handoff-index-export"
 REQUIRED_FILES = (
@@ -121,7 +129,9 @@ def build_handoff_export_bundle_files(bundle: dict[str, Any]) -> dict[str, bytes
         "handoff_index.md": render_handoff_index_markdown(index).encode("utf-8"),
         "handoff_index_summary.json": canonical_json(summary).encode("utf-8"),
     }
-    preview_bundle = {key: value for key, value in bundle.items() if key not in {"manifest", "files"}}
+    preview_bundle = {
+        key: value for key, value in bundle.items() if key not in {"manifest", "files"}
+    }
     files["README.md"] = _readme(preview_bundle).encode("utf-8")
     files["manifest.json"] = b"{}\n"
     manifest = handoff_export_manifest(files)
@@ -140,7 +150,9 @@ def build_handoff_export_zip(bundle: dict[str, Any]) -> bytes:
     return buffer.getvalue()
 
 
-def build_handoff_export_bundle(index: dict[str, Any], *, bundle_name: str | None = None) -> dict[str, Any]:
+def build_handoff_export_bundle(
+    index: dict[str, Any], *, bundle_name: str | None = None
+) -> dict[str, Any]:
     handoff_index = deepcopy(index or {})
     bundle: dict[str, Any] = {
         "schema": HANDOFF_EXPORT_BUNDLE_SCHEMA,
@@ -169,5 +181,10 @@ def build_handoff_export_bundle_from_verification_report(
     operator: str | None = None,
     notes: str | None = None,
 ) -> dict[str, Any]:
-    index = build_handoff_index(deepcopy(verification_report or {}), bundle_name=bundle_name, operator=operator, notes=notes)
+    index = build_handoff_index(
+        deepcopy(verification_report or {}),
+        bundle_name=bundle_name,
+        operator=operator,
+        notes=notes,
+    )
     return build_handoff_export_bundle(index, bundle_name=bundle_name)

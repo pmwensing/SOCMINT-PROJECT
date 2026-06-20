@@ -41,7 +41,9 @@ def _evidence(prefix: str) -> list[dict[str, Any]]:
     ]
 
 
-def create_export_blocker_demo(root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def create_export_blocker_demo(
+    root: str | Path = DEFAULT_EXPORT_ROOT,
+) -> dict[str, Any]:
     allowed = persist_export_pack(
         _subject(ALLOWED_SUBJECT_ID, ALLOWED_CASE_ID, "V13.40 Allowed Export"),
         _evidence("v13-40-allowed"),

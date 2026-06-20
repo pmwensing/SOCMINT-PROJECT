@@ -95,7 +95,10 @@ def main() -> None:
 
             after = command_center_payload()
             assert after["summary"]["queued_jobs"] == 0
-            assert after["summary"]["completed_jobs"] + after["summary"]["failed_jobs"] >= 1
+            assert (
+                after["summary"]["completed_jobs"] + after["summary"]["failed_jobs"]
+                >= 1
+            )
 
         print("v7.5.8 command center UX smoke passed")
 

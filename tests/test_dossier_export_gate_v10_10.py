@@ -36,10 +36,14 @@ def _evidence():
 
 
 def test_v10_10_gate_allows_when_verification_passes(tmp_path):
-    persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True)
+    persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True
+    )
     report = export_gate_report("subject-gate-1010", "case-gate-1010", root=tmp_path)
     summary = export_gate_summary("subject-gate-1010", "case-gate-1010", root=tmp_path)
-    decision = export_gate_decision("subject-gate-1010", "case-gate-1010", root=tmp_path)
+    decision = export_gate_decision(
+        "subject-gate-1010", "case-gate-1010", root=tmp_path
+    )
 
     assert report["schema"] == "socmint.dossier_export_gate.v10_10_0"
     assert report["status"] == "ready"
@@ -50,9 +54,13 @@ def test_v10_10_gate_allows_when_verification_passes(tmp_path):
 
 
 def test_v10_10_gate_blocks_missing_audit_coverage(tmp_path):
-    persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False)
+    persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False
+    )
     report = export_gate_report("subject-gate-1010", "case-gate-1010", root=tmp_path)
-    decision = export_gate_decision("subject-gate-1010", "case-gate-1010", root=tmp_path)
+    decision = export_gate_decision(
+        "subject-gate-1010", "case-gate-1010", root=tmp_path
+    )
 
     assert report["status"] == "blocked"
     assert report["ready"] is False
@@ -61,7 +69,9 @@ def test_v10_10_gate_blocks_missing_audit_coverage(tmp_path):
 
 
 def test_v10_10_gate_blocks_hash_mismatch(tmp_path):
-    persisted = persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True)
+    persisted = persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True
+    )
     Path(persisted["artifacts"][0]["path"]).write_text("tampered", encoding="utf-8")
     report = export_gate_report("subject-gate-1010", "case-gate-1010", root=tmp_path)
 
@@ -83,5 +93,11 @@ def test_v10_10_gate_routes_are_registered():
     routes = {rule.rule for rule in app.url_map.iter_rules()}
 
     assert "/api/v1/dossier-builder/v3/export-gate/<case_id>/<subject_id>" in routes
-    assert "/api/v1/dossier-builder/v3/export-gate/<case_id>/<subject_id>/summary" in routes
-    assert "/api/v1/dossier-builder/v3/export-gate/<case_id>/<subject_id>/decision" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/export-gate/<case_id>/<subject_id>/summary"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/export-gate/<case_id>/<subject_id>/decision"
+        in routes
+    )

@@ -23,12 +23,18 @@ def _route_rules(app) -> set[str]:
 def _routes_containing(app, *needles: str) -> list[str]:
     routes = sorted(_route_rules(app))
     lowered = [needle.lower() for needle in needles]
-    return [route for route in routes if all(needle in route.lower() for needle in lowered)]
+    return [
+        route for route in routes if all(needle in route.lower() for needle in lowered)
+    ]
 
 
 def _get_ok(client, path: str) -> tuple[bool, int, str]:
     response = client.get(path)
-    return response.status_code == 200, response.status_code, response.get_data(as_text=True)[:2500]
+    return (
+        response.status_code == 200,
+        response.status_code,
+        response.get_data(as_text=True)[:2500],
+    )
 
 
 def main() -> int:
@@ -44,7 +50,9 @@ def main() -> int:
         db.configure_database(os.environ["DATABASE_URL"])
 
         app = create_app()
-        app.config.update(TESTING=True, SECRET_KEY="v1003-artifact-pipeline-extraction-smoke")
+        app.config.update(
+            TESTING=True, SECRET_KEY="v1003-artifact-pipeline-extraction-smoke"
+        )
 
         with app.test_client() as client:
             with client.session_transaction() as session:
@@ -64,9 +72,19 @@ def main() -> int:
                 and "product_artifacts.product_artifacts_manifest"
                 in architecture.get("foundation", {}).get("extracted_modules", [])
             )
-            print(("[PASS]" if ok else "[FAIL]"), "v10 architecture includes artifact module", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "v10 architecture includes artifact module",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("v10 architecture includes artifact module", response.status_code, response.get_data(as_text=True)[:4000]))
+                failures.append(
+                    (
+                        "v10 architecture includes artifact module",
+                        response.status_code,
+                        response.get_data(as_text=True)[:4000],
+                    )
+                )
 
             # Seed release artifacts so the artifact browser, review, export, and package builders have content.
             release = Path("release")
@@ -88,12 +106,18 @@ def main() -> int:
                 "artifact_audit": _routes_containing(app, "artifact", "audit"),
                 "artifact_export": _routes_containing(app, "artifact", "export"),
                 "release_package": _routes_containing(app, "release-package"),
-                "release_package_download": _routes_containing(app, "release-package", "download"),
+                "release_package_download": _routes_containing(
+                    app, "release-package", "download"
+                ),
             }
 
             for key, routes in route_checks.items():
                 ok = bool(routes)
-                print(("[PASS]" if ok else "[FAIL]"), f"route surface {key}", ",".join(routes[:5]))
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"route surface {key}",
+                    ",".join(routes[:5]),
+                )
                 if not ok:
                     failures.append((f"route surface {key}", 0, "no matching routes"))
 
@@ -118,9 +142,19 @@ def main() -> int:
                     headers={"X-CSRF-Token": "v1003-csrf"},
                 )
                 ok = response.status_code in {200, 302}
-                print(("[PASS]" if ok else "[FAIL]"), "POST artifact review", response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    "POST artifact review",
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append(("POST artifact review", response.status_code, response.get_data(as_text=True)[:2500]))
+                    failures.append(
+                        (
+                            "POST artifact review",
+                            response.status_code,
+                            response.get_data(as_text=True)[:2500],
+                        )
+                    )
 
             for route in ["/api/v1/product/artifact-review-state"]:
                 if route in _route_rules(app):
@@ -149,15 +183,28 @@ def main() -> int:
                     failures.append((f"GET {route}", status, body))
 
             # Write architecture manifest.
-            response = client.post("/api/v1/product/v10/architecture/write", headers={"X-CSRF-Token": "v1003-csrf"})
+            response = client.post(
+                "/api/v1/product/v10/architecture/write",
+                headers={"X-CSRF-Token": "v1003-csrf"},
+            )
             ok = (
                 response.status_code == 200
                 and Path("release/V10_0_0_PRODUCT_ARCHITECTURE_MANIFEST.json").exists()
                 and Path("release/V10_0_0_PRODUCT_ARCHITECTURE_MANIFEST.md").exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "write v10 architecture manifest", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write v10 architecture manifest",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write v10 architecture manifest", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "write v10 architecture manifest",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
             # Confirm smoke covered the required concepts.
             coverage = {
@@ -169,9 +216,15 @@ def main() -> int:
                 "zip_export": bool(route_checks["release_package_download"]),
             }
             ok = all(coverage.values())
-            print(("[PASS]" if ok else "[FAIL]"), "artifact pipeline coverage", json.dumps(coverage, sort_keys=True))
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "artifact pipeline coverage",
+                json.dumps(coverage, sort_keys=True),
+            )
             if not ok:
-                failures.append(("artifact pipeline coverage", 0, json.dumps(coverage, indent=2)))
+                failures.append(
+                    ("artifact pipeline coverage", 0, json.dumps(coverage, indent=2))
+                )
 
             if failures:
                 for name, status, body in failures:

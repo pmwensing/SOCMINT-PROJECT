@@ -3,10 +3,18 @@ from __future__ import annotations
 import base64
 
 from socmint.dashboard import create_app
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle_zip
-from socmint.dossier_finalization_certificate_bundle_verify_routes_v7_5_6 import register_dossier_finalization_certificate_bundle_verify_routes
-from socmint.dossier_finalization_certificate_v7_5_4 import build_verification_certificate
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle,
+)
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle_zip,
+)
+from socmint.dossier_finalization_certificate_bundle_verify_routes_v7_5_6 import (
+    register_dossier_finalization_certificate_bundle_verify_routes,
+)
+from socmint.dossier_finalization_certificate_v7_5_4 import (
+    build_verification_certificate,
+)
 
 CSRF_TOKEN = "test-csrf-token"
 CSRF_HEADERS = {"X-CSRF-Token": CSRF_TOKEN}
@@ -30,7 +38,9 @@ def verified_report():
 
 
 def valid_bundle():
-    certificate = build_verification_certificate(verified_report(), packet_name="packet-a")
+    certificate = build_verification_certificate(
+        verified_report(), packet_name="packet-a"
+    )
     return build_certificate_bundle(certificate, bundle_name="bundle-a")
 
 
@@ -57,14 +67,21 @@ def test_json_bundle_route_returns_verified_report():
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["schema"] == "socmint.v7_5_6.dossier_finalization_certificate_bundle_verification"
+    assert (
+        data["schema"]
+        == "socmint.v7_5_6.dossier_finalization_certificate_bundle_verification"
+    )
     assert data["status"] == "verified"
     assert data["verified"] is True
 
 
 def test_raw_bundle_request_shape_works():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle/verify", valid_bundle())
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle/verify",
+        valid_bundle(),
+    )
 
     assert response.status_code == 200
     assert response.get_json()["status"] == "verified"
@@ -115,7 +132,11 @@ def test_invalid_base64_returns_failed_report_not_500():
 
 def test_missing_base64_returns_failed_report_not_500():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle/verify-zip", {})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle/verify-zip",
+        {},
+    )
 
     assert response.status_code == 200
     data = response.get_json()
@@ -131,7 +152,11 @@ def test_no_connector_execution_function_is_called(monkeypatch):
 
     monkeypatch.setattr(verify_module, "execute_connector", explode, raising=False)
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle/verify", {"bundle": valid_bundle()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle/verify",
+        {"bundle": valid_bundle()},
+    )
 
     assert response.status_code == 200
     assert response.get_json()["status"] == "verified"

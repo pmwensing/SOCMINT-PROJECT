@@ -98,7 +98,10 @@ def main() -> None:
                 f"/api/v1/spine/subjects/{subject_id}/full-report/retention?keep_latest=1"
             )
             assert retention_response.status_code == 200
-            assert retention_response.get_json()["schema"] == "socmint.full_report_retention.v7_5_6"
+            assert (
+                retention_response.get_json()["schema"]
+                == "socmint.full_report_retention.v7_5_6"
+            )
 
             pin_response = client.post(
                 f"/api/v1/spine/subjects/{subject_id}/full-report/pin",

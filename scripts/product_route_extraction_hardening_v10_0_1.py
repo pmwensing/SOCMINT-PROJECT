@@ -13,7 +13,9 @@ def now_iso() -> str:
 
 def run(name: str, cmd: list[str], timeout: int = 420) -> dict:
     print(f"[+] {name}: {' '.join(cmd)}")
-    proc = subprocess.run(cmd, text=True, capture_output=True, timeout=timeout, check=False)
+    proc = subprocess.run(
+        cmd, text=True, capture_output=True, timeout=timeout, check=False
+    )
     ok = proc.returncode == 0
     print(("[PASS] " if ok else "[FAIL] ") + name)
     if not ok:
@@ -37,7 +39,10 @@ def main() -> int:
     checks = [
         run("compileall-src", [sys.executable, "-m", "compileall", "src/socmint"]),
         run("v10-foundation-smoke", ["make", "product-v10-foundation-smoke"]),
-        run("route-extraction-smoke-v10-0-1", [sys.executable, "scripts/product_route_extraction_smoke_v10_0_1.py"]),
+        run(
+            "route-extraction-smoke-v10-0-1",
+            [sys.executable, "scripts/product_route_extraction_smoke_v10_0_1.py"],
+        ),
     ]
 
     failed = [check for check in checks if not check["ok"]]
@@ -50,12 +55,16 @@ def main() -> int:
         "summary": f"{len(checks) - len(failed)}/{len(checks)} checks passed.",
         "checks": checks,
         "failed": [check["name"] for check in failed],
-        "next_action": "Merge and tag v10.0.1 route extraction phase 1" if status == "pass" else "Fix v10.0.1 route extraction failures before merge.",
+        "next_action": "Merge and tag v10.0.1 route extraction phase 1"
+        if status == "pass"
+        else "Fix v10.0.1 route extraction failures before merge.",
     }
 
     json_path = Path("release/V10_0_1_ROUTE_EXTRACTION_HARDENING_REPORT.json")
     md_path = Path("release/V10_0_1_ROUTE_EXTRACTION_HARDENING_REPORT.md")
-    storage_path = Path("storage/product_qa/V10_0_1_ROUTE_EXTRACTION_HARDENING_REPORT.json")
+    storage_path = Path(
+        "storage/product_qa/V10_0_1_ROUTE_EXTRACTION_HARDENING_REPORT.json"
+    )
 
     json_path.write_text(json.dumps(report, indent=2))
     storage_path.write_text(json.dumps(report, indent=2))

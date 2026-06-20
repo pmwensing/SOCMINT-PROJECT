@@ -8,7 +8,9 @@ from src.socmint.tor_production import upsert_hidden_service_status
 
 
 def test_torrc_snippet_uses_v3_hidden_service():
-    snippet = torrc_snippet(service_dir="/var/lib/tor/socmint", tor_port=80, target_port=5000)
+    snippet = torrc_snippet(
+        service_dir="/var/lib/tor/socmint", tor_port=80, target_port=5000
+    )
 
     assert "HiddenServiceDir /var/lib/tor/socmint" in snippet
     assert "HiddenServicePort 80 127.0.0.1:5000" in snippet
@@ -18,7 +20,9 @@ def test_torrc_snippet_uses_v3_hidden_service():
 def test_deployment_check_detects_onion_hostname_without_reading_secret(tmp_path):
     service_dir = tmp_path / "hidden_service"
     service_dir.mkdir()
-    (service_dir / "hostname").write_text("abcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijkl.onion")
+    (service_dir / "hostname").write_text(
+        "abcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijkl.onion"
+    )
     (service_dir / "hs_ed25519_secret_key").write_text("do-not-read")
 
     check = deployment_check(str(service_dir))

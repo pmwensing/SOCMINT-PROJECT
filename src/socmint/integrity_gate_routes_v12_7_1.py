@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from flask import jsonify, render_template
 
-from .integrity_gate_v12_7_1 import evidence_integrity_summary, integrity_release_gate, write_integrity_report
+from .integrity_gate_v12_7_1 import (
+    evidence_integrity_summary,
+    integrity_release_gate,
+    write_integrity_report,
+)
 
 
 def integrity_command_center_card() -> dict:
@@ -29,7 +33,11 @@ def register_integrity_gate_routes(app) -> None:
 
     @login_required
     def integrity_gate_dashboard():
-        return render_template("integrity_gate_dashboard.html", payload=integrity_release_gate(), card=integrity_command_center_card())
+        return render_template(
+            "integrity_gate_dashboard.html",
+            payload=integrity_release_gate(),
+            card=integrity_command_center_card(),
+        )
 
     @login_required
     def api_integrity_gate():
@@ -43,7 +51,27 @@ def register_integrity_gate_routes(app) -> None:
     def api_integrity_report_export():
         return jsonify(write_integrity_report())
 
-    app.add_url_rule("/evidence/integrity/gate", endpoint="integrity_gate_dashboard", view_func=integrity_gate_dashboard, methods=["GET"])
-    app.add_url_rule("/api/v1/evidence/integrity/gate", endpoint="api_integrity_gate", view_func=api_integrity_gate, methods=["GET"])
-    app.add_url_rule("/api/v1/evidence/integrity/summary", endpoint="api_integrity_summary", view_func=api_integrity_summary, methods=["GET"])
-    app.add_url_rule("/api/v1/evidence/integrity/report", endpoint="api_integrity_report_export", view_func=api_integrity_report_export, methods=["GET"])
+    app.add_url_rule(
+        "/evidence/integrity/gate",
+        endpoint="integrity_gate_dashboard",
+        view_func=integrity_gate_dashboard,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/evidence/integrity/gate",
+        endpoint="api_integrity_gate",
+        view_func=api_integrity_gate,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/evidence/integrity/summary",
+        endpoint="api_integrity_summary",
+        view_func=api_integrity_summary,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/evidence/integrity/report",
+        endpoint="api_integrity_report_export",
+        view_func=api_integrity_report_export,
+        methods=["GET"],
+    )

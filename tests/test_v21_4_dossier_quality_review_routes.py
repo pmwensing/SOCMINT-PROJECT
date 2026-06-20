@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -31,22 +33,26 @@ def _payload():
         "provenance_quality_percent": 100.0,
         "source_readiness_percent": 100.0,
         "unresolved_citation_count": 0,
-        "section_reviews": [{
-            "section_id": "key_findings",
-            "title": "Key Findings",
-            "position": 1,
-            "finding_count": 1,
-            "narrative_covered": True,
-            "section_completeness": {"score": 100.0},
-            "citations_complete": True,
-            "ready": True,
-            "finding_reviews": [{
-                "finding_id": "finding-1",
-                "provenance_quality": {"score": 100.0, "missing": []},
-                "source_ready": True,
-                "citation_labels": ["C1"],
-            }],
-        }],
+        "section_reviews": [
+            {
+                "section_id": "key_findings",
+                "title": "Key Findings",
+                "position": 1,
+                "finding_count": 1,
+                "narrative_covered": True,
+                "section_completeness": {"score": 100.0},
+                "citations_complete": True,
+                "ready": True,
+                "finding_reviews": [
+                    {
+                        "finding_id": "finding-1",
+                        "provenance_quality": {"score": 100.0, "missing": []},
+                        "source_ready": True,
+                        "citation_labels": ["C1"],
+                    }
+                ],
+            }
+        ],
         "blocker_count": 0,
         "blocker_keys": [],
         "blockers": [],
@@ -56,10 +62,15 @@ def _payload():
 
 def test_v21_4_routes_and_ui(tmp_path, monkeypatch):
     from src.socmint import dossier_quality_review_routes_v21_4 as routes
-    monkeypatch.setattr(routes, "build_dossier_quality_review", lambda *a, **k: _payload())
-    monkeypatch.setattr(routes, "save_dossier_quality_review_snapshot", lambda *a, **k: {
-        "status": "saved", "snapshot_record_id": 9
-    })
+
+    monkeypatch.setattr(
+        routes, "build_dossier_quality_review", lambda *a, **k: _payload()
+    )
+    monkeypatch.setattr(
+        routes,
+        "save_dossier_quality_review_snapshot",
+        lambda *a, **k: {"status": "saved", "snapshot_record_id": 9},
+    )
     client = _app(tmp_path, monkeypatch).test_client()
     with client.session_transaction() as sess:
         sess["user"] = "supervisor"
@@ -68,7 +79,8 @@ def test_v21_4_routes_and_ui(tmp_path, monkeypatch):
     ui = client.get("/dossier-assembly/case-alpha/quality-review?subject_id=42")
     saved = client.post(
         "/api/v1/dossier-assembly/case-alpha/quality-review-snapshot?subject_id=42",
-        json={}, headers={"X-CSRF-Token": "test-csrf"},
+        json={},
+        headers={"X-CSRF-Token": "test-csrf"},
     )
     assert api.status_code == 200
     assert ui.status_code == 200
@@ -80,9 +92,18 @@ def test_v21_4_routes_and_ui(tmp_path, monkeypatch):
 
 
 def test_v21_4_release_note_client_and_no_migration():
-    note = Path("release/V21_4_DOSSIER_QUALITY_COMPLETENESS_REVIEW.md").read_text(encoding="utf-8")
-    script = Path("src/socmint/static/dossier_quality_review_v21_4.js").read_text(encoding="utf-8")
-    migrations = [p for d in (Path("migrations"), Path("alembic")) if d.exists() for p in d.rglob("*v21_4*")]
+    note = Path("release/V21_4_DOSSIER_QUALITY_COMPLETENESS_REVIEW.md").read_text(
+        encoding="utf-8"
+    )
+    script = Path("src/socmint/static/dossier_quality_review_v21_4.js").read_text(
+        encoding="utf-8"
+    )
+    migrations = [
+        p
+        for d in (Path("migrations"), Path("alembic"))
+        if d.exists()
+        for p in d.rglob("*v21_4*")
+    ]
     assert "section completeness" in note
     assert "unresolved citations" in note
     assert "provenance quality" in note

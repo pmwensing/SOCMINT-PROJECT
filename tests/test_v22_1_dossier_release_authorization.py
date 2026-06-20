@@ -31,7 +31,9 @@ def _setup(tmp_path, monkeypatch, ready=True):
     )
 
 
-def test_v22_1_requires_explicit_confirmation_and_valid_selection(tmp_path, monkeypatch):
+def test_v22_1_requires_explicit_confirmation_and_valid_selection(
+    tmp_path, monkeypatch
+):
     _setup(tmp_path, monkeypatch)
     unconfirmed = service.authorize_dossier_release(
         "case-alpha",
@@ -41,7 +43,9 @@ def test_v22_1_requires_explicit_confirmation_and_valid_selection(tmp_path, monk
         authorizer="operator",
     )
     assert unconfirmed["status"] == "blocked"
-    assert unconfirmed["blockers"][0]["key"] == "explicit_operator_confirmation_required"
+    assert (
+        unconfirmed["blockers"][0]["key"] == "explicit_operator_confirmation_required"
+    )
 
     monkeypatch.setattr(
         service,
@@ -59,7 +63,9 @@ def test_v22_1_requires_explicit_confirmation_and_valid_selection(tmp_path, monk
     assert invalid["transmission_performed"] is False
 
 
-def test_v22_1_records_immutable_authorization_for_delivery_workspace(tmp_path, monkeypatch):
+def test_v22_1_records_immutable_authorization_for_delivery_workspace(
+    tmp_path, monkeypatch
+):
     _setup(tmp_path, monkeypatch)
     result = service.authorize_dossier_release(
         "case-alpha",

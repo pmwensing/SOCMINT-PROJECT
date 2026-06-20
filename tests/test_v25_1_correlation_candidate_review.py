@@ -57,7 +57,9 @@ def _setup(tmp_path, monkeypatch):
     )
 
 
-def test_v25_1_records_accept_reject_defer_with_immutable_history(tmp_path, monkeypatch):
+def test_v25_1_records_accept_reject_defer_with_immutable_history(
+    tmp_path, monkeypatch
+):
     _setup(tmp_path, monkeypatch)
     decisions = []
     for value in ("accept", "reject", "defer"):
@@ -90,10 +92,15 @@ def test_v25_1_records_accept_reject_defer_with_immutable_history(tmp_path, monk
         decisions[1]["action_record_id"],
         decisions[2]["action_record_id"],
     ]
-    assert service.latest_correlation_review("cross-case-entity-abc")["decision"] == "defer"
+    assert (
+        service.latest_correlation_review("cross-case-entity-abc")["decision"]
+        == "defer"
+    )
 
 
-def test_v25_1_split_requires_complete_non_overlapping_occurrence_groups(tmp_path, monkeypatch):
+def test_v25_1_split_requires_complete_non_overlapping_occurrence_groups(
+    tmp_path, monkeypatch
+):
     _setup(tmp_path, monkeypatch)
     result = service.review_correlation_candidate(
         "cross-case-entity-abc",
@@ -142,7 +149,9 @@ def test_v25_1_split_requires_complete_non_overlapping_occurrence_groups(tmp_pat
     assert invalid["blockers"][0]["key"] == "valid_complete_split_groups_required"
 
 
-def test_v25_1_enforces_confirmation_reason_reviewer_decision_and_visibility(tmp_path, monkeypatch):
+def test_v25_1_enforces_confirmation_reason_reviewer_decision_and_visibility(
+    tmp_path, monkeypatch
+):
     _setup(tmp_path, monkeypatch)
     base = {
         "correlation_id": "cross-case-entity-abc",

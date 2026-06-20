@@ -11,7 +11,9 @@ from src.socmint.case_delivery_recovery_action_receipt_v16_4 import (
     build_case_delivery_recovery_action_receipt,
 )
 from src.socmint.case_delivery_recovery_v16_3 import build_case_delivery_recovery
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
 from tests.test_v15_case_delivery_workspace import ready_payload
 
@@ -149,7 +151,13 @@ def test_case_delivery_recovery_action_receipt_blocks_when_recovery_is_blocked()
             operator="operator",
             issuer="release-lead",
             authorizer="delivery-lead",
-            events=[{"type": "exception", "operator": "delivery-lead", "detail": "Channel outage."}],
+            events=[
+                {
+                    "type": "exception",
+                    "operator": "delivery-lead",
+                    "detail": "Channel outage.",
+                }
+            ],
             actions=[{"status": "completed", "operator": "delivery-lead"}],
         ),
     )
@@ -161,7 +169,9 @@ def test_case_delivery_recovery_action_receipt_blocks_when_recovery_is_blocked()
     assert result["next_action"] == "complete_recovery_actions"
 
 
-def test_case_delivery_recovery_action_receipt_route_requires_login(tmp_path, monkeypatch):
+def test_case_delivery_recovery_action_receipt_route_requires_login(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -177,7 +187,9 @@ def test_case_delivery_recovery_action_receipt_route_requires_login(tmp_path, mo
     assert response.status_code == 401
 
 
-def test_case_delivery_recovery_action_receipt_route_returns_issued_receipt(tmp_path, monkeypatch):
+def test_case_delivery_recovery_action_receipt_route_returns_issued_receipt(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -214,7 +226,9 @@ def test_case_delivery_recovery_action_receipt_route_returns_issued_receipt(tmp_
 
 
 def test_v16_4_release_note_and_changelog_are_present():
-    note = Path("release/V16_4_DELIVERY_RECOVERY_ACTION_RECEIPT.md").read_text(encoding="utf-8")
+    note = Path("release/V16_4_DELIVERY_RECOVERY_ACTION_RECEIPT.md").read_text(
+        encoding="utf-8"
+    )
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/case-delivery/<case_id>/recovery-action-receipt" in note

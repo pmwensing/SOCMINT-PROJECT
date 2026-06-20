@@ -48,7 +48,11 @@ def main() -> int:
                 body = response.get_data(as_text=True)
                 ok = response.status_code == 200
                 if endpoint == "/":
-                    ok = ok and "Product Release Readiness" in body and "Product Control" in body
+                    ok = (
+                        ok
+                        and "Product Release Readiness" in body
+                        and "Product Control" in body
+                    )
                 if endpoint == "/product/build-control":
                     ok = ok and "Operator Actions" in body
                 if endpoint == "/product/operator-runbook":

@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -26,13 +28,15 @@ def _payload(ready=True):
         },
         "approval_state": {"approval_id": "approval-1"},
         "integrity_state": {"content_sha256": "b" * 64},
-        "recipient_catalog": [{
-            "recipient_id": "recipient-1",
-            "display_name": "Authorized Recipient",
-            "organization": "Example Agency",
-            "authorized": True,
-            "allowed_channels": ["secure_portal"],
-        }],
+        "recipient_catalog": [
+            {
+                "recipient_id": "recipient-1",
+                "display_name": "Authorized Recipient",
+                "organization": "Example Agency",
+                "authorized": True,
+                "allowed_channels": ["secure_portal"],
+            }
+        ],
         "selected_recipient": None,
         "available_channels": ["secure_portal"],
         "selected_channel": None,
@@ -50,7 +54,10 @@ def _payload(ready=True):
 
 def test_v22_0_routes_and_ui(tmp_path, monkeypatch):
     from src.socmint import dossier_release_workspace_routes_v22_0 as routes
-    monkeypatch.setattr(routes, "build_dossier_release_workspace", lambda *a, **k: _payload(True))
+
+    monkeypatch.setattr(
+        routes, "build_dossier_release_workspace", lambda *a, **k: _payload(True)
+    )
     client = _app(tmp_path, monkeypatch).test_client()
     assert client.get("/api/v1/dossier-release/case-alpha").status_code == 401
     with client.session_transaction() as sess:
@@ -75,8 +82,12 @@ def test_v22_0_routes_and_ui(tmp_path, monkeypatch):
 
 
 def test_v22_0_release_note_client_and_no_migration():
-    note = Path("release/V22_0_DOSSIER_RELEASE_WORKSPACE.md").read_text(encoding="utf-8")
-    script = Path("src/socmint/static/dossier_release_workspace_v22_0.js").read_text(encoding="utf-8")
+    note = Path("release/V22_0_DOSSIER_RELEASE_WORKSPACE.md").read_text(
+        encoding="utf-8"
+    )
+    script = Path("src/socmint/static/dossier_release_workspace_v22_0.js").read_text(
+        encoding="utf-8"
+    )
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

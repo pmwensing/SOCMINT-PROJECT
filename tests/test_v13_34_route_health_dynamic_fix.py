@@ -7,7 +7,7 @@ def test_support_bundle_dynamic_route_health_fix_is_installed():
 
     assert "install_support_bundle_route_health_fix_v13_34" in wsgi
     assert "route_health_summary_with_dynamic_paths" in fix
-    assert "adapter.match(route, method=\"GET\")" in fix
+    assert 'adapter.match(route, method="GET")' in fix
     assert "registered_method_mismatch" in fix
 
 

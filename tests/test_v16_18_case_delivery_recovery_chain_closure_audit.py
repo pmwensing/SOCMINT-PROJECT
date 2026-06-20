@@ -3,9 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 
 from src.socmint.case_delivery_recovery_chain_closure_audit_v16_18 import CHAIN_STAGES
-from src.socmint.case_delivery_recovery_chain_closure_audit_v16_18 import OPERATIONS_RETURN_ROUTE
-from src.socmint.case_delivery_recovery_chain_closure_audit_v16_18 import audit_case_delivery_recovery_chain_closure
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_recovery_chain_closure_audit_v16_18 import (
+    OPERATIONS_RETURN_ROUTE,
+)
+from src.socmint.case_delivery_recovery_chain_closure_audit_v16_18 import (
+    audit_case_delivery_recovery_chain_closure,
+)
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
 
 
@@ -57,14 +63,26 @@ def test_v16_18_detects_missing_route_and_duplicate_route_drift():
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
     routes = _registered_routes(app)
-    trimmed_routes = [route for route in routes if route.rule != "/api/v1/case-delivery/<case_id>/recovery"]
-    duplicate_routes = trimmed_routes + [next(route for route in routes if route.rule == "/api/v1/case-delivery/<case_id>/operations")]
+    trimmed_routes = [
+        route
+        for route in routes
+        if route.rule != "/api/v1/case-delivery/<case_id>/recovery"
+    ]
+    duplicate_routes = trimmed_routes + [
+        next(
+            route
+            for route in routes
+            if route.rule == "/api/v1/case-delivery/<case_id>/operations"
+        )
+    ]
 
     result = audit_case_delivery_recovery_chain_closure(routes=duplicate_routes)
 
     assert result["status"] == "blocked"
     assert any(blocker["key"] == "missing_route" for blocker in result["blockers"])
-    assert any(blocker["key"] == "duplicate_route_drift" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "duplicate_route_drift" for blocker in result["blockers"]
+    )
     assert "v16.3" in result["orphaned_artifacts"]
 
 
@@ -107,7 +125,9 @@ def test_v16_18_route_returns_closed(tmp_path, monkeypatch):
 
 
 def test_v16_18_release_note_and_changelog_are_present():
-    note = Path("release/V16_18_RECOVERY_CHAIN_CLOSURE_AUDIT.md").read_text(encoding="utf-8")
+    note = Path("release/V16_18_RECOVERY_CHAIN_CLOSURE_AUDIT.md").read_text(
+        encoding="utf-8"
+    )
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/case-delivery/<case_id>/recovery-chain-closure-audit" in note

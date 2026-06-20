@@ -5,15 +5,31 @@ import json
 import zipfile
 from copy import deepcopy
 
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle_files
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle_zip
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle,
+)
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle_files,
+)
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle_zip,
+)
 from socmint.dossier_finalization_certificate_bundle_v7_5_5 import canonical_json
-from socmint.dossier_finalization_certificate_v7_5_4 import build_verification_certificate
-from socmint.dossier_finalization_certificate_bundle_verify_v7_5_6 import summarize_bundle_verification
-from socmint.dossier_finalization_certificate_bundle_verify_v7_5_6 import verify_certificate_bundle
-from socmint.dossier_finalization_certificate_bundle_verify_v7_5_6 import verify_certificate_bundle_files
-from socmint.dossier_finalization_certificate_bundle_verify_v7_5_6 import verify_certificate_bundle_zip
+from socmint.dossier_finalization_certificate_v7_5_4 import (
+    build_verification_certificate,
+)
+from socmint.dossier_finalization_certificate_bundle_verify_v7_5_6 import (
+    summarize_bundle_verification,
+)
+from socmint.dossier_finalization_certificate_bundle_verify_v7_5_6 import (
+    verify_certificate_bundle,
+)
+from socmint.dossier_finalization_certificate_bundle_verify_v7_5_6 import (
+    verify_certificate_bundle_files,
+)
+from socmint.dossier_finalization_certificate_bundle_verify_v7_5_6 import (
+    verify_certificate_bundle_zip,
+)
 
 
 def verified_report():
@@ -49,11 +65,15 @@ def failed_report():
 
 
 def valid_bundle():
-    return build_certificate_bundle(build_verification_certificate(verified_report(), packet_name="packet-a"))
+    return build_certificate_bundle(
+        build_verification_certificate(verified_report(), packet_name="packet-a")
+    )
 
 
 def failed_bundle():
-    return build_certificate_bundle(build_verification_certificate(failed_report(), packet_name="packet-b"))
+    return build_certificate_bundle(
+        build_verification_certificate(failed_report(), packet_name="packet-b")
+    )
 
 
 def valid_files():
@@ -63,7 +83,10 @@ def valid_files():
 def test_verifies_valid_v755_bundle_as_verified():
     report = verify_certificate_bundle(valid_bundle())
 
-    assert report["schema"] == "socmint.v7_5_6.dossier_finalization_certificate_bundle_verification"
+    assert (
+        report["schema"]
+        == "socmint.v7_5_6.dossier_finalization_certificate_bundle_verification"
+    )
     assert report["status"] == "verified"
     assert report["verified"] is True
     assert report["failure_count"] == 0
@@ -84,7 +107,10 @@ def test_fails_when_manifest_json_is_missing():
     report = verify_certificate_bundle_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "missing_required_file" and item["path"] == "manifest.json" for item in report["failures"])
+    assert any(
+        item["code"] == "missing_required_file" and item["path"] == "manifest.json"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_required_file_is_missing():
@@ -94,7 +120,10 @@ def test_fails_when_required_file_is_missing():
     report = verify_certificate_bundle_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "missing_required_file" and item["path"] == "README.md" for item in report["failures"])
+    assert any(
+        item["code"] == "missing_required_file" and item["path"] == "README.md"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_sha256_does_not_match():
@@ -104,7 +133,10 @@ def test_fails_when_sha256_does_not_match():
     report = verify_certificate_bundle_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "sha256_mismatch" and item["path"] == "certificate.json" for item in report["failures"])
+    assert any(
+        item["code"] == "sha256_mismatch" and item["path"] == "certificate.json"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_size_does_not_match():
@@ -118,7 +150,10 @@ def test_fails_when_size_does_not_match():
     report = verify_certificate_bundle_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "size_mismatch" and item["path"] == "certificate.json" for item in report["failures"])
+    assert any(
+        item["code"] == "size_mismatch" and item["path"] == "certificate.json"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_certificate_summary_status_differs():
@@ -131,14 +166,18 @@ def test_fails_when_certificate_summary_status_differs():
         if row["path"] == "certificate_summary.json":
             import hashlib
 
-            row["sha256"] = hashlib.sha256(files["certificate_summary.json"]).hexdigest()
+            row["sha256"] = hashlib.sha256(
+                files["certificate_summary.json"]
+            ).hexdigest()
             row["size_bytes"] = len(files["certificate_summary.json"])
     files["manifest.json"] = canonical_json(manifest).encode("utf-8")
 
     report = verify_certificate_bundle_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "certificate_status_mismatch" for item in report["failures"])
+    assert any(
+        item["code"] == "certificate_status_mismatch" for item in report["failures"]
+    )
 
 
 def test_fails_when_certificate_digest_is_wrong():
@@ -158,7 +197,9 @@ def test_fails_when_certificate_digest_is_wrong():
     report = verify_certificate_bundle_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "certificate_digest_mismatch" for item in report["failures"])
+    assert any(
+        item["code"] == "certificate_digest_mismatch" for item in report["failures"]
+    )
 
 
 def test_needs_human_review_when_unexpected_extra_file_exists():
@@ -209,7 +250,10 @@ def test_summary_is_compact():
     report = verify_certificate_bundle(valid_bundle())
     summary = summarize_bundle_verification(report)
 
-    assert summary["schema"] == "socmint.v7_5_6.dossier_finalization_certificate_bundle_verification.summary"
+    assert (
+        summary["schema"]
+        == "socmint.v7_5_6.dossier_finalization_certificate_bundle_verification.summary"
+    )
     assert summary["status"] == "verified"
     assert summary["verified"] is True
     assert "manifest" not in summary

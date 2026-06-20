@@ -4,7 +4,9 @@ from socmint.dossier_readiness_v13 import ReadinessInput, compute_dossier_readin
 
 
 def test_readiness_blocks_without_subject():
-    result = compute_dossier_readiness(ReadinessInput(subject_id=None, subject_exists=False))
+    result = compute_dossier_readiness(
+        ReadinessInput(subject_id=None, subject_exists=False)
+    )
 
     assert result["schema"] == "socmint.dossier_readiness.v13_4"
     assert result["state"] == "blocked"

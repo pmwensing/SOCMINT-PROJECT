@@ -23,8 +23,15 @@ CERTIFICATION_DOMAINS = {
 }
 
 
-def _domain(status: str, score: int, max_score: int, notes: list[str] | None = None) -> dict[str, Any]:
-    return {"status": status, "score": score, "max_score": max_score, "notes": notes or []}
+def _domain(
+    status: str, score: int, max_score: int, notes: list[str] | None = None
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "score": score,
+        "max_score": max_score,
+        "notes": notes or [],
+    }
 
 
 def certification_report() -> dict[str, Any]:
@@ -37,14 +44,20 @@ def certification_report() -> dict[str, Any]:
     domains = {
         "production_release": _domain(
             "ready" if production.get("version") else "needs_review",
-            CERTIFICATION_DOMAINS["production_release"] if production.get("version") else 0,
+            CERTIFICATION_DOMAINS["production_release"]
+            if production.get("version")
+            else 0,
             CERTIFICATION_DOMAINS["production_release"],
         ),
         "release_pipeline": _domain(
             pipeline.get("status", "needs_review"),
-            CERTIFICATION_DOMAINS["release_pipeline"] if pipeline.get("status") == "ready" else 8,
+            CERTIFICATION_DOMAINS["release_pipeline"]
+            if pipeline.get("status") == "ready"
+            else 8,
             CERTIFICATION_DOMAINS["release_pipeline"],
-            [] if pipeline.get("status") == "ready" else ["Run production Docker/Tor smoke in target environment."],
+            []
+            if pipeline.get("status") == "ready"
+            else ["Run production Docker/Tor smoke in target environment."],
         ),
         "security_audit": _domain(
             "ready" if security.get("controls") else "needs_review",
@@ -54,23 +67,37 @@ def certification_report() -> dict[str, Any]:
         ),
         "beta_readiness": _domain(
             beta.get("status", "needs_review"),
-            CERTIFICATION_DOMAINS["beta_readiness"] if beta.get("status") == "ready" else 9,
+            CERTIFICATION_DOMAINS["beta_readiness"]
+            if beta.get("status") == "ready"
+            else 9,
             CERTIFICATION_DOMAINS["beta_readiness"],
-            [] if beta.get("status") == "ready" else ["Resolve beta readiness missing docs/checks."],
+            []
+            if beta.get("status") == "ready"
+            else ["Resolve beta readiness missing docs/checks."],
         ),
         "billing_integration": _domain(
             "provider_ready",
             8,
             CERTIFICATION_DOMAINS["billing_integration"],
-            ["Verify live Stripe keys and webhook replay outside CI before taking payments."],
+            [
+                "Verify live Stripe keys and webhook replay outside CI before taking payments."
+            ],
         ),
         "case_access": _domain(
             "ready" if CASE_ACCESS_SCHEMA.endswith("v9_2_0") else "needs_review",
-            CERTIFICATION_DOMAINS["case_access"] if CASE_ACCESS_SCHEMA.endswith("v9_2_0") else 0,
+            CERTIFICATION_DOMAINS["case_access"]
+            if CASE_ACCESS_SCHEMA.endswith("v9_2_0")
+            else 0,
             CERTIFICATION_DOMAINS["case_access"],
         ),
-        "documentation": _domain("ready", CERTIFICATION_DOMAINS["documentation"], CERTIFICATION_DOMAINS["documentation"]),
-        "ci_gate": _domain("ready", CERTIFICATION_DOMAINS["ci_gate"], CERTIFICATION_DOMAINS["ci_gate"]),
+        "documentation": _domain(
+            "ready",
+            CERTIFICATION_DOMAINS["documentation"],
+            CERTIFICATION_DOMAINS["documentation"],
+        ),
+        "ci_gate": _domain(
+            "ready", CERTIFICATION_DOMAINS["ci_gate"], CERTIFICATION_DOMAINS["ci_gate"]
+        ),
     }
     total = sum(item["score"] for item in domains.values())
     maximum = sum(item["max_score"] for item in domains.values())
@@ -78,9 +105,16 @@ def certification_report() -> dict[str, Any]:
         f"{name}: {note}"
         for name, item in domains.items()
         for note in item.get("notes", [])
-        if item["status"] != "ready" or "recommended" in note.lower() or "verify" in note.lower()
+        if item["status"] != "ready"
+        or "recommended" in note.lower()
+        or "verify" in note.lower()
     ]
-    state = "certified_private_beta" if total >= 85 and not any(item["status"] == "needs_review" for item in domains.values()) else "conditional_beta"
+    state = (
+        "certified_private_beta"
+        if total >= 85
+        and not any(item["status"] == "needs_review" for item in domains.values())
+        else "conditional_beta"
+    )
     return {
         "schema": CERTIFICATION_SCHEMA,
         "state": state,

@@ -56,7 +56,16 @@ def _portfolio() -> dict:
         "schema": "socmint.portfolio_operations_dashboard.v24_0",
         "version": "v24.0.0",
         "status": "ready",
-        "counts": {"total": 1, "active": 1, "blocked": 1, "delivered": 0, "closed": 0, "archived": 0, "reopened": 0, "unstarted": 0},
+        "counts": {
+            "total": 1,
+            "active": 1,
+            "blocked": 1,
+            "delivered": 0,
+            "closed": 0,
+            "archived": 0,
+            "reopened": 0,
+            "unstarted": 0,
+        },
         "stage_counts": {"closure_review": 1},
         "cases": [case],
         "blocked_cases": [case],
@@ -71,25 +80,37 @@ def _stage() -> dict:
         "schema": "socmint.portfolio_case_stage_overview.v24_1",
         "version": "v24.1.0",
         "status": "ready",
-        "stage_model": ["unstarted", "active", "closure_review", "dossier_exported", "delivered", "closed", "retention_pending_archive", "archived", "reopened"],
+        "stage_model": [
+            "unstarted",
+            "active",
+            "closure_review",
+            "dossier_exported",
+            "delivered",
+            "closed",
+            "retention_pending_archive",
+            "archived",
+            "reopened",
+        ],
         "stage_counts": {"closure_review": 1},
-        "cases": [{
-            "case_id": CASE_ID,
-            "current_stage": "closure_review",
-            "prior_stage": "active",
-            "stage_entered_at": "2026-06-12T00:00:00+00:00",
-            "stage_duration_seconds": 345600,
-            "stage_duration_hours": 96.0,
-            "progress_position": 3,
-            "progress_total": 9,
-            "progress_percent": 33.3,
-            "blocked": True,
-            "blocking_reason": "delivery_acknowledgement_required",
-            "blockers": [{"key": "delivery_acknowledgement_required"}],
-            "next_expected_action": "resolve_blocking_reason",
-            "transitions": [],
-            "latest_activity_at": "2026-06-16T00:00:00+00:00",
-        }],
+        "cases": [
+            {
+                "case_id": CASE_ID,
+                "current_stage": "closure_review",
+                "prior_stage": "active",
+                "stage_entered_at": "2026-06-12T00:00:00+00:00",
+                "stage_duration_seconds": 345600,
+                "stage_duration_hours": 96.0,
+                "progress_position": 3,
+                "progress_total": 9,
+                "progress_percent": 33.3,
+                "blocked": True,
+                "blocking_reason": "delivery_acknowledgement_required",
+                "blockers": [{"key": "delivery_acknowledgement_required"}],
+                "next_expected_action": "resolve_blocking_reason",
+                "transitions": [],
+                "latest_activity_at": "2026-06-16T00:00:00+00:00",
+            }
+        ],
         "case_count": 1,
         "blocked_count": 1,
         "source_records_mutated": False,
@@ -104,20 +125,53 @@ def _workload() -> dict:
         "version": "v24.2.0",
         "status": "attention_required",
         "generated_at": "2026-06-16T01:00:00+00:00",
-        "counts": {"total_decisions": 1, "active_workload": 1, "assigned_active": 1, "unassigned_active": 0, "reviewer_count": 1},
+        "counts": {
+            "total_decisions": 1,
+            "active_workload": 1,
+            "assigned_active": 1,
+            "unassigned_active": 0,
+            "reviewer_count": 1,
+        },
         "review_state_counts": {"unreviewed": 1},
-        "reviewers": [{
-            "reviewer": "alice", "total_assigned": 1, "active_workload": 1,
-            "unreviewed": 1, "needs_follow_up": 0, "reviewed": 0, "accepted": 0,
-            "oldest_assignment_age_hours": 72.0, "average_assignment_age_hours": 72.0,
-            "reviewer_queue_href": "/case-intelligence-review/my-assignments",
-            "supervisor_queue_href": "/case-intelligence-review/supervisor-queue?assigned_reviewer=alice",
-            "workload_delta_from_average": 0.0, "workload_imbalanced": False, "overloaded": False,
-        }],
-        "entries": [{"case_id": CASE_ID, "review_state": "unreviewed", "assigned_reviewer": "alice", "assignment_age_hours": 72.0}],
+        "reviewers": [
+            {
+                "reviewer": "alice",
+                "total_assigned": 1,
+                "active_workload": 1,
+                "unreviewed": 1,
+                "needs_follow_up": 0,
+                "reviewed": 0,
+                "accepted": 0,
+                "oldest_assignment_age_hours": 72.0,
+                "average_assignment_age_hours": 72.0,
+                "reviewer_queue_href": "/case-intelligence-review/my-assignments",
+                "supervisor_queue_href": "/case-intelligence-review/supervisor-queue?assigned_reviewer=alice",
+                "workload_delta_from_average": 0.0,
+                "workload_imbalanced": False,
+                "overloaded": False,
+            }
+        ],
+        "entries": [
+            {
+                "case_id": CASE_ID,
+                "review_state": "unreviewed",
+                "assigned_reviewer": "alice",
+                "assignment_age_hours": 72.0,
+            }
+        ],
         "unassigned_work": [],
-        "workload_balance": {"minimum_active_workload": 1, "maximum_active_workload": 1, "average_active_workload": 1.0, "workload_spread": 0, "imbalanced": False, "overloaded_threshold": 2},
-        "links": {"supervisor_queue": "/case-intelligence-review/supervisor-queue", "reviewer_queue": "/case-intelligence-review/my-assignments"},
+        "workload_balance": {
+            "minimum_active_workload": 1,
+            "maximum_active_workload": 1,
+            "average_active_workload": 1.0,
+            "workload_spread": 0,
+            "imbalanced": False,
+            "overloaded_threshold": 2,
+        },
+        "links": {
+            "supervisor_queue": "/case-intelligence-review/supervisor-queue",
+            "reviewer_queue": "/case-intelligence-review/my-assignments",
+        },
         "source_assignments_mutated": False,
         "workload_record_created": False,
         "next_action": "monitor_reviewer_workload",
@@ -130,27 +184,46 @@ def _blocked() -> dict:
         "version": "v24.3.0",
         "status": "attention_required",
         "thresholds": {"stage_overdue_hours": 72.0, "assignment_overdue_hours": 48.0},
-        "counts": {"total": 1, "critical": 1, "high": 0, "medium": 0, "low": 0, "blocked": 1, "stage_overdue": 1, "assignment_overdue": 1},
-        "queue": [{
-            "case_id": CASE_ID, "severity": "critical", "severity_rank": 4,
-            "current_stage": "closure_review", "stage_age_hours": 96.0,
-            "stage_overdue": True, "stage_overdue_by_hours": 24.0,
-            "assignment_age_hours": 72.0, "assignment_overdue": True,
-            "assignment_overdue_by_hours": 24.0, "blocked": True,
-            "blocking_reason": "delivery_acknowledgement_required",
-            "blockers": [{"key": "delivery_acknowledgement_required"}],
-            "owner": "manager", "assigned_reviewers": ["alice"],
-            "active_assignment_count": 1, "review_states": ["unreviewed"],
-            "next_expected_action": "resolve_blocking_reason",
-            "remediation_links": {
-                "case_review": f"/case-intelligence-review/{CASE_ID}",
-                "dossier_assembly": f"/dossier-assembly/{CASE_ID}",
-                "closure_workspace": f"/case-closure/{CASE_ID}",
-                "closure_history": f"/case-closure/{CASE_ID}/history",
-                "supervisor_queue": f"/case-intelligence-review/supervisor-queue?case_id={CASE_ID}",
-                "reviewer_queue": "/case-intelligence-review/my-assignments",
-            },
-        }],
+        "counts": {
+            "total": 1,
+            "critical": 1,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "blocked": 1,
+            "stage_overdue": 1,
+            "assignment_overdue": 1,
+        },
+        "queue": [
+            {
+                "case_id": CASE_ID,
+                "severity": "critical",
+                "severity_rank": 4,
+                "current_stage": "closure_review",
+                "stage_age_hours": 96.0,
+                "stage_overdue": True,
+                "stage_overdue_by_hours": 24.0,
+                "assignment_age_hours": 72.0,
+                "assignment_overdue": True,
+                "assignment_overdue_by_hours": 24.0,
+                "blocked": True,
+                "blocking_reason": "delivery_acknowledgement_required",
+                "blockers": [{"key": "delivery_acknowledgement_required"}],
+                "owner": "manager",
+                "assigned_reviewers": ["alice"],
+                "active_assignment_count": 1,
+                "review_states": ["unreviewed"],
+                "next_expected_action": "resolve_blocking_reason",
+                "remediation_links": {
+                    "case_review": f"/case-intelligence-review/{CASE_ID}",
+                    "dossier_assembly": f"/dossier-assembly/{CASE_ID}",
+                    "closure_workspace": f"/case-closure/{CASE_ID}",
+                    "closure_history": f"/case-closure/{CASE_ID}/history",
+                    "supervisor_queue": f"/case-intelligence-review/supervisor-queue?case_id={CASE_ID}",
+                    "reviewer_queue": "/case-intelligence-review/my-assignments",
+                },
+            }
+        ],
         "source_records_mutated": False,
         "queue_record_created": False,
         "next_action": "remediate_highest_priority_case",
@@ -159,7 +232,15 @@ def _blocked() -> dict:
 
 def _escalations() -> dict:
     item = dict(_blocked()["queue"][0])
-    item.update({"latest_control": None, "control_history_count": 0, "escalated": False, "acknowledged": False, "resolved": False})
+    item.update(
+        {
+            "latest_control": None,
+            "control_history_count": 0,
+            "escalated": False,
+            "acknowledged": False,
+            "resolved": False,
+        }
+    )
     return {
         "schema": "socmint.portfolio_supervisor_escalation.v24_4",
         "version": "v24.4.0",
@@ -172,21 +253,73 @@ def _escalations() -> dict:
 
 
 def _metrics() -> dict:
-    duration = {stage: {"count": 0, "average_hours": None, "median_hours": None, "minimum_hours": None, "maximum_hours": None} for stage in _stage()["stage_model"]}
-    duration["active"] = {"count": 1, "average_hours": 24.0, "median_hours": 24.0, "minimum_hours": 24.0, "maximum_hours": 24.0}
+    duration = {
+        stage: {
+            "count": 0,
+            "average_hours": None,
+            "median_hours": None,
+            "minimum_hours": None,
+            "maximum_hours": None,
+        }
+        for stage in _stage()["stage_model"]
+    }
+    duration["active"] = {
+        "count": 1,
+        "average_hours": 24.0,
+        "median_hours": 24.0,
+        "minimum_hours": 24.0,
+        "maximum_hours": 24.0,
+    }
     return {
         "schema": "socmint.portfolio_operational_metrics.v24_5",
         "version": "v24.5.0",
         "status": "ready",
         "generated_at": "2026-06-16T01:00:00+00:00",
-        "case_volume": {"total_cases": 1, "active_cases": 1, "completed_cases": 0, "blocked_cases": 1, "overdue_cases": 1},
-        "completion_counts": {"delivered": 0, "closed": 0, "archived": 0, "reopened": 0},
+        "case_volume": {
+            "total_cases": 1,
+            "active_cases": 1,
+            "completed_cases": 0,
+            "blocked_cases": 1,
+            "overdue_cases": 1,
+        },
+        "completion_counts": {
+            "delivered": 0,
+            "closed": 0,
+            "archived": 0,
+            "reopened": 0,
+        },
         "stage_throughput": {"closure_review": 1},
         "current_stage_counts": {"closure_review": 1},
         "stage_duration_metrics": duration,
-        "reviewer_throughput": [{"reviewer": "alice", "completed_reviews": 0, "active_workload": 1, "total_assigned": 1, "completion_rate_percent": 0.0, "average_assignment_age_hours": 72.0}],
-        "rates": {"blocked_rate_percent": 100.0, "overdue_rate_percent": 100.0, "closure_archive_conversion_percent": 0.0, "reopen_rate_percent": 0.0},
-        "trend_windows": [{"days": 7, "window_start": "2026-06-09T01:00:00+00:00", "window_end": "2026-06-16T01:00:00+00:00", "event_count": 4, "active_case_count": 1, "stage_throughput": {"closure_review": 1}, "closure_completions": 0, "archive_completions": 0, "reopen_completions": 0}],
+        "reviewer_throughput": [
+            {
+                "reviewer": "alice",
+                "completed_reviews": 0,
+                "active_workload": 1,
+                "total_assigned": 1,
+                "completion_rate_percent": 0.0,
+                "average_assignment_age_hours": 72.0,
+            }
+        ],
+        "rates": {
+            "blocked_rate_percent": 100.0,
+            "overdue_rate_percent": 100.0,
+            "closure_archive_conversion_percent": 0.0,
+            "reopen_rate_percent": 0.0,
+        },
+        "trend_windows": [
+            {
+                "days": 7,
+                "window_start": "2026-06-09T01:00:00+00:00",
+                "window_end": "2026-06-16T01:00:00+00:00",
+                "event_count": 4,
+                "active_case_count": 1,
+                "stage_throughput": {"closure_review": 1},
+                "closure_completions": 0,
+                "archive_completions": 0,
+                "reopen_completions": 0,
+            }
+        ],
         "source_records_mutated": False,
         "metrics_record_created": False,
         "next_action": "review_operational_metrics",
@@ -199,13 +332,26 @@ def _history() -> dict:
         "version": "v24.6.0",
         "status": "ready",
         "generated_at": "2026-06-16T01:00:00+00:00",
-        "history": [{"history_event_id": "checkpoint-1", "event_type": "metrics_checkpoint", "occurred_at": "2026-06-16T01:00:00+00:00", "actor": "system", "case_id": None, "source_action": None, "source_record_id": None, "source_binding_sha256": "a" * 64}],
+        "history": [
+            {
+                "history_event_id": "checkpoint-1",
+                "event_type": "metrics_checkpoint",
+                "occurred_at": "2026-06-16T01:00:00+00:00",
+                "actor": "system",
+                "case_id": None,
+                "source_action": None,
+                "source_record_id": None,
+                "source_binding_sha256": "a" * 64,
+            }
+        ],
         "event_count": 1,
         "event_type_counts": {"metrics_checkpoint": 1},
         "actor_counts": {"system": 1},
         "case_count": 1,
         "source_bound_event_count": 1,
-        "current_portfolio_state": {"portfolio": {"status": "ready", "counts": {"total": 1}}},
+        "current_portfolio_state": {
+            "portfolio": {"status": "ready", "counts": {"total": 1}}
+        },
         "current_portfolio_state_sha256": "b" * 64,
         "source_records_mutated": False,
         "history_record_created": False,
@@ -220,7 +366,9 @@ def _app(db: Path):
     os.environ["SOCMINT_AUTO_CREATE_DB"] = "true"
 
     from src.socmint.dashboard import create_app
-    from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+    from src.socmint.dossier_assembly_routes_v21_0 import (
+        register_dossier_assembly_routes_v21_0,
+    )
     from src.socmint import portfolio_operations_routes_v24_0 as routes
     from src.socmint import portfolio_supervisor_escalation_routes_v24_4 as page_routes
 
@@ -235,16 +383,20 @@ def _app(db: Path):
 
     control_ids = {"escalate": 1, "acknowledge": 2, "reassign": 3, "resolve": 4}
     for control in control_ids:
-        setattr(routes, {
-            "escalate": "record_escalation",
-            "acknowledge": "acknowledge_escalation",
-            "reassign": "reassign_escalation",
-            "resolve": "resolve_escalation",
-        }[control], lambda *args, _control=control, **kwargs: {
-            "status": f"{_control}_recorded",
-            "action_record_id": control_ids[_control],
-            "source_records_mutated": False,
-        })
+        setattr(
+            routes,
+            {
+                "escalate": "record_escalation",
+                "acknowledge": "acknowledge_escalation",
+                "reassign": "reassign_escalation",
+                "resolve": "resolve_escalation",
+            }[control],
+            lambda *args, _control=control, **kwargs: {
+                "status": f"{_control}_recorded",
+                "action_record_id": control_ids[_control],
+                "source_records_mutated": False,
+            },
+        )
 
     app = create_app()
     app.config.update(TESTING=True)
@@ -270,7 +422,12 @@ def _fetch(browser, path: str, method: str = "GET", body: dict | None = None) ->
 
 
 def run(output: Path) -> dict:
-    report = {"schema": "socmint.portfolio_browser_e2e.v24_7", "version": "v24.7.0", "status": "passed", "checks": []}
+    report = {
+        "schema": "socmint.portfolio_browser_e2e.v24_7",
+        "version": "v24.7.0",
+        "status": "passed",
+        "checks": [],
+    }
     with tempfile.TemporaryDirectory(prefix="socmint-v24-") as temp:
         app = _app(Path(temp) / "v24.db")
         server = make_server("127.0.0.1", _port(), app)
@@ -284,37 +441,98 @@ def run(output: Path) -> dict:
         if chromium:
             options.binary_location = chromium
         driver_path = shutil.which("chromedriver")
-        browser = webdriver.Chrome(options=options, service=ChromeService(driver_path) if driver_path else None)
+        browser = webdriver.Chrome(
+            options=options, service=ChromeService(driver_path) if driver_path else None
+        )
         wait = WebDriverWait(browser, 20)
         try:
             base = f"http://127.0.0.1:{server.server_port}"
             browser.get(base + "/")
             serializer = app.session_interface.get_signing_serializer(app)
-            browser.add_cookie({"name": app.config.get("SESSION_COOKIE_NAME", "session"), "value": serializer.dumps({"user": "manager", "_csrf_token": "v24-csrf"}), "path": "/"})
+            browser.add_cookie(
+                {
+                    "name": app.config.get("SESSION_COOKIE_NAME", "session"),
+                    "value": serializer.dumps(
+                        {"user": "manager", "_csrf_token": "v24-csrf"}
+                    ),
+                    "path": "/",
+                }
+            )
 
             browser.get(base + "/portfolio-operations")
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-portfolio-operations-dashboard]")))
+            wait.until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, "[data-portfolio-operations-dashboard]")
+                )
+            )
             page = browser.page_source
-            _check(report, "portfolio_dashboard", "Portfolio Operations Dashboard" in page)
+            _check(
+                report, "portfolio_dashboard", "Portfolio Operations Dashboard" in page
+            )
             _check(report, "stage_overview", "Case Status and Stage Overview" in page)
-            _check(report, "workload_monitoring", "Workload and Assignment Monitoring" in page)
-            _check(report, "blocked_overdue_queue", "Blocked and Overdue Case Queue" in page)
-            _check(report, "operational_metrics", "Operational Metrics and Throughput" in page)
+            _check(
+                report,
+                "workload_monitoring",
+                "Workload and Assignment Monitoring" in page,
+            )
+            _check(
+                report,
+                "blocked_overdue_queue",
+                "Blocked and Overdue Case Queue" in page,
+            )
+            _check(
+                report,
+                "operational_metrics",
+                "Operational Metrics and Throughput" in page,
+            )
 
             endpoints = [
                 ("dashboard_api", "/api/v1/portfolio-operations", "status", "ready"),
-                ("stage_api", "/api/v1/portfolio-operations/stage-overview", "case_count", 1),
-                ("workload_api", "/api/v1/portfolio-operations/workload-monitoring", "status", "attention_required"),
-                ("blocked_api", "/api/v1/portfolio-operations/blocked-overdue", "status", "attention_required"),
-                ("metrics_api", "/api/v1/portfolio-operations/metrics", "status", "ready"),
+                (
+                    "stage_api",
+                    "/api/v1/portfolio-operations/stage-overview",
+                    "case_count",
+                    1,
+                ),
+                (
+                    "workload_api",
+                    "/api/v1/portfolio-operations/workload-monitoring",
+                    "status",
+                    "attention_required",
+                ),
+                (
+                    "blocked_api",
+                    "/api/v1/portfolio-operations/blocked-overdue",
+                    "status",
+                    "attention_required",
+                ),
+                (
+                    "metrics_api",
+                    "/api/v1/portfolio-operations/metrics",
+                    "status",
+                    "ready",
+                ),
             ]
             for key, path, field, expected in endpoints:
                 result = _fetch(browser, path)
-                _check(report, key, result["status"] == 200 and result["data"].get(field) == expected, json.dumps(result["data"], sort_keys=True))
+                _check(
+                    report,
+                    key,
+                    result["status"] == 200 and result["data"].get(field) == expected,
+                    json.dumps(result["data"], sort_keys=True),
+                )
 
             browser.get(base + "/portfolio-operations/escalations")
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-portfolio-escalations]")))
-            _check(report, "escalation_page", "Supervisor Escalation Controls" in browser.page_source)
+            wait.until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, "[data-portfolio-escalations]")
+                )
+            )
+            _check(
+                report,
+                "escalation_page",
+                "Supervisor Escalation Controls" in browser.page_source,
+            )
 
             controls = [
                 ("escalate", {"confirmed": True, "reason": "Critical overdue case"}),
@@ -323,17 +541,47 @@ def run(output: Path) -> dict:
                 ("resolve", {"confirmed": True, "resolution": "Remediated"}),
             ]
             for control, body in controls:
-                result = _fetch(browser, f"/api/v1/portfolio-operations/{CASE_ID}/{control}", "POST", body)
-                _check(report, f"control_{control}", result["status"] == 200 and result["data"].get("status") == f"{control}_recorded", json.dumps(result["data"], sort_keys=True))
+                result = _fetch(
+                    browser,
+                    f"/api/v1/portfolio-operations/{CASE_ID}/{control}",
+                    "POST",
+                    body,
+                )
+                _check(
+                    report,
+                    f"control_{control}",
+                    result["status"] == 200
+                    and result["data"].get("status") == f"{control}_recorded",
+                    json.dumps(result["data"], sort_keys=True),
+                )
 
             browser.get(base + "/portfolio-operations/history")
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-portfolio-history-audit]")))
-            _check(report, "portfolio_history_page", "Ordered Operational History" in browser.page_source)
+            wait.until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, "[data-portfolio-history-audit]")
+                )
+            )
+            _check(
+                report,
+                "portfolio_history_page",
+                "Ordered Operational History" in browser.page_source,
+            )
             history = _fetch(browser, "/api/v1/portfolio-operations/history")
-            _check(report, "portfolio_history_api", history["status"] == 200 and history["data"].get("status") == "ready")
+            _check(
+                report,
+                "portfolio_history_api",
+                history["status"] == 200 and history["data"].get("status") == "ready",
+            )
 
-            checkpoint = _fetch(browser, "/api/v1/portfolio-operations/product-review-checkpoint")
-            _check(report, "product_checkpoint", checkpoint["status"] == 200 and checkpoint["data"].get("ready") is True, json.dumps(checkpoint["data"], sort_keys=True))
+            checkpoint = _fetch(
+                browser, "/api/v1/portfolio-operations/product-review-checkpoint"
+            )
+            _check(
+                report,
+                "product_checkpoint",
+                checkpoint["status"] == 200 and checkpoint["data"].get("ready") is True,
+                json.dumps(checkpoint["data"], sort_keys=True),
+            )
         except Exception as exc:
             _check(report, "browser_exception", False, f"{type(exc).__name__}: {exc}")
         finally:
@@ -344,13 +592,17 @@ def run(output: Path) -> dict:
     report["failed_count"] = sum(1 for item in report["checks"] if not item["ok"])
     report["status"] = "passed" if report["failed_count"] == 0 else "failed"
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return report
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, default=Path("reports/v24_7_portfolio_browser_e2e.json"))
+    parser.add_argument(
+        "--output", type=Path, default=Path("reports/v24_7_portfolio_browser_e2e.json")
+    )
     args = parser.parse_args()
     report = run(args.output)
     print(json.dumps(report, indent=2, sort_keys=True))

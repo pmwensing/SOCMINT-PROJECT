@@ -13,18 +13,27 @@ DISTRIBUTION_RELEASE_LEDGER_SCHEMA = "socmint.distribution_release_ledger.v10_17
 DISTRIBUTION_RELEASE_LEDGER_ROOT = Path("exports") / "distribution_release_ledger"
 
 
-def _ledger_dir(case_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT) -> Path:
+def _ledger_dir(
+    case_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT
+) -> Path:
     path = Path(root) / safe_slug(case_id, "case")
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
-def release_ledger_path(case_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT) -> Path:
+def release_ledger_path(
+    case_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT
+) -> Path:
     return _ledger_dir(case_id, root=root) / "release_ledger.jsonl"
 
 
-def release_seal_path(case_id: str, subject_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT) -> Path:
-    return _ledger_dir(case_id, root=root) / f"{safe_slug(subject_id, 'subject')}.seal.json"
+def release_seal_path(
+    case_id: str, subject_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT
+) -> Path:
+    return (
+        _ledger_dir(case_id, root=root)
+        / f"{safe_slug(subject_id, 'subject')}.seal.json"
+    )
 
 
 def _seal_id(payload: dict[str, Any]) -> str:
@@ -32,7 +41,9 @@ def _seal_id(payload: dict[str, Any]) -> str:
     return hashlib.sha256(body.encode("utf-8")).hexdigest()[:32]
 
 
-def load_release_ledger(case_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT) -> list[dict[str, Any]]:
+def load_release_ledger(
+    case_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT
+) -> list[dict[str, Any]]:
     path = release_ledger_path(case_id, root=root)
     if not path.exists():
         return []
@@ -43,7 +54,9 @@ def load_release_ledger(case_id: str, root: str | Path = DISTRIBUTION_RELEASE_LE
     return entries
 
 
-def latest_release_seal(case_id: str, subject_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT) -> dict[str, Any] | None:
+def latest_release_seal(
+    case_id: str, subject_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT
+) -> dict[str, Any] | None:
     path = release_seal_path(case_id, subject_id, root=root)
     if not path.exists():
         return None
@@ -79,14 +92,18 @@ def create_distribution_release_seal(
     }
     base["seal_id"] = _seal_id(base)
     seal_path = release_seal_path(case_id, subject_id, root=root)
-    seal_path.write_text(json.dumps(base, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    seal_path.write_text(
+        json.dumps(base, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     ledger_path = release_ledger_path(case_id, root=root)
     with ledger_path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(base, sort_keys=True) + "\n")
     return base
 
 
-def release_state(case_id: str, subject_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT) -> dict[str, Any]:
+def release_state(
+    case_id: str, subject_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT
+) -> dict[str, Any]:
     seal = latest_release_seal(case_id, subject_id, root=root)
     if seal:
         return {
@@ -108,7 +125,9 @@ def release_state(case_id: str, subject_id: str, root: str | Path = DISTRIBUTION
     }
 
 
-def release_ledger_summary(case_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT) -> dict[str, Any]:
+def release_ledger_summary(
+    case_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT
+) -> dict[str, Any]:
     entries = load_release_ledger(case_id, root=root)
     return {
         "schema": DISTRIBUTION_RELEASE_LEDGER_SCHEMA,
@@ -119,7 +138,9 @@ def release_ledger_summary(case_id: str, root: str | Path = DISTRIBUTION_RELEASE
     }
 
 
-def release_seal_markdown(case_id: str, subject_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT) -> str:
+def release_seal_markdown(
+    case_id: str, subject_id: str, root: str | Path = DISTRIBUTION_RELEASE_LEDGER_ROOT
+) -> str:
     state = release_state(case_id, subject_id, root=root)
     seal = state.get("seal") or {}
     lines = [

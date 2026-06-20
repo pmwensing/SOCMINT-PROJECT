@@ -9,7 +9,9 @@ from .case_delivery_workspace_v15 import build_case_delivery_workspace
 
 
 CASE_DELIVERY_HANDOFF_PACKAGE_SCHEMA = "socmint.case_delivery_handoff_package.v15_1"
-CASE_DELIVERY_HANDOFF_MANIFEST_SCHEMA = "socmint.case_delivery_handoff_package.v15_1.manifest"
+CASE_DELIVERY_HANDOFF_MANIFEST_SCHEMA = (
+    "socmint.case_delivery_handoff_package.v15_1.manifest"
+)
 VERSION = "v15.1.0"
 
 PACKAGE_FILES = (
@@ -22,7 +24,10 @@ PACKAGE_FILES = (
 
 
 def canonical_json(data: dict[str, Any]) -> str:
-    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
+    return (
+        json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        + "\n"
+    )
 
 
 def sha256_text(value: str) -> str:
@@ -30,12 +35,22 @@ def sha256_text(value: str) -> str:
 
 
 def _latest_delivery_id(workspace: dict[str, Any]) -> str | None:
-    latest = workspace.get("latest_delivery") if isinstance(workspace.get("latest_delivery"), dict) else {}
-    registry = workspace.get("delivery_registry") if isinstance(workspace.get("delivery_registry"), dict) else {}
+    latest = (
+        workspace.get("latest_delivery")
+        if isinstance(workspace.get("latest_delivery"), dict)
+        else {}
+    )
+    registry = (
+        workspace.get("delivery_registry")
+        if isinstance(workspace.get("delivery_registry"), dict)
+        else {}
+    )
     return latest.get("delivery_id") or registry.get("latest_delivery_id")
 
 
-def _operator_receipt(workspace: dict[str, Any], operator: str | None, notes: str | None) -> dict[str, Any]:
+def _operator_receipt(
+    workspace: dict[str, Any], operator: str | None, notes: str | None
+) -> dict[str, Any]:
     gate = workspace.get("gate") if isinstance(workspace.get("gate"), dict) else {}
     return {
         "case_id": workspace.get("case_id"),
@@ -86,7 +101,9 @@ def _readme(package: dict[str, Any]) -> str:
     )
 
 
-def _manifest(package: dict[str, Any], workspace: dict[str, Any], receipt: dict[str, Any]) -> dict[str, Any]:
+def _manifest(
+    package: dict[str, Any], workspace: dict[str, Any], receipt: dict[str, Any]
+) -> dict[str, Any]:
     gate = workspace.get("gate") if isinstance(workspace.get("gate"), dict) else {}
     files = {
         "README.md": _readme(package),
@@ -111,7 +128,9 @@ def _manifest(package: dict[str, Any], workspace: dict[str, Any], receipt: dict[
         rows.append(
             {
                 "path": path,
-                "content_type": "text/markdown" if path.endswith(".md") else "application/json",
+                "content_type": "text/markdown"
+                if path.endswith(".md")
+                else "application/json",
                 "size_bytes": len(content.encode("utf-8")),
                 "sha256": sha256_text(content),
             }
@@ -158,7 +177,10 @@ def build_case_delivery_handoff_package(
         "remediation_actions": _remediation_actions(workspace),
         "delivery_links": [
             {"label": "Workspace API", "href": f"/api/v1/case-delivery/{case_id}"},
-            {"label": "Handoff package", "href": f"/api/v1/case-delivery/{case_id}/handoff-package"},
+            {
+                "label": "Handoff package",
+                "href": f"/api/v1/case-delivery/{case_id}/handoff-package",
+            },
         ],
     }
     manifest = _manifest(package, workspace, receipt)
@@ -167,11 +189,23 @@ def build_case_delivery_handoff_package(
     return package
 
 
-def build_case_delivery_handoff_package_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def build_case_delivery_handoff_package_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     safe_payload = deepcopy(payload or {})
-    operator = safe_payload.get("operator") if isinstance(safe_payload.get("operator"), str) else None
-    notes = safe_payload.get("notes") if isinstance(safe_payload.get("notes"), str) else None
-    return build_case_delivery_handoff_package(case_id, safe_payload, operator=operator, notes=notes)
+    operator = (
+        safe_payload.get("operator")
+        if isinstance(safe_payload.get("operator"), str)
+        else None
+    )
+    notes = (
+        safe_payload.get("notes")
+        if isinstance(safe_payload.get("notes"), str)
+        else None
+    )
+    return build_case_delivery_handoff_package(
+        case_id, safe_payload, operator=operator, notes=notes
+    )
 
 
 def case_delivery_handoff_markdown(package: dict[str, Any]) -> str:
@@ -189,7 +223,11 @@ def case_delivery_handoff_markdown(package: dict[str, Any]) -> str:
     for row in package.get("files", []):
         if isinstance(row, dict):
             lines.append(f"| {row.get('path')} | {row.get('sha256') or 'self'} |")
-    actions = package.get("remediation_actions") if isinstance(package.get("remediation_actions"), list) else []
+    actions = (
+        package.get("remediation_actions")
+        if isinstance(package.get("remediation_actions"), list)
+        else []
+    )
     if actions:
         lines.extend(["", "## Remediation Actions", ""])
         for action in actions:

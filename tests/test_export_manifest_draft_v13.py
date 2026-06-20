@@ -1,5 +1,7 @@
 from socmint.dashboard import create_app
-from socmint.export_manifest_draft_routes_v13 import register_export_manifest_draft_routes
+from socmint.export_manifest_draft_routes_v13 import (
+    register_export_manifest_draft_routes,
+)
 from socmint.export_manifest_draft_v13 import manifest_entry
 
 

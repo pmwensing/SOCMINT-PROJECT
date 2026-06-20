@@ -8,7 +8,9 @@ EXPORT_GATE_SCHEMA = "socmint.export_gate.v9_0_3"
 DEFAULT_MIN_SCORE = 75
 
 
-def export_preflight(subject_id: int, external: bool = True, min_score: int = DEFAULT_MIN_SCORE) -> dict[str, Any]:
+def export_preflight(
+    subject_id: int, external: bool = True, min_score: int = DEFAULT_MIN_SCORE
+) -> dict[str, Any]:
     quality = export_quality_report(subject_id, redacted=True)
     readiness = quality.get("readiness") or {}
     warnings = list(quality.get("warnings") or [])
@@ -18,8 +20,14 @@ def export_preflight(subject_id: int, external: bool = True, min_score: int = DE
     if quality.get("score", 0) < min_score:
         blockers.append(f"Export quality score is below {min_score}.")
     if external and quality.get("redaction", {}).get("coverage_ratio", 0) < 1:
-        blockers.append("External export requires complete sensitive assertion redaction coverage.")
-    if external and quality.get("counts", {}).get("assertions", 0) and not quality.get("counts", {}).get("traceable_entries", 0):
+        blockers.append(
+            "External export requires complete sensitive assertion redaction coverage."
+        )
+    if (
+        external
+        and quality.get("counts", {}).get("assertions", 0)
+        and not quality.get("counts", {}).get("traceable_entries", 0)
+    ):
         blockers.append("External export requires source/evidence traceability.")
     allowed = not blockers
     return {

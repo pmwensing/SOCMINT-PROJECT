@@ -16,10 +16,19 @@ def register_analytic_product_review_routes_v30_7(app):
             return render_template(
                 "analytic_product_review_v30_7.html",
                 title="Analytic Product Review",
-                payload={"status": "forbidden", "error": "administrator required", "ready": False, "blockers": []},
+                payload={
+                    "status": "forbidden",
+                    "error": "administrator required",
+                    "ready": False,
+                    "blockers": [],
+                },
             ), 403
         payload = build_analytic_product_review(routes=list(app.url_map.iter_rules()))
-        return render_template("analytic_product_review_v30_7.html", title="Analytic Product Review", payload=payload), 200 if payload.get("ready") else 503
+        return render_template(
+            "analytic_product_review_v30_7.html",
+            title="Analytic Product Review",
+            payload=payload,
+        ), 200 if payload.get("ready") else 503
 
     @app.get("/api/v1/analytic-review/product-review-checkpoint")
     def api_analytic_product_review_get_v30_7():

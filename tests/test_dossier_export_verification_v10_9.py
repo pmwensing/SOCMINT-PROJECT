@@ -39,8 +39,12 @@ def _evidence():
 
 
 def test_v10_9_artifact_hashes_pass_for_persisted_export(tmp_path):
-    persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False)
-    report = verify_artifact_hashes("subject-verify-109", "case-verify-109", root=tmp_path)
+    persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False
+    )
+    report = verify_artifact_hashes(
+        "subject-verify-109", "case-verify-109", root=tmp_path
+    )
 
     assert report["schema"] == "socmint.dossier_export_verification.v10_9_0"
     assert report["status"] == "pass"
@@ -49,17 +53,25 @@ def test_v10_9_artifact_hashes_pass_for_persisted_export(tmp_path):
 
 
 def test_v10_9_artifact_hashes_detect_tampering(tmp_path):
-    persisted = persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False)
+    persisted = persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False
+    )
     Path(persisted["artifacts"][0]["path"]).write_text("tampered", encoding="utf-8")
-    report = verify_artifact_hashes("subject-verify-109", "case-verify-109", root=tmp_path)
+    report = verify_artifact_hashes(
+        "subject-verify-109", "case-verify-109", root=tmp_path
+    )
 
     assert report["status"] == "needs_review"
     assert any(item["status"] == "hash_mismatch" for item in report["checks"])
 
 
 def test_v10_9_manifest_index_passes_for_persisted_export(tmp_path):
-    persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False)
-    report = verify_manifest_index("subject-verify-109", "case-verify-109", root=tmp_path)
+    persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False
+    )
+    report = verify_manifest_index(
+        "subject-verify-109", "case-verify-109", root=tmp_path
+    )
 
     assert report["schema"] == "socmint.dossier_export_verification.v10_9_0"
     assert report["status"] == "pass"
@@ -67,19 +79,33 @@ def test_v10_9_manifest_index_passes_for_persisted_export(tmp_path):
 
 
 def test_v10_9_audit_coverage_requires_export_created_event(tmp_path):
-    persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False)
-    missing = verify_audit_coverage("subject-verify-109", "case-verify-109", root=tmp_path)
-    audit_event("export_created", "case-verify-109", "subject-verify-109", root=tmp_path)
-    present = verify_audit_coverage("subject-verify-109", "case-verify-109", root=tmp_path)
+    persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False
+    )
+    missing = verify_audit_coverage(
+        "subject-verify-109", "case-verify-109", root=tmp_path
+    )
+    audit_event(
+        "export_created", "case-verify-109", "subject-verify-109", root=tmp_path
+    )
+    present = verify_audit_coverage(
+        "subject-verify-109", "case-verify-109", root=tmp_path
+    )
 
     assert missing["status"] == "needs_review"
     assert present["status"] == "pass"
 
 
 def test_v10_9_full_verification_report_and_summary_pass(tmp_path):
-    persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True)
-    report = export_verification_report("subject-verify-109", "case-verify-109", root=tmp_path)
-    summary = export_verification_summary("subject-verify-109", "case-verify-109", root=tmp_path)
+    persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True
+    )
+    report = export_verification_report(
+        "subject-verify-109", "case-verify-109", root=tmp_path
+    )
+    summary = export_verification_summary(
+        "subject-verify-109", "case-verify-109", root=tmp_path
+    )
 
     assert report["schema"] == "socmint.dossier_export_verification.v10_9_0"
     assert report["status"] == "pass"
@@ -91,5 +117,11 @@ def test_v10_9_verification_routes_are_registered():
     routes = {rule.rule for rule in app.url_map.iter_rules()}
 
     assert "/api/v1/dossier-builder/v3/export-verify/<case_id>/<subject_id>" in routes
-    assert "/api/v1/dossier-builder/v3/export-verify/<case_id>/<subject_id>/summary" in routes
-    assert "/api/v1/dossier-builder/v3/export-verify/<case_id>/<subject_id>/hashes" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/export-verify/<case_id>/<subject_id>/summary"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/export-verify/<case_id>/<subject_id>/hashes"
+        in routes
+    )

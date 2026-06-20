@@ -27,7 +27,9 @@ def _assignment_age_hours(value: str | None, now: dt.datetime) -> float | None:
     assigned = _parse(value)
     if assigned is None:
         return None
-    return max(0.0, round((now - assigned.astimezone(dt.UTC)).total_seconds() / 3600, 2))
+    return max(
+        0.0, round((now - assigned.astimezone(dt.UTC)).total_seconds() / 3600, 2)
+    )
 
 
 def build_workload_assignment_monitoring(
@@ -39,7 +41,9 @@ def build_workload_assignment_monitoring(
 
     queue = build_persistent_decision_supervisor_queue(now=current_time)
     entries = list(queue.get("entries") or [])
-    active_entries = [item for item in entries if item.get("review_state") in OUTSTANDING_STATES]
+    active_entries = [
+        item for item in entries if item.get("review_state") in OUTSTANDING_STATES
+    ]
     unassigned = [item for item in active_entries if not item.get("assigned_reviewer")]
 
     reviewer_entries: dict[str, list[dict[str, Any]]] = {}
@@ -56,26 +60,34 @@ def build_workload_assignment_monitoring(
 
     reviewers = []
     for reviewer, items in sorted(reviewer_entries.items()):
-        active = [item for item in items if item.get("review_state") in OUTSTANDING_STATES]
-        counts = Counter(str(item.get("review_state") or "unreviewed") for item in items)
+        active = [
+            item for item in items if item.get("review_state") in OUTSTANDING_STATES
+        ]
+        counts = Counter(
+            str(item.get("review_state") or "unreviewed") for item in items
+        )
         ages = [
             float(item["assignment_age_hours"])
             for item in items
             if item.get("assignment_age_hours") is not None
         ]
-        reviewers.append({
-            "reviewer": reviewer,
-            "total_assigned": len(items),
-            "active_workload": len(active),
-            "unreviewed": counts.get("unreviewed", 0),
-            "needs_follow_up": counts.get("needs_follow_up", 0),
-            "reviewed": counts.get("reviewed", 0),
-            "accepted": counts.get("accepted", 0),
-            "oldest_assignment_age_hours": max(ages) if ages else None,
-            "average_assignment_age_hours": round(sum(ages) / len(ages), 2) if ages else None,
-            "reviewer_queue_href": "/case-intelligence-review/my-assignments",
-            "supervisor_queue_href": f"/case-intelligence-review/supervisor-queue?assigned_reviewer={reviewer}",
-        })
+        reviewers.append(
+            {
+                "reviewer": reviewer,
+                "total_assigned": len(items),
+                "active_workload": len(active),
+                "unreviewed": counts.get("unreviewed", 0),
+                "needs_follow_up": counts.get("needs_follow_up", 0),
+                "reviewed": counts.get("reviewed", 0),
+                "accepted": counts.get("accepted", 0),
+                "oldest_assignment_age_hours": max(ages) if ages else None,
+                "average_assignment_age_hours": round(sum(ages) / len(ages), 2)
+                if ages
+                else None,
+                "reviewer_queue_href": "/case-intelligence-review/my-assignments",
+                "supervisor_queue_href": f"/case-intelligence-review/supervisor-queue?assigned_reviewer={reviewer}",
+            }
+        )
 
     workloads = [item["active_workload"] for item in reviewers]
     min_workload = min(workloads) if workloads else 0

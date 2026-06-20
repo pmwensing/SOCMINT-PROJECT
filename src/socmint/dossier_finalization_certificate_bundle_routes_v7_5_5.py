@@ -25,7 +25,9 @@ def register_dossier_finalization_certificate_bundle_routes(app):
         certificate, bundle_name = _unwrap_certificate(payload)
         return jsonify(build_certificate_bundle(certificate, bundle_name=bundle_name))
 
-    @app.post("/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle.zip")
+    @app.post(
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle.zip"
+    )
     def api_finalization_certificate_bundle_zip():
         payload = _request_payload()
         certificate, bundle_name = _unwrap_certificate(payload)

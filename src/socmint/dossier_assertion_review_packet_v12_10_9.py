@@ -20,15 +20,29 @@ def _checklist(projection: dict[str, Any]) -> list[dict[str, Any]]:
     evidence_refs = projection.get("evidence_refs") or []
     alias_ids = projection.get("supporting_alias_ids") or []
     return [
-        {"name": "identity_link_go", "status": "pass" if projection.get("decision") == "GO" else "hold"},
-        {"name": "evidence_refs_present", "status": "pass" if evidence_refs else "hold"},
-        {"name": "supporting_aliases_present", "status": "pass" if alias_ids else "hold"},
-        {"name": "projection_not_blocked", "status": "pass" if projection.get("status") == "ready" else "hold"},
+        {
+            "name": "identity_link_go",
+            "status": "pass" if projection.get("decision") == "GO" else "hold",
+        },
+        {
+            "name": "evidence_refs_present",
+            "status": "pass" if evidence_refs else "hold",
+        },
+        {
+            "name": "supporting_aliases_present",
+            "status": "pass" if alias_ids else "hold",
+        },
+        {
+            "name": "projection_not_blocked",
+            "status": "pass" if projection.get("status") == "ready" else "hold",
+        },
         {"name": "analyst_confirmation_required", "status": "review"},
     ]
 
 
-def build_dossier_assertion_review_packet(projection_payload: dict[str, Any]) -> dict[str, Any]:
+def build_dossier_assertion_review_packet(
+    projection_payload: dict[str, Any],
+) -> dict[str, Any]:
     packets: list[dict[str, Any]] = []
     for projection in projection_payload.get("projections", []) or []:
         checklist = _checklist(projection)
@@ -45,7 +59,8 @@ def build_dossier_assertion_review_packet(projection_payload: dict[str, Any]) ->
                 "confidence": projection.get("confidence", 0),
                 "evidence_refs": projection.get("evidence_refs") or [],
                 "supporting_alias_ids": projection.get("supporting_alias_ids") or [],
-                "supporting_alias_types": projection.get("supporting_alias_types") or [],
+                "supporting_alias_types": projection.get("supporting_alias_types")
+                or [],
                 "blockers": blocker_names,
                 "reasons": projection.get("reasons") or [],
                 "checklist": checklist,
@@ -66,7 +81,9 @@ def build_dossier_assertion_review_packet(projection_payload: dict[str, Any]) ->
     }
 
 
-def export_dossier_assertion_review_packet_report(payload: dict[str, Any], fmt: str = "json") -> tuple[str, str, str]:
+def export_dossier_assertion_review_packet_report(
+    payload: dict[str, Any], fmt: str = "json"
+) -> tuple[str, str, str]:
     fmt = (fmt or "json").lower().strip()
     if fmt in {"md", "markdown"}:
         lines = [
@@ -96,4 +113,8 @@ def export_dossier_assertion_review_packet_report(payload: dict[str, Any], fmt: 
                 ]
             )
         return "text/markdown", "dossier-assertion-review-packet.md", "\n".join(lines)
-    return "application/json", "dossier-assertion-review-packet.json", json.dumps(payload, indent=2, sort_keys=True)
+    return (
+        "application/json",
+        "dossier-assertion-review-packet.json",
+        json.dumps(payload, indent=2, sort_keys=True),
+    )

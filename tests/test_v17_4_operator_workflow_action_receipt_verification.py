@@ -3,16 +3,26 @@ from __future__ import annotations
 from pathlib import Path
 
 from src.socmint.case_delivery_operations_v16_0 import build_case_delivery_operations
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
-from src.socmint.operator_release_console_routes_v14 import register_operator_release_console_routes_v14
-from src.socmint.operator_workflow_action_launcher_v17_2 import launch_operator_workflow_action
-from src.socmint.operator_workflow_action_receipt_v17_3 import build_operator_workflow_action_receipt
+from src.socmint.operator_release_console_routes_v14 import (
+    register_operator_release_console_routes_v14,
+)
+from src.socmint.operator_workflow_action_launcher_v17_2 import (
+    launch_operator_workflow_action,
+)
+from src.socmint.operator_workflow_action_receipt_v17_3 import (
+    build_operator_workflow_action_receipt,
+)
 from src.socmint.operator_workflow_action_receipt_verification_v17_4 import (
     OPERATOR_WORKFLOW_ACTION_RECEIPT_VERIFICATION_SCHEMA,
     verify_operator_workflow_action_receipt,
 )
-from src.socmint.unified_operator_workflow_dashboard_routes_v17_1 import register_unified_operator_workflow_dashboard_routes_v17_1
+from src.socmint.unified_operator_workflow_dashboard_routes_v17_1 import (
+    register_unified_operator_workflow_dashboard_routes_v17_1,
+)
 from tests.test_v15_case_delivery_workspace import ready_payload
 
 
@@ -28,7 +38,9 @@ def _app():
 
 
 def _ready_payload(case_id="case-v17-4"):
-    payload = ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead")
+    payload = ready_payload(
+        operator="operator", issuer="release-lead", authorizer="delivery-lead"
+    )
     payload["operations"] = build_case_delivery_operations(case_id, payload)
     return payload
 
@@ -84,7 +96,9 @@ def test_v17_4_blocks_tampered_hash_and_receipt_id():
 
     assert result["status"] == "blocked"
     assert any(item["key"] == "receipt_hash_mismatch" for item in result["blockers"])
-    assert any(item["key"] == "action_receipt_id_mismatch" for item in result["blockers"])
+    assert any(
+        item["key"] == "action_receipt_id_mismatch" for item in result["blockers"]
+    )
 
 
 def test_v17_4_blocks_invalid_timestamp_and_operator_mismatch():
@@ -147,7 +161,10 @@ def test_v17_4_action_route_attaches_verified_receipt(tmp_path, monkeypatch):
     verification = payload["action_receipt_verification"]
     assert verification["status"] == "verified"
     assert verification["verified"] is True
-    assert verification["action_receipt_id"] == payload["action_receipt"]["action_receipt_id"]
+    assert (
+        verification["action_receipt_id"]
+        == payload["action_receipt"]["action_receipt_id"]
+    )
 
 
 def test_v17_4_dedicated_verify_route_accepts_valid_receipt(tmp_path, monkeypatch):
@@ -191,7 +208,9 @@ def test_v17_4_dedicated_verify_route_blocks_tampered_receipt(tmp_path, monkeypa
 
 
 def test_v17_4_release_note_and_changelog_are_present():
-    note = Path("release/V17_4_OPERATOR_ACTION_RECEIPT_VERIFICATION.md").read_text(encoding="utf-8")
+    note = Path("release/V17_4_OPERATOR_ACTION_RECEIPT_VERIFICATION.md").read_text(
+        encoding="utf-8"
+    )
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/operator/workflow-dashboard/<case_id>/actions/verify" in note

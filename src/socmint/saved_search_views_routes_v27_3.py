@@ -3,8 +3,13 @@ from __future__ import annotations
 from flask import jsonify, redirect, render_template, request, session, url_for
 
 from .saved_search_view_events_v27_3 import create_view, deactivate_view, revise_view
-from .saved_search_views_workspace_v27_3 import build_saved_views_workspace, run_saved_view
-from .watchlist_monitoring_routes_v27_4 import register_watchlist_monitoring_routes_v27_4
+from .saved_search_views_workspace_v27_3 import (
+    build_saved_views_workspace,
+    run_saved_view,
+)
+from .watchlist_monitoring_routes_v27_4 import (
+    register_watchlist_monitoring_routes_v27_4,
+)
 
 
 def _allowed_case_ids() -> set[str] | None:
@@ -53,11 +58,14 @@ def register_saved_search_views_routes_v27_3(app):
             return jsonify({"error": "login required"}), 401
         payload = _payload()
         result = create_view(
-            name=str(payload.get("name") or ""), owner=str(session.get("user")),
-            query=str(payload.get("query") or ""), filters=_filters(payload),
+            name=str(payload.get("name") or ""),
+            owner=str(session.get("user")),
+            query=str(payload.get("query") or ""),
+            filters=_filters(payload),
             visibility=str(payload.get("visibility") or "private"),
             description=str(payload.get("description") or ""),
-            confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr,
+            confirmed=payload.get("confirmed") is True,
+            ip_address=request.remote_addr,
         )
         return jsonify(result), _code(result, "saved_view_created")
 
@@ -67,11 +75,16 @@ def register_saved_search_views_routes_v27_3(app):
             return jsonify({"error": "login required"}), 401
         payload = _payload()
         result = revise_view(
-            view_id, actor=str(session.get("user")), name=str(payload.get("name") or ""),
-            query=str(payload.get("query") or ""), filters=_filters(payload),
+            view_id,
+            actor=str(session.get("user")),
+            name=str(payload.get("name") or ""),
+            query=str(payload.get("query") or ""),
+            filters=_filters(payload),
             visibility=str(payload.get("visibility") or "private"),
-            description=str(payload.get("description") or ""), reason=str(payload.get("reason") or ""),
-            confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr,
+            description=str(payload.get("description") or ""),
+            reason=str(payload.get("reason") or ""),
+            confirmed=payload.get("confirmed") is True,
+            ip_address=request.remote_addr,
         )
         return jsonify(result), _code(result, "saved_view_revised")
 
@@ -81,8 +94,11 @@ def register_saved_search_views_routes_v27_3(app):
             return jsonify({"error": "login required"}), 401
         payload = _payload()
         result = deactivate_view(
-            view_id, actor=str(session.get("user")), reason=str(payload.get("reason") or ""),
-            confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr,
+            view_id,
+            actor=str(session.get("user")),
+            reason=str(payload.get("reason") or ""),
+            confirmed=payload.get("confirmed") is True,
+            ip_address=request.remote_addr,
         )
         return jsonify(result), _code(result, "saved_view_deactivated")
 
@@ -95,8 +111,10 @@ def register_saved_search_views_routes_v27_3(app):
         except ValueError:
             limit = 100
         result = run_saved_view(
-            view_id, user_identity=str(session.get("user")),
-            allowed_case_ids=_allowed_case_ids(), limit=limit,
+            view_id,
+            user_identity=str(session.get("user")),
+            allowed_case_ids=_allowed_case_ids(),
+            limit=limit,
         )
         return jsonify(result), _code(result, "saved_view_executed")
 

@@ -116,7 +116,9 @@ def build_dossier_quality_review(
             continue
         citation_section = citation_sections.get(section["section_id"], {})
         finding_reviews = []
-        for finding in citation_section.get("findings") or section.get("findings") or []:
+        for finding in (
+            citation_section.get("findings") or section.get("findings") or []
+        ):
             quality = _provenance_quality(finding)
             total_findings += 1
             provenance_complete += int(quality["complete"])
@@ -149,7 +151,8 @@ def build_dossier_quality_review(
                     "source_ready": source_ok,
                     "citation_labels": finding.get("citation_labels") or [],
                     "unresolved_claim_ids": finding.get("unresolved_claim_ids") or [],
-                    "unresolved_evidence_ids": finding.get("unresolved_evidence_ids") or [],
+                    "unresolved_evidence_ids": finding.get("unresolved_evidence_ids")
+                    or [],
                 }
             )
 
@@ -187,8 +190,7 @@ def build_dossier_quality_review(
                     and narrative_covered
                     and citations_complete
                     and all(
-                        item["provenance_quality"]["complete"]
-                        and item["source_ready"]
+                        item["provenance_quality"]["complete"] and item["source_ready"]
                         for item in finding_reviews
                     )
                 ),
@@ -196,7 +198,9 @@ def build_dossier_quality_review(
         )
 
     for unresolved in citations.get("unresolved") or []:
-        blockers.append({**unresolved, "key": unresolved.get("key", "citation_unresolved")})
+        blockers.append(
+            {**unresolved, "key": unresolved.get("key", "citation_unresolved")}
+        )
 
     blocker_keys = sorted({blocker["key"] for blocker in blockers})
     review_content = {
@@ -242,9 +246,7 @@ def build_dossier_quality_review(
             else 0.0
         ),
         "source_readiness_percent": (
-            round(source_ready / total_findings * 100, 2)
-            if total_findings
-            else 0.0
+            round(source_ready / total_findings * 100, 2) if total_findings else 0.0
         ),
         "unresolved_citation_count": citations.get("unresolved_count", 0),
         "section_reviews": section_reviews,

@@ -30,6 +30,21 @@ def register_assertion_trust_routes(app) -> None:
     def api_corroboration_dashboard():
         return jsonify(corroboration_dashboard_payload(subject_id=_subject_id()))
 
-    app.add_url_rule("/assertions/trust", endpoint="assertion_trust_dashboard", view_func=assertion_trust_dashboard, methods=["GET"])
-    app.add_url_rule("/api/v1/assertions/trust", endpoint="api_assertion_trust", view_func=api_assertion_trust, methods=["GET"])
-    app.add_url_rule("/api/v1/corroboration/dashboard", endpoint="api_corroboration_dashboard", view_func=api_corroboration_dashboard, methods=["GET"])
+    app.add_url_rule(
+        "/assertions/trust",
+        endpoint="assertion_trust_dashboard",
+        view_func=assertion_trust_dashboard,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/assertions/trust",
+        endpoint="api_assertion_trust",
+        view_func=api_assertion_trust,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/corroboration/dashboard",
+        endpoint="api_corroboration_dashboard",
+        view_func=api_corroboration_dashboard,
+        methods=["GET"],
+    )

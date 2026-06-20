@@ -5,8 +5,12 @@ import zipfile
 
 from flask import Flask
 
-from socmint.dossier_finalization_master_delivery_export_bundle_routes_v7_5_14 import register_dossier_finalization_master_delivery_export_bundle_routes
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index
+from socmint.dossier_finalization_master_delivery_export_bundle_routes_v7_5_14 import (
+    register_dossier_finalization_master_delivery_export_bundle_routes,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index,
+)
 
 REQUIRED_FILES = {
     "README.md",
@@ -44,7 +48,9 @@ def verification_report():
 
 
 def delivery_index():
-    return build_master_delivery_index(verification_report(), operator="analyst", notes="Ready.")
+    return build_master_delivery_index(
+        verification_report(), operator="analyst", notes="Ready."
+    )
 
 
 def test_json_export_route_returns_bundle_metadata():
@@ -56,7 +62,10 @@ def test_json_export_route_returns_bundle_metadata():
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["schema"] == "socmint.v7_5_14.dossier_finalization_master_delivery_export_bundle"
+    assert (
+        data["schema"]
+        == "socmint.v7_5_14.dossier_finalization_master_delivery_export_bundle"
+    )
     assert data["bundle_name"] == "route-export"
     assert data["delivery_action"] == "deliver_ready"
     assert data["file_count"] == 5

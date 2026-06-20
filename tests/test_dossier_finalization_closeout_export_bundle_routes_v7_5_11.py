@@ -4,7 +4,9 @@ import io
 import zipfile
 
 from socmint.dashboard import create_app
-from socmint.dossier_finalization_closeout_export_bundle_routes_v7_5_11 import register_dossier_finalization_closeout_export_bundle_routes
+from socmint.dossier_finalization_closeout_export_bundle_routes_v7_5_11 import (
+    register_dossier_finalization_closeout_export_bundle_routes,
+)
 from socmint.dossier_finalization_closeout_report_v7_5_10 import build_closeout_report
 
 CSRF_TOKEN = "test-csrf-token"
@@ -64,14 +66,20 @@ def test_json_route_returns_export_bundle_metadata_from_wrapped_report():
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["schema"] == "socmint.v7_5_11.dossier_finalization_closeout_export_bundle"
+    assert (
+        data["schema"] == "socmint.v7_5_11.dossier_finalization_closeout_export_bundle"
+    )
     assert data["bundle_name"] == "closeout-bundle"
     assert data["closeout_action"] == "closeout_ready"
 
 
 def test_raw_report_request_shape_works():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report/export", closeout_ready_report())
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report/export",
+        closeout_ready_report(),
+    )
 
     assert response.status_code == 200
     assert response.get_json()["closeout_action"] == "closeout_ready"
@@ -104,7 +112,11 @@ def test_zip_route_contains_required_files():
 
 def test_csrf_token_is_used_in_route_tests():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report/export", {"report": closeout_ready_report()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report/export",
+        {"report": closeout_ready_report()},
+    )
 
     assert response.status_code == 200
 
@@ -117,7 +129,11 @@ def test_no_connector_execution_function_is_called(monkeypatch):
 
     monkeypatch.setattr(bundle_module, "execute_connector", explode, raising=False)
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report/export", {"report": closeout_ready_report()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report/export",
+        {"report": closeout_ready_report()},
+    )
 
     assert response.status_code == 200
     assert response.get_json()["closeout_action"] == "closeout_ready"

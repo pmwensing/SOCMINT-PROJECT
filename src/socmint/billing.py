@@ -40,7 +40,8 @@ def ensure_billing_schema() -> None:
     db.ensure_configured()
     session = db.Session()
     try:
-        session.execute(text("""
+        session.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS billing_events (
                 id INTEGER PRIMARY KEY,
                 provider VARCHAR(64) NOT NULL,
@@ -53,8 +54,10 @@ def ensure_billing_schema() -> None:
                 processed_at DATETIME NOT NULL,
                 created_at DATETIME NOT NULL
             )
-        """))
-        session.execute(text("""
+        """)
+        )
+        session.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS checkout_sessions (
                 id INTEGER PRIMARY KEY,
                 checkout_id VARCHAR(255) NOT NULL UNIQUE,
@@ -67,7 +70,8 @@ def ensure_billing_schema() -> None:
                 created_at DATETIME NOT NULL,
                 updated_at DATETIME NOT NULL
             )
-        """))
+        """)
+        )
         session.commit()
     finally:
         session.close()
@@ -129,7 +133,12 @@ def create_checkout_session(
         actor=username,
         details={"checkout_id": checkout_id, "plan_key": plan_key},
     )
-    return {"schema": BILLING_SCHEMA, "checkout_id": checkout_id, "plan": plan_key, "payload": payload}
+    return {
+        "schema": BILLING_SCHEMA,
+        "checkout_id": checkout_id,
+        "plan": plan_key,
+        "payload": payload,
+    }
 
 
 def record_billing_event(
@@ -145,12 +154,22 @@ def record_billing_event(
     now = _now()
     session = db.Session()
     try:
-        existing = session.execute(
-            text("SELECT id FROM billing_events WHERE provider_event_id = :provider_event_id"),
-            {"provider_event_id": provider_event_id},
-        ).mappings().first()
+        existing = (
+            session.execute(
+                text(
+                    "SELECT id FROM billing_events WHERE provider_event_id = :provider_event_id"
+                ),
+                {"provider_event_id": provider_event_id},
+            )
+            .mappings()
+            .first()
+        )
         if existing:
-            return {"schema": BILLING_SCHEMA, "duplicate": True, "event_id": existing["id"]}
+            return {
+                "schema": BILLING_SCHEMA,
+                "duplicate": True,
+                "event_id": existing["id"],
+            }
         session.execute(
             text("""
                 INSERT INTO billing_events
@@ -171,10 +190,16 @@ def record_billing_event(
             },
         )
         session.commit()
-        row = session.execute(
-            text("SELECT id FROM billing_events WHERE provider_event_id = :provider_event_id"),
-            {"provider_event_id": provider_event_id},
-        ).mappings().first()
+        row = (
+            session.execute(
+                text(
+                    "SELECT id FROM billing_events WHERE provider_event_id = :provider_event_id"
+                ),
+                {"provider_event_id": provider_event_id},
+            )
+            .mappings()
+            .first()
+        )
         return {"schema": BILLING_SCHEMA, "duplicate": False, "event_id": row["id"]}
     finally:
         session.close()
@@ -185,35 +210,59 @@ def process_subscription_event(event: dict[str, Any]) -> dict[str, Any]:
     event_id = str(event.get("id") or event.get("provider_event_id") or "")
     event_type = str(event.get("type") or event.get("event_type") or "")
     data = event.get("data") or event
-    username = data.get("username") or data.get("customer_email") or data.get("client_reference_id")
+    username = (
+        data.get("username")
+        or data.get("customer_email")
+        or data.get("client_reference_id")
+    )
     price_id = data.get("price_id") or data.get("stripe_price_id")
-    plan_key = data.get("plan") or data.get("plan_key") or PRICE_ID_TO_PLAN.get(price_id)
+    plan_key = (
+        data.get("plan") or data.get("plan_key") or PRICE_ID_TO_PLAN.get(price_id)
+    )
     if not event_id or not event_type:
         raise ValueError("Billing event requires id and type.")
-    recorded = record_billing_event(event_id, event_type, event, username=username, plan_key=plan_key)
+    recorded = record_billing_event(
+        event_id, event_type, event, username=username, plan_key=plan_key
+    )
     if recorded.get("duplicate"):
         return {**recorded, "action": "ignored_duplicate"}
     if not username:
         return {**recorded, "action": "recorded_unmatched"}
 
-    if event_type in {"checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "invoice.paid"}:
+    if event_type in {
+        "checkout.session.completed",
+        "customer.subscription.created",
+        "customer.subscription.updated",
+        "invoice.paid",
+    }:
         if not plan_key or plan_key not in PLAN_DEFINITIONS or plan_key == "free":
             raise ValueError("Paid subscription event requires a paid plan.")
-        summary = assign_membership(username, plan_key, actor="billing", metadata={"source_event": event_id})
+        summary = assign_membership(
+            username, plan_key, actor="billing", metadata={"source_event": event_id}
+        )
         return {**recorded, "action": "membership_activated", "membership": summary}
 
     if event_type in {"invoice.payment_failed", "customer.subscription.past_due"}:
         summary = mark_past_due(username, actor="billing", source_event=event_id)
         return {**recorded, "action": "membership_past_due", "membership": summary}
 
-    if event_type in {"customer.subscription.deleted", "customer.subscription.canceled"}:
+    if event_type in {
+        "customer.subscription.deleted",
+        "customer.subscription.canceled",
+    }:
         summary = downgrade_to_free(username, actor="billing", source_event=event_id)
         return {**recorded, "action": "membership_downgraded", "membership": summary}
 
     return {**recorded, "action": "recorded_no_membership_change"}
 
 
-def _set_membership_status(username: str, status: str, plan_key: str | None = None, actor: str | None = None, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+def _set_membership_status(
+    username: str,
+    status: str,
+    plan_key: str | None = None,
+    actor: str | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     ensure_billing_schema()
     user = db.get_user_by_username(username)
     if not user:
@@ -230,7 +279,14 @@ def _set_membership_status(username: str, status: str, plan_key: str | None = No
                         actor = :actor, updated_at = :now
                     WHERE user_id = :user_id
                 """),
-                {"status": status, "plan_key": plan_key, "metadata_json": metadata_json, "actor": actor, "now": now, "user_id": user.id},
+                {
+                    "status": status,
+                    "plan_key": plan_key,
+                    "metadata_json": metadata_json,
+                    "actor": actor,
+                    "now": now,
+                    "user_id": user.id,
+                },
             )
         else:
             session.execute(
@@ -240,16 +296,28 @@ def _set_membership_status(username: str, status: str, plan_key: str | None = No
                         actor = :actor, updated_at = :now
                     WHERE user_id = :user_id
                 """),
-                {"status": status, "metadata_json": metadata_json, "actor": actor, "now": now, "user_id": user.id},
+                {
+                    "status": status,
+                    "metadata_json": metadata_json,
+                    "actor": actor,
+                    "now": now,
+                    "user_id": user.id,
+                },
             )
         session.commit()
     finally:
         session.close()
-    db.record_audit_event(action="membership_status_update", actor=actor, details={"username": username, "status": status, "plan_key": plan_key})
+    db.record_audit_event(
+        action="membership_status_update",
+        actor=actor,
+        details={"username": username, "status": status, "plan_key": plan_key},
+    )
     return membership_summary(username)
 
 
-def mark_past_due(username: str, actor: str | None = None, source_event: str | None = None) -> dict[str, Any]:
+def mark_past_due(
+    username: str, actor: str | None = None, source_event: str | None = None
+) -> dict[str, Any]:
     ensure_default_membership(username, actor=actor)
     grace_until = (_now() + dt.timedelta(days=GRACE_DAYS)).isoformat()
     return _set_membership_status(
@@ -260,7 +328,9 @@ def mark_past_due(username: str, actor: str | None = None, source_event: str | N
     )
 
 
-def downgrade_to_free(username: str, actor: str | None = None, source_event: str | None = None) -> dict[str, Any]:
+def downgrade_to_free(
+    username: str, actor: str | None = None, source_event: str | None = None
+) -> dict[str, Any]:
     ensure_default_membership(username, actor=actor)
     return _set_membership_status(
         username,
@@ -276,24 +346,32 @@ def billing_status(username: str) -> dict[str, Any]:
     summary = ensure_default_membership(username)
     session = db.Session()
     try:
-        events = session.execute(
-            text("""
+        events = (
+            session.execute(
+                text("""
                 SELECT provider_event_id, event_type, plan_key, status, created_at
                 FROM billing_events
                 WHERE username = :username
                 ORDER BY created_at DESC LIMIT 20
             """),
-            {"username": username},
-        ).mappings().all()
-        checkouts = session.execute(
-            text("""
+                {"username": username},
+            )
+            .mappings()
+            .all()
+        )
+        checkouts = (
+            session.execute(
+                text("""
                 SELECT checkout_id, plan_key, status, created_at
                 FROM checkout_sessions
                 WHERE username = :username
                 ORDER BY created_at DESC LIMIT 20
             """),
-            {"username": username},
-        ).mappings().all()
+                {"username": username},
+            )
+            .mappings()
+            .all()
+        )
     finally:
         session.close()
     return {
@@ -301,5 +379,8 @@ def billing_status(username: str) -> dict[str, Any]:
         "membership": summary,
         "events": [dict(item) for item in events],
         "checkout_sessions": [dict(item) for item in checkouts],
-        "plans": {key: {"price_id": PLAN_PRICE_IDS.get(key), **value} for key, value in PLAN_DEFINITIONS.items()},
+        "plans": {
+            key: {"price_id": PLAN_PRICE_IDS.get(key), **value}
+            for key, value in PLAN_DEFINITIONS.items()
+        },
     }

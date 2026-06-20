@@ -3,33 +3,83 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
-from .evidence_ingestion_v29_4 import ARTIFACT_STATES, SCHEMA, VERSION, current_artifacts, history, observations
+from .evidence_ingestion_v29_4 import (
+    ARTIFACT_STATES,
+    SCHEMA,
+    VERSION,
+    current_artifacts,
+    history,
+    observations,
+)
 
 
 def build_evidence_ingestion_workspace() -> dict[str, Any]:
     artifacts = current_artifacts()
     events = history()
     derived = observations()
-    state_counts = Counter(str(item.get("artifact_state") or "unknown") for item in artifacts)
+    state_counts = Counter(
+        str(item.get("artifact_state") or "unknown") for item in artifacts
+    )
     duplicates = [item for item in artifacts if item.get("duplicate_of_artifact_id")]
-    quarantined = [item for item in artifacts if item.get("artifact_state") == "quarantined"]
+    quarantined = [
+        item for item in artifacts if item.get("artifact_state") == "quarantined"
+    ]
     rejected = [item for item in artifacts if item.get("artifact_state") == "rejected"]
     accepted = [item for item in artifacts if item.get("artifact_state") == "accepted"]
-    incomplete = [item for item in artifacts if not item.get("chain_of_custody_complete")]
+    incomplete = [
+        item for item in artifacts if not item.get("chain_of_custody_complete")
+    ]
     findings = []
     for item in artifacts:
         if not item.get("content_sha256"):
-            findings.append({"severity":"critical","key":"artifact_content_hash_missing","artifact_id":item.get("artifact_id")})
+            findings.append(
+                {
+                    "severity": "critical",
+                    "key": "artifact_content_hash_missing",
+                    "artifact_id": item.get("artifact_id"),
+                }
+            )
         if not item.get("acquisition_sha256"):
-            findings.append({"severity":"critical","key":"artifact_acquisition_hash_missing","artifact_id":item.get("artifact_id")})
+            findings.append(
+                {
+                    "severity": "critical",
+                    "key": "artifact_acquisition_hash_missing",
+                    "artifact_id": item.get("artifact_id"),
+                }
+            )
         if not item.get("contract_binding_sha256"):
-            findings.append({"severity":"high","key":"collection_attempt_binding_missing","artifact_id":item.get("artifact_id")})
+            findings.append(
+                {
+                    "severity": "high",
+                    "key": "collection_attempt_binding_missing",
+                    "artifact_id": item.get("artifact_id"),
+                }
+            )
         if item.get("duplicate_of_artifact_id"):
-            findings.append({"severity":"medium","key":"duplicate_artifact_detected","artifact_id":item.get("artifact_id"),"duplicate_of_artifact_id":item.get("duplicate_of_artifact_id")})
+            findings.append(
+                {
+                    "severity": "medium",
+                    "key": "duplicate_artifact_detected",
+                    "artifact_id": item.get("artifact_id"),
+                    "duplicate_of_artifact_id": item.get("duplicate_of_artifact_id"),
+                }
+            )
         if item.get("artifact_state") == "registered":
-            findings.append({"severity":"low","key":"artifact_pending_acceptance_review","artifact_id":item.get("artifact_id")})
+            findings.append(
+                {
+                    "severity": "low",
+                    "key": "artifact_pending_acceptance_review",
+                    "artifact_id": item.get("artifact_id"),
+                }
+            )
         if item.get("artifact_state") == "quarantined":
-            findings.append({"severity":"high","key":"artifact_quarantined","artifact_id":item.get("artifact_id")})
+            findings.append(
+                {
+                    "severity": "high",
+                    "key": "artifact_quarantined",
+                    "artifact_id": item.get("artifact_id"),
+                }
+            )
     return {
         "schema": SCHEMA,
         "version": VERSION,

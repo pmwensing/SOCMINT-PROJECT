@@ -13,9 +13,7 @@ ABSOLUTE_IMPORT_PATTERNS = (
     re.compile(r"^\s*from\s+socmint\b", re.MULTILINE),
 )
 
-IGNORED_IMPORT_PROBE_PREFIXES = (
-    "src.socmint.tests",
-)
+IGNORED_IMPORT_PROBE_PREFIXES = ("src.socmint.tests",)
 
 
 def source_import_scan(root: str | Path = "src/socmint") -> dict[str, Any]:
@@ -26,7 +24,9 @@ def source_import_scan(root: str | Path = "src/socmint") -> dict[str, Any]:
             text = path.read_text(errors="ignore")
             for line_number, line in enumerate(text.splitlines(), start=1):
                 if any(pattern.search(line) for pattern in ABSOLUTE_IMPORT_PATTERNS):
-                    hits.append({"path": str(path), "line": line_number, "text": line.strip()})
+                    hits.append(
+                        {"path": str(path), "line": line_number, "text": line.strip()}
+                    )
     return {
         "schema": RUNTIME_IMPORT_HEALTH_SCHEMA,
         "status": "pass" if not hits else "needs_cleanup",
@@ -50,8 +50,13 @@ def package_import_probe() -> dict[str, Any]:
             importlib.import_module(name)
         except Exception as exc:
             message = str(exc)
-            if "No module named 'socmint'" in message or 'No module named "socmint"' in message:
-                failures.append({"module": name, "type": type(exc).__name__, "error": message})
+            if (
+                "No module named 'socmint'" in message
+                or 'No module named "socmint"' in message
+            ):
+                failures.append(
+                    {"module": name, "type": type(exc).__name__, "error": message}
+                )
     return {
         "schema": RUNTIME_IMPORT_HEALTH_SCHEMA,
         "status": "pass" if not failures else "fail",
@@ -66,7 +71,9 @@ def runtime_import_health_report(root: str | Path = "src/socmint") -> dict[str, 
     package_probe = package_import_probe()
     return {
         "schema": RUNTIME_IMPORT_HEALTH_SCHEMA,
-        "status": "pass" if source_scan["status"] == "pass" and package_probe["status"] == "pass" else "fail",
+        "status": "pass"
+        if source_scan["status"] == "pass" and package_probe["status"] == "pass"
+        else "fail",
         "source_scan": source_scan,
         "package_probe": package_probe,
     }

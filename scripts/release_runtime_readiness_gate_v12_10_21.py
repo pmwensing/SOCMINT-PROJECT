@@ -16,7 +16,9 @@ try:
     from socmint.release_status_v12_10_19 import release_status
     from socmint.version import VERSION
 except ModuleNotFoundError:
-    from src.socmint.release_runtime_readiness_v12_10_21 import release_runtime_readiness
+    from src.socmint.release_runtime_readiness_v12_10_21 import (
+        release_runtime_readiness,
+    )
     from src.socmint.release_status_v12_10_19 import release_status
     from src.socmint.version import VERSION
 
@@ -78,7 +80,9 @@ report = {
 }
 
 stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
-json_path = REPORT_ROOT / f"socmint_v12_10_21_release_runtime_readiness_gate_{stamp}.json"
+json_path = (
+    REPORT_ROOT / f"socmint_v12_10_21_release_runtime_readiness_gate_{stamp}.json"
+)
 md_path = REPORT_ROOT / f"socmint_v12_10_21_release_runtime_readiness_gate_{stamp}.md"
 json_path.write_text(json.dumps(report, indent=2, sort_keys=True))
 md_path.write_text(

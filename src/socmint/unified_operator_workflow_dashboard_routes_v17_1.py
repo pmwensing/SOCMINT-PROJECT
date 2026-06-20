@@ -8,7 +8,9 @@ from .operator_action_session_timeline_v17_5 import (
     build_operator_action_session_timeline,
 )
 from .operator_workflow_action_launcher_v17_2 import launch_operator_workflow_action
-from .operator_workflow_action_receipt_v17_3 import attach_operator_workflow_action_receipt
+from .operator_workflow_action_receipt_v17_3 import (
+    attach_operator_workflow_action_receipt,
+)
 from .operator_workflow_action_receipt_verification_v17_4 import (
     verify_operator_workflow_action_receipt,
     verify_operator_workflow_action_receipt_from_request,
@@ -16,7 +18,9 @@ from .operator_workflow_action_receipt_verification_v17_4 import (
 from .operator_workflow_product_review_checkpoint_v17_7 import (
     build_operator_workflow_product_review_checkpoint,
 )
-from .unified_operator_workflow_dashboard_v17_1 import build_unified_operator_workflow_dashboard
+from .unified_operator_workflow_dashboard_v17_1 import (
+    build_unified_operator_workflow_dashboard,
+)
 
 
 def _login_required() -> bool:

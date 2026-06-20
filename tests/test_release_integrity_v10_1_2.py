@@ -28,7 +28,9 @@ def test_v10_1_2_required_routes_are_registered():
     assert report["status"] == "pass"
     assert report["missing"] == []
     assert "/api/v1/admin/certification/summary" in report["registered_required_routes"]
-    assert "/api/v1/admin/operator-smoke/summary" in report["registered_required_routes"]
+    assert (
+        "/api/v1/admin/operator-smoke/summary" in report["registered_required_routes"]
+    )
 
 
 def test_v10_1_2_release_notes_exist():

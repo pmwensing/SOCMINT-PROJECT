@@ -45,7 +45,11 @@ def test_quality_gate_fails_missing_context():
 
     assert result["status"] == "fail"
     assert result["finding_count"] == 1
-    assert set(result["findings"][0]["missing"]) == {"evidence_refs", "source", "confidence"}
+    assert set(result["findings"][0]["missing"]) == {
+        "evidence_refs",
+        "source",
+        "confidence",
+    }
 
 
 def test_entity_profile_intelligence_attaches_quality_gate():
@@ -71,7 +75,9 @@ def test_entity_profile_intelligence_attaches_quality_gate():
         },
     ]
 
-    payload = build_entity_profile_intelligence(subject, evidence=evidence, analyst_reviewed=True)
+    payload = build_entity_profile_intelligence(
+        subject, evidence=evidence, analyst_reviewed=True
+    )
     summary = entity_profile_intelligence_summary(payload)
 
     assert payload["quality_gate"]["status"] == "pass"
@@ -93,7 +99,9 @@ def test_entity_profile_intelligence_blocks_unsubstantiated_subject_claims():
         ],
     }
 
-    payload = build_entity_profile_intelligence(subject, evidence=[], analyst_reviewed=False)
+    payload = build_entity_profile_intelligence(
+        subject, evidence=[], analyst_reviewed=False
+    )
 
     assert payload["quality_gate"]["status"] == "fail"
     assert payload["export_ready"] is False

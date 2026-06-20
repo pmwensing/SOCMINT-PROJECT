@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -31,12 +33,14 @@ def test_v23_0_routes_and_ui(tmp_path, monkeypatch):
             "acknowledgement_received": True,
             "next_action": "monitor_delivery_recovery",
         },
-        "retention_policies": [{
-            "policy_id": "standard_case_retention",
-            "display_name": "Standard case retention",
-            "retention_years": 7,
-            "archive_class": "standard",
-        }],
+        "retention_policies": [
+            {
+                "policy_id": "standard_case_retention",
+                "display_name": "Standard case retention",
+                "retention_years": 7,
+                "archive_class": "standard",
+            }
+        ],
         "proposed_retention_policy": {
             "policy_id": "standard_case_retention",
             "display_name": "Standard case retention",
@@ -44,11 +48,13 @@ def test_v23_0_routes_and_ui(tmp_path, monkeypatch):
             "archive_class": "standard",
             "description": "Retain the case for seven years.",
         },
-        "supervisor_actions": [{
-            "action": "review_closure_readiness",
-            "version": "v23.1",
-            "available": True,
-        }],
+        "supervisor_actions": [
+            {
+                "action": "review_closure_readiness",
+                "version": "v23.1",
+                "available": True,
+            }
+        ],
         "links": {
             "release_workspace": "/dossier-release/case-alpha",
             "release_history": "/dossier-release/case-alpha/history",
@@ -69,7 +75,10 @@ def test_v23_0_routes_and_ui(tmp_path, monkeypatch):
     assert b"Closure Readiness" in ui.data
     assert b"Proposed Retention Policy" in ui.data
     assert b"Supervisor Actions" in ui.data
-    assert b"does not create a closure decision, retention assignment, archive package, or reopen authorization" in ui.data
+    assert (
+        b"does not create a closure decision, retention assignment, archive package, or reopen authorization"
+        in ui.data
+    )
     assert api.status_code == 200
     assert api.get_json()["closure_eligible"] is True
     assert api.get_json()["archive_ready"] is True

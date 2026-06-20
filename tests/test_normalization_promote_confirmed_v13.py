@@ -1,7 +1,9 @@
 import pytest
 
 from socmint.dashboard import create_app
-from socmint.normalization_promote_confirmed_routes_v13 import register_normalization_promote_confirmed_routes
+from socmint.normalization_promote_confirmed_routes_v13 import (
+    register_normalization_promote_confirmed_routes,
+)
 from socmint.normalization_promote_confirmed_v13 import promote_confirmed_item
 
 

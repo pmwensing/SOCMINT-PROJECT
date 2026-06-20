@@ -20,7 +20,9 @@ def _setup(tmp_path, monkeypatch):
     url = f"sqlite:///{tmp_path / 'app.db'}"
     monkeypatch.setenv("DATABASE_URL", url)
     database.configure_database(url)
-    monkeypatch.setattr(service, "latest_secure_distribution", lambda case_id: _distribution())
+    monkeypatch.setattr(
+        service, "latest_secure_distribution", lambda case_id: _distribution()
+    )
 
 
 def test_v22_4_records_success_and_outstanding_acknowledgement(tmp_path, monkeypatch):
@@ -65,7 +67,9 @@ def test_v22_4_failure_and_separate_recipient_acknowledgement(tmp_path, monkeypa
     blocked = service.record_recipient_acknowledgement(
         "case-alpha", acknowledged=False, recorder="operator"
     )
-    assert blocked["blockers"][0]["key"] == "explicit_recipient_acknowledgement_required"
+    assert (
+        blocked["blockers"][0]["key"] == "explicit_recipient_acknowledgement_required"
+    )
 
     ack = service.record_recipient_acknowledgement(
         "case-alpha",

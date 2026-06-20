@@ -68,8 +68,14 @@ def test_v25_0_correlates_shared_values_with_case_provenance():
 
     infrastructure = result["correlations"]["infrastructure"][0]
     assert infrastructure["match_value"] == "example.com"
-    assert any(item["pattern"] == "case_entity_observed" for item in result["repeated_patterns"])
-    assert any(item["pattern"] == "manual_identity_review_required" for item in result["repeated_patterns"])
+    assert any(
+        item["pattern"] == "case_entity_observed"
+        for item in result["repeated_patterns"]
+    )
+    assert any(
+        item["pattern"] == "manual_identity_review_required"
+        for item in result["repeated_patterns"]
+    )
     assert result["human_review_required"] is True
     assert result["correlations_are_candidates"] is True
     assert result["source_records_mutated"] is False

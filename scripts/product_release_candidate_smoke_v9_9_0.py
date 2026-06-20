@@ -61,9 +61,19 @@ def main() -> int:
                 and payload.get("summary", {}).get("required_passed") == 6
                 and payload.get("status") == "pass"
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET RC manifest API", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET RC manifest API",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET RC manifest API", response.status_code, response.get_data(as_text=True)[:2000]))
+                failures.append(
+                    (
+                        "GET RC manifest API",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/release-candidate/write",
@@ -78,9 +88,19 @@ def main() -> int:
                 and json_path.exists()
                 and md_path.exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "POST write RC manifest API", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "POST write RC manifest API",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("POST write RC manifest API", response.status_code, response.get_data(as_text=True)[:2000]))
+                failures.append(
+                    (
+                        "POST write RC manifest API",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2000],
+                    )
+                )
 
             if json_path.exists():
                 data = json.loads(json_path.read_text())
@@ -91,7 +111,13 @@ def main() -> int:
                 )
                 print(("[PASS]" if ok else "[FAIL]"), "RC manifest file content")
                 if not ok:
-                    failures.append(("RC manifest file content", 0, json.dumps(data, indent=2)[:2500]))
+                    failures.append(
+                        (
+                            "RC manifest file content",
+                            0,
+                            json.dumps(data, indent=2)[:2500],
+                        )
+                    )
 
             response = client.get("/product/release-candidate")
             body = response.get_data(as_text=True)
@@ -102,16 +128,28 @@ def main() -> int:
                 and "Product Smoke" in body
                 and "Release Package ZIP Export" in body
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET RC console UI", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET RC console UI",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET RC console UI", response.status_code, body[:2000]))
+                failures.append(
+                    ("GET RC console UI", response.status_code, body[:2000])
+                )
 
             response = client.get("/product/build-control")
             body = response.get_data(as_text=True)
             ok = response.status_code == 200 and "Release Candidate Console" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET Product Control RC link", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET Product Control RC link",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET Product Control RC link", response.status_code, body[:2000]))
+                failures.append(
+                    ("GET Product Control RC link", response.status_code, body[:2000])
+                )
 
             if failures:
                 for name, status, body in failures:

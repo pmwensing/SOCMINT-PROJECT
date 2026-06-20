@@ -2,8 +2,14 @@ from __future__ import annotations
 
 from flask import jsonify, request, session
 
-from .analytic_dossier_contribution_routes_v30_6 import register_analytic_dossier_contribution_routes_v30_6
-from .human_analytic_review_v30_5 import current_review_decisions, record_human_review, reviews_for_claim
+from .analytic_dossier_contribution_routes_v30_6 import (
+    register_analytic_dossier_contribution_routes_v30_6,
+)
+from .human_analytic_review_v30_5 import (
+    current_review_decisions,
+    record_human_review,
+    reviews_for_claim,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -27,23 +33,27 @@ def register_human_analytic_review_routes_v30_5(app):
         actor, error = _authorized()
         if error:
             return error
-        return jsonify({
-            "schema": "socmint.human_analytic_reviews.v30_5",
-            "version": "v30.5.0",
-            "reviews": current_review_decisions(),
-        })
+        return jsonify(
+            {
+                "schema": "socmint.human_analytic_reviews.v30_5",
+                "version": "v30.5.0",
+                "reviews": current_review_decisions(),
+            }
+        )
 
     @app.get("/api/v1/analytic-review/claims/<claim_id>/human-reviews")
     def list_claim_human_reviews_v30_5(claim_id: str):
         actor, error = _authorized()
         if error:
             return error
-        return jsonify({
-            "schema": "socmint.human_analytic_review_history.v30_5",
-            "version": "v30.5.0",
-            "claim_id": claim_id,
-            "reviews": reviews_for_claim(claim_id),
-        })
+        return jsonify(
+            {
+                "schema": "socmint.human_analytic_review_history.v30_5",
+                "version": "v30.5.0",
+                "claim_id": claim_id,
+                "reviews": reviews_for_claim(claim_id),
+            }
+        )
 
     @app.post("/api/v1/analytic-review/claims/<claim_id>/human-reviews")
     def create_human_review_v30_5(claim_id: str):

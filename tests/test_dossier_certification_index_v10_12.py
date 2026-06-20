@@ -34,10 +34,16 @@ def _evidence():
     ]
 
 
-def test_v10_12_index_entry_reports_export_artifacts_verification_and_certification(tmp_path):
-    persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True)
+def test_v10_12_index_entry_reports_export_artifacts_verification_and_certification(
+    tmp_path,
+):
+    persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True
+    )
 
-    entry = certification_index_entry("case-cert-index-1012", "subject-cert-index-1", root=tmp_path)
+    entry = certification_index_entry(
+        "case-cert-index-1012", "subject-cert-index-1", root=tmp_path
+    )
 
     assert entry["schema"] == "socmint.dossier_certification_index.v10_12_0"
     assert entry["status"] == "ready"
@@ -63,7 +69,9 @@ def test_v10_12_index_blocks_export_without_audit_coverage(tmp_path):
         audit=False,
     )
 
-    entry = certification_index_entry("case-cert-index-1012", "subject-cert-index-no-audit", root=tmp_path)
+    entry = certification_index_entry(
+        "case-cert-index-1012", "subject-cert-index-no-audit", root=tmp_path
+    )
 
     assert entry["certified"] is False
     assert entry["safe_to_distribute"] is False
@@ -74,8 +82,20 @@ def test_v10_12_index_blocks_export_without_audit_coverage(tmp_path):
 
 
 def test_v10_12_case_index_and_summary_count_safe_and_held_exports(tmp_path):
-    persist_export_pack(_subject("subject-cert-index-safe"), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True)
-    persist_export_pack(_subject("subject-cert-index-held"), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False)
+    persist_export_pack(
+        _subject("subject-cert-index-safe"),
+        _evidence(),
+        analyst_reviewed=True,
+        root=tmp_path,
+        audit=True,
+    )
+    persist_export_pack(
+        _subject("subject-cert-index-held"),
+        _evidence(),
+        analyst_reviewed=True,
+        root=tmp_path,
+        audit=False,
+    )
 
     index = certification_index("case-cert-index-1012", root=tmp_path)
     summary = certification_index_summary("case-cert-index-1012", root=tmp_path)
@@ -93,7 +113,9 @@ def test_v10_12_case_index_and_summary_count_safe_and_held_exports(tmp_path):
 
 
 def test_v10_12_missing_entry_is_held_with_manifest_blocker(tmp_path):
-    entry = certification_index_entry("case-missing-1012", "subject-missing-1012", root=tmp_path)
+    entry = certification_index_entry(
+        "case-missing-1012", "subject-missing-1012", root=tmp_path
+    )
 
     assert entry["status"] == "missing"
     assert entry["safe_to_distribute"] is False
@@ -102,7 +124,13 @@ def test_v10_12_missing_entry_is_held_with_manifest_blocker(tmp_path):
 
 
 def test_v10_12_markdown_contains_distribution_readiness_table(tmp_path):
-    persist_export_pack(_subject("subject-cert-index-md"), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True)
+    persist_export_pack(
+        _subject("subject-cert-index-md"),
+        _evidence(),
+        analyst_reviewed=True,
+        root=tmp_path,
+        audit=True,
+    )
 
     markdown = certification_index_markdown("case-cert-index-1012", root=tmp_path)
 
@@ -119,4 +147,7 @@ def test_v10_12_certification_index_routes_are_registered():
     assert "/api/v1/dossier-builder/v3/certification-index/<case_id>" in routes
     assert "/api/v1/dossier-builder/v3/certification-index/<case_id>/summary" in routes
     assert "/api/v1/dossier-builder/v3/certification-index/<case_id>/markdown" in routes
-    assert "/api/v1/dossier-builder/v3/certification-index/<case_id>/<subject_id>" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/certification-index/<case_id>/<subject_id>"
+        in routes
+    )

@@ -146,9 +146,7 @@ def graph_payload(subject_id):
             "id": graph.id,
             "subject_id": graph.subject_id,
             "label": graph.label,
-            "created_at": graph.created_at.isoformat()
-            if graph.created_at
-            else None,
+            "created_at": graph.created_at.isoformat() if graph.created_at else None,
         },
         "nodes": [
             {

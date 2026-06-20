@@ -42,7 +42,10 @@ def first_endpoint_for(app, route: str) -> str | None:
 
 
 def has_dashboard_fallback(app, route: str) -> bool:
-    return any(rule.rule == route and rule.endpoint.startswith("dashboard.") for rule in app.url_map.iter_rules())
+    return any(
+        rule.rule == route and rule.endpoint.startswith("dashboard.")
+        for rule in app.url_map.iter_rules()
+    )
 
 
 def main() -> int:
@@ -66,28 +69,62 @@ def main() -> int:
 
             response = client.get("/api/v1/product/v10/migration-plan")
             plan = response.get_json() if response.is_json else {}
-            ok = response.status_code == 200 and plan.get("status") == "ready" and plan.get("module_health_status") == "healthy"
-            print(("[PASS]" if ok else "[FAIL]"), "migration plan ready gate", response.status_code)
+            ok = (
+                response.status_code == 200
+                and plan.get("status") == "ready"
+                and plan.get("module_health_status") == "healthy"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "migration plan ready gate",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("migration plan ready gate", response.status_code, response.get_data(as_text=True)[:4000]))
+                failures.append(
+                    (
+                        "migration plan ready gate",
+                        response.status_code,
+                        response.get_data(as_text=True)[:4000],
+                    )
+                )
 
             for route, owner in WAVE1_ROUTES.items():
                 endpoint = first_endpoint_for(app, route)
                 ok = bool(endpoint and endpoint.startswith(owner + "."))
-                print(("[PASS]" if ok else "[FAIL]"), f"endpoint ownership {route}", endpoint)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"endpoint ownership {route}",
+                    endpoint,
+                )
                 if not ok:
-                    failures.append((f"endpoint ownership {route}", 0, f"endpoint={endpoint!r}, expected={owner!r}"))
+                    failures.append(
+                        (
+                            f"endpoint ownership {route}",
+                            0,
+                            f"endpoint={endpoint!r}, expected={owner!r}",
+                        )
+                    )
 
                 ok = has_dashboard_fallback(app, route)
                 print(("[PASS]" if ok else "[FAIL]"), f"dashboard fallback {route}", 0)
                 if not ok:
-                    failures.append((f"dashboard fallback {route}", 0, "missing dashboard fallback"))
+                    failures.append(
+                        (f"dashboard fallback {route}", 0, "missing dashboard fallback")
+                    )
 
                 response = client.get(route)
                 ok = response.status_code == 200
-                print(("[PASS]" if ok else "[FAIL]"), f"GET {route}", response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"), f"GET {route}", response.status_code
+                )
                 if not ok:
-                    failures.append((f"GET {route}", response.status_code, response.get_data(as_text=True)[:2000]))
+                    failures.append(
+                        (
+                            f"GET {route}",
+                            response.status_code,
+                            response.get_data(as_text=True)[:2000],
+                        )
+                    )
 
             response = client.get("/api/v1/product/v10/route-ownership")
             ownership = response.get_json() if response.is_json else {}
@@ -99,19 +136,45 @@ def main() -> int:
             ok = (
                 response.status_code == 200
                 and len(ownership_rows) == len(WAVE1_ROUTES)
-                and all(row.get("ownership") == "blueprint-owned" for row in ownership_rows.values())
-                and all(row.get("wave1_blueprint_owned") is True for row in ownership_rows.values())
+                and all(
+                    row.get("ownership") == "blueprint-owned"
+                    for row in ownership_rows.values()
+                )
+                and all(
+                    row.get("wave1_blueprint_owned") is True
+                    for row in ownership_rows.values()
+                )
             )
-            print(("[PASS]" if ok else "[FAIL]"), "ownership map shows wave1 blueprint-owned", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "ownership map shows wave1 blueprint-owned",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("ownership map shows wave1 blueprint-owned", response.status_code, response.get_data(as_text=True)[:6000]))
+                failures.append(
+                    (
+                        "ownership map shows wave1 blueprint-owned",
+                        response.status_code,
+                        response.get_data(as_text=True)[:6000],
+                    )
+                )
 
             response = client.get("/api/v1/product/v10/module-health")
             health = response.get_json() if response.is_json else {}
             ok = response.status_code == 200 and health.get("status") == "healthy"
-            print(("[PASS]" if ok else "[FAIL]"), "module health remains healthy", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "module health remains healthy",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("module health remains healthy", response.status_code, response.get_data(as_text=True)[:4000]))
+                failures.append(
+                    (
+                        "module health remains healthy",
+                        response.status_code,
+                        response.get_data(as_text=True)[:4000],
+                    )
+                )
 
             if failures:
                 for name, status, body in failures:

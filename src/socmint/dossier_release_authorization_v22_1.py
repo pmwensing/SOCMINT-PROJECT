@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from . import database
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .dossier_release_workspace_v22_0 import build_dossier_release_workspace
 
 SCHEMA = "socmint.dossier_release_authorization.v22_1"
@@ -66,7 +71,8 @@ def authorize_dossier_release(
             "version": VERSION,
             "case_id": case_id,
             "status": "blocked",
-            "blockers": preview.get("blockers") or [{"key": "release_configuration_not_ready"}],
+            "blockers": preview.get("blockers")
+            or [{"key": "release_configuration_not_ready"}],
             "release_preview": preview,
             "transmission_performed": False,
         }

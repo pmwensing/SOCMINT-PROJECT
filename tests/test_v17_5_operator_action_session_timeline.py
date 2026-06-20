@@ -3,7 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from src.socmint.case_delivery_operations_v16_0 import build_case_delivery_operations
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
 from src.socmint.operator_action_session_timeline_v17_5 import (
     DEFAULT_MAX_ENTRIES,
@@ -11,7 +13,9 @@ from src.socmint.operator_action_session_timeline_v17_5 import (
     append_operator_action_history,
     build_operator_action_session_timeline,
 )
-from src.socmint.operator_release_console_routes_v14 import register_operator_release_console_routes_v14
+from src.socmint.operator_release_console_routes_v14 import (
+    register_operator_release_console_routes_v14,
+)
 from src.socmint.unified_operator_workflow_dashboard_routes_v17_1 import (
     register_unified_operator_workflow_dashboard_routes_v17_1,
 )
@@ -27,7 +31,9 @@ def _app():
 
 
 def _ready_payload(case_id="case-v17-5"):
-    payload = ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead")
+    payload = ready_payload(
+        operator="operator", issuer="release-lead", authorizer="delivery-lead"
+    )
     payload["operations"] = build_case_delivery_operations(case_id, payload)
     return payload
 
@@ -52,16 +58,22 @@ def _verification(status="verified"):
         "status": status,
         "verified": status == "verified",
         "blocker_count": 0 if status == "verified" else 1,
-        "next_action": "accept_operator_action_receipt" if status == "verified" else "resolve_operator_action_receipt",
+        "next_action": "accept_operator_action_receipt"
+        if status == "verified"
+        else "resolve_operator_action_receipt",
     }
 
 
 def test_v17_5_builds_reverse_chronological_session_timeline():
     history = []
     history = append_operator_action_history(history, _receipt(1), _verification())
-    history = append_operator_action_history(history, _receipt(2), _verification("blocked"))
+    history = append_operator_action_history(
+        history, _receipt(2), _verification("blocked")
+    )
 
-    timeline = build_operator_action_session_timeline(history, case_id="case-v17-5", operator="operator")
+    timeline = build_operator_action_session_timeline(
+        history, case_id="case-v17-5", operator="operator"
+    )
 
     assert timeline["schema"] == OPERATOR_ACTION_SESSION_TIMELINE_SCHEMA
     assert timeline["entry_count"] == 2
@@ -74,8 +86,12 @@ def test_v17_5_builds_reverse_chronological_session_timeline():
 def test_v17_5_history_deduplicates_and_caps_entries():
     history = []
     for index in range(DEFAULT_MAX_ENTRIES + 5):
-        history = append_operator_action_history(history, _receipt(index), _verification())
-    history = append_operator_action_history(history, _receipt(DEFAULT_MAX_ENTRIES + 4), _verification("blocked"))
+        history = append_operator_action_history(
+            history, _receipt(index), _verification()
+        )
+    history = append_operator_action_history(
+        history, _receipt(DEFAULT_MAX_ENTRIES + 4), _verification("blocked")
+    )
 
     assert len(history) == DEFAULT_MAX_ENTRIES
     assert history[-1]["action_receipt_id"] == f"receipt-{DEFAULT_MAX_ENTRIES + 4}"
@@ -86,11 +102,17 @@ def test_v17_5_history_deduplicates_and_caps_entries():
 def test_v17_5_timeline_filters_case_and_operator():
     history = [
         append_operator_action_history([], _receipt(1), _verification())[0],
-        append_operator_action_history([], _receipt(2, case_id="other-case"), _verification())[0],
-        append_operator_action_history([], _receipt(3, operator="other-operator"), _verification())[0],
+        append_operator_action_history(
+            [], _receipt(2, case_id="other-case"), _verification()
+        )[0],
+        append_operator_action_history(
+            [], _receipt(3, operator="other-operator"), _verification()
+        )[0],
     ]
 
-    timeline = build_operator_action_session_timeline(history, case_id="case-v17-5", operator="operator")
+    timeline = build_operator_action_session_timeline(
+        history, case_id="case-v17-5", operator="operator"
+    )
 
     assert timeline["entry_count"] == 1
     assert timeline["entries"][0]["action_receipt_id"] == "receipt-1"
@@ -131,7 +153,9 @@ def test_v17_5_history_api_returns_current_case_timeline(tmp_path, monkeypatch):
         json={"action": "open_case_delivery", "dashboard_payload": _ready_payload()},
         headers={"X-CSRF-Token": "test-csrf"},
     )
-    response = client.get("/api/v1/operator/workflow-dashboard/case-v17-5/actions/history")
+    response = client.get(
+        "/api/v1/operator/workflow-dashboard/case-v17-5/actions/history"
+    )
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -163,9 +187,13 @@ def test_v17_5_dashboard_api_and_ui_include_session_timeline(tmp_path, monkeypat
 
 
 def test_v17_5_release_note_changelog_and_template_are_present():
-    note = Path("release/V17_5_OPERATOR_ACTION_HISTORY_SESSION_TIMELINE.md").read_text(encoding="utf-8")
+    note = Path("release/V17_5_OPERATOR_ACTION_HISTORY_SESSION_TIMELINE.md").read_text(
+        encoding="utf-8"
+    )
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
-    template = Path("src/socmint/templates/unified_operator_workflow_dashboard.html").read_text(encoding="utf-8")
+    template = Path(
+        "src/socmint/templates/unified_operator_workflow_dashboard.html"
+    ).read_text(encoding="utf-8")
 
     assert "/api/v1/operator/workflow-dashboard/<case_id>/actions/history" in note
     assert "v17.5 Operator Action History / Session Timeline" in changelog

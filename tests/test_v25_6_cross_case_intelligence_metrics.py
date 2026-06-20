@@ -7,9 +7,15 @@ def _candidate_workspace():
     return {
         "counts": {"visible_cases": 4, "source_records": 12, "repeated_patterns": 2},
         "correlations": {
-            "entities": [{"correlation_id": "c1", "case_ids": ["a", "b"], "occurrence_count": 4}],
-            "identifiers": [{"correlation_id": "c2", "case_ids": ["b", "c"], "occurrence_count": 2}],
-            "infrastructure": [{"correlation_id": "c3", "case_ids": ["a", "d"], "occurrence_count": 2}],
+            "entities": [
+                {"correlation_id": "c1", "case_ids": ["a", "b"], "occurrence_count": 4}
+            ],
+            "identifiers": [
+                {"correlation_id": "c2", "case_ids": ["b", "c"], "occurrence_count": 2}
+            ],
+            "infrastructure": [
+                {"correlation_id": "c3", "case_ids": ["a", "d"], "occurrence_count": 2}
+            ],
             "evidence": [],
             "timelines": [],
         },
@@ -20,13 +26,31 @@ def _registry_workspace():
     return {
         "review_histories": {
             "c1": [
-                {"decision": "defer", "reviewer": "alice", "recorded_at": "2026-06-14T10:00:00+00:00"},
-                {"decision": "accept", "reviewer": "alice", "recorded_at": "2026-06-15T10:00:00+00:00"},
+                {
+                    "decision": "defer",
+                    "reviewer": "alice",
+                    "recorded_at": "2026-06-14T10:00:00+00:00",
+                },
+                {
+                    "decision": "accept",
+                    "reviewer": "alice",
+                    "recorded_at": "2026-06-15T10:00:00+00:00",
+                },
             ],
-            "c2": [{"decision": "reject", "reviewer": "bob", "recorded_at": "2026-06-15T11:00:00+00:00"}],
+            "c2": [
+                {
+                    "decision": "reject",
+                    "reviewer": "bob",
+                    "recorded_at": "2026-06-15T11:00:00+00:00",
+                }
+            ],
         },
         "confirmed_links": [
-            {"confirmed_link_id": "l1", "case_ids": ["a", "b"], "source_occurrence_count": 4}
+            {
+                "confirmed_link_id": "l1",
+                "case_ids": ["a", "b"],
+                "source_occurrence_count": 4,
+            }
         ],
     }
 
@@ -46,18 +70,22 @@ def _graph():
 
 
 def test_v25_6_calculates_metrics_and_confidence(monkeypatch):
-    monkeypatch.setattr(service, "build_cross_case_link_impact_analysis", lambda link_id, **kwargs: {
-        "status": "ready",
-        "impact_sha256": "i" * 64,
-        "counts": {
-            "affected_cases": 2,
-            "affected_entities": 1,
-            "evidence_packages": 1,
-            "review_queue_entries": 1,
-            "closure_states": 2,
-            "archive_records": 1,
+    monkeypatch.setattr(
+        service,
+        "build_cross_case_link_impact_analysis",
+        lambda link_id, **kwargs: {
+            "status": "ready",
+            "impact_sha256": "i" * 64,
+            "counts": {
+                "affected_cases": 2,
+                "affected_entities": 1,
+                "evidence_packages": 1,
+                "review_queue_entries": 1,
+                "closure_states": 2,
+                "archive_records": 1,
+            },
         },
-    })
+    )
     result = service.build_cross_case_intelligence_metrics(
         candidate_workspace=_candidate_workspace(),
         registry_workspace=_registry_workspace(),
@@ -68,7 +96,11 @@ def test_v25_6_calculates_metrics_and_confidence(monkeypatch):
     metrics = result["metrics"]
     assert metrics["candidate_volume"]["total"] == 3
     assert metrics["review_dispositions"]["total_reviews"] == 3
-    assert metrics["review_dispositions"]["all_decisions"] == {"accept": 1, "defer": 1, "reject": 1}
+    assert metrics["review_dispositions"]["all_decisions"] == {
+        "accept": 1,
+        "defer": 1,
+        "reject": 1,
+    }
     assert metrics["review_dispositions"]["review_coverage_percent"] == 66.67
     assert metrics["confirmation_conversion"]["candidate_to_confirmed_percent"] == 33.33
     assert metrics["confirmation_conversion"]["accepted_to_registered_percent"] == 100.0
@@ -80,7 +112,10 @@ def test_v25_6_calculates_metrics_and_confidence(monkeypatch):
     assert metrics["impact_breadth"]["average_breadth_score"] == 8.0
     assert metrics["analyst_throughput"]["analyst_count"] == 2
     assert metrics["analyst_throughput"]["analysts"][0]["analyst"] == "alice"
-    assert metrics["confidence_indicators"]["interpretation"] == "operational_indicator_not_probability_or_factual_certainty"
+    assert (
+        metrics["confidence_indicators"]["interpretation"]
+        == "operational_indicator_not_probability_or_factual_certainty"
+    )
     assert len(result["metrics_sha256"]) == 64
     assert result["confidence_is_not_probability"] is True
     assert result["source_records_mutated"] is False
@@ -103,7 +138,11 @@ def test_v25_6_handles_empty_workspace_without_division_errors(monkeypatch):
 
 
 def test_v25_6_metrics_hash_is_deterministic(monkeypatch):
-    monkeypatch.setattr(service, "build_cross_case_link_impact_analysis", lambda *args, **kwargs: {"status": "blocked"})
+    monkeypatch.setattr(
+        service,
+        "build_cross_case_link_impact_analysis",
+        lambda *args, **kwargs: {"status": "blocked"},
+    )
     kwargs = {
         "candidate_workspace": _candidate_workspace(),
         "registry_workspace": _registry_workspace(),

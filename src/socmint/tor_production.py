@@ -32,7 +32,8 @@ def ensure_tor_schema() -> None:
     db.ensure_configured()
     session = db.Session()
     try:
-        session.execute(text("""
+        session.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS hidden_service_status (
                 id INTEGER PRIMARY KEY,
                 service_name VARCHAR(128) NOT NULL UNIQUE,
@@ -48,7 +49,8 @@ def ensure_tor_schema() -> None:
                 created_at DATETIME NOT NULL,
                 updated_at DATETIME NOT NULL
             )
-        """))
+        """)
+        )
         session.commit()
     finally:
         session.close()
@@ -72,7 +74,10 @@ def torrc_snippet(
 
 
 def parse_torrc_text(text_value: str) -> dict[str, Any]:
-    parsed: dict[str, Any] = {"raw_present": bool(text_value), "hidden_service_ports": []}
+    parsed: dict[str, Any] = {
+        "raw_present": bool(text_value),
+        "hidden_service_ports": [],
+    }
     for raw_line in text_value.splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#"):
@@ -96,7 +101,9 @@ def parse_torrc_text(text_value: str) -> dict[str, Any]:
                     "target": target,
                     "target_host": target_host or target,
                     "target_port": target_port if target_port else None,
-                    "shared_namespace_localhost_mapping": target.startswith("127.0.0.1:"),
+                    "shared_namespace_localhost_mapping": target.startswith(
+                        "127.0.0.1:"
+                    ),
                 }
             )
     return parsed
@@ -107,7 +114,12 @@ def read_torrc(path: str = "/etc/tor/torrc") -> dict[str, Any]:
     if not torrc.exists():
         return {"path": path, "exists": False, "parsed": parse_torrc_text("")}
     text_value = torrc.read_text(errors="replace")
-    return {"path": path, "exists": True, "text": text_value, "parsed": parse_torrc_text(text_value)}
+    return {
+        "path": path,
+        "exists": True,
+        "text": text_value,
+        "parsed": parse_torrc_text(text_value),
+    }
 
 
 def _socket_check(host: str, port: int, timeout: float = 2.0) -> dict[str, Any]:
@@ -134,7 +146,13 @@ def _http_check(url: str, timeout: float = 5.0) -> dict[str, Any]:
                 "error": None,
             }
     except Exception as exc:
-        return {"url": url, "ok": False, "status": None, "sample": "", "error": str(exc)}
+        return {
+            "url": url,
+            "ok": False,
+            "status": None,
+            "sample": "",
+            "error": str(exc),
+        }
 
 
 def tor_hidden_service_diagnostics(
@@ -154,7 +172,9 @@ def tor_hidden_service_diagnostics(
     app_host = app_host or os.getenv("SOCMINT_TOR_TARGET_HOST") or DEFAULT_APP_HOST
     app_port = int(app_port or os.getenv("SOCMINT_TOR_TARGET_PORT") or DEFAULT_APP_PORT)
     torrc_path = torrc_path or os.getenv("SOCMINT_TORRC_PATH") or "/etc/tor/torrc"
-    service_dir = service_dir or os.getenv("SOCMINT_TOR_SERVICE_DIR") or "/var/lib/tor/socmint"
+    service_dir = (
+        service_dir or os.getenv("SOCMINT_TOR_SERVICE_DIR") or "/var/lib/tor/socmint"
+    )
     torrc = read_torrc(torrc_path)
     service = deployment_check(service_dir=service_dir)
     socket_result = _socket_check(app_host, app_port)
@@ -167,16 +187,31 @@ def tor_hidden_service_diagnostics(
         and str(row.get("target_port")) == str(app_port)
         for row in hidden_ports
     )
-    localhost_mapping = any(row.get("shared_namespace_localhost_mapping") for row in hidden_ports)
-    docker_tor = os.getenv("SOCMINT_DOCKER_TOR", "").strip().lower() in {"1", "true", "yes", "on"}
-    shared_namespace_expected = docker_tor or (app_host == "127.0.0.1" and localhost_mapping)
+    localhost_mapping = any(
+        row.get("shared_namespace_localhost_mapping") for row in hidden_ports
+    )
+    docker_tor = os.getenv("SOCMINT_DOCKER_TOR", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    shared_namespace_expected = docker_tor or (
+        app_host == "127.0.0.1" and localhost_mapping
+    )
     checks = {
         "torrc_available_to_process": bool(torrc.get("exists")),
-        "hidden_service_dir_present": bool(service.get("checks", {}).get("service_dir_present")),
+        "hidden_service_dir_present": bool(
+            service.get("checks", {}).get("service_dir_present")
+        ),
         "hostname_present": bool(service.get("checks", {}).get("hostname_present")),
-        "hostname_format_valid": bool(service.get("checks", {}).get("hostname_format_valid")),
+        "hostname_format_valid": bool(
+            service.get("checks", {}).get("hostname_format_valid")
+        ),
         "hidden_service_port_maps_to_app": bool(mapping_ok),
-        "localhost_mapping_valid_for_shared_namespace": bool(shared_namespace_expected and localhost_mapping),
+        "localhost_mapping_valid_for_shared_namespace": bool(
+            shared_namespace_expected and localhost_mapping
+        ),
         "app_socket_listening": bool(socket_result.get("listening")),
         "readyz_http_ok": bool(readyz.get("ok") and readyz.get("status") == 200),
         "dashboard_http_ok": bool(dashboard.get("ok")),
@@ -184,7 +219,9 @@ def tor_hidden_service_diagnostics(
     passed = all(checks.values())
     recommendation = "pass"
     if not mapping_ok and localhost_mapping and shared_namespace_expected:
-        recommendation = "do_not_change_127_0_0_1_mapping_shared_network_namespace_detected"
+        recommendation = (
+            "do_not_change_127_0_0_1_mapping_shared_network_namespace_detected"
+        )
     elif not mapping_ok:
         recommendation = f"verify HiddenServicePort 80 {app_host}:{app_port} or the Docker network namespace model"
     elif not checks["readyz_http_ok"]:
@@ -201,7 +238,11 @@ def tor_hidden_service_diagnostics(
             "expected_shared_network_namespace": shared_namespace_expected,
             "why_127_0_0_1_can_be_correct": "When app uses network_mode: service:tor, 127.0.0.1 inside Tor's hidden-service target is the shared app/Tor namespace, not the host.",
         },
-        "target": {"host": app_host, "port": app_port, "readyz_url": f"http://{app_host}:{app_port}/readyz"},
+        "target": {
+            "host": app_host,
+            "port": app_port,
+            "readyz_url": f"http://{app_host}:{app_port}/readyz",
+        },
         "torrc": torrc,
         "hidden_service": service,
         "socket": socket_result,
@@ -230,11 +271,15 @@ def deployment_check(
         onion_hostname = hostname_path.read_text().strip()
         checks["hostname_present"] = bool(onion_hostname)
     if onion_hostname:
-        checks["hostname_format_valid"] = onion_hostname.endswith(".onion") and len(onion_hostname) >= 22
+        checks["hostname_format_valid"] = (
+            onion_hostname.endswith(".onion") and len(onion_hostname) >= 22
+        )
     private_key_path = path / "hs_ed25519_secret_key"
     if private_key_path.exists():
         checks["private_key_detected_not_read"] = True
-    passed = all(value for key, value in checks.items() if key != "private_key_detected_not_read")
+    passed = all(
+        value for key, value in checks.items() if key != "private_key_detected_not_read"
+    )
     return {
         "schema": TOR_SCHEMA,
         "passed": bool(passed),
@@ -257,7 +302,13 @@ def upsert_hidden_service_status(
 ) -> dict[str, Any]:
     ensure_tor_schema()
     check = deployment_check(service_dir=service_dir, onion_hostname=onion_hostname)
-    status = "ready" if enabled and check["passed"] else "disabled" if not enabled else "needs_attention"
+    status = (
+        "ready"
+        if enabled and check["passed"]
+        else "disabled"
+        if not enabled
+        else "needs_attention"
+    )
     now = _now()
     session = db.Session()
     try:
@@ -309,10 +360,16 @@ def hidden_service_status(service_name: str = "socmint") -> dict[str, Any]:
     ensure_tor_schema()
     session = db.Session()
     try:
-        row = session.execute(
-            text("SELECT * FROM hidden_service_status WHERE service_name = :service_name"),
-            {"service_name": service_name},
-        ).mappings().first()
+        row = (
+            session.execute(
+                text(
+                    "SELECT * FROM hidden_service_status WHERE service_name = :service_name"
+                ),
+                {"service_name": service_name},
+            )
+            .mappings()
+            .first()
+        )
     finally:
         session.close()
     if not row:
@@ -354,7 +411,9 @@ def production_env_template() -> str:
 
 
 def production_readiness_report(service_dir: str | None = None) -> dict[str, Any]:
-    service_dir = service_dir or os.getenv("SOCMINT_TOR_SERVICE_DIR") or DEFAULT_SERVICE_DIR
+    service_dir = (
+        service_dir or os.getenv("SOCMINT_TOR_SERVICE_DIR") or DEFAULT_SERVICE_DIR
+    )
     check = deployment_check(service_dir=service_dir)
     return {
         "schema": TOR_SCHEMA,

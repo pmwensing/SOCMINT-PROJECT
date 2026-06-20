@@ -13,7 +13,9 @@ def now_iso() -> str:
 
 def run(name: str, cmd: list[str], timeout: int = 360) -> dict:
     print(f"[+] {name}: {' '.join(cmd)}")
-    proc = subprocess.run(cmd, text=True, capture_output=True, timeout=timeout, check=False)
+    proc = subprocess.run(
+        cmd, text=True, capture_output=True, timeout=timeout, check=False
+    )
     ok = proc.returncode == 0
     print(("[PASS] " if ok else "[FAIL] ") + name)
     if not ok:
@@ -37,7 +39,10 @@ def main() -> int:
     checks = [
         run("compileall-src", [sys.executable, "-m", "compileall", "src/socmint"]),
         run("final-gate-smoke", ["make", "product-final-gate-smoke"]),
-        run("final-release-smoke-v9-9-2", [sys.executable, "scripts/product_final_release_smoke_v9_9_2.py"]),
+        run(
+            "final-release-smoke-v9-9-2",
+            [sys.executable, "scripts/product_final_release_smoke_v9_9_2.py"],
+        ),
     ]
 
     failed = [c for c in checks if not c["ok"]]
@@ -50,7 +55,9 @@ def main() -> int:
         "summary": f"{len(checks) - len(failed)}/{len(checks)} checks passed.",
         "checks": checks,
         "failed": [c["name"] for c in failed],
-        "next_action": "Merge and tag v9.9.2 final release publisher" if status == "pass" else "Fix final release publisher failures before merge.",
+        "next_action": "Merge and tag v9.9.2 final release publisher"
+        if status == "pass"
+        else "Fix final release publisher failures before merge.",
     }
 
     json_path = Path("release/V9_9_2_FINAL_RELEASE_HARDENING_REPORT.json")

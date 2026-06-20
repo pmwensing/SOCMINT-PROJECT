@@ -16,7 +16,9 @@ ALLOWED_TARGET_TYPES = {"email", "phone", "username", "name", "domain", "url", "
 
 
 def _stable_hash(value: Any) -> str:
-    return hashlib.sha256(json.dumps(value, sort_keys=True, default=str).encode()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, default=str).encode()
+    ).hexdigest()
 
 
 def spec_to_manifest(name: str, spec: ConnectorSpec) -> dict[str, Any]:
@@ -69,7 +71,9 @@ def validate_connector_spec(manifest: dict[str, Any]) -> dict[str, Any]:
 
 
 def registered_connector_manifests() -> dict[str, Any]:
-    manifests = [spec_to_manifest(name, spec) for name, spec in sorted(CONNECTORS.items())]
+    manifests = [
+        spec_to_manifest(name, spec) for name, spec in sorted(CONNECTORS.items())
+    ]
     return {
         "schema": SDK_SCHEMA,
         "connectors": manifests,
@@ -113,7 +117,9 @@ def connector_marketplace_sdk_payload() -> dict[str, Any]:
             {
                 **item,
                 "sdk_validation": validate_connector_spec(item),
-                "listing_state": "publishable" if validate_connector_spec(item)["valid"] else "needs_repair",
+                "listing_state": "publishable"
+                if validate_connector_spec(item)["valid"]
+                else "needs_repair",
             }
             for item in raw
         ],

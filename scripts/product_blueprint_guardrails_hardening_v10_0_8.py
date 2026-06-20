@@ -13,7 +13,9 @@ def now_iso() -> str:
 
 def run(name: str, cmd: list[str], timeout: int = 720) -> dict:
     print(f"[+] {name}: {' '.join(cmd)}")
-    proc = subprocess.run(cmd, text=True, capture_output=True, timeout=timeout, check=False)
+    proc = subprocess.run(
+        cmd, text=True, capture_output=True, timeout=timeout, check=False
+    )
     ok = proc.returncode == 0
     print(("[PASS] " if ok else "[FAIL] ") + name)
     if not ok:
@@ -37,7 +39,10 @@ def main() -> int:
     checks = [
         run("compileall-src", [sys.executable, "-m", "compileall", "src/socmint"]),
         run("blueprint-wave1-smoke", ["make", "product-blueprint-wave1-smoke"]),
-        run("blueprint-guardrails-smoke-v10-0-8", [sys.executable, "scripts/product_blueprint_guardrails_smoke_v10_0_8.py"]),
+        run(
+            "blueprint-guardrails-smoke-v10-0-8",
+            [sys.executable, "scripts/product_blueprint_guardrails_smoke_v10_0_8.py"],
+        ),
     ]
 
     failed = [check for check in checks if not check["ok"]]
@@ -50,12 +55,16 @@ def main() -> int:
         "summary": f"{len(checks) - len(failed)}/{len(checks)} checks passed.",
         "checks": checks,
         "failed": [check["name"] for check in failed],
-        "next_action": "Merge and tag v10.0.8 blueprint guardrails" if status == "pass" else "Fix v10.0.8 blueprint guardrail failures before merge.",
+        "next_action": "Merge and tag v10.0.8 blueprint guardrails"
+        if status == "pass"
+        else "Fix v10.0.8 blueprint guardrail failures before merge.",
     }
 
     json_path = Path("release/V10_0_8_BLUEPRINT_GUARDRAILS_HARDENING_REPORT.json")
     md_path = Path("release/V10_0_8_BLUEPRINT_GUARDRAILS_HARDENING_REPORT.md")
-    storage_path = Path("storage/product_qa/V10_0_8_BLUEPRINT_GUARDRAILS_HARDENING_REPORT.json")
+    storage_path = Path(
+        "storage/product_qa/V10_0_8_BLUEPRINT_GUARDRAILS_HARDENING_REPORT.json"
+    )
 
     json_path.write_text(json.dumps(report, indent=2))
     storage_path.write_text(json.dumps(report, indent=2))

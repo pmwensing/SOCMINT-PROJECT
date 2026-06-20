@@ -54,9 +54,7 @@ def _candidate_from_observation(observation) -> dict[str, Any] | None:
         account_value = profile_url
     else:
         profile_url = (
-            context.get("profile_url")
-            or context.get("url")
-            or finding.get("url")
+            context.get("profile_url") or context.get("url") or finding.get("url")
         )
         platform = value
         account_value = str(context.get("target") or finding.get("target") or value)

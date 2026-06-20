@@ -42,6 +42,7 @@ SCOPE_GATES = [
     "No production secret, default credential, or unsafe target may be introduced.",
 ]
 
+
 @dataclass(frozen=True)
 class ScopeFinding:
     check: str

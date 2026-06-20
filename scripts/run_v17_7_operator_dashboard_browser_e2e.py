@@ -243,7 +243,9 @@ def main() -> int:
     try:
         report = run_browser_validation(args.driver, Path(args.output))
     except WebDriverException as exc:
-        print(json.dumps({"status": "driver_unavailable", "detail": str(exc)}, indent=2))
+        print(
+            json.dumps({"status": "driver_unavailable", "detail": str(exc)}, indent=2)
+        )
         return 2
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if report["status"] == "passed" else 1

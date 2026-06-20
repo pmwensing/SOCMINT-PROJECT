@@ -44,7 +44,9 @@ V9_COMPATIBILITY_ROUTES = [
 def _route_inventory() -> list[dict[str, Any]]:
     routes: list[dict[str, Any]] = []
     for rule in sorted(current_app.url_map.iter_rules(), key=lambda item: item.rule):
-        methods = sorted(method for method in rule.methods if method not in {"HEAD", "OPTIONS"})
+        methods = sorted(
+            method for method in rule.methods if method not in {"HEAD", "OPTIONS"}
+        )
         routes.append(
             {
                 "rule": rule.rule,
@@ -90,7 +92,11 @@ def _v10_architecture_manifest() -> dict[str, Any]:
                 "v10.0.1 extracts v9.9.0-v9.9.4 final release flow routes into product_release_flow.py while preserving original URLs.",
             ],
             "new_blueprint": "product_v10.product_v10_bp",
-            "extracted_modules": ["product_release_flow.product_release_flow_manifest", "product_post_release.product_post_release_manifest", "product_artifacts.product_artifacts_manifest"],
+            "extracted_modules": [
+                "product_release_flow.product_release_flow_manifest",
+                "product_post_release.product_post_release_manifest",
+                "product_artifacts.product_artifacts_manifest",
+            ],
             "extracted_blueprints": ["product_release_flow.product_release_flow_bp"],
             "compatibility_policy": "All v9.9.x final release endpoints must remain routable until v10 replacement routes are stable.",
         },
@@ -139,10 +145,14 @@ def write_v10_architecture_manifest() -> dict[str, Any]:
             "",
         ]
     )
-    rows.extend([f"- `{route}`" for route in manifest["compatibility"]["missing"]] or ["- None"])
+    rows.extend(
+        [f"- `{route}`" for route in manifest["compatibility"]["missing"]] or ["- None"]
+    )
     rows.extend(["", "## v9.9.x Compatibility Routes", ""])
     for item in manifest["compatibility"]["routes"]:
-        rows.append(f"- {'PRESENT' if item['present'] else 'MISSING'} `{item['route']}`")
+        rows.append(
+            f"- {'PRESENT' if item['present'] else 'MISSING'} `{item['route']}`"
+        )
 
     md_path.write_text("\n".join(rows) + "\n")
     manifest["artifacts_written"] = {

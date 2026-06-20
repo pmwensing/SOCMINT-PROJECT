@@ -10,7 +10,9 @@ from src.socmint.correlation_scope_db_backfill_v13_35 import (
 
 
 def _sqlite_tmp(tmp_path):
-    db.configure_database(f"sqlite:///{tmp_path / 'socmint-v13-35d.db'}", create_schema=True)
+    db.configure_database(
+        f"sqlite:///{tmp_path / 'socmint-v13-35d.db'}", create_schema=True
+    )
 
 
 def test_v13_35d_models_have_correlation_scope_columns():
@@ -42,7 +44,9 @@ def test_v13_35d_existing_db_gets_scope_columns_when_auto_create_disabled(tmp_pa
 
     db.configure_database(f"sqlite:///{db_path}", create_schema=False)
 
-    columns = {column["name"] for column in db.inspect(db.engine).get_columns("spine_seeds")}
+    columns = {
+        column["name"] for column in db.inspect(db.engine).get_columns("spine_seeds")
+    }
     assert "correlation_scope_id" in columns
     assert "correlation_scope_state" in columns
     assert "correlation_scope_reason" in columns
@@ -155,7 +159,9 @@ def test_v13_35d_routes_are_auth_guarded_and_idempotent(tmp_path):
     register_correlation_scope_db_backfill_routes_v13_35(app)
 
     client = app.test_client()
-    assert client.get("/api/v1/audit/correlation-scope/v13.35/db-proof").status_code == 302
+    assert (
+        client.get("/api/v1/audit/correlation-scope/v13.35/db-proof").status_code == 302
+    )
 
     with client.session_transaction() as sess:
         sess["user"] = "viewer"

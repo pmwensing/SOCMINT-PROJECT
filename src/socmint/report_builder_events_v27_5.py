@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from . import database
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 
 SCHEMA = "socmint.report_builder_export_packages.v27_5"
 VERSION = "v27.5.0"
@@ -58,20 +63,36 @@ def current_reports() -> list[dict[str, Any]]:
         if event.get("event_type") in {"created", "revised"} and report_id:
             previous = str(event.get("supersedes_report_id") or "")
             if previous in reports:
-                reports[previous] = {**reports[previous], "report_status": "superseded", "superseded_by_report_id": report_id}
+                reports[previous] = {
+                    **reports[previous],
+                    "report_status": "superseded",
+                    "superseded_by_report_id": report_id,
+                }
             reports[report_id] = {**event, "report_status": "active"}
-    return sorted(reports.values(), key=lambda item: (str(item.get("owner") or ""), str(item.get("name") or "")))
+    return sorted(
+        reports.values(),
+        key=lambda item: (str(item.get("owner") or ""), str(item.get("name") or "")),
+    )
 
 
 def visible_reports(user: str) -> list[dict[str, Any]]:
-    return [item for item in current_reports() if item.get("owner") == user or item.get("visibility") == "shared"]
+    return [
+        item
+        for item in current_reports()
+        if item.get("owner") == user or item.get("visibility") == "shared"
+    ]
 
 
 def find_report(report_id: str, user: str) -> dict[str, Any] | None:
-    return next((item for item in visible_reports(user) if item.get("report_id") == report_id), None)
+    return next(
+        (item for item in visible_reports(user) if item.get("report_id") == report_id),
+        None,
+    )
 
 
-def _record(action: str, event: dict[str, Any], actor: str, ip: str | None) -> dict[str, Any]:
+def _record(
+    action: str, event: dict[str, Any], actor: str, ip: str | None
+) -> dict[str, Any]:
     _ensure_storage()
     session = database.Session()
     try:
@@ -85,7 +106,12 @@ def _record(action: str, event: dict[str, Any], actor: str, ip: str | None) -> d
         session.add(row)
         session.commit()
         session.refresh(row)
-        return {**event, "action_record_id": row.id, "recorded_by": actor, "recorded_at": row.created_at.isoformat() if row.created_at else None}
+        return {
+            **event,
+            "action_record_id": row.id,
+            "recorded_by": actor,
+            "recorded_at": row.created_at.isoformat() if row.created_at else None,
+        }
     finally:
         session.close()
 
@@ -107,15 +133,17 @@ def _normalize_sections(sections: Any) -> list[dict[str, Any]] | None:
             return None
         if section_type == "text" and not text:
             return None
-        normalized.append({
-            "position": index,
-            "section_type": section_type,
-            "title": title,
-            "source_id": source_id or None,
-            "text": text or None,
-            "include_summary": item.get("include_summary") is not False,
-            "include_results": item.get("include_results") is not False,
-        })
+        normalized.append(
+            {
+                "position": index,
+                "section_type": section_type,
+                "title": title,
+                "source_id": source_id or None,
+                "text": text or None,
+                "include_summary": item.get("include_summary") is not False,
+                "include_results": item.get("include_results") is not False,
+            }
+        )
     return normalized
 
 
@@ -131,76 +159,152 @@ def _duplicate(name: str, owner: str, exclude_id: str | None = None) -> bool:
 
 
 def create_report_definition(
-    *, name: str, owner: str, description: str, visibility: str,
-    sections: Any, export_formats: Any, confirmed: bool,
+    *,
+    name: str,
+    owner: str,
+    description: str,
+    visibility: str,
+    sections: Any,
+    export_formats: Any,
+    confirmed: bool,
     ip_address: str | None = None,
 ) -> dict[str, Any]:
     name = str(name or "").strip()
     owner = str(owner or "").strip()
     visibility = str(visibility or "private").strip()
-    formats = sorted({str(item) for item in (export_formats or []) if str(item) in EXPORT_FORMATS})
+    formats = sorted(
+        {str(item) for item in (export_formats or []) if str(item) in EXPORT_FORMATS}
+    )
     normalized = _normalize_sections(sections)
-    if confirmed is not True: return blocked("explicit_report_confirmation_required")
-    if not name: return blocked("report_name_required")
-    if not owner: return blocked("report_owner_required")
-    if visibility not in VISIBILITIES: return blocked("report_visibility_invalid")
-    if not normalized: return blocked("valid_report_sections_required")
-    if not formats: return blocked("report_export_format_required")
-    if _duplicate(name, owner): return blocked("active_report_name_must_be_unique_per_owner")
-    definition = {"description": str(description or "").strip(), "sections": normalized, "export_formats": formats}
+    if confirmed is not True:
+        return blocked("explicit_report_confirmation_required")
+    if not name:
+        return blocked("report_name_required")
+    if not owner:
+        return blocked("report_owner_required")
+    if visibility not in VISIBILITIES:
+        return blocked("report_visibility_invalid")
+    if not normalized:
+        return blocked("valid_report_sections_required")
+    if not formats:
+        return blocked("report_export_format_required")
+    if _duplicate(name, owner):
+        return blocked("active_report_name_must_be_unique_per_owner")
+    definition = {
+        "description": str(description or "").strip(),
+        "sections": normalized,
+        "export_formats": formats,
+    }
     content = {
-        "event_type": "created", "name": name, "owner": owner, "visibility": visibility,
-        "definition": definition, "definition_sha256": _sha(definition), "revision": 1,
+        "event_type": "created",
+        "name": name,
+        "owner": owner,
+        "visibility": visibility,
+        "definition": definition,
+        "definition_sha256": _sha(definition),
+        "revision": 1,
         "supersedes_report_id": None,
     }
     digest = _sha(content)
     event = {
-        "schema": SCHEMA, "version": VERSION, **content,
+        "schema": SCHEMA,
+        "version": VERSION,
+        **content,
         "report_id": f"report-{digest[:24]}",
         "report_event_id": f"report-event-{digest[:24]}",
         "report_event_sha256": digest,
-        "source_records_mutated": False, "case_access_scope_changed": False,
+        "source_records_mutated": False,
+        "case_access_scope_changed": False,
         "report_grants_access": False,
     }
-    return {**_record(CREATE_ACTION, event, owner, ip_address), "status": "report_definition_created", "next_action": "generate_report_package"}
+    return {
+        **_record(CREATE_ACTION, event, owner, ip_address),
+        "status": "report_definition_created",
+        "next_action": "generate_report_package",
+    }
 
 
 def revise_report_definition(
-    report_id: str, *, actor: str, name: str, description: str, visibility: str,
-    sections: Any, export_formats: Any, reason: str, confirmed: bool,
+    report_id: str,
+    *,
+    actor: str,
+    name: str,
+    description: str,
+    visibility: str,
+    sections: Any,
+    export_formats: Any,
+    reason: str,
+    confirmed: bool,
     ip_address: str | None = None,
 ) -> dict[str, Any]:
     previous = find_report(report_id, actor)
-    if previous is None: return blocked("report_definition_required")
-    if previous.get("owner") != actor: return blocked("report_owner_required")
-    if previous.get("report_status") != "active": return blocked("active_report_required")
-    if confirmed is not True: return blocked("explicit_report_revision_confirmation_required")
+    if previous is None:
+        return blocked("report_definition_required")
+    if previous.get("owner") != actor:
+        return blocked("report_owner_required")
+    if previous.get("report_status") != "active":
+        return blocked("active_report_required")
+    if confirmed is not True:
+        return blocked("explicit_report_revision_confirmation_required")
     reason = str(reason or "").strip()
-    if not reason: return blocked("report_revision_reason_required")
+    if not reason:
+        return blocked("report_revision_reason_required")
     name = str(name or "").strip()
     visibility = str(visibility or "private").strip()
-    formats = sorted({str(item) for item in (export_formats or []) if str(item) in EXPORT_FORMATS})
+    formats = sorted(
+        {str(item) for item in (export_formats or []) if str(item) in EXPORT_FORMATS}
+    )
     normalized = _normalize_sections(sections)
-    if not name: return blocked("report_name_required")
-    if visibility not in VISIBILITIES: return blocked("report_visibility_invalid")
-    if not normalized: return blocked("valid_report_sections_required")
-    if not formats: return blocked("report_export_format_required")
-    if _duplicate(name, actor, report_id): return blocked("active_report_name_must_be_unique_per_owner")
-    definition = {"description": str(description or "").strip(), "sections": normalized, "export_formats": formats}
-    binding = {"report_id": report_id, "report_event_id": previous.get("report_event_id"), "report_event_sha256": previous.get("report_event_sha256"), "definition_sha256": previous.get("definition_sha256"), "revision": previous.get("revision")}
+    if not name:
+        return blocked("report_name_required")
+    if visibility not in VISIBILITIES:
+        return blocked("report_visibility_invalid")
+    if not normalized:
+        return blocked("valid_report_sections_required")
+    if not formats:
+        return blocked("report_export_format_required")
+    if _duplicate(name, actor, report_id):
+        return blocked("active_report_name_must_be_unique_per_owner")
+    definition = {
+        "description": str(description or "").strip(),
+        "sections": normalized,
+        "export_formats": formats,
+    }
+    binding = {
+        "report_id": report_id,
+        "report_event_id": previous.get("report_event_id"),
+        "report_event_sha256": previous.get("report_event_sha256"),
+        "definition_sha256": previous.get("definition_sha256"),
+        "revision": previous.get("revision"),
+    }
     content = {
-        "event_type": "revised", "name": name, "owner": actor, "visibility": visibility,
-        "definition": definition, "definition_sha256": _sha(definition),
-        "revision": int(previous.get("revision") or 1) + 1, "reason": reason,
-        "supersedes_report_id": report_id, "previous_report_binding": binding,
+        "event_type": "revised",
+        "name": name,
+        "owner": actor,
+        "visibility": visibility,
+        "definition": definition,
+        "definition_sha256": _sha(definition),
+        "revision": int(previous.get("revision") or 1) + 1,
+        "reason": reason,
+        "supersedes_report_id": report_id,
+        "previous_report_binding": binding,
         "previous_report_binding_sha256": _sha(binding),
     }
     digest = _sha(content)
     event = {
-        "schema": SCHEMA, "version": VERSION, **content,
-        "report_id": f"report-{digest[:24]}", "report_event_id": f"report-event-{digest[:24]}",
-        "report_event_sha256": digest, "source_records_mutated": False,
-        "prior_report_mutated": False, "case_access_scope_changed": False,
+        "schema": SCHEMA,
+        "version": VERSION,
+        **content,
+        "report_id": f"report-{digest[:24]}",
+        "report_event_id": f"report-event-{digest[:24]}",
+        "report_event_sha256": digest,
+        "source_records_mutated": False,
+        "prior_report_mutated": False,
+        "case_access_scope_changed": False,
         "report_grants_access": False,
     }
-    return {**_record(REVISE_ACTION, event, actor, ip_address), "status": "report_definition_revised", "next_action": "generate_report_package"}
+    return {
+        **_record(REVISE_ACTION, event, actor, ip_address),
+        "status": "report_definition_revised",
+        "next_action": "generate_report_package",
+    }

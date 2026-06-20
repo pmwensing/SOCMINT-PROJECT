@@ -19,23 +19,29 @@ def _setup(tmp_path, monkeypatch, decision=None):
     url = f"sqlite:///{tmp_path / 'app.db'}"
     monkeypatch.setenv("DATABASE_URL", url)
     database.configure_database(url)
-    monkeypatch.setattr(service, "latest_supervisor_closure_decision", lambda case_id: decision)
-    monkeypatch.setattr(service, "_retention_policies", lambda: [
-        {
-            "policy_id": "standard_case_retention",
-            "display_name": "Standard case retention",
-            "retention_years": 7,
-            "archive_class": "standard",
-            "description": "Seven-year retention.",
-        },
-        {
-            "policy_id": "indefinite_legal_hold",
-            "display_name": "Indefinite legal hold",
-            "retention_years": None,
-            "archive_class": "legal_hold",
-            "description": "Hold until released.",
-        },
-    ])
+    monkeypatch.setattr(
+        service, "latest_supervisor_closure_decision", lambda case_id: decision
+    )
+    monkeypatch.setattr(
+        service,
+        "_retention_policies",
+        lambda: [
+            {
+                "policy_id": "standard_case_retention",
+                "display_name": "Standard case retention",
+                "retention_years": 7,
+                "archive_class": "standard",
+                "description": "Seven-year retention.",
+            },
+            {
+                "policy_id": "indefinite_legal_hold",
+                "display_name": "Indefinite legal hold",
+                "retention_years": None,
+                "archive_class": "legal_hold",
+                "description": "Hold until released.",
+            },
+        ],
+    )
 
 
 def test_v23_3_records_catalog_validated_assignment(tmp_path, monkeypatch):
@@ -76,7 +82,9 @@ def test_v23_3_requires_close_and_valid_catalog_policy(tmp_path, monkeypatch):
     hold = _closed_decision()
     hold["decision"] = "hold"
     hold["case_closed"] = False
-    monkeypatch.setattr(service, "latest_supervisor_closure_decision", lambda case_id: hold)
+    monkeypatch.setattr(
+        service, "latest_supervisor_closure_decision", lambda case_id: hold
+    )
     blocked = service.assign_retention_policy(
         "case-alpha",
         policy_id="standard_case_retention",
@@ -85,7 +93,11 @@ def test_v23_3_requires_close_and_valid_catalog_policy(tmp_path, monkeypatch):
     )
     assert blocked["blockers"][0]["key"] == "closed_supervisor_decision_required"
 
-    monkeypatch.setattr(service, "latest_supervisor_closure_decision", lambda case_id: _closed_decision())
+    monkeypatch.setattr(
+        service,
+        "latest_supervisor_closure_decision",
+        lambda case_id: _closed_decision(),
+    )
     invalid = service.assign_retention_policy(
         "case-alpha",
         policy_id="unknown-policy",

@@ -5,15 +5,31 @@ import json
 import zipfile
 from copy import deepcopy
 
-from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import build_handoff_index
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import build_handoff_export_bundle
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import build_handoff_export_bundle_files
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import build_handoff_export_zip
+from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    build_handoff_index,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    build_handoff_export_bundle,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    build_handoff_export_bundle_files,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    build_handoff_export_zip,
+)
 from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import canonical_json
-from socmint.dossier_finalization_handoff_export_verify_v7_5_9 import summarize_handoff_export_verification
-from socmint.dossier_finalization_handoff_export_verify_v7_5_9 import verify_handoff_export_bundle
-from socmint.dossier_finalization_handoff_export_verify_v7_5_9 import verify_handoff_export_files
-from socmint.dossier_finalization_handoff_export_verify_v7_5_9 import verify_handoff_export_zip
+from socmint.dossier_finalization_handoff_export_verify_v7_5_9 import (
+    summarize_handoff_export_verification,
+)
+from socmint.dossier_finalization_handoff_export_verify_v7_5_9 import (
+    verify_handoff_export_bundle,
+)
+from socmint.dossier_finalization_handoff_export_verify_v7_5_9 import (
+    verify_handoff_export_files,
+)
+from socmint.dossier_finalization_handoff_export_verify_v7_5_9 import (
+    verify_handoff_export_zip,
+)
 
 
 def verified_report():
@@ -29,8 +45,19 @@ def verified_report():
         "present_files": ["handoff_index.json", "manifest.json"],
         "missing_files": [],
         "unexpected_files": [],
-        "manifest": {"files": [{"path": "handoff_index.json", "content_type": "application/json", "size_bytes": 123, "sha256": "a" * 64}]},
-        "file_results": [{"path": "handoff_index.json", "hash_match": True, "size_match": True}],
+        "manifest": {
+            "files": [
+                {
+                    "path": "handoff_index.json",
+                    "content_type": "application/json",
+                    "size_bytes": 123,
+                    "sha256": "a" * 64,
+                }
+            ]
+        },
+        "file_results": [
+            {"path": "handoff_index.json", "hash_match": True, "size_match": True}
+        ],
         "failures": [],
         "warnings": [],
         "summary": {"status": "verified", "verified": True},
@@ -39,7 +66,15 @@ def verified_report():
 
 def failed_report():
     report = verified_report()
-    report.update({"status": "failed", "verified": False, "failure_count": 1, "certificate_status": "failed", "certificate_valid": False})
+    report.update(
+        {
+            "status": "failed",
+            "verified": False,
+            "failure_count": 1,
+            "certificate_status": "failed",
+            "certificate_valid": False,
+        }
+    )
     report["failures"] = [
         {
             "severity": "fail",
@@ -53,7 +88,9 @@ def failed_report():
 
 
 def archive_bundle():
-    index = build_handoff_index(verified_report(), bundle_name="bundle-a", operator="analyst")
+    index = build_handoff_index(
+        verified_report(), bundle_name="bundle-a", operator="analyst"
+    )
     return build_handoff_export_bundle(index, bundle_name="handoff-export")
 
 
@@ -69,7 +106,10 @@ def archive_files():
 def test_verifies_archive_ready_v758_bundle_as_verified():
     report = verify_handoff_export_bundle(archive_bundle())
 
-    assert report["schema"] == "socmint.v7_5_9.dossier_finalization_handoff_export_verification"
+    assert (
+        report["schema"]
+        == "socmint.v7_5_9.dossier_finalization_handoff_export_verification"
+    )
     assert report["status"] == "verified"
     assert report["verified"] is True
     assert report["failure_count"] == 0
@@ -90,7 +130,10 @@ def test_fails_when_manifest_json_is_missing():
     report = verify_handoff_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "missing_required_file" and item["path"] == "manifest.json" for item in report["failures"])
+    assert any(
+        item["code"] == "missing_required_file" and item["path"] == "manifest.json"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_required_file_is_missing():
@@ -100,7 +143,10 @@ def test_fails_when_required_file_is_missing():
     report = verify_handoff_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "missing_required_file" and item["path"] == "README.md" for item in report["failures"])
+    assert any(
+        item["code"] == "missing_required_file" and item["path"] == "README.md"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_sha256_does_not_match():
@@ -110,7 +156,10 @@ def test_fails_when_sha256_does_not_match():
     report = verify_handoff_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "sha256_mismatch" and item["path"] == "handoff_index.json" for item in report["failures"])
+    assert any(
+        item["code"] == "sha256_mismatch" and item["path"] == "handoff_index.json"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_size_does_not_match():
@@ -124,7 +173,10 @@ def test_fails_when_size_does_not_match():
     report = verify_handoff_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "size_mismatch" and item["path"] == "handoff_index.json" for item in report["failures"])
+    assert any(
+        item["code"] == "size_mismatch" and item["path"] == "handoff_index.json"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_handoff_summary_recommended_action_differs():
@@ -137,14 +189,18 @@ def test_fails_when_handoff_summary_recommended_action_differs():
         if row["path"] == "handoff_index_summary.json":
             import hashlib
 
-            row["sha256"] = hashlib.sha256(files["handoff_index_summary.json"]).hexdigest()
+            row["sha256"] = hashlib.sha256(
+                files["handoff_index_summary.json"]
+            ).hexdigest()
             row["size_bytes"] = len(files["handoff_index_summary.json"])
     files["manifest.json"] = canonical_json(manifest).encode("utf-8")
 
     report = verify_handoff_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "recommended_action_mismatch" for item in report["failures"])
+    assert any(
+        item["code"] == "recommended_action_mismatch" for item in report["failures"]
+    )
 
 
 def test_needs_human_review_when_unexpected_extra_file_exists():
@@ -174,7 +230,9 @@ def test_needs_human_review_when_recommended_action_is_regenerate_but_hashes_mat
     report = verify_handoff_export_bundle(regenerate_bundle())
 
     assert report["status"] == "needs_human_review"
-    assert any(item["code"] == "non_archive_ready_handoff" for item in report["warnings"])
+    assert any(
+        item["code"] == "non_archive_ready_handoff" for item in report["warnings"]
+    )
 
 
 def test_fails_on_path_traversal_zip_entry():
@@ -195,7 +253,10 @@ def test_summary_is_compact():
     report = verify_handoff_export_bundle(archive_bundle())
     summary = summarize_handoff_export_verification(report)
 
-    assert summary["schema"] == "socmint.v7_5_9.dossier_finalization_handoff_export_verification.summary"
+    assert (
+        summary["schema"]
+        == "socmint.v7_5_9.dossier_finalization_handoff_export_verification.summary"
+    )
     assert summary["status"] == "verified"
     assert summary["verified"] is True
     assert "manifest" not in summary

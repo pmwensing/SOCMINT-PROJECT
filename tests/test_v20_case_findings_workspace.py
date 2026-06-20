@@ -57,7 +57,9 @@ def test_v20_0_workspace_and_v20_1_claim_promotion(tmp_path, monkeypatch):
     assert workspace["findings"][0]["text"].startswith("The subject")
 
 
-def test_v20_2_provenance_is_sorted_hashed_and_confidence_preserved(tmp_path, monkeypatch):
+def test_v20_2_provenance_is_sorted_hashed_and_confidence_preserved(
+    tmp_path, monkeypatch
+):
     _configure(tmp_path, monkeypatch)
     result = _proposal()
 

@@ -10,7 +10,9 @@ from .dossier_finalization_export_verify_v7_5_3 import verify_finalization_expor
 from .dossier_finalization_export_verify_v7_5_3 import verify_finalization_export_zip
 
 CERTIFICATE_SCHEMA = "socmint.v7_5_4.dossier_finalization_verification_certificate"
-CERTIFICATE_SUMMARY_SCHEMA = "socmint.v7_5_4.dossier_finalization_verification_certificate.summary"
+CERTIFICATE_SUMMARY_SCHEMA = (
+    "socmint.v7_5_4.dossier_finalization_verification_certificate.summary"
+)
 APPROVED_LINE = "v7.5.4"
 CERT_VALID = "valid"
 CERT_REVIEW = "needs_human_review"
@@ -41,7 +43,9 @@ def _certificate_digest_payload(certificate: dict[str, Any]) -> dict[str, Any]:
 
 
 def certificate_digest(certificate: dict[str, Any]) -> str:
-    return hashlib.sha256(canonical_json(_certificate_digest_payload(certificate)).encode("utf-8")).hexdigest()
+    return hashlib.sha256(
+        canonical_json(_certificate_digest_payload(certificate)).encode("utf-8")
+    ).hexdigest()
 
 
 def summarize_certificate(certificate: dict[str, Any]) -> dict[str, Any]:
@@ -68,7 +72,10 @@ def build_verification_certificate(
     report = deepcopy(verification_report or {})
     verification_status = str(report.get("status") or "failed")
     status = _status_from_verification(verification_status)
-    findings = [*list(report.get("failures") or []), *list(report.get("warnings") or [])]
+    findings = [
+        *list(report.get("failures") or []),
+        *list(report.get("warnings") or []),
+    ]
     certificate: dict[str, Any] = {
         "schema": CERTIFICATE_SCHEMA,
         "approved_line": APPROVED_LINE,
@@ -104,7 +111,9 @@ def build_certificate_from_packet(
     notes: str | None = None,
 ) -> dict[str, Any]:
     report = verify_finalization_export_packet(deepcopy(packet or {}))
-    return build_verification_certificate(report, packet_name=packet_name, reviewer=reviewer, notes=notes)
+    return build_verification_certificate(
+        report, packet_name=packet_name, reviewer=reviewer, notes=notes
+    )
 
 
 def build_certificate_from_zip_bytes(
@@ -115,7 +124,9 @@ def build_certificate_from_zip_bytes(
     notes: str | None = None,
 ) -> dict[str, Any]:
     report = verify_finalization_export_zip(bytes(zip_bytes or b""))
-    return build_verification_certificate(report, packet_name=packet_name, reviewer=reviewer, notes=notes)
+    return build_verification_certificate(
+        report, packet_name=packet_name, reviewer=reviewer, notes=notes
+    )
 
 
 def _status_label(status: Any) -> str:

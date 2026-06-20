@@ -24,7 +24,9 @@ from socmint.ultimate_dossier import ultimate_dossier_payload
 from socmint.ultimate_dossier_routes import register_ultimate_dossier_routes
 
 
-def _run_with_result(subject_id: int, connector: str, seed_type: str, seed_value: str, raw_result: dict) -> int:
+def _run_with_result(
+    subject_id: int, connector: str, seed_type: str, seed_value: str, raw_result: dict
+) -> int:
     seed_id = db.add_spine_seed(
         subject_id=subject_id,
         seed_type=seed_type,
@@ -39,7 +41,9 @@ def _run_with_result(subject_id: int, connector: str, seed_type: str, seed_value
         "result": raw_result,
         "created_at": datetime.now(UTC).isoformat(),
     }
-    artifact = write_json_artifact("connector-runs", payload, prefix=f"{connector}-{subject_id}")
+    artifact = write_json_artifact(
+        "connector-runs", payload, prefix=f"{connector}-{subject_id}"
+    )
     run_id = db.create_spine_connector_run(
         subject_id=subject_id,
         connector_key=connector,
@@ -56,7 +60,9 @@ def _run_with_result(subject_id: int, connector: str, seed_type: str, seed_value
         size_bytes=artifact["size_bytes"],
         meta=payload,
     )
-    for finding in normalize_connector_output(connector, seed_value, seed_type, raw_result):
+    for finding in normalize_connector_output(
+        connector, seed_value, seed_type, raw_result
+    ):
         db.create_spine_observation(
             subject_id=subject_id,
             run_id=run_id,
@@ -65,7 +71,11 @@ def _run_with_result(subject_id: int, connector: str, seed_type: str, seed_value
             confidence=str(finding["confidence"]),
             source_ref=f"run:{run_id}:{connector}",
             evidence_ref=f"sha256:{artifact['sha256']}",
-            payload={**finding, "diagnostic": False, "artifact_sha256": artifact["sha256"]},
+            payload={
+                **finding,
+                "diagnostic": False,
+                "artifact_sha256": artifact["sha256"],
+            },
         )
     return run_id
 
@@ -87,57 +97,92 @@ def main() -> None:
             ],
         )
 
-        assert normalize_connector_output(
-            "sherlock",
-            "ultimateqa",
-            "username",
-            {"status": "completed", "stdout": "Twitter: found\nhttps://x.com/ultimateqa"},
-        )[0]["type"] == "profile_url"
-        assert normalize_connector_output(
-            "phoneinfoga",
-            "+15555550123",
-            "phone",
-            {"status": "completed", "stdout": "Country: Canada\nCarrier: ExampleTel\nLine Type: mobile"},
-        )[0]["type"] == "phone_country"
-        assert normalize_connector_output(
-            "h8mail",
-            "ultimateqa@example.com",
-            "email",
-            {"status": "completed", "stdout": "breach found ExampleLeak database"},
-        )[0]["type"] == "exposure_indicator"
+        assert (
+            normalize_connector_output(
+                "sherlock",
+                "ultimateqa",
+                "username",
+                {
+                    "status": "completed",
+                    "stdout": "Twitter: found\nhttps://x.com/ultimateqa",
+                },
+            )[0]["type"]
+            == "profile_url"
+        )
+        assert (
+            normalize_connector_output(
+                "phoneinfoga",
+                "+15555550123",
+                "phone",
+                {
+                    "status": "completed",
+                    "stdout": "Country: Canada\nCarrier: ExampleTel\nLine Type: mobile",
+                },
+            )[0]["type"]
+            == "phone_country"
+        )
+        assert (
+            normalize_connector_output(
+                "h8mail",
+                "ultimateqa@example.com",
+                "email",
+                {"status": "completed", "stdout": "breach found ExampleLeak database"},
+            )[0]["type"]
+            == "exposure_indicator"
+        )
 
         _run_with_result(
             subject_id,
             "sherlock",
             "username",
             "ultimateqa",
-            {"status": "completed", "stdout": "Twitter: found\nhttps://x.com/ultimateqa", "stderr": "", "findings": []},
+            {
+                "status": "completed",
+                "stdout": "Twitter: found\nhttps://x.com/ultimateqa",
+                "stderr": "",
+                "findings": [],
+            },
         )
         _run_with_result(
             subject_id,
             "phoneinfoga",
             "phone",
             "+15555550123",
-            {"status": "completed", "stdout": "Country: Canada\nCarrier: ExampleTel\nLine Type: mobile", "stderr": "", "findings": []},
+            {
+                "status": "completed",
+                "stdout": "Country: Canada\nCarrier: ExampleTel\nLine Type: mobile",
+                "stderr": "",
+                "findings": [],
+            },
         )
         _run_with_result(
             subject_id,
             "h8mail",
             "email",
             "ultimateqa@example.com",
-            {"status": "completed", "stdout": "breach found ExampleLeak database", "stderr": "", "findings": []},
+            {
+                "status": "completed",
+                "stdout": "breach found ExampleLeak database",
+                "stderr": "",
+                "findings": [],
+            },
         )
         correlate_subject(subject_id)
 
         assertions = db.list_spine_assertions(subject_id)
         assert len(assertions) >= 3
         for assertion in assertions:
-            db.validate_spine_assertion(assertion.id, "ultimate-smoke", "confirmed", "smoke confirm")
+            db.validate_spine_assertion(
+                assertion.id, "ultimate-smoke", "confirmed", "smoke confirm"
+            )
 
         payload = ultimate_dossier_payload(subject_id)
         assert payload["schema"] == "socmint.ultimate_entity_human_dossier.v7_8_0"
         assert payload["summary"]["assertion_count"] >= 3
-        assert payload["resolution"]["dossier_kind"] in {"human_subject", "entity_human_hybrid"}
+        assert payload["resolution"]["dossier_kind"] in {
+            "human_subject",
+            "entity_human_hybrid",
+        }
         assert payload["resolution"]["identity_confidence"] > 0
         assert payload["traceability"]
         assert payload["timeline"]
@@ -184,13 +229,18 @@ def main() -> None:
 
             api = client.get(f"/api/v1/spine/subjects/{subject_id}/ultimate-dossier")
             assert api.status_code == 200
-            assert api.get_json()["schema"] == "socmint.ultimate_entity_human_dossier.v7_8_0"
+            assert (
+                api.get_json()["schema"]
+                == "socmint.ultimate_entity_human_dossier.v7_8_0"
+            )
 
             redacted_api = client.get(
                 f"/api/v1/spine/subjects/{subject_id}/ultimate-dossier?redacted=1"
             )
             assert redacted_api.status_code == 200
-            assert redacted_api.get_json()["redaction"]["mode"] == "sensitive_identifiers"
+            assert (
+                redacted_api.get_json()["redaction"]["mode"] == "sensitive_identifiers"
+            )
 
             manifest_api = client.get(
                 f"/api/v1/spine/subjects/{subject_id}/ultimate-dossier/manifest"
@@ -198,7 +248,9 @@ def main() -> None:
             assert manifest_api.status_code == 200
             assert manifest_api.get_json()["parity"]["csv_matches_assertions"] is True
 
-            csv_response = client.get(f"/spine/subjects/{subject_id}/ultimate-dossier/assertions.csv")
+            csv_response = client.get(
+                f"/spine/subjects/{subject_id}/ultimate-dossier/assertions.csv"
+            )
             assert csv_response.status_code == 200
             assert "text/csv" in csv_response.content_type
             assert "profile_url" in csv_response.get_data(as_text=True)

@@ -132,9 +132,7 @@ def _integration_links(case_id: str, subject_id: int | None) -> dict[str, Any]:
                 "export_manifest_draft": (
                     f"/api/v1/subjects/{subject_id}/export-manifest-draft"
                 ),
-                "ultimate_dossier": (
-                    f"/spine/subjects/{subject_id}/ultimate-dossier"
-                ),
+                "ultimate_dossier": (f"/spine/subjects/{subject_id}/ultimate-dossier"),
             }
         )
     return links
@@ -224,7 +222,9 @@ def build_dossier_assembly_workspace(
         "version": VERSION,
         "case_id": case_id,
         "subject_id": subject_id,
-        "status": "ready_for_arrangement" if package.get("finding_count") else "blocked",
+        "status": "ready_for_arrangement"
+        if package.get("finding_count")
+        else "blocked",
         "source_package": package,
         "source_package_immutable": True,
         "source_findings_immutable": True,
@@ -287,9 +287,7 @@ def save_dossier_arrangement(
         "version": VERSION,
         "case_id": case_id,
         "source_package_id": workspace["source_package"].get("package_id"),
-        "source_manifest_sha256": workspace["source_package"].get(
-            "manifest_sha256"
-        ),
+        "source_manifest_sha256": workspace["source_package"].get("manifest_sha256"),
         "section_order": section_order,
         "finding_sections": finding_sections,
         "narratives": narratives,

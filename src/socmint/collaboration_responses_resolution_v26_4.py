@@ -5,7 +5,12 @@ from typing import Any
 from . import database
 from .collaboration_notes_workspace_v26_2 import find_note
 from .collaboration_requests_handoffs_v26_3 import current_items
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .portfolio_operations_dashboard_v24_0 import build_portfolio_operations_dashboard
 
 SCHEMA = "socmint.collaboration_responses_resolution.v26_4"
@@ -40,14 +45,22 @@ def _blocked(case_id: str, key: str) -> dict[str, Any]:
 def _case_state(case_id: str) -> dict[str, Any] | None:
     payload = build_portfolio_operations_dashboard()
     item = next(
-        (row for row in payload.get("cases") or [] if str(row.get("case_id") or "") == case_id),
+        (
+            row
+            for row in payload.get("cases") or []
+            if str(row.get("case_id") or "") == case_id
+        ),
         None,
     )
-    return None if item is None else {
-        "portfolio_schema": payload.get("schema"),
-        "portfolio_version": payload.get("version"),
-        "case": item,
-    }
+    return (
+        None
+        if item is None
+        else {
+            "portfolio_schema": payload.get("schema"),
+            "portfolio_version": payload.get("version"),
+            "case": item,
+        }
+    )
 
 
 def response_history(case_id: str) -> list[dict[str, Any]]:
@@ -77,7 +90,9 @@ def response_history(case_id: str) -> list[dict[str, Any]]:
         session.close()
 
 
-def _source_item(case_id: str, target_type: str, target_id: str) -> dict[str, Any] | None:
+def _source_item(
+    case_id: str, target_type: str, target_id: str
+) -> dict[str, Any] | None:
     if target_type == "note":
         return find_note(case_id, target_id)
     items = current_items(case_id)
@@ -107,11 +122,14 @@ def _source_binding(target_type: str, item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def latest_response_state(case_id: str, target_type: str, target_id: str) -> dict[str, Any] | None:
+def latest_response_state(
+    case_id: str, target_type: str, target_id: str
+) -> dict[str, Any] | None:
     matches = [
         event
         for event in response_history(case_id)
-        if event.get("target_type") == target_type and event.get("target_id") == target_id
+        if event.get("target_type") == target_type
+        and event.get("target_id") == target_id
     ]
     return matches[-1] if matches else None
 
@@ -133,7 +151,9 @@ def record_collaboration_response(
     if allowed_case_ids is not None and case_id not in allowed_case_ids:
         return _blocked(case_id, "case_access_required")
     if confirmed is not True:
-        return _blocked(case_id, "explicit_collaboration_response_confirmation_required")
+        return _blocked(
+            case_id, "explicit_collaboration_response_confirmation_required"
+        )
     if target_type not in TARGET_TYPES:
         return _blocked(case_id, "collaboration_response_target_not_in_catalog")
     if response_type not in RESPONSE_TYPES:
@@ -164,7 +184,9 @@ def record_collaboration_response(
     if previous:
         previous_binding = {
             "collaboration_response_id": previous.get("collaboration_response_id"),
-            "collaboration_response_sha256": previous.get("collaboration_response_sha256"),
+            "collaboration_response_sha256": previous.get(
+                "collaboration_response_sha256"
+            ),
             "response_type": previous.get("response_type"),
             "action_record_id": previous.get("action_record_id"),
         }
@@ -181,7 +203,9 @@ def record_collaboration_response(
         "source_binding": binding,
         "source_binding_sha256": _sha(binding),
         "previous_response_binding": previous_binding,
-        "previous_response_binding_sha256": _sha(previous_binding) if previous_binding else None,
+        "previous_response_binding_sha256": _sha(previous_binding)
+        if previous_binding
+        else None,
         "source_case_state": case_state,
         "source_case_state_sha256": _sha(case_state),
     }
@@ -247,7 +271,9 @@ def build_collaboration_response_workspace(case_id: str) -> dict[str, Any]:
         "case_id": case_id,
         "response_types": list(RESPONSE_TYPES),
         "target_types": list(TARGET_TYPES),
-        "latest_responses": sorted(latest.values(), key=lambda item: str(item.get("recorded_at") or "")),
+        "latest_responses": sorted(
+            latest.values(), key=lambda item: str(item.get("recorded_at") or "")
+        ),
         "unresolved_responses": unresolved,
         "counts": {
             "history": len(events),

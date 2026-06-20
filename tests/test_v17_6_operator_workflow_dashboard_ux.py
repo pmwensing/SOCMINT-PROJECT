@@ -2,9 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
-from src.socmint.operator_release_console_routes_v14 import register_operator_release_console_routes_v14
+from src.socmint.operator_release_console_routes_v14 import (
+    register_operator_release_console_routes_v14,
+)
 from src.socmint.unified_operator_workflow_dashboard_routes_v17_1 import (
     register_unified_operator_workflow_dashboard_routes_v17_1,
 )
@@ -18,7 +22,9 @@ def _app():
     return app
 
 
-def test_v17_6_dashboard_renders_feedback_loading_and_empty_states(tmp_path, monkeypatch):
+def test_v17_6_dashboard_renders_feedback_loading_and_empty_states(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     client = _app().test_client()
     with client.session_transaction() as sess:
@@ -63,7 +69,9 @@ def test_v17_6_dashboard_uses_client_side_action_controls(tmp_path, monkeypatch)
 
 
 def test_v17_6_static_script_contains_feedback_and_history_refresh_logic():
-    script = Path("src/socmint/static/operator_workflow_dashboard_v17_6.js").read_text(encoding="utf-8")
+    script = Path("src/socmint/static/operator_workflow_dashboard_v17_6.js").read_text(
+        encoding="utf-8"
+    )
 
     assert "setBanner" in script
     assert "refreshHistory" in script
@@ -86,9 +94,13 @@ def test_v17_6_static_script_is_served(tmp_path, monkeypatch):
 
 
 def test_v17_6_release_note_and_changelog_are_present():
-    note = Path("release/V17_6_OPERATOR_WORKFLOW_DASHBOARD_UX_HARDENING.md").read_text(encoding="utf-8")
+    note = Path("release/V17_6_OPERATOR_WORKFLOW_DASHBOARD_UX_HARDENING.md").read_text(
+        encoding="utf-8"
+    )
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
-    template = Path("src/socmint/templates/unified_operator_workflow_dashboard.html").read_text(encoding="utf-8")
+    template = Path(
+        "src/socmint/templates/unified_operator_workflow_dashboard.html"
+    ).read_text(encoding="utf-8")
 
     assert "action-result feedback" in note
     assert "history refresh" in note

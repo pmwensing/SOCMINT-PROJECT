@@ -29,7 +29,9 @@ def _evidence():
 
 
 def _approved_export(subject_id: str):
-    persist_export_pack(_subject(subject_id), _evidence(), analyst_reviewed=True, audit=True)
+    persist_export_pack(
+        _subject(subject_id), _evidence(), analyst_reviewed=True, audit=True
+    )
     record_distribution_action(
         case_id="case-handoff-1019",
         subject_id=subject_id,
@@ -47,7 +49,9 @@ def _approved_export(subject_id: str):
     build_distribution_packet_export("case-handoff-1019", subject_id)
 
 
-def test_v10_19_handoff_packet_summarizes_released_ready_and_held(tmp_path, monkeypatch):
+def test_v10_19_handoff_packet_summarizes_released_ready_and_held(
+    tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     _approved_export("subject-handoff-released")
     seal = create_distribution_release_seal(
@@ -56,7 +60,12 @@ def test_v10_19_handoff_packet_summarizes_released_ready_and_held(tmp_path, monk
         actor="analyst",
     )
     _approved_export("subject-handoff-ready")
-    persist_export_pack(_subject("subject-handoff-held"), _evidence(), analyst_reviewed=True, audit=False)
+    persist_export_pack(
+        _subject("subject-handoff-held"),
+        _evidence(),
+        analyst_reviewed=True,
+        audit=False,
+    )
 
     packet = distribution_handoff_packet("case-handoff-1019")
 
@@ -80,13 +89,23 @@ def test_v10_19_handoff_packet_includes_operator_links(tmp_path, monkeypatch):
     packet = distribution_handoff_packet("case-handoff-1019")
     row = packet["subjects"][0]
 
-    assert row["download_url"].endswith("/distribution-export/case-handoff-1019/subject-handoff-links/download")
-    assert row["verify_url"].endswith("/distribution-export/case-handoff-1019/subject-handoff-links/verify")
-    assert row["release_state_url"].endswith("/distribution-release/case-handoff-1019/subject-handoff-links")
-    assert row["seal_markdown_url"].endswith("/distribution-release/case-handoff-1019/subject-handoff-links/markdown")
+    assert row["download_url"].endswith(
+        "/distribution-export/case-handoff-1019/subject-handoff-links/download"
+    )
+    assert row["verify_url"].endswith(
+        "/distribution-export/case-handoff-1019/subject-handoff-links/verify"
+    )
+    assert row["release_state_url"].endswith(
+        "/distribution-release/case-handoff-1019/subject-handoff-links"
+    )
+    assert row["seal_markdown_url"].endswith(
+        "/distribution-release/case-handoff-1019/subject-handoff-links/markdown"
+    )
 
 
-def test_v10_19_handoff_markdown_contains_summary_and_seal_statement(tmp_path, monkeypatch):
+def test_v10_19_handoff_markdown_contains_summary_and_seal_statement(
+    tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     _approved_export("subject-handoff-md")
     seal = create_distribution_release_seal(
@@ -109,7 +128,9 @@ def test_v10_19_handoff_routes_are_registered():
     routes = {rule.rule for rule in app.url_map.iter_rules()}
 
     assert "/api/v1/dossier-builder/v3/distribution-handoff/<case_id>" in routes
-    assert "/api/v1/dossier-builder/v3/distribution-handoff/<case_id>/markdown" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/distribution-handoff/<case_id>/markdown" in routes
+    )
 
 
 def test_v10_19_handoff_api_requires_login():

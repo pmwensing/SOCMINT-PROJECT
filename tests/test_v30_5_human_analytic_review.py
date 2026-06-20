@@ -25,7 +25,9 @@ def _linkage():
     return {"linkage_id": "linkage-1", "linkage_sha256": "c" * 64}
 
 
-def test_v30_5_records_approval_and_preserves_reassessment_history(monkeypatch, tmp_path):
+def test_v30_5_records_approval_and_preserves_reassessment_history(
+    monkeypatch, tmp_path
+):
     database.configure_database(f"sqlite:///{tmp_path / 'reviews.db'}")
     monkeypatch.setattr(review, "find_claim", lambda claim_id: _claim())
     monkeypatch.setattr(review, "latest_confidence", lambda claim_id: _confidence())
@@ -64,11 +66,15 @@ def test_v30_5_records_approval_and_preserves_reassessment_history(monkeypatch, 
     assert len(current["review_history"]) == 2
 
 
-def test_v30_5_blocks_approval_without_substantial_confidence_or_with_conflict(monkeypatch, tmp_path):
+def test_v30_5_blocks_approval_without_substantial_confidence_or_with_conflict(
+    monkeypatch, tmp_path
+):
     database.configure_database(f"sqlite:///{tmp_path / 'blocked.db'}")
     monkeypatch.setattr(review, "find_claim", lambda claim_id: _claim())
     monkeypatch.setattr(review, "claim_linkages", lambda claim_id: [_linkage()])
-    monkeypatch.setattr(review, "latest_confidence", lambda claim_id: _confidence("moderate"))
+    monkeypatch.setattr(
+        review, "latest_confidence", lambda claim_id: _confidence("moderate")
+    )
     monkeypatch.setattr(review, "current_conflicts", lambda: [])
 
     moderate = review.record_human_review(
@@ -81,16 +87,24 @@ def test_v30_5_blocks_approval_without_substantial_confidence_or_with_conflict(m
         confirmed=True,
     )
     assert moderate["status"] == "blocked"
-    assert moderate["blockers"][0]["key"] == "substantial_confidence_required_for_approval"
+    assert (
+        moderate["blockers"][0]["key"] == "substantial_confidence_required_for_approval"
+    )
 
     monkeypatch.setattr(review, "latest_confidence", lambda claim_id: _confidence())
-    monkeypatch.setattr(review, "current_conflicts", lambda: [{
-        "conflict_id": "conflict-1",
-        "claim_a_id": "claim-1",
-        "claim_b_id": "claim-2",
-        "resolution": "unresolved",
-        "conflict_event_sha256": "d" * 64,
-    }])
+    monkeypatch.setattr(
+        review,
+        "current_conflicts",
+        lambda: [
+            {
+                "conflict_id": "conflict-1",
+                "claim_a_id": "claim-1",
+                "claim_b_id": "claim-2",
+                "resolution": "unresolved",
+                "conflict_event_sha256": "d" * 64,
+            }
+        ],
+    )
     unresolved = review.record_human_review(
         actor="reviewer",
         claim_id="claim-1",
@@ -101,4 +115,7 @@ def test_v30_5_blocks_approval_without_substantial_confidence_or_with_conflict(m
         confirmed=True,
     )
     assert unresolved["status"] == "blocked"
-    assert unresolved["blockers"][0]["key"] == "unresolved_analytic_conflict_blocks_approval"
+    assert (
+        unresolved["blockers"][0]["key"]
+        == "unresolved_analytic_conflict_blocks_approval"
+    )

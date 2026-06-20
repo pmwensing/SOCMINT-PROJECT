@@ -1,12 +1,16 @@
 # ruff: noqa: E501
 from pathlib import Path
 
+
 def write(path, content):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content.strip() + "\n")
 
-write("src/socmint/seeds.py", """
+
+write(
+    "src/socmint/seeds.py",
+    """
 import hashlib
 import re
 from dataclasses import dataclass
@@ -101,9 +105,12 @@ def normalize_phone(value: str) -> str:
         parsed,
         phonenumbers.PhoneNumberFormat.E164,
     )
-""")
+""",
+)
 
-write("src/socmint/artifacts.py", """
+write(
+    "src/socmint/artifacts.py",
+    """
 import hashlib
 import json
 import os
@@ -137,9 +144,12 @@ def write_json_artifact(kind: str, payload: dict, prefix: str = "artifact") -> d
         "mime_type": "application/json",
         "size_bytes": len(data),
     }
-""")
+""",
+)
 
-write("src/socmint/scoring.py", """
+write(
+    "src/socmint/scoring.py",
+    """
 def clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
     return max(low, min(high, value))
 
@@ -175,9 +185,12 @@ def confidence_band(score: float) -> str:
     if score >= 0.6:
         return "plausible"
     return "lead"
-""")
+""",
+)
 
-write("src/socmint/spine.py", """
+write(
+    "src/socmint/spine.py",
+    """
 import json
 from collections import defaultdict
 from datetime import datetime, UTC
@@ -458,7 +471,8 @@ def build_dossier(subject_id: int) -> dict:
             for run in runs
         ],
     }
-""")
+""",
+)
 
 # Patch database.py by appending compact spine model/functions.
 db_path = Path("src/socmint/database.py")
@@ -926,7 +940,9 @@ if "def spine_subjects()" not in dash:
 
 dash_path.write_text(dash)
 
-write("src/socmint/templates/spine.html", """
+write(
+    "src/socmint/templates/spine.html",
+    """
 {% extends "base.html" %}
 {% block content %}
 <h1>Validated Dossier Spine</h1>
@@ -979,9 +995,12 @@ write("src/socmint/templates/spine.html", """
   </table>
 </section>
 {% endblock %}
-""")
+""",
+)
 
-write("src/socmint/templates/spine_dossier.html", """
+write(
+    "src/socmint/templates/spine_dossier.html",
+    """
 {% extends "base.html" %}
 {% block content %}
 <h1>Enrichment-Validated Profile Dossier</h1>
@@ -1078,9 +1097,12 @@ write("src/socmint/templates/spine_dossier.html", """
   </table>
 </section>
 {% endblock %}
-""")
+""",
+)
 
-write("docs/SOCMINT_DOSSIER_SPINE_SPEC.md", """
+write(
+    "docs/SOCMINT_DOSSIER_SPINE_SPEC.md",
+    """
 # SOCMINT-PROJECT Dossier Spine
 
 ## Core rule
@@ -1107,9 +1129,12 @@ A connector belongs in the production spine only if it improves at least one:
 5. media/profile enrichment
 6. contradiction detection
 7. validated dossier quality
-""")
+""",
+)
 
-write("scripts/socmint_spine_smoke.py", """
+write(
+    "scripts/socmint_spine_smoke.py",
+    """
 import json
 import os
 import tempfile
@@ -1159,9 +1184,12 @@ def main():
 
 if __name__ == "__main__":
     main()
-""")
+""",
+)
 
-write("tests/test_spine_v6.py", """
+write(
+    "tests/test_spine_v6.py",
+    """
 import pytest
 
 from src.socmint import database as db
@@ -1249,7 +1277,8 @@ def test_spine_dashboard_api(tmp_path, monkeypatch):
     dossier = client.get(f"/api/v1/spine/subjects/{subject_id}/dossier")
     assert dossier.status_code == 200
     assert dossier.get_json()["subject"]["id"] == subject_id
-""")
+""",
+)
 
 # Add nav link safely.
 base = Path("src/socmint/templates/base.html")

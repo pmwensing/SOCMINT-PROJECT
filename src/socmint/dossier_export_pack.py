@@ -13,7 +13,12 @@ from .dossier_builder_v3 import dossier_builder_summary
 DOSSIER_EXPORT_SCHEMA = "socmint.dossier_export.v10_4_0"
 SUPPORTED_EXPORT_FORMATS = ["json", "html"]
 UNREVIEWED_STATES = {"unreviewed", "pending", "needs_review", "needs-review"}
-CONTRADICTION_STATES = {"contradicted", "conflict", "contradiction", "blocked_contradiction"}
+CONTRADICTION_STATES = {
+    "contradicted",
+    "conflict",
+    "contradiction",
+    "blocked_contradiction",
+}
 
 
 def canonical_json(data: dict[str, Any]) -> str:
@@ -56,7 +61,9 @@ def render_dossier_html(dossier: dict[str, Any]) -> str:
             "</tbody></table>",
             "<h2>Review Queue</h2>",
             "<pre>",
-            html.escape(canonical_json({"review_queue": dossier.get("review_queue", [])})),
+            html.escape(
+                canonical_json({"review_queue": dossier.get("review_queue", [])})
+            ),
             "</pre>",
             "</body></html>",
         ]
@@ -78,7 +85,8 @@ def export_policy_blockers(dossier: dict[str, Any]) -> list[dict[str, Any]]:
     unreviewed = [
         item
         for item in evidence
-        if str(item.get("validation_state") or item.get("review_state") or "").lower() in UNREVIEWED_STATES
+        if str(item.get("validation_state") or item.get("review_state") or "").lower()
+        in UNREVIEWED_STATES
     ]
     if unreviewed:
         blockers.append(
@@ -86,7 +94,12 @@ def export_policy_blockers(dossier: dict[str, Any]) -> list[dict[str, Any]]:
                 "code": "unreviewed_assertions",
                 "severity": "block",
                 "count": len(unreviewed),
-                "items": [item.get("assertion_id") or item.get("claim_id") or item.get("evidence_id") for item in unreviewed],
+                "items": [
+                    item.get("assertion_id")
+                    or item.get("claim_id")
+                    or item.get("evidence_id")
+                    for item in unreviewed
+                ],
             }
         )
 
@@ -96,10 +109,16 @@ def export_policy_blockers(dossier: dict[str, Any]) -> list[dict[str, Any]]:
         claim_key = _evidence_claim_key(item)
         if not claim_key:
             continue
-        claim_sources.setdefault(claim_key, set()).add(str(item.get("source") or "unknown"))
+        claim_sources.setdefault(claim_key, set()).add(
+            str(item.get("source") or "unknown")
+        )
         claim_items.setdefault(claim_key, []).append(item)
     single_source = [
-        {"claim_id": claim_key, "sources": sorted(sources), "evidence_count": len(claim_items[claim_key])}
+        {
+            "claim_id": claim_key,
+            "sources": sorted(sources),
+            "evidence_count": len(claim_items[claim_key]),
+        }
         for claim_key, sources in claim_sources.items()
         if len(sources) < 2
     ]
@@ -117,7 +136,13 @@ def export_policy_blockers(dossier: dict[str, Any]) -> list[dict[str, Any]]:
         item
         for item in evidence
         if item.get("contradiction") is True
-        or str(item.get("status") or item.get("validation_state") or item.get("review_state") or "").lower() in CONTRADICTION_STATES
+        or str(
+            item.get("status")
+            or item.get("validation_state")
+            or item.get("review_state")
+            or ""
+        ).lower()
+        in CONTRADICTION_STATES
     ]
     dossier_contradictions = dossier.get("contradictions") or []
     if contradictions or dossier_contradictions:
@@ -127,7 +152,9 @@ def export_policy_blockers(dossier: dict[str, Any]) -> list[dict[str, Any]]:
                 "severity": "block",
                 "count": len(contradictions) + len(dossier_contradictions),
                 "items": [
-                    item.get("assertion_id") or item.get("claim_id") or item.get("evidence_id")
+                    item.get("assertion_id")
+                    or item.get("claim_id")
+                    or item.get("evidence_id")
                     for item in contradictions
                 ],
             }
@@ -163,7 +190,9 @@ def build_export_pack(
     evidence: list[dict[str, Any]] | None = None,
     analyst_reviewed: bool = False,
 ) -> dict[str, Any]:
-    dossier = build_dossier_payload(subject, evidence=evidence or [], analyst_reviewed=analyst_reviewed)
+    dossier = build_dossier_payload(
+        subject, evidence=evidence or [], analyst_reviewed=analyst_reviewed
+    )
     preflight = export_preflight(dossier)
     json_body = canonical_json(dossier)
     html_body = render_dossier_html(dossier)

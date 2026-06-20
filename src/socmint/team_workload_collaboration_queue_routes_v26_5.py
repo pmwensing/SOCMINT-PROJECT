@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, session, url_for
 
-from .team_workload_collaboration_queue_v26_5 import build_team_workload_collaboration_queue
+from .team_workload_collaboration_queue_v26_5 import (
+    build_team_workload_collaboration_queue,
+)
 
 
 def _allowed_case_ids() -> set[str] | None:

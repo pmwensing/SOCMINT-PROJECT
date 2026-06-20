@@ -2,22 +2,40 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.socmint.case_delivery_recovery_action_receipt_v16_4 import build_case_delivery_recovery_action_receipt
-from src.socmint.case_delivery_recovery_closure_audit_package_v16_8 import build_case_delivery_recovery_closure_audit_package
-from src.socmint.case_delivery_recovery_closure_audit_package_verification_v16_9 import verify_case_delivery_recovery_closure_audit_package
-from src.socmint.case_delivery_recovery_closure_record_v16_6 import build_case_delivery_recovery_closure_record
-from src.socmint.case_delivery_recovery_closure_record_verification_v16_7 import verify_case_delivery_recovery_closure_record
-from src.socmint.case_delivery_recovery_continuation_gate_v16_12 import build_case_delivery_recovery_continuation_gate
+from src.socmint.case_delivery_recovery_action_receipt_v16_4 import (
+    build_case_delivery_recovery_action_receipt,
+)
+from src.socmint.case_delivery_recovery_closure_audit_package_v16_8 import (
+    build_case_delivery_recovery_closure_audit_package,
+)
+from src.socmint.case_delivery_recovery_closure_audit_package_verification_v16_9 import (
+    verify_case_delivery_recovery_closure_audit_package,
+)
+from src.socmint.case_delivery_recovery_closure_record_v16_6 import (
+    build_case_delivery_recovery_closure_record,
+)
+from src.socmint.case_delivery_recovery_closure_record_verification_v16_7 import (
+    verify_case_delivery_recovery_closure_record,
+)
+from src.socmint.case_delivery_recovery_continuation_gate_v16_12 import (
+    build_case_delivery_recovery_continuation_gate,
+)
 from src.socmint.case_delivery_recovery_continuation_gate_verification_v16_13 import (
     CASE_DELIVERY_RECOVERY_CONTINUATION_GATE_VERIFICATION_SCHEMA,
 )
 from src.socmint.case_delivery_recovery_continuation_gate_verification_v16_13 import (
     verify_case_delivery_recovery_continuation_gate,
 )
-from src.socmint.case_delivery_recovery_finalization_record_v16_10 import build_case_delivery_recovery_finalization_record
-from src.socmint.case_delivery_recovery_finalization_record_verification_v16_11 import verify_case_delivery_recovery_finalization_record
+from src.socmint.case_delivery_recovery_finalization_record_v16_10 import (
+    build_case_delivery_recovery_finalization_record,
+)
+from src.socmint.case_delivery_recovery_finalization_record_verification_v16_11 import (
+    verify_case_delivery_recovery_finalization_record,
+)
 from src.socmint.case_delivery_recovery_v16_3 import build_case_delivery_recovery
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
 from tests.test_v15_case_delivery_workspace import ready_payload
 
@@ -55,8 +73,12 @@ def _verification_artifacts():
             ],
         },
     )["receipt"]
-    closure = build_case_delivery_recovery_closure_record(recovery, receipt, closer="delivery-owner")["closure"]
-    closure_verification = verify_case_delivery_recovery_closure_record(closure, recovery, receipt)
+    closure = build_case_delivery_recovery_closure_record(
+        recovery, receipt, closer="delivery-owner"
+    )["closure"]
+    closure_verification = verify_case_delivery_recovery_closure_record(
+        closure, recovery, receipt
+    )
     audit_package = build_case_delivery_recovery_closure_audit_package(
         recovery,
         receipt,
@@ -97,11 +119,29 @@ def _verification_artifacts():
         finalization_verification,
         gate_operator="delivery-ops",
     )["continuation_gate"]
-    return recovery, receipt, closure, audit_package, audit_verification, finalization, finalization_verification, continuation_gate
+    return (
+        recovery,
+        receipt,
+        closure,
+        audit_package,
+        audit_verification,
+        finalization,
+        finalization_verification,
+        continuation_gate,
+    )
 
 
 def test_case_delivery_recovery_continuation_gate_verification_passes_valid_gate():
-    recovery, receipt, closure, audit_package, audit_verification, finalization, finalization_verification, gate = _verification_artifacts()
+    (
+        recovery,
+        receipt,
+        closure,
+        audit_package,
+        audit_verification,
+        finalization,
+        finalization_verification,
+        gate,
+    ) = _verification_artifacts()
 
     result = verify_case_delivery_recovery_continuation_gate(
         gate,
@@ -114,7 +154,9 @@ def test_case_delivery_recovery_continuation_gate_verification_passes_valid_gate
         finalization_verification,
     )
 
-    assert result["schema"] == CASE_DELIVERY_RECOVERY_CONTINUATION_GATE_VERIFICATION_SCHEMA
+    assert (
+        result["schema"] == CASE_DELIVERY_RECOVERY_CONTINUATION_GATE_VERIFICATION_SCHEMA
+    )
     assert result["status"] == "verified"
     assert result["verified"] is True
     assert result["gate_open"] is True
@@ -125,49 +167,137 @@ def test_case_delivery_recovery_continuation_gate_verification_passes_valid_gate
 
 
 def test_case_delivery_recovery_continuation_gate_verification_blocks_tampered_payload_hash():
-    recovery, receipt, closure, audit_package, audit_verification, finalization, finalization_verification, gate = _verification_artifacts()
+    (
+        recovery,
+        receipt,
+        closure,
+        audit_package,
+        audit_verification,
+        finalization,
+        finalization_verification,
+        gate,
+    ) = _verification_artifacts()
     tampered = {**gate, "payload_sha256": "tampered"}
 
-    result = verify_case_delivery_recovery_continuation_gate(tampered, recovery, receipt, closure, audit_package, audit_verification, finalization, finalization_verification)
+    result = verify_case_delivery_recovery_continuation_gate(
+        tampered,
+        recovery,
+        receipt,
+        closure,
+        audit_package,
+        audit_verification,
+        finalization,
+        finalization_verification,
+    )
 
     assert result["status"] == "blocked"
-    assert any(blocker["key"] == "payload_hash_mismatch" for blocker in result["blockers"])
-    assert any(blocker["key"] == "continuation_gate_id_mismatch" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "payload_hash_mismatch" for blocker in result["blockers"]
+    )
+    assert any(
+        blocker["key"] == "continuation_gate_id_mismatch"
+        for blocker in result["blockers"]
+    )
 
 
 def test_case_delivery_recovery_continuation_gate_verification_blocks_tampered_gate_id():
-    recovery, receipt, closure, audit_package, audit_verification, finalization, finalization_verification, gate = _verification_artifacts()
+    (
+        recovery,
+        receipt,
+        closure,
+        audit_package,
+        audit_verification,
+        finalization,
+        finalization_verification,
+        gate,
+    ) = _verification_artifacts()
     tampered = {**gate, "continuation_gate_id": "tampered"}
 
-    result = verify_case_delivery_recovery_continuation_gate(tampered, recovery, receipt, closure, audit_package, audit_verification, finalization, finalization_verification)
+    result = verify_case_delivery_recovery_continuation_gate(
+        tampered,
+        recovery,
+        receipt,
+        closure,
+        audit_package,
+        audit_verification,
+        finalization,
+        finalization_verification,
+    )
 
     assert result["status"] == "blocked"
-    assert any(blocker["key"] == "continuation_gate_id_mismatch" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "continuation_gate_id_mismatch"
+        for blocker in result["blockers"]
+    )
 
 
 def test_case_delivery_recovery_continuation_gate_verification_blocks_closed_gate_flag():
-    recovery, receipt, closure, audit_package, audit_verification, finalization, finalization_verification, gate = _verification_artifacts()
+    (
+        recovery,
+        receipt,
+        closure,
+        audit_package,
+        audit_verification,
+        finalization,
+        finalization_verification,
+        gate,
+    ) = _verification_artifacts()
     tampered = {**gate, "gate_open": False}
 
-    result = verify_case_delivery_recovery_continuation_gate(tampered, recovery, receipt, closure, audit_package, audit_verification, finalization, finalization_verification)
+    result = verify_case_delivery_recovery_continuation_gate(
+        tampered,
+        recovery,
+        receipt,
+        closure,
+        audit_package,
+        audit_verification,
+        finalization,
+        finalization_verification,
+    )
 
     assert result["status"] == "blocked"
     assert any(blocker["key"] == "gate_not_open" for blocker in result["blockers"])
-    assert any(blocker["key"] == "payload_hash_mismatch" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "payload_hash_mismatch" for blocker in result["blockers"]
+    )
 
 
 def test_case_delivery_recovery_continuation_gate_verification_blocks_next_action_mismatch():
-    recovery, receipt, closure, audit_package, audit_verification, finalization, finalization_verification, gate = _verification_artifacts()
+    (
+        recovery,
+        receipt,
+        closure,
+        audit_package,
+        audit_verification,
+        finalization,
+        finalization_verification,
+        gate,
+    ) = _verification_artifacts()
     tampered = {**gate, "next_action": "hold_delivery"}
 
-    result = verify_case_delivery_recovery_continuation_gate(tampered, recovery, receipt, closure, audit_package, audit_verification, finalization, finalization_verification)
+    result = verify_case_delivery_recovery_continuation_gate(
+        tampered,
+        recovery,
+        receipt,
+        closure,
+        audit_package,
+        audit_verification,
+        finalization,
+        finalization_verification,
+    )
 
     assert result["status"] == "blocked"
-    assert any(blocker["key"] == "next_action_mismatch" for blocker in result["blockers"])
-    assert any(blocker["key"] == "payload_hash_mismatch" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "next_action_mismatch" for blocker in result["blockers"]
+    )
+    assert any(
+        blocker["key"] == "payload_hash_mismatch" for blocker in result["blockers"]
+    )
 
 
-def test_case_delivery_recovery_continuation_gate_verification_route_requires_login(tmp_path, monkeypatch):
+def test_case_delivery_recovery_continuation_gate_verification_route_requires_login(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -183,7 +313,9 @@ def test_case_delivery_recovery_continuation_gate_verification_route_requires_lo
     assert response.status_code == 401
 
 
-def test_case_delivery_recovery_continuation_gate_verification_route_returns_verified(tmp_path, monkeypatch):
+def test_case_delivery_recovery_continuation_gate_verification_route_returns_verified(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -193,7 +325,16 @@ def test_case_delivery_recovery_continuation_gate_verification_route_returns_ver
         sess["is_admin"] = False
         sess["_csrf_token"] = "test-csrf"
 
-    recovery, receipt, closure, audit_package, audit_verification, finalization, finalization_verification, gate = _verification_artifacts()
+    (
+        recovery,
+        receipt,
+        closure,
+        audit_package,
+        audit_verification,
+        finalization,
+        finalization_verification,
+        gate,
+    ) = _verification_artifacts()
     response = client.post(
         "/api/v1/case-delivery/case-1/recovery-continuation-gate/verify",
         json={
@@ -218,7 +359,9 @@ def test_case_delivery_recovery_continuation_gate_verification_route_returns_ver
 
 
 def test_v16_13_release_note_and_changelog_are_present():
-    note = Path("release/V16_13_DELIVERY_RECOVERY_CONTINUATION_GATE_VERIFICATION.md").read_text(encoding="utf-8")
+    note = Path(
+        "release/V16_13_DELIVERY_RECOVERY_CONTINUATION_GATE_VERIFICATION.md"
+    ).read_text(encoding="utf-8")
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/case-delivery/<case_id>/recovery-continuation-gate/verify" in note

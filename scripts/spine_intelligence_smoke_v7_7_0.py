@@ -97,10 +97,18 @@ def main() -> None:
         assert empty_payload["schema"] == "socmint.spine_intelligence.v7_7_1"
         assert empty_payload["summary"]["seed_count"] == 4
         assert empty_payload["summary"]["connector_run_count"] == 0
-        assert any(item["key"] == "sherlock" and item["enabled"] for item in empty_payload["connector_options"])
-        assert any(item["key"] == "phoneinfoga" and item["enabled"] for item in empty_payload["connector_options"])
+        assert any(
+            item["key"] == "sherlock" and item["enabled"]
+            for item in empty_payload["connector_options"]
+        )
+        assert any(
+            item["key"] == "phoneinfoga" and item["enabled"]
+            for item in empty_payload["connector_options"]
+        )
 
-        run_result = run_spine_for_subject(subject_id, ["sherlock", "socialscan", "phoneinfoga", "archivebox"])
+        run_result = run_spine_for_subject(
+            subject_id, ["sherlock", "socialscan", "phoneinfoga", "archivebox"]
+        )
         assert run_result["run_ids"]
 
         diagnostic_payload = spine_intelligence_payload(subject_id)
@@ -128,7 +136,9 @@ def main() -> None:
         assert payload["summary"]["assertion_count"] == 1
         assert payload["summary"]["dossier_ready"] is True
         assert payload["summary"]["has_real_enrichment"] is True
-        assert payload["observations"][0]["value"] == "https://example.com/spineqa-profile"
+        assert (
+            payload["observations"][0]["value"] == "https://example.com/spineqa-profile"
+        )
         assert payload["assertions"]
 
         promoted = promote_observation_to_assertion(

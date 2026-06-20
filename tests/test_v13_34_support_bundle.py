@@ -19,7 +19,10 @@ def test_support_bundle_module_defines_safe_schema_routes_and_redaction():
 def test_wsgi_registers_support_bundle_routes():
     source = Path("src/socmint/wsgi.py").read_text()
 
-    assert "from .support_bundle_v13_34 import register_support_bundle_routes_v13_34" in source
+    assert (
+        "from .support_bundle_v13_34 import register_support_bundle_routes_v13_34"
+        in source
+    )
     assert "register_support_bundle_routes_v13_34(app)" in source
 
 
@@ -41,7 +44,9 @@ def test_support_bundle_script_and_docs_exist():
 def test_support_bundle_payload_redacts_secret_values(monkeypatch):
     from socmint.support_bundle_v13_34 import redact_value
 
-    assert redact_value("SOCMINT_ADMIN_PASSWORD", "secret-value") == "<redacted:12 chars>"
+    assert (
+        redact_value("SOCMINT_ADMIN_PASSWORD", "secret-value") == "<redacted:12 chars>"
+    )
     assert redact_value("SOCMINT_SECRET_KEY", "abc") == "<redacted:3 chars>"
     assert redact_value("SOCMINT_DATA_DIR", "/tmp/data") == "/tmp/data"
 
@@ -51,13 +56,20 @@ def test_support_bundle_payload_points_to_latest_support_capture():
 
     payload = support_bundle_payload()
 
-    assert payload["acceptance_scripts"]["support_bundle_capture"] == "scripts/support_bundle_v13_34.sh"
+    assert (
+        payload["acceptance_scripts"]["support_bundle_capture"]
+        == "scripts/support_bundle_v13_34.sh"
+    )
 
 
 def test_export_blocker_workflow_docs_and_release_artifact_reference_exist():
     runbook = Path("RUNBOOK.md").read_text()
-    release = Path("release/V13_44_EXPORT_BLOCKER_DEDICATED_SCREENSHOT_WORKFLOW.md").read_text()
-    v13_45 = Path("release/V13_45_EXPORT_BLOCKER_WORKFLOW_DOCS_AND_ROUTE_HEALTH.md").read_text()
+    release = Path(
+        "release/V13_44_EXPORT_BLOCKER_DEDICATED_SCREENSHOT_WORKFLOW.md"
+    ).read_text()
+    v13_45 = Path(
+        "release/V13_45_EXPORT_BLOCKER_WORKFLOW_DOCS_AND_ROUTE_HEALTH.md"
+    ).read_text()
 
     assert "Export Blocker Screenshots" in runbook
     assert "export-blocker-screenshots-<run_id>" in runbook

@@ -6,7 +6,9 @@ from copy import deepcopy
 from datetime import UTC, datetime
 from typing import Any
 
-from .v10_29_final_delivery_dashboard_api import build_final_delivery_dashboard_api_from_request
+from .v10_29_final_delivery_dashboard_api import (
+    build_final_delivery_dashboard_api_from_request,
+)
 
 CASE_DELIVERY_REGISTRY_SCHEMA = "socmint.v10_30.case_delivery_registry"
 CASE_DELIVERY_ENTRY_SCHEMA = "socmint.v10_30.case_delivery_registry.entry"
@@ -19,7 +21,10 @@ def utc_now() -> str:
 
 
 def canonical_json(data: dict[str, Any]) -> str:
-    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
+    return (
+        json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        + "\n"
+    )
 
 
 def sha256_text(value: str) -> str:
@@ -68,14 +73,28 @@ def summarize_delivery_entry(entry: dict[str, Any]) -> dict[str, Any]:
 
 
 def list_delivery_summaries(registry: dict[str, Any]) -> list[dict[str, Any]]:
-    deliveries = registry.get("deliveries") if isinstance(registry.get("deliveries"), list) else []
-    return [summarize_delivery_entry(entry) for entry in deliveries if isinstance(entry, dict)]
+    deliveries = (
+        registry.get("deliveries")
+        if isinstance(registry.get("deliveries"), list)
+        else []
+    )
+    return [
+        summarize_delivery_entry(entry)
+        for entry in deliveries
+        if isinstance(entry, dict)
+    ]
 
 
-def get_delivery_by_id(registry: dict[str, Any], delivery_id: str | None) -> dict[str, Any] | None:
+def get_delivery_by_id(
+    registry: dict[str, Any], delivery_id: str | None
+) -> dict[str, Any] | None:
     if not delivery_id:
         return None
-    deliveries = registry.get("deliveries") if isinstance(registry.get("deliveries"), list) else []
+    deliveries = (
+        registry.get("deliveries")
+        if isinstance(registry.get("deliveries"), list)
+        else []
+    )
     for entry in deliveries:
         if isinstance(entry, dict) and entry.get("delivery_id") == delivery_id:
             return deepcopy(entry)
@@ -99,9 +118,13 @@ def _summary(case_id: str, deliveries: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def build_case_delivery_registry(case_id: str, dashboards: list[dict[str, Any]]) -> dict[str, Any]:
+def build_case_delivery_registry(
+    case_id: str, dashboards: list[dict[str, Any]]
+) -> dict[str, Any]:
     safe_dashboards = [deepcopy(item) for item in dashboards if isinstance(item, dict)]
-    deliveries = [build_delivery_entry(case_id, dashboard) for dashboard in safe_dashboards]
+    deliveries = [
+        build_delivery_entry(case_id, dashboard) for dashboard in safe_dashboards
+    ]
     summary = _summary(case_id, deliveries)
     return {
         "schema": CASE_DELIVERY_REGISTRY_SCHEMA,
@@ -124,15 +147,23 @@ def _dashboards_from_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return [build_final_delivery_dashboard_api_from_request(safe_payload)]
 
 
-def build_case_delivery_registry_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def build_case_delivery_registry_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     return build_case_delivery_registry(case_id, _dashboards_from_payload(payload))
 
 
-def build_case_delivery_summaries_from_request(case_id: str, payload: dict[str, Any]) -> list[dict[str, Any]]:
-    return list_delivery_summaries(build_case_delivery_registry_from_request(case_id, payload))
+def build_case_delivery_summaries_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> list[dict[str, Any]]:
+    return list_delivery_summaries(
+        build_case_delivery_registry_from_request(case_id, payload)
+    )
 
 
-def get_case_delivery_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any] | None:
+def get_case_delivery_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any] | None:
     safe_payload = deepcopy(payload or {})
     registry = build_case_delivery_registry_from_request(case_id, safe_payload)
     return get_delivery_by_id(registry, safe_payload.get("delivery_id"))

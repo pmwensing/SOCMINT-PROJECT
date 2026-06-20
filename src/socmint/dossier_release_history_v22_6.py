@@ -53,7 +53,9 @@ def build_release_delivery_history(case_id: str) -> dict[str, Any]:
         latest[event["event_type"]] = event
 
     receipt = (latest.get("delivery_receipt") or {}).get("details") or {}
-    acknowledgement = (latest.get("recipient_acknowledgement") or {}).get("details") or {}
+    acknowledgement = (latest.get("recipient_acknowledgement") or {}).get(
+        "details"
+    ) or {}
     recall = (latest.get("recall") or {}).get("details") or {}
     reissue = (latest.get("reissue") or {}).get("details") or {}
     dispatch = (latest.get("dispatch") or {}).get("details") or {}
@@ -92,7 +94,9 @@ def build_release_delivery_history(case_id: str) -> dict[str, Any]:
         "release_outcome": outcome,
         "closure_ready": closure_ready,
         "event_count": len(timeline),
-        "authorization_id": ((latest.get("authorization") or {}).get("details") or {}).get("authorization_id"),
+        "authorization_id": (
+            (latest.get("authorization") or {}).get("details") or {}
+        ).get("authorization_id"),
         "distribution_id": dispatch.get("distribution_id"),
         "delivery_receipt_id": receipt.get("delivery_receipt_id"),
         "acknowledgement_id": acknowledgement.get("acknowledgement_id"),
@@ -114,5 +118,7 @@ def build_release_delivery_history(case_id: str) -> dict[str, Any]:
         "closure_ready": closure_ready,
         "closure_summary": summary,
         "source_records_mutated": False,
-        "next_action": "close_release_case" if closure_ready else (unresolved[0]["key"] if unresolved else "continue_release_workflow"),
+        "next_action": "close_release_case"
+        if closure_ready
+        else (unresolved[0]["key"] if unresolved else "continue_release_workflow"),
     }

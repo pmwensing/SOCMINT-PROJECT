@@ -1,13 +1,21 @@
 from flask import Flask
 
-from src.socmint.analytic_confidence_routes_v30_4 import register_analytic_confidence_routes_v30_4
+from src.socmint.analytic_confidence_routes_v30_4 import (
+    register_analytic_confidence_routes_v30_4,
+)
 
 
 def test_v30_4_routes_require_admin_and_assess(monkeypatch):
     app = Flask(__name__)
     app.secret_key = "test-secret"
-    monkeypatch.setattr("src.socmint.analytic_confidence_routes_v30_4.actor_is_administrator", lambda actor: actor == "admin")
-    monkeypatch.setattr("src.socmint.analytic_confidence_routes_v30_4.confidence_assessments", lambda claim_id: [])
+    monkeypatch.setattr(
+        "src.socmint.analytic_confidence_routes_v30_4.actor_is_administrator",
+        lambda actor: actor == "admin",
+    )
+    monkeypatch.setattr(
+        "src.socmint.analytic_confidence_routes_v30_4.confidence_assessments",
+        lambda claim_id: [],
+    )
     monkeypatch.setattr(
         "src.socmint.analytic_confidence_routes_v30_4.assess_confidence",
         lambda **kwargs: {

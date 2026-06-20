@@ -17,7 +17,9 @@ from socmint.dashboard import create_app  # noqa: E402
 def main() -> int:
     seeded = ROOT / "release" / "V9_8_5_REVIEW_SMOKE_ARTIFACT.md"
     seeded.parent.mkdir(exist_ok=True)
-    seeded.write_text("# v9.8.5 review smoke artifact\n\nUsed to verify review-state persistence.\n")
+    seeded.write_text(
+        "# v9.8.5 review smoke artifact\n\nUsed to verify review-state persistence.\n"
+    )
 
     with tempfile.TemporaryDirectory(prefix="socmint-v985-") as tmp:
         os.environ["DATABASE_URL"] = f"sqlite:///{tmp}/socmint.db"
@@ -53,7 +55,13 @@ def main() -> int:
             ok = response.status_code == 200 and response.is_json
             print(("[PASS]" if ok else "[FAIL]"), "POST review", response.status_code)
             if not ok:
-                failures.append(("POST review", response.status_code, response.get_data(as_text=True)[:800]))
+                failures.append(
+                    (
+                        "POST review",
+                        response.status_code,
+                        response.get_data(as_text=True)[:800],
+                    )
+                )
 
             response = client.get("/api/v1/product/artifact-review-state")
             data = response.get_json() if response.is_json else {}
@@ -65,24 +73,56 @@ def main() -> int:
                 and state.get("archived") is False
                 and state.get("note") == "smoke reviewed"
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET review state", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"), "GET review state", response.status_code
+            )
             if not ok:
-                failures.append(("GET review state", response.status_code, response.get_data(as_text=True)[:800]))
+                failures.append(
+                    (
+                        "GET review state",
+                        response.status_code,
+                        response.get_data(as_text=True)[:800],
+                    )
+                )
 
-            response = client.get("/api/v1/product/artifacts?reviewed=true&important=true&archived=false")
+            response = client.get(
+                "/api/v1/product/artifacts?reviewed=true&important=true&archived=false"
+            )
             payload = response.get_json() if response.is_json else {}
-            found = any(item.get("path") == path for item in payload.get("artifacts", []))
+            found = any(
+                item.get("path") == path for item in payload.get("artifacts", [])
+            )
             ok = response.status_code == 200 and found
-            print(("[PASS]" if ok else "[FAIL]"), "GET filtered artifacts", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET filtered artifacts",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET filtered artifacts", response.status_code, response.get_data(as_text=True)[:1000]))
+                failures.append(
+                    (
+                        "GET filtered artifacts",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1000],
+                    )
+                )
 
             response = client.get("/product/artifacts?reviewed=true")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Review Filters" in body and "reviewed=True" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET artifact UI filters", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Review Filters" in body
+                and "reviewed=True" in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET artifact UI filters",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET artifact UI filters", response.status_code, body[:1000]))
+                failures.append(
+                    ("GET artifact UI filters", response.status_code, body[:1000])
+                )
 
             response = client.post(
                 "/product/artifacts/review",
@@ -97,17 +137,38 @@ def main() -> int:
                 headers={"X-CSRF-Token": "v985-csrf"},
             )
             ok = response.status_code in {200, 302}
-            print(("[PASS]" if ok else "[FAIL]"), "POST form review", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"), "POST form review", response.status_code
+            )
             if not ok:
-                failures.append(("POST form review", response.status_code, response.get_data(as_text=True)[:800]))
+                failures.append(
+                    (
+                        "POST form review",
+                        response.status_code,
+                        response.get_data(as_text=True)[:800],
+                    )
+                )
 
             response = client.get("/api/v1/product/artifacts?archived=true")
             payload = response.get_json() if response.is_json else {}
-            found = any(item.get("path") == path and item.get("archived") is True for item in payload.get("artifacts", []))
+            found = any(
+                item.get("path") == path and item.get("archived") is True
+                for item in payload.get("artifacts", [])
+            )
             ok = response.status_code == 200 and found
-            print(("[PASS]" if ok else "[FAIL]"), "GET archived filter", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET archived filter",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET archived filter", response.status_code, response.get_data(as_text=True)[:1000]))
+                failures.append(
+                    (
+                        "GET archived filter",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1000],
+                    )
+                )
 
             if failures:
                 for name, status, body in failures:

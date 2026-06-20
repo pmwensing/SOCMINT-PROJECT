@@ -2,9 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
-from src.socmint.operator_release_console_routes_v14 import register_operator_release_console_routes_v14
+from src.socmint.operator_release_console_routes_v14 import (
+    register_operator_release_console_routes_v14,
+)
 from src.socmint.operator_workflow_product_review_checkpoint_v17_7 import (
     OPERATOR_WORKFLOW_PRODUCT_REVIEW_CHECKPOINT_SCHEMA,
     build_operator_workflow_product_review_checkpoint,
@@ -46,7 +50,9 @@ def test_v17_7_product_review_checkpoint_route_requires_login(tmp_path, monkeypa
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     client = _app().test_client()
 
-    response = client.get("/api/v1/operator/workflow-dashboard/product-review-checkpoint")
+    response = client.get(
+        "/api/v1/operator/workflow-dashboard/product-review-checkpoint"
+    )
 
     assert response.status_code == 401
 
@@ -57,7 +63,9 @@ def test_v17_7_product_review_checkpoint_route_returns_ready(tmp_path, monkeypat
     with client.session_transaction() as sess:
         sess["user"] = "operator"
 
-    response = client.get("/api/v1/operator/workflow-dashboard/product-review-checkpoint")
+    response = client.get(
+        "/api/v1/operator/workflow-dashboard/product-review-checkpoint"
+    )
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -82,9 +90,13 @@ def test_v17_7_browser_runner_has_real_browser_checks():
 
 
 def test_v17_7_release_note_and_changelog_are_present():
-    note = Path("release/V17_7_PRODUCT_REVIEW_AND_BROWSER_E2E_VALIDATION.md").read_text(encoding="utf-8")
+    note = Path("release/V17_7_PRODUCT_REVIEW_AND_BROWSER_E2E_VALIDATION.md").read_text(
+        encoding="utf-8"
+    )
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "product-review-checkpoint" in note
     assert "run_v17_7_operator_dashboard_browser_e2e.py" in note
-    assert "v17.7 Product Review Checkpoint and Browser-Level E2E Validation" in changelog
+    assert (
+        "v17.7 Product Review Checkpoint and Browser-Level E2E Validation" in changelog
+    )

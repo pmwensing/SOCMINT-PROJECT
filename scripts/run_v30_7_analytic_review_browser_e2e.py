@@ -32,10 +32,14 @@ def _port() -> int:
 def _app(db: Path):
     os.environ["DATABASE_URL"] = f"sqlite:///{db}"
     os.environ["SOCMINT_DATA_DIR"] = str(db.parent)
-    os.environ["SOCMINT_SECRET_KEY"] = "v30-browser-e2e-stable-secret-key-32chars-minimum"
+    os.environ["SOCMINT_SECRET_KEY"] = (
+        "v30-browser-e2e-stable-secret-key-32chars-minimum"
+    )
     os.environ["SOCMINT_AUTO_CREATE_DB"] = "true"
     from src.socmint.dashboard import create_app
-    from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+    from src.socmint.dossier_assembly_routes_v21_0 import (
+        register_dossier_assembly_routes_v21_0,
+    )
     from src.socmint import database
     from src.socmint import analytic_product_review_routes_v30_7 as review_routes
 
@@ -47,7 +51,15 @@ def _app(db: Path):
     dbs = database.Session()
     try:
         if not dbs.query(database.User).filter(database.User.username == USER).first():
-            dbs.add(database.User(username=USER, password_hash=generate_password_hash("v30-e2e-internal"), is_admin=True, role="admin", is_active=True))
+            dbs.add(
+                database.User(
+                    username=USER,
+                    password_hash=generate_password_hash("v30-e2e-internal"),
+                    is_admin=True,
+                    role="admin",
+                    is_active=True,
+                )
+            )
             dbs.commit()
     finally:
         dbs.close()
@@ -65,16 +77,23 @@ def _check(report: dict, key: str, ok: bool, detail: str = "") -> None:
 
 
 def _get_json(driver, url: str) -> dict:
-    return driver.execute_async_script("""
+    return driver.execute_async_script(
+        """
         const done = arguments[arguments.length - 1];
         fetch(arguments[0], {credentials:'same-origin'})
           .then(async r => done({status:r.status, body:await r.json()}))
           .catch(e => done({status:0, body:{error:String(e)}}));
-        """, url)
+        """,
+        url,
+    )
 
 
 def run() -> dict:
-    report = {"schema": "socmint.analytic_review_browser_e2e.v30_7", "version": "v30.7.0", "checks": []}
+    report = {
+        "schema": "socmint.analytic_review_browser_e2e.v30_7",
+        "version": "v30.7.0",
+        "checks": [],
+    }
     temp = Path(tempfile.mkdtemp(prefix="socmint-v30-e2e-"))
     port = _port()
     server = make_server("127.0.0.1", port, _app(temp / "e2e.db"))
@@ -86,34 +105,66 @@ def run() -> dict:
         options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        binary = os.getenv("SOCMINT_CHROME_BINARY") or shutil.which("chromium") or shutil.which("chromium-browser") or shutil.which("google-chrome")
+        binary = (
+            os.getenv("SOCMINT_CHROME_BINARY")
+            or shutil.which("chromium")
+            or shutil.which("chromium-browser")
+            or shutil.which("google-chrome")
+        )
         executable = os.getenv("SOCMINT_CHROMEDRIVER") or shutil.which("chromedriver")
         if binary:
             options.binary_location = binary
-        service = ChromeService(executable_path=executable) if executable else ChromeService()
+        service = (
+            ChromeService(executable_path=executable) if executable else ChromeService()
+        )
         driver = webdriver.Chrome(service=service, options=options)
         base = f"http://127.0.0.1:{port}"
         driver.get(base + "/_v30_e2e_login")
 
         for key, path, phrase in [
             ("workspace", "/analytic-review", "Analytic Review Workspace"),
-            ("product_review", "/analytic-review/product-review", "Analytic Product Review"),
+            (
+                "product_review",
+                "/analytic-review/product-review",
+                "Analytic Product Review",
+            ),
         ]:
             driver.get(base + path)
-            _check(report, key, phrase.lower() in driver.page_source.lower(), driver.current_url)
+            _check(
+                report,
+                key,
+                phrase.lower() in driver.page_source.lower(),
+                driver.current_url,
+            )
 
         for key, path in [
             ("workspace_api", "/api/v1/analytic-review"),
             ("claims_api", "/api/v1/analytic-review/claims"),
             ("conflicts_api", "/api/v1/analytic-review/conflicts"),
             ("human_reviews_api", "/api/v1/analytic-review/human-reviews"),
-            ("dossier_contributions_api", "/api/v1/analytic-review/dossier-contributions"),
+            (
+                "dossier_contributions_api",
+                "/api/v1/analytic-review/dossier-contributions",
+            ),
         ]:
             result = _get_json(driver, base + path)
-            _check(report, key, result.get("status") == 200, json.dumps(result, sort_keys=True))
+            _check(
+                report,
+                key,
+                result.get("status") == 200,
+                json.dumps(result, sort_keys=True),
+            )
 
-        checkpoint = _get_json(driver, base + "/api/v1/analytic-review/product-review-checkpoint")
-        _check(report, "checkpoint_ready", checkpoint.get("status") == 200 and checkpoint.get("body", {}).get("ready") is True, json.dumps(checkpoint, sort_keys=True))
+        checkpoint = _get_json(
+            driver, base + "/api/v1/analytic-review/product-review-checkpoint"
+        )
+        _check(
+            report,
+            "checkpoint_ready",
+            checkpoint.get("status") == 200
+            and checkpoint.get("body", {}).get("ready") is True,
+            json.dumps(checkpoint, sort_keys=True),
+        )
     finally:
         if driver is not None:
             driver.quit()
@@ -121,13 +172,17 @@ def run() -> dict:
         shutil.rmtree(temp, ignore_errors=True)
 
     failed = [item for item in report["checks"] if not item["ok"]]
-    report.update({
-        "passed_count": len(report["checks"]) - len(failed),
-        "failed_count": len(failed),
-        "status": "passed" if not failed else "failed",
-        "v30_closed": False,
-        "next_action": "confirm_test_gates_and_close_v30" if not failed else "resolve_v30_browser_e2e_failures",
-    })
+    report.update(
+        {
+            "passed_count": len(report["checks"]) - len(failed),
+            "failed_count": len(failed),
+            "status": "passed" if not failed else "failed",
+            "v30_closed": False,
+            "next_action": "confirm_test_gates_and_close_v30"
+            if not failed
+            else "resolve_v30_browser_e2e_failures",
+        }
+    )
     return report
 
 

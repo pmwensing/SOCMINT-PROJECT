@@ -64,6 +64,7 @@ def main() -> int:
                     runtime_file.unlink()
 
             import shutil
+
             for runtime_dir in [
                 Path("storage/final_releases/v9_9_2_blocked_smoke"),
                 Path("storage/final_releases/v9_9_2_final_release_smoke"),
@@ -78,9 +79,19 @@ def main() -> int:
             )
             payload = response.get_json() if response.is_json else {}
             ok = response.status_code == 200 and payload.get("status") == "blocked"
-            print(("[PASS]" if ok else "[FAIL]"), "deny publish before final gate approval", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "deny publish before final gate approval",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("deny publish before final gate approval", response.status_code, response.get_data(as_text=True)[:2000]))
+                failures.append(
+                    (
+                        "deny publish before final gate approval",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final-gate/signoff",
@@ -88,27 +99,67 @@ def main() -> int:
                 headers={"X-CSRF-Token": "v992-csrf"},
             )
             payload = response.get_json() if response.is_json else {}
-            ok = response.status_code == 200 and payload.get("gate", {}).get("gate_status") == "approved"
-            print(("[PASS]" if ok else "[FAIL]"), "approve final gate", response.status_code)
+            ok = (
+                response.status_code == 200
+                and payload.get("gate", {}).get("gate_status") == "approved"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "approve final gate",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("approve final gate", response.status_code, response.get_data(as_text=True)[:2000]))
+                failures.append(
+                    (
+                        "approve final gate",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final-gate/write",
                 headers={"X-CSRF-Token": "v992-csrf"},
             )
-            ok = response.status_code == 200 and Path("release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json").exists()
-            print(("[PASS]" if ok else "[FAIL]"), "write final gate manifest", response.status_code)
+            ok = (
+                response.status_code == 200
+                and Path("release/V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json").exists()
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write final gate manifest",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write final gate manifest", response.status_code, response.get_data(as_text=True)[:2000]))
+                failures.append(
+                    (
+                        "write final gate manifest",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2000],
+                    )
+                )
 
             # Seed a built package ZIP so final release can include package evidence.
-            package_root = Path("storage/product_packages/v9_9_2_final_release_smoke_package")
+            package_root = Path(
+                "storage/product_packages/v9_9_2_final_release_smoke_package"
+            )
             package_root.mkdir(parents=True, exist_ok=True)
-            (package_root / "PACKAGE_MANIFEST.json").write_text(json.dumps({"selected_count": 1, "copied_artifact_count": 1, "metadata_file_count": 2}, indent=2))
+            (package_root / "PACKAGE_MANIFEST.json").write_text(
+                json.dumps(
+                    {
+                        "selected_count": 1,
+                        "copied_artifact_count": 1,
+                        "metadata_file_count": 2,
+                    },
+                    indent=2,
+                )
+            )
             (package_root / "PACKAGE_INDEX.md").write_text("# package index\n")
-            zip_path = Path("storage/product_packages/v9_9_2_final_release_smoke_package.zip")
+            zip_path = Path(
+                "storage/product_packages/v9_9_2_final_release_smoke_package.zip"
+            )
             import zipfile
+
             with zipfile.ZipFile(zip_path, "w") as zf:
                 zf.writestr("PACKAGE_MANIFEST.json", "{}")
                 zf.writestr("PACKAGE_INDEX.md", "# index\n")
@@ -121,9 +172,19 @@ def main() -> int:
                 and preview.get("can_publish") is True
                 and preview.get("publish_status") == "ready"
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET final release preview ready", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET final release preview ready",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET final release preview ready", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "GET final release preview ready",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final-release/publish",
@@ -142,9 +203,19 @@ def main() -> int:
                 and Path("release/V9_9_2_FINAL_RELEASE_NOTES.md").exists()
                 and Path("release/V9_9_2_FINAL_RELEASE_PUBLISH_MANIFEST.json").exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "publish final release", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "publish final release",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("publish final release", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "publish final release",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
             if root.exists():
                 manifest = json.loads((root / "PUBLISH_MANIFEST.json").read_text())
@@ -155,21 +226,43 @@ def main() -> int:
                 )
                 print(("[PASS]" if ok else "[FAIL]"), "publish manifest content")
                 if not ok:
-                    failures.append(("publish manifest content", 0, json.dumps(manifest, indent=2)[:2500]))
+                    failures.append(
+                        (
+                            "publish manifest content",
+                            0,
+                            json.dumps(manifest, indent=2)[:2500],
+                        )
+                    )
 
             response = client.get("/product/final-release")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Final Release Publisher" in body and "Publish Final Release Notes Pack" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET final release UI", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Final Release Publisher" in body
+                and "Publish Final Release Notes Pack" in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET final release UI",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET final release UI", response.status_code, body[:2000]))
+                failures.append(
+                    ("GET final release UI", response.status_code, body[:2000])
+                )
 
             response = client.get("/product/final-gate")
             body = response.get_data(as_text=True)
             ok = response.status_code == 200 and "Open Final Release Publisher" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET final gate publisher link", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET final gate publisher link",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET final gate publisher link", response.status_code, body[:2000]))
+                failures.append(
+                    ("GET final gate publisher link", response.status_code, body[:2000])
+                )
 
             if failures:
                 for name, status, body in failures:

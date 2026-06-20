@@ -78,11 +78,13 @@ def build_portfolio_product_review(
     for route in routes or []:
         rule = str(getattr(route, "rule", route))
         methods = getattr(route, "methods", None)
-        method_tuple = tuple(sorted(
-            method
-            for method in (methods or {"UNKNOWN"})
-            if method not in {"HEAD", "OPTIONS"}
-        ))
+        method_tuple = tuple(
+            sorted(
+                method
+                for method in (methods or {"UNKNOWN"})
+                if method not in {"HEAD", "OPTIONS"}
+            )
+        )
         route_rules.add(rule)
         route_keys.append((rule, method_tuple))
 
@@ -96,7 +98,8 @@ def build_portfolio_product_review(
     duplicate_routes = [
         {"route": rule, "methods": list(methods), "count": count}
         for (rule, methods), count in Counter(route_keys).items()
-        if count > 1 and rule.startswith(("/portfolio-operations", "/api/v1/portfolio-operations"))
+        if count > 1
+        and rule.startswith(("/portfolio-operations", "/api/v1/portfolio-operations"))
     ]
     if duplicate_routes:
         blockers.append({"key": "duplicate_v24_route", "detail": str(duplicate_routes)})
@@ -109,7 +112,9 @@ def build_portfolio_product_review(
         if path.is_file() and "v24" in path.name.lower()
     )
     if migrations:
-        blockers.append({"key": "unexpected_v24_migration", "detail": ", ".join(migrations)})
+        blockers.append(
+            {"key": "unexpected_v24_migration", "detail": ", ".join(migrations)}
+        )
 
     return {
         "schema": SCHEMA,
@@ -126,5 +131,7 @@ def build_portfolio_product_review(
         "blockers": blockers,
         "source_records_mutated": False,
         "checkpoint_record_created": False,
-        "next_action": "run_v24_browser_e2e" if not blockers else "resolve_v24_product_blockers",
+        "next_action": "run_v24_browser_e2e"
+        if not blockers
+        else "resolve_v24_product_blockers",
     }

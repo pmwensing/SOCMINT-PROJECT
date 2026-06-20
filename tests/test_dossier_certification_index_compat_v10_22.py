@@ -7,15 +7,24 @@ def test_v10_22_certification_index_canonical_routes_remain_registered():
     assert "/api/v1/dossier-builder/v3/certification-index/<case_id>" in routes
     assert "/api/v1/dossier-builder/v3/certification-index/<case_id>/summary" in routes
     assert "/api/v1/dossier-builder/v3/certification-index/<case_id>/markdown" in routes
-    assert "/api/v1/dossier-builder/v3/certification-index/<case_id>/<subject_id>" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/certification-index/<case_id>/<subject_id>"
+        in routes
+    )
 
 
 def test_v10_22_export_certification_index_compat_routes_are_registered():
     routes = {rule.rule for rule in app.url_map.iter_rules()}
 
     assert "/api/v1/dossier-builder/v3/export-certification-index/<case_id>" in routes
-    assert "/api/v1/dossier-builder/v3/export-certification-index/<case_id>/summary" in routes
-    assert "/api/v1/dossier-builder/v3/export-certification-index/<case_id>/review" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/export-certification-index/<case_id>/summary"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/export-certification-index/<case_id>/review"
+        in routes
+    )
 
 
 def test_v10_22_compat_routes_are_aliases_not_replacements():

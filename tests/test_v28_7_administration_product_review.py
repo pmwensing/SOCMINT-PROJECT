@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from src.socmint.administration_product_review_v28_7 import REQUIRED_ROUTES, build_administration_product_review
+from src.socmint.administration_product_review_v28_7 import (
+    REQUIRED_ROUTES,
+    build_administration_product_review,
+)
 
 
 class _Route:
@@ -10,7 +13,12 @@ class _Route:
 
 
 def _fixture_tree(root: Path) -> None:
-    from src.socmint.administration_product_review_v28_7 import REQUIRED_ASSETS, REQUIRED_MODULES, REQUIRED_NOTES
+    from src.socmint.administration_product_review_v28_7 import (
+        REQUIRED_ASSETS,
+        REQUIRED_MODULES,
+        REQUIRED_NOTES,
+    )
+
     for item in (*REQUIRED_MODULES, *REQUIRED_ASSETS, *REQUIRED_NOTES):
         path = root / item
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -45,7 +53,9 @@ def test_v28_7_product_review_blocks_missing_duplicate_and_migration(tmp_path):
     migration = tmp_path / "migrations/v28_7_bad.py"
     migration.parent.mkdir(parents=True, exist_ok=True)
     migration.write_text("bad\n", encoding="utf-8")
-    routes = [_Route(rule) for rule in REQUIRED_ROUTES if rule != "/administration/operations"]
+    routes = [
+        _Route(rule) for rule in REQUIRED_ROUTES if rule != "/administration/operations"
+    ]
     routes.extend([_Route("/administration"), _Route("/administration")])
     result = build_administration_product_review(tmp_path, routes=routes)
     assert result["status"] == "blocked"

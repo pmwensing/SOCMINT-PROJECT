@@ -30,7 +30,8 @@ def ensure_billing_integration_schema() -> None:
     db.ensure_configured()
     session = db.Session()
     try:
-        session.execute(text("""
+        session.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS billing_customer_links (
                 id INTEGER PRIMARY KEY,
                 username VARCHAR(255) NOT NULL UNIQUE,
@@ -44,7 +45,8 @@ def ensure_billing_integration_schema() -> None:
                 created_at DATETIME NOT NULL,
                 updated_at DATETIME NOT NULL
             )
-        """))
+        """)
+        )
         session.commit()
     finally:
         session.close()
@@ -98,8 +100,23 @@ def link_customer(
     finally:
         session.close()
     if plan_key and status in {"active", "trialing"}:
-        assign_membership(username, plan_key, actor="billing", metadata={"customer_id": customer_id, "subscription_id": subscription_id})
-    db.record_audit_event(action="billing_customer_link", actor="billing", details={"username": username, "customer_id": customer_id, "subscription_id": subscription_id, "plan_key": plan_key, "status": status})
+        assign_membership(
+            username,
+            plan_key,
+            actor="billing",
+            metadata={"customer_id": customer_id, "subscription_id": subscription_id},
+        )
+    db.record_audit_event(
+        action="billing_customer_link",
+        actor="billing",
+        details={
+            "username": username,
+            "customer_id": customer_id,
+            "subscription_id": subscription_id,
+            "plan_key": plan_key,
+            "status": status,
+        },
+    )
     return billing_link_status(username)
 
 
@@ -107,10 +124,14 @@ def billing_link_status(username: str) -> dict[str, Any]:
     ensure_billing_integration_schema()
     session = db.Session()
     try:
-        row = session.execute(
-            text("SELECT * FROM billing_customer_links WHERE username = :username"),
-            {"username": username},
-        ).mappings().first()
+        row = (
+            session.execute(
+                text("SELECT * FROM billing_customer_links WHERE username = :username"),
+                {"username": username},
+            )
+            .mappings()
+            .first()
+        )
     finally:
         session.close()
     return {
@@ -125,21 +146,39 @@ def billing_link_status(username: str) -> dict[str, Any]:
 
 def normalize_provider_event(event: dict[str, Any]) -> dict[str, Any]:
     event_type = event.get("type") or event.get("event_type") or ""
-    data = event.get("data", {}).get("object") if isinstance(event.get("data"), dict) and "object" in event.get("data", {}) else event.get("data", event)
+    data = (
+        event.get("data", {}).get("object")
+        if isinstance(event.get("data"), dict) and "object" in event.get("data", {})
+        else event.get("data", event)
+    )
     if not isinstance(data, dict):
         data = {}
     customer_id = data.get("customer") or data.get("customer_id")
-    subscription_id = data.get("subscription") or data.get("subscription_id") or data.get("id")
-    username = data.get("client_reference_id") or data.get("username") or data.get("customer_email")
+    subscription_id = (
+        data.get("subscription") or data.get("subscription_id") or data.get("id")
+    )
+    username = (
+        data.get("client_reference_id")
+        or data.get("username")
+        or data.get("customer_email")
+    )
     price_id = data.get("price_id")
-    items = data.get("items", {}).get("data", []) if isinstance(data.get("items"), dict) else []
+    items = (
+        data.get("items", {}).get("data", [])
+        if isinstance(data.get("items"), dict)
+        else []
+    )
     if not price_id and items:
         first_price = items[0].get("price", {}) if isinstance(items[0], dict) else {}
         price_id = first_price.get("id")
-    plan_key = data.get("plan") or data.get("plan_key") or PRICE_ID_TO_PLAN.get(price_id)
+    plan_key = (
+        data.get("plan") or data.get("plan_key") or PRICE_ID_TO_PLAN.get(price_id)
+    )
     current_period_end = data.get("current_period_end")
     if isinstance(current_period_end, int):
-        current_period_end_dt = dt.datetime.fromtimestamp(current_period_end, tz=dt.timezone.utc)
+        current_period_end_dt = dt.datetime.fromtimestamp(
+            current_period_end, tz=dt.timezone.utc
+        )
     else:
         current_period_end_dt = None
     return {

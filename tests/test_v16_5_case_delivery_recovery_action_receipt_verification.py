@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.socmint.case_delivery_recovery_action_receipt_v16_4 import build_case_delivery_recovery_action_receipt
+from src.socmint.case_delivery_recovery_action_receipt_v16_4 import (
+    build_case_delivery_recovery_action_receipt,
+)
 from src.socmint.case_delivery_recovery_action_receipt_verification_v16_5 import (
     CASE_DELIVERY_RECOVERY_ACTION_RECEIPT_VERIFICATION_SCHEMA,
 )
@@ -10,12 +12,16 @@ from src.socmint.case_delivery_recovery_action_receipt_verification_v16_5 import
     verify_case_delivery_recovery_action_receipt,
 )
 from src.socmint.case_delivery_recovery_v16_3 import build_case_delivery_recovery
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
 from tests.test_v15_case_delivery_workspace import ready_payload
 
 
-def _issued_receipt(detail: str = "Recipient did not acknowledge.", *, status: str = "completed"):
+def _issued_receipt(
+    detail: str = "Recipient did not acknowledge.", *, status: str = "completed"
+):
     recovery = build_case_delivery_recovery(
         "case-v16-5-verify",
         ready_payload(
@@ -72,7 +78,9 @@ def test_case_delivery_recovery_action_receipt_verification_blocks_tampered_rece
 
     assert result["status"] == "blocked"
     assert result["verified"] is False
-    assert any(blocker["key"] == "receipt_id_mismatch" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "receipt_id_mismatch" for blocker in result["blockers"]
+    )
 
 
 def test_case_delivery_recovery_action_receipt_verification_blocks_queue_mismatch():
@@ -83,19 +91,27 @@ def test_case_delivery_recovery_action_receipt_verification_blocks_queue_mismatc
 
     assert result["status"] == "blocked"
     assert any(blocker["key"] == "queue_id_mismatch" for blocker in result["blockers"])
-    assert any(blocker["key"] == "receipt_id_mismatch" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "receipt_id_mismatch" for blocker in result["blockers"]
+    )
 
 
 def test_case_delivery_recovery_action_receipt_verification_blocks_tampered_action_receipt_id():
     recovery, receipt = _issued_receipt()
-    tampered_actions = [{**receipt["actions"][0], "action_receipt_id": "tampered-action"}]
+    tampered_actions = [
+        {**receipt["actions"][0], "action_receipt_id": "tampered-action"}
+    ]
     tampered = {**receipt, "actions": tampered_actions}
 
     result = verify_case_delivery_recovery_action_receipt(tampered, recovery)
 
     assert result["status"] == "blocked"
-    assert any(blocker["key"] == "action_receipt_id_mismatch" for blocker in result["blockers"])
-    assert any(blocker["key"] == "receipt_id_mismatch" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "action_receipt_id_mismatch" for blocker in result["blockers"]
+    )
+    assert any(
+        blocker["key"] == "receipt_id_mismatch" for blocker in result["blockers"]
+    )
 
 
 def test_case_delivery_recovery_action_receipt_verification_blocks_recovery_mismatch():
@@ -107,7 +123,9 @@ def test_case_delivery_recovery_action_receipt_verification_blocks_recovery_mism
 
     assert result["status"] == "blocked"
     assert any(blocker["key"] == "decision_mismatch" for blocker in result["blockers"])
-    assert any(blocker["key"] == "action_receipt_id_mismatch" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "action_receipt_id_mismatch" for blocker in result["blockers"]
+    )
 
 
 def test_case_delivery_recovery_action_receipt_verification_blocks_when_recovery_blocked():
@@ -117,7 +135,13 @@ def test_case_delivery_recovery_action_receipt_verification_blocks_when_recovery
             operator="operator",
             issuer="release-lead",
             authorizer="delivery-lead",
-            events=[{"type": "exception", "operator": "delivery-lead", "detail": "Channel outage."}],
+            events=[
+                {
+                    "type": "exception",
+                    "operator": "delivery-lead",
+                    "detail": "Channel outage.",
+                }
+            ],
         ),
     )
 
@@ -128,7 +152,9 @@ def test_case_delivery_recovery_action_receipt_verification_blocks_when_recovery
     assert any(blocker["key"] == "recovery_blocked" for blocker in result["blockers"])
 
 
-def test_case_delivery_recovery_action_receipt_verification_route_requires_login(tmp_path, monkeypatch):
+def test_case_delivery_recovery_action_receipt_verification_route_requires_login(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -144,7 +170,9 @@ def test_case_delivery_recovery_action_receipt_verification_route_requires_login
     assert response.status_code == 401
 
 
-def test_case_delivery_recovery_action_receipt_verification_route_returns_verified(tmp_path, monkeypatch):
+def test_case_delivery_recovery_action_receipt_verification_route_returns_verified(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -169,7 +197,9 @@ def test_case_delivery_recovery_action_receipt_verification_route_returns_verifi
 
 
 def test_v16_5_release_note_and_changelog_are_present():
-    note = Path("release/V16_5_DELIVERY_RECOVERY_ACTION_RECEIPT_VERIFICATION.md").read_text(encoding="utf-8")
+    note = Path(
+        "release/V16_5_DELIVERY_RECOVERY_ACTION_RECEIPT_VERIFICATION.md"
+    ).read_text(encoding="utf-8")
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/case-delivery/<case_id>/recovery-action-receipt/verify" in note

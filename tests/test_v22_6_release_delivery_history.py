@@ -13,37 +13,64 @@ def _setup(tmp_path, monkeypatch):
 def _event(case_id, actor, action, details):
     session = database.Session()
     try:
-        session.add(database.AuditLog(
-            actor=actor,
-            action=action,
-            target_value=case_id,
-            details=_canonical(details),
-        ))
+        session.add(
+            database.AuditLog(
+                actor=actor,
+                action=action,
+                target_value=case_id,
+                details=_canonical(details),
+            )
+        )
         session.commit()
     finally:
         session.close()
 
 
-def test_v22_6_consolidates_ordered_history_and_unresolved_actions(tmp_path, monkeypatch):
+def test_v22_6_consolidates_ordered_history_and_unresolved_actions(
+    tmp_path, monkeypatch
+):
     _setup(tmp_path, monkeypatch)
-    _event("case-alpha", "operator", "case_dossier_release_authorization", {
-        "authorization_id": "auth-1",
-    })
-    _event("case-alpha", "operator", "case_dossier_release_preview", {
-        "preview_id": "preview-1",
-    })
-    _event("case-alpha", "operator", "case_dossier_secure_distribution", {
-        "distribution_id": "distribution-1",
-        "status": "dispatch_recorded",
-    })
-    _event("case-alpha", "operator", "case_dossier_delivery_receipt", {
-        "delivery_receipt_id": "receipt-1",
-        "delivery_result": "delivered",
-    })
+    _event(
+        "case-alpha",
+        "operator",
+        "case_dossier_release_authorization",
+        {
+            "authorization_id": "auth-1",
+        },
+    )
+    _event(
+        "case-alpha",
+        "operator",
+        "case_dossier_release_preview",
+        {
+            "preview_id": "preview-1",
+        },
+    )
+    _event(
+        "case-alpha",
+        "operator",
+        "case_dossier_secure_distribution",
+        {
+            "distribution_id": "distribution-1",
+            "status": "dispatch_recorded",
+        },
+    )
+    _event(
+        "case-alpha",
+        "operator",
+        "case_dossier_delivery_receipt",
+        {
+            "delivery_receipt_id": "receipt-1",
+            "delivery_result": "delivered",
+        },
+    )
 
     result = build_release_delivery_history("case-alpha")
     assert [item["event_type"] for item in result["timeline"]] == [
-        "authorization", "preview", "dispatch", "delivery_receipt"
+        "authorization",
+        "preview",
+        "dispatch",
+        "delivery_receipt",
     ]
     assert result["current_release_outcome"] == "delivered_acknowledgement_pending"
     assert result["closure_ready"] is False
@@ -57,9 +84,18 @@ def test_v22_6_produces_closure_ready_summary(tmp_path, monkeypatch):
     _setup(tmp_path, monkeypatch)
     events = [
         ("case_dossier_release_authorization", {"authorization_id": "auth-1"}),
-        ("case_dossier_secure_distribution", {"distribution_id": "distribution-1", "status": "dispatch_recorded"}),
-        ("case_dossier_delivery_receipt", {"delivery_receipt_id": "receipt-1", "delivery_result": "delivered"}),
-        ("case_dossier_recipient_acknowledgement", {"acknowledgement_id": "ack-1", "recipient_acknowledged": True}),
+        (
+            "case_dossier_secure_distribution",
+            {"distribution_id": "distribution-1", "status": "dispatch_recorded"},
+        ),
+        (
+            "case_dossier_delivery_receipt",
+            {"delivery_receipt_id": "receipt-1", "delivery_result": "delivered"},
+        ),
+        (
+            "case_dossier_recipient_acknowledgement",
+            {"acknowledgement_id": "ack-1", "recipient_acknowledged": True},
+        ),
     ]
     for action, details in events:
         _event("case-alpha", "operator", action, details)

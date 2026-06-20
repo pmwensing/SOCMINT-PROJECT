@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import json
@@ -189,18 +188,10 @@ def list_evidence_links(
     links = _load_links()
 
     if review_item_id:
-        links = [
-            item
-            for item in links
-            if item.get("review_item_id") == review_item_id
-        ]
+        links = [item for item in links if item.get("review_item_id") == review_item_id]
 
     if evidence_id:
-        links = [
-            item
-            for item in links
-            if item.get("evidence_id") == evidence_id
-        ]
+        links = [item for item in links if item.get("evidence_id") == evidence_id]
 
     return links
 
@@ -216,9 +207,7 @@ def evidence_links_payload(
     evidence = list_evidence()
 
     by_id = {
-        item.get("evidence_id"): item
-        for item in evidence
-        if item.get("evidence_id")
+        item.get("evidence_id"): item for item in evidence if item.get("evidence_id")
     }
 
     enriched = []
@@ -243,9 +232,7 @@ def linked_evidence_for_review_items(
 ) -> list[dict[str, Any]]:
     evidence = list_evidence()
     by_id = {
-        item.get("evidence_id"): item
-        for item in evidence
-        if item.get("evidence_id")
+        item.get("evidence_id"): item for item in evidence if item.get("evidence_id")
     }
 
     wanted = set(review_item_ids)
@@ -297,9 +284,7 @@ def review_item_attachment_map(
     evidence = list_evidence()
 
     evidence_by_id = {
-        item.get("evidence_id"): item
-        for item in evidence
-        if item.get("evidence_id")
+        item.get("evidence_id"): item for item in evidence if item.get("evidence_id")
     }
 
     export_item_ids: set[str] | None = None

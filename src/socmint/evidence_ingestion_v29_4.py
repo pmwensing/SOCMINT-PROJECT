@@ -5,7 +5,12 @@ from typing import Any
 
 from . import database
 from .collection_job_contract_v29_1 import find_contract
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 
 SCHEMA = "socmint.evidence_safe_ingestion.v29_4"
 VERSION = "v29.4.0"
@@ -62,7 +67,9 @@ def history() -> list[dict[str, Any]]:
         session.close()
 
 
-def _record(action: str, actor: str, target: str, event: dict[str, Any], ip_address: str | None) -> dict[str, Any]:
+def _record(
+    action: str, actor: str, target: str, event: dict[str, Any], ip_address: str | None
+) -> dict[str, Any]:
     _ensure_storage()
     session = database.Session()
     try:
@@ -111,22 +118,57 @@ def current_artifacts() -> list[dict[str, Any]]:
             item = dict(artifacts[artifact_id])
             item["observation_count"] = int(item.get("observation_count") or 0) + 1
             artifacts[artifact_id] = item
-    return sorted(artifacts.values(), key=lambda item: str(item.get("recorded_at") or ""), reverse=True)
+    return sorted(
+        artifacts.values(),
+        key=lambda item: str(item.get("recorded_at") or ""),
+        reverse=True,
+    )
 
 
 def find_artifact(artifact_id: str) -> dict[str, Any] | None:
-    return next((item for item in current_artifacts() if item.get("artifact_id") == artifact_id), None)
+    return next(
+        (
+            item
+            for item in current_artifacts()
+            if item.get("artifact_id") == artifact_id
+        ),
+        None,
+    )
 
 
 def observations() -> list[dict[str, Any]]:
-    return [item for item in history() if item.get("event_type") == "observation_derived"]
+    return [
+        item for item in history() if item.get("event_type") == "observation_derived"
+    ]
 
 
 def _duplicate_for(content_sha256: str) -> dict[str, Any] | None:
-    return next((item for item in current_artifacts() if item.get("content_sha256") == content_sha256), None)
+    return next(
+        (
+            item
+            for item in current_artifacts()
+            if item.get("content_sha256") == content_sha256
+        ),
+        None,
+    )
 
 
-def register_artifact(*, actor: str, collection_job_id: str, attempt_number: int, source_reference: str, acquired_at: str, content_sha256: str, content_type: str, byte_size: int, acquisition_method: str, provenance_metadata: Any, reason: str, confirmed: bool, ip_address: str | None = None) -> dict[str, Any]:
+def register_artifact(
+    *,
+    actor: str,
+    collection_job_id: str,
+    attempt_number: int,
+    source_reference: str,
+    acquired_at: str,
+    content_sha256: str,
+    content_type: str,
+    byte_size: int,
+    acquisition_method: str,
+    provenance_metadata: Any,
+    reason: str,
+    confirmed: bool,
+    ip_address: str | None = None,
+) -> dict[str, Any]:
     contract = find_contract(collection_job_id)
     if contract is None:
         return blocked("collection_job_contract_required")
@@ -159,7 +201,9 @@ def register_artifact(*, actor: str, collection_job_id: str, attempt_number: int
     duplicate = _duplicate_for(content_sha256)
     contract_binding = {
         "collection_job_id": collection_job_id,
-        "collection_job_event_sha256": (contract.get("transition_history") or [contract])[-1].get("collection_job_event_sha256"),
+        "collection_job_event_sha256": (
+            contract.get("transition_history") or [contract]
+        )[-1].get("collection_job_event_sha256"),
         "attempt_number": attempt_number,
         "case_id": contract.get("case_id"),
         "entity_id": contract.get("entity_id"),
@@ -203,11 +247,25 @@ def register_artifact(*, actor: str, collection_job_id: str, attempt_number: int
         "connector_execution_performed": False,
     }
     result = _record(ACTIONS[0], actor, event["artifact_id"], event, ip_address)
-    next_action = "review_duplicate_artifact" if duplicate else "review_artifact_acceptance"
-    return {**result, "status": "evidence_artifact_registered", "next_action": next_action}
+    next_action = (
+        "review_duplicate_artifact" if duplicate else "review_artifact_acceptance"
+    )
+    return {
+        **result,
+        "status": "evidence_artifact_registered",
+        "next_action": next_action,
+    }
 
 
-def change_artifact_state(*, actor: str, artifact_id: str, to_state: str, reason: str, confirmed: bool, ip_address: str | None = None) -> dict[str, Any]:
+def change_artifact_state(
+    *,
+    actor: str,
+    artifact_id: str,
+    to_state: str,
+    reason: str,
+    confirmed: bool,
+    ip_address: str | None = None,
+) -> dict[str, Any]:
     artifact = find_artifact(artifact_id)
     if artifact is None:
         return blocked("evidence_artifact_required")
@@ -224,8 +282,12 @@ def change_artifact_state(*, actor: str, artifact_id: str, to_state: str, reason
         return blocked("state_change_reason_required")
     binding = {
         "artifact_id": artifact_id,
-        "artifact_event_id": (artifact.get("state_history") or [artifact])[-1].get("artifact_event_id"),
-        "artifact_event_sha256": (artifact.get("state_history") or [artifact])[-1].get("artifact_event_sha256"),
+        "artifact_event_id": (artifact.get("state_history") or [artifact])[-1].get(
+            "artifact_event_id"
+        ),
+        "artifact_event_sha256": (artifact.get("state_history") or [artifact])[-1].get(
+            "artifact_event_sha256"
+        ),
         "content_sha256": artifact.get("content_sha256"),
         "current_state": current_state,
     }
@@ -250,10 +312,27 @@ def change_artifact_state(*, actor: str, artifact_id: str, to_state: str, reason
         "connector_output_mutated": False,
     }
     result = _record(ACTIONS[1], actor, artifact_id, event, ip_address)
-    return {**result, "status": "evidence_artifact_state_changed", "next_action": "derive_observations" if to_state == "accepted" else "review_artifact_state"}
+    return {
+        **result,
+        "status": "evidence_artifact_state_changed",
+        "next_action": "derive_observations"
+        if to_state == "accepted"
+        else "review_artifact_state",
+    }
 
 
-def derive_observation(*, actor: str, artifact_id: str, observation_type: str, normalized_value: Any, confidence: str, derivation_method: str, reason: str, confirmed: bool, ip_address: str | None = None) -> dict[str, Any]:
+def derive_observation(
+    *,
+    actor: str,
+    artifact_id: str,
+    observation_type: str,
+    normalized_value: Any,
+    confidence: str,
+    derivation_method: str,
+    reason: str,
+    confirmed: bool,
+    ip_address: str | None = None,
+) -> dict[str, Any]:
     artifact = find_artifact(artifact_id)
     if artifact is None:
         return blocked("evidence_artifact_required")
@@ -272,7 +351,9 @@ def derive_observation(*, actor: str, artifact_id: str, observation_type: str, n
         "artifact_id": artifact_id,
         "content_sha256": artifact.get("content_sha256"),
         "acquisition_sha256": artifact.get("acquisition_sha256"),
-        "artifact_event_sha256": (artifact.get("state_history") or [artifact])[-1].get("artifact_event_sha256"),
+        "artifact_event_sha256": (artifact.get("state_history") or [artifact])[-1].get(
+            "artifact_event_sha256"
+        ),
         "collection_job_id": artifact.get("collection_job_id"),
         "attempt_number": artifact.get("attempt_number"),
     }
@@ -304,4 +385,8 @@ def derive_observation(*, actor: str, artifact_id: str, observation_type: str, n
         "connector_output_mutated": False,
     }
     result = _record(ACTIONS[2], actor, artifact_id, event, ip_address)
-    return {**result, "status": "evidence_observation_derived", "next_action": "review_observation_for_dossier"}
+    return {
+        **result,
+        "status": "evidence_observation_derived",
+        "next_action": "review_observation_for_dossier",
+    }

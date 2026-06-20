@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.socmint.case_delivery_recovery_action_receipt_v16_4 import build_case_delivery_recovery_action_receipt
-from src.socmint.case_delivery_recovery_closure_record_v16_6 import build_case_delivery_recovery_closure_record
+from src.socmint.case_delivery_recovery_action_receipt_v16_4 import (
+    build_case_delivery_recovery_action_receipt,
+)
+from src.socmint.case_delivery_recovery_closure_record_v16_6 import (
+    build_case_delivery_recovery_closure_record,
+)
 from src.socmint.case_delivery_recovery_closure_record_verification_v16_7 import (
     CASE_DELIVERY_RECOVERY_CLOSURE_RECORD_VERIFICATION_SCHEMA,
 )
@@ -11,7 +15,9 @@ from src.socmint.case_delivery_recovery_closure_record_verification_v16_7 import
     verify_case_delivery_recovery_closure_record,
 )
 from src.socmint.case_delivery_recovery_v16_3 import build_case_delivery_recovery
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
 from tests.test_v15_case_delivery_workspace import ready_payload
 
@@ -50,7 +56,9 @@ def _closed_payload(action_status: str = "completed"):
         },
     )
     receipt = receipt_result["receipt"]
-    closure_result = build_case_delivery_recovery_closure_record(recovery, receipt, closer="delivery-owner")
+    closure_result = build_case_delivery_recovery_closure_record(
+        recovery, receipt, closer="delivery-owner"
+    )
     return recovery, receipt, closure_result["closure"]
 
 
@@ -75,7 +83,9 @@ def test_case_delivery_recovery_closure_record_verification_blocks_tampered_clos
     result = verify_case_delivery_recovery_closure_record(tampered, recovery, receipt)
 
     assert result["status"] == "blocked"
-    assert any(blocker["key"] == "closure_id_mismatch" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "closure_id_mismatch" for blocker in result["blockers"]
+    )
 
 
 def test_case_delivery_recovery_closure_record_verification_blocks_tampered_payload_hash():
@@ -85,8 +95,12 @@ def test_case_delivery_recovery_closure_record_verification_blocks_tampered_payl
     result = verify_case_delivery_recovery_closure_record(tampered, recovery, receipt)
 
     assert result["status"] == "blocked"
-    assert any(blocker["key"] == "payload_hash_mismatch" for blocker in result["blockers"])
-    assert any(blocker["key"] == "closure_id_mismatch" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "payload_hash_mismatch" for blocker in result["blockers"]
+    )
+    assert any(
+        blocker["key"] == "closure_id_mismatch" for blocker in result["blockers"]
+    )
 
 
 def test_case_delivery_recovery_closure_record_verification_blocks_linkage_mismatch():
@@ -97,7 +111,9 @@ def test_case_delivery_recovery_closure_record_verification_blocks_linkage_misma
 
     assert result["status"] == "blocked"
     assert any(blocker["key"] == "queue_id_mismatch" for blocker in result["blockers"])
-    assert any(blocker["key"] == "payload_hash_mismatch" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "payload_hash_mismatch" for blocker in result["blockers"]
+    )
 
 
 def test_case_delivery_recovery_closure_record_verification_blocks_pending_receipt():
@@ -106,10 +122,15 @@ def test_case_delivery_recovery_closure_record_verification_blocks_pending_recei
     result = verify_case_delivery_recovery_closure_record(closure, recovery, receipt)
 
     assert result["status"] == "blocked"
-    assert any(blocker["key"] in {"missing_closure", "receipt_not_complete"} for blocker in result["blockers"])
+    assert any(
+        blocker["key"] in {"missing_closure", "receipt_not_complete"}
+        for blocker in result["blockers"]
+    )
 
 
-def test_case_delivery_recovery_closure_record_verification_route_requires_login(tmp_path, monkeypatch):
+def test_case_delivery_recovery_closure_record_verification_route_requires_login(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -125,7 +146,9 @@ def test_case_delivery_recovery_closure_record_verification_route_requires_login
     assert response.status_code == 401
 
 
-def test_case_delivery_recovery_closure_record_verification_route_returns_verified(tmp_path, monkeypatch):
+def test_case_delivery_recovery_closure_record_verification_route_returns_verified(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -150,7 +173,9 @@ def test_case_delivery_recovery_closure_record_verification_route_returns_verifi
 
 
 def test_v16_7_release_note_and_changelog_are_present():
-    note = Path("release/V16_7_DELIVERY_RECOVERY_CLOSURE_RECORD_VERIFICATION.md").read_text(encoding="utf-8")
+    note = Path(
+        "release/V16_7_DELIVERY_RECOVERY_CLOSURE_RECORD_VERIFICATION.md"
+    ).read_text(encoding="utf-8")
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/case-delivery/<case_id>/recovery-closure-record/verify" in note

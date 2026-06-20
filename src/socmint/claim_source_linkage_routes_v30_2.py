@@ -27,7 +27,14 @@ def register_claim_source_linkage_routes_v30_2(app):
         actor, error = _authorized()
         if error:
             return error
-        return jsonify({"schema": "socmint.claim_source_linkages.v30_2", "version": "v30.2.0", "claim_id": claim_id, "linkages": claim_linkages(claim_id)})
+        return jsonify(
+            {
+                "schema": "socmint.claim_source_linkages.v30_2",
+                "version": "v30.2.0",
+                "claim_id": claim_id,
+                "linkages": claim_linkages(claim_id),
+            }
+        )
 
     @app.post("/api/v1/analytic-review/claims/<claim_id>/source-linkages")
     def api_claim_source_linkage_post_v30_2(claim_id: str):
@@ -35,8 +42,18 @@ def register_claim_source_linkage_routes_v30_2(app):
         if error:
             return error
         payload = _payload()
-        result = link_claim_sources(actor=actor, claim_id=claim_id, artifact_ids=payload.get("artifact_ids"), observation_ids=payload.get("observation_ids"), reason=str(payload.get("reason") or ""), confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr)
-        return jsonify(result), 200 if result.get("status") == "corroboration_claim_sources_linked" else 422
+        result = link_claim_sources(
+            actor=actor,
+            claim_id=claim_id,
+            artifact_ids=payload.get("artifact_ids"),
+            observation_ids=payload.get("observation_ids"),
+            reason=str(payload.get("reason") or ""),
+            confirmed=payload.get("confirmed") is True,
+            ip_address=request.remote_addr,
+        )
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "corroboration_claim_sources_linked" else 422
 
     register_analytic_conflict_routes_v30_3(app)
     return app

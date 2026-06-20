@@ -17,7 +17,9 @@ def register_distribution_action_routes(app):
     def api_distribution_actions(case_id: str, subject_id: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
-        return jsonify(distribution_action_summary(case_id=case_id, subject_id=subject_id))
+        return jsonify(
+            distribution_action_summary(case_id=case_id, subject_id=subject_id)
+        )
 
     @app.post("/api/v1/dossier-builder/v3/distribution-actions/<case_id>/<subject_id>")
     def api_record_distribution_action(case_id: str, subject_id: str):
@@ -40,12 +42,19 @@ def register_distribution_action_routes(app):
     def api_distribution_packet(case_id: str, subject_id: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
-        return jsonify(distribution_action_packet(case_id=case_id, subject_id=subject_id))
+        return jsonify(
+            distribution_action_packet(case_id=case_id, subject_id=subject_id)
+        )
 
-    @app.get("/api/v1/dossier-builder/v3/distribution-packet/<case_id>/<subject_id>/markdown")
+    @app.get(
+        "/api/v1/dossier-builder/v3/distribution-packet/<case_id>/<subject_id>/markdown"
+    )
     def api_distribution_packet_markdown(case_id: str, subject_id: str):
         if not _login_required():
             return Response("login required\n", status=401, mimetype="text/plain")
-        return Response(distribution_action_markdown(case_id=case_id, subject_id=subject_id), mimetype="text/markdown")
+        return Response(
+            distribution_action_markdown(case_id=case_id, subject_id=subject_id),
+            mimetype="text/markdown",
+        )
 
     return app

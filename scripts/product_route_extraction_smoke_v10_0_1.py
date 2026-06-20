@@ -48,9 +48,19 @@ def main() -> int:
                 and "product_release_flow.product_release_flow_manifest"
                 in architecture.get("foundation", {}).get("extracted_modules", [])
             )
-            print(("[PASS]" if ok else "[FAIL]"), "v10 architecture includes extracted module", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "v10 architecture includes extracted module",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("v10 architecture includes extracted module", response.status_code, response.get_data(as_text=True)[:4000]))
+                failures.append(
+                    (
+                        "v10 architecture includes extracted module",
+                        response.status_code,
+                        response.get_data(as_text=True)[:4000],
+                    )
+                )
 
             required_routes = [
                 "/product/release-candidate",
@@ -72,19 +82,42 @@ def main() -> int:
             for route in required_routes:
                 response = client.get(route)
                 ok = response.status_code == 200
-                print(("[PASS]" if ok else "[FAIL]"), f"compat GET {route}", response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"compat GET {route}",
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append((f"compat GET {route}", response.status_code, response.get_data(as_text=True)[:1500]))
+                    failures.append(
+                        (
+                            f"compat GET {route}",
+                            response.status_code,
+                            response.get_data(as_text=True)[:1500],
+                        )
+                    )
 
-            response = client.post("/api/v1/product/v10/architecture/write", headers={"X-CSRF-Token": "v1001-csrf"})
+            response = client.post(
+                "/api/v1/product/v10/architecture/write",
+                headers={"X-CSRF-Token": "v1001-csrf"},
+            )
             ok = (
                 response.status_code == 200
                 and Path("release/V10_0_0_PRODUCT_ARCHITECTURE_MANIFEST.json").exists()
                 and Path("release/V10_0_0_PRODUCT_ARCHITECTURE_MANIFEST.md").exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "write v10 architecture manifest", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write v10 architecture manifest",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write v10 architecture manifest", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "write v10 architecture manifest",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
             if failures:
                 for name, status, body in failures:

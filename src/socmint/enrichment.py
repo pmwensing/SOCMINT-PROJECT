@@ -28,9 +28,7 @@ session.mount("https://", adapter)
 session.headers.update({"User-Agent": "SOCMINT-Profile-Enricher/1.0"})
 
 URL_RE = re.compile(r"https?://[\w\-.$%&?=/#+:]+")
-IMAGE_EXT_RE = re.compile(
-    r'https?://[^\s"]+\.(?:jpg|jpeg|png|gif|webp)', re.IGNORECASE
-)
+IMAGE_EXT_RE = re.compile(r'https?://[^\s"]+\.(?:jpg|jpeg|png|gif|webp)', re.IGNORECASE)
 ENRICHMENT_PROMOTION_THRESHOLD = 0.55
 SENSITIVE_EXPANSION_TYPES = {
     "email",
@@ -306,11 +304,7 @@ def score_enrichment_correlation(finding, parent_observation, seeds) -> dict:
         reasons.append("parent_observation_confidence_contributes")
 
     score = round(min(score, 1.0), 3)
-    state = (
-        "promoted"
-        if score >= ENRICHMENT_PROMOTION_THRESHOLD
-        else "quarantined"
-    )
+    state = "promoted" if score >= ENRICHMENT_PROMOTION_THRESHOLD else "quarantined"
     review_reasons = []
     if finding_type in SENSITIVE_EXPANSION_TYPES and state == "quarantined":
         has_context_link, review_reasons = _has_contextual_seed_link(
@@ -433,9 +427,11 @@ def _media_enrichment_payload(enrichment):
 
 
 def enrichment_review_queue(subject_id=None) -> dict:
-    subject_ids = [subject_id] if subject_id else [
-        subject.id for subject in db.list_spine_subjects(limit=10000)
-    ]
+    subject_ids = (
+        [subject_id]
+        if subject_id
+        else [subject.id for subject in db.list_spine_subjects(limit=10000)]
+    )
     findings = []
     for current_subject_id in subject_ids:
         for enrichment in db.list_media_profile_enrichments(current_subject_id):
@@ -503,7 +499,8 @@ def review_enrichment_finding(
             f"finding:{int(finding_index)}"
         )
         existing = [
-            obs for obs in db.list_spine_observations(enrichment.subject_id)
+            obs
+            for obs in db.list_spine_observations(enrichment.subject_id)
             if obs.source_ref == source_ref
         ]
         if existing:
@@ -583,14 +580,11 @@ def media_profile_payload(subject_id: int) -> dict:
                 "source_value": item.source_value,
                 "artifact_ref": item.artifact_ref,
                 "payload": _json_loads(item.payload_json),
-                "created_at": item.created_at.isoformat()
-                if item.created_at
-                else None,
+                "created_at": item.created_at.isoformat() if item.created_at else None,
             }
             for item in enrichments
         ],
     }
-
 
 
 def enrich_dossier(dossier):

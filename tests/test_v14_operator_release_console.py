@@ -3,12 +3,16 @@ import json
 from datetime import UTC, datetime
 
 from src.socmint.dashboard import create_app
-from src.socmint.operator_release_console_routes_v14 import register_operator_release_console_routes_v14
+from src.socmint.operator_release_console_routes_v14 import (
+    register_operator_release_console_routes_v14,
+)
 from src.socmint.operator_release_console_v14 import OPERATOR_RELEASE_CONSOLE_SCHEMA
 from src.socmint.operator_release_console_v14 import _operator_release_evaluation
 from src.socmint.operator_release_console_v14 import _snapshot_freshness
 from src.socmint.operator_release_console_v14 import operator_release_console_payload
-from scripts.refresh_operator_release_health_v14_1 import SCHEMA as RELEASE_HEALTH_SCHEMA
+from scripts.refresh_operator_release_health_v14_1 import (
+    SCHEMA as RELEASE_HEALTH_SCHEMA,
+)
 from scripts.refresh_operator_release_health_v14_1 import build_release_health_snapshot
 
 
@@ -49,10 +53,15 @@ def test_operator_release_console_payload_marks_missing_docs(tmp_path):
     assert payload["decision"] == "HOLD_FOR_RELEASE_REPAIR"
     assert payload["status"] == "needs_review"
     assert payload["summary"]["needs_review"] > 0
-    assert any(item["source"] == "release/V13_RELEASE_DOCUMENTATION_CLOSURE.md" for item in payload["checks"])
+    assert any(
+        item["source"] == "release/V13_RELEASE_DOCUMENTATION_CLOSURE.md"
+        for item in payload["checks"]
+    )
 
 
-def test_operator_release_console_payload_marks_missing_release_health_snapshot(tmp_path):
+def test_operator_release_console_payload_marks_missing_release_health_snapshot(
+    tmp_path,
+):
     release_dir = tmp_path / "release"
     release_dir.mkdir()
     for source in [
@@ -69,7 +78,9 @@ def test_operator_release_console_payload_marks_missing_release_health_snapshot(
         "\n".join(f"PR #{number} closed" for number in range(139, 145)),
         encoding="utf-8",
     )
-    (tmp_path / "CHANGELOG.md").write_text("v14.0 Operator Release Console\n", encoding="utf-8")
+    (tmp_path / "CHANGELOG.md").write_text(
+        "v14.0 Operator Release Console\n", encoding="utf-8"
+    )
 
     payload = operator_release_console_payload(tmp_path)
 
@@ -115,14 +126,18 @@ def test_operator_release_console_payload_loads_release_health_snapshot(tmp_path
         ),
         encoding="utf-8",
     )
-    (tmp_path / "CHANGELOG.md").write_text("v14.0 Operator Release Console\n", encoding="utf-8")
+    (tmp_path / "CHANGELOG.md").write_text(
+        "v14.0 Operator Release Console\n", encoding="utf-8"
+    )
 
     payload = operator_release_console_payload(tmp_path)
 
     assert payload["release_health"]["status"] in {"pass", "needs_review"}
     assert payload["release_health"]["schema"] == RELEASE_HEALTH_SCHEMA
     assert payload["release_health"]["latest_master"]["headSha"] == "abc123"
-    assert next(item for item in payload["checks"] if item["key"] == "release_health_snapshot")["status"] in {"pass", "needs_review"}
+    assert next(
+        item for item in payload["checks"] if item["key"] == "release_health_snapshot"
+    )["status"] in {"pass", "needs_review"}
 
 
 def test_release_health_snapshot_freshness_marks_fresh_snapshot(monkeypatch):
@@ -153,7 +168,9 @@ def test_release_health_snapshot_freshness_marks_stale_snapshot(monkeypatch):
     assert freshness["max_age_hours"] == 2
 
 
-def test_release_health_snapshot_freshness_handles_missing_and_invalid_timestamp(monkeypatch):
+def test_release_health_snapshot_freshness_handles_missing_and_invalid_timestamp(
+    monkeypatch,
+):
     monkeypatch.delenv("SOCMINT_RELEASE_HEALTH_MAX_AGE_HOURS", raising=False)
 
     missing = _snapshot_freshness(None)
@@ -167,7 +184,13 @@ def test_release_health_snapshot_freshness_handles_missing_and_invalid_timestamp
 
 def test_operator_release_evaluation_reaches_evaluation_point():
     checks = [
-        {"key": "docs", "label": "Docs", "ok": True, "source": "release", "detail": "present"},
+        {
+            "key": "docs",
+            "label": "Docs",
+            "ok": True,
+            "source": "release",
+            "detail": "present",
+        },
         {"key": "git", "label": "Git", "ok": True, "source": "git", "detail": "clean"},
     ]
     release_health = {"status": "pass", "freshness": {"ok": True}}
@@ -182,8 +205,20 @@ def test_operator_release_evaluation_reaches_evaluation_point():
 
 def test_operator_release_evaluation_pauses_on_blockers():
     checks = [
-        {"key": "docs", "label": "Docs", "ok": True, "source": "release", "detail": "present"},
-        {"key": "snapshot", "label": "Snapshot", "ok": False, "source": "release/OPERATOR_RELEASE_HEALTH.json", "detail": "stale"},
+        {
+            "key": "docs",
+            "label": "Docs",
+            "ok": True,
+            "source": "release",
+            "detail": "present",
+        },
+        {
+            "key": "snapshot",
+            "label": "Snapshot",
+            "ok": False,
+            "source": "release/OPERATOR_RELEASE_HEALTH.json",
+            "detail": "stale",
+        },
     ]
     release_health = {"status": "needs_review", "freshness": {"ok": False}}
 
@@ -220,7 +255,9 @@ def test_refresh_release_health_snapshot_builds_from_gh_payload(monkeypatch):
             },
         ]
 
-    monkeypatch.setattr("scripts.refresh_operator_release_health_v14_1._gh_json", fake_gh_json)
+    monkeypatch.setattr(
+        "scripts.refresh_operator_release_health_v14_1._gh_json", fake_gh_json
+    )
 
     snapshot = build_release_health_snapshot()
 
@@ -247,7 +284,9 @@ def test_operator_release_console_routes_require_login(tmp_path, monkeypatch):
     assert "/login" in ui_response.headers["Location"]
 
 
-def test_operator_release_console_routes_render_for_logged_in_user(tmp_path, monkeypatch):
+def test_operator_release_console_routes_render_for_logged_in_user(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_operator_release_console_routes_v14(app)
@@ -270,9 +309,15 @@ def test_operator_release_console_routes_render_for_logged_in_user(tmp_path, mon
 
 def test_v14_release_note_and_changelog_are_present():
     note = Path("release/V14_0_OPERATOR_RELEASE_CONSOLE.md").read_text(encoding="utf-8")
-    v14_1_note = Path("release/V14_1_RELEASE_HEALTH_SNAPSHOT.md").read_text(encoding="utf-8")
-    v14_2_note = Path("release/V14_2_RELEASE_HEALTH_FRESHNESS.md").read_text(encoding="utf-8")
-    v14_3_note = Path("release/V14_3_OPERATOR_RELEASE_EVALUATION_POINT.md").read_text(encoding="utf-8")
+    v14_1_note = Path("release/V14_1_RELEASE_HEALTH_SNAPSHOT.md").read_text(
+        encoding="utf-8"
+    )
+    v14_2_note = Path("release/V14_2_RELEASE_HEALTH_FRESHNESS.md").read_text(
+        encoding="utf-8"
+    )
+    v14_3_note = Path("release/V14_3_OPERATOR_RELEASE_EVALUATION_POINT.md").read_text(
+        encoding="utf-8"
+    )
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/operator/release-console" in note

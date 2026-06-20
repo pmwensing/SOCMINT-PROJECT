@@ -24,7 +24,9 @@ def _stamp() -> str:
     return datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
 
-def story_export_payload(subject_id: int | None = None, root: str | None = None) -> dict[str, Any]:
+def story_export_payload(
+    subject_id: int | None = None, root: str | None = None
+) -> dict[str, Any]:
     story = story_reconstruction_payload(root=root, subject_id=subject_id)
     narrative = story.get("court_lawyer_ready_narrative", {})
     confidence = story.get("narrative_confidence", {})
@@ -35,14 +37,18 @@ def story_export_payload(subject_id: int | None = None, root: str | None = None)
         "narrative_confidence": confidence,
         "timeline_event_count": story.get("timeline", {}).get("event_count", 0),
         "claim_count": len(story.get("claims", [])),
-        "contradiction_count": story.get("contradictions", {}).get("contradiction_count", 0),
+        "contradiction_count": story.get("contradictions", {}).get(
+            "contradiction_count", 0
+        ),
         "markdown": narrative.get("markdown", ""),
         "plain_text": narrative.get("plain_text", ""),
         "story_payload": story,
     }
 
 
-def write_story_exports(subject_id: int | None = None, root: str | None = None) -> dict[str, Any]:
+def write_story_exports(
+    subject_id: int | None = None, root: str | None = None
+) -> dict[str, Any]:
     payload = story_export_payload(subject_id=subject_id, root=root)
     out = narrative_export_root(root)
     out.mkdir(parents=True, exist_ok=True)
@@ -51,7 +57,10 @@ def write_story_exports(subject_id: int | None = None, root: str | None = None) 
     json_path = base.with_suffix(".json")
     md_path = base.with_suffix(".md")
     json_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
-    md_path.write_text(payload.get("markdown") or "# Narrative Intelligence Brief\n\nNo narrative generated.\n")
+    md_path.write_text(
+        payload.get("markdown")
+        or "# Narrative Intelligence Brief\n\nNo narrative generated.\n"
+    )
     return {
         "schema": SCHEMA,
         "generated_at": utc_now(),
@@ -74,20 +83,29 @@ def dossier_story_layer(subject_id: int, root: str | None = None) -> dict[str, A
         "schema": DOSSIER_STORY_SCHEMA,
         "generated_at": utc_now(),
         "subject_id": subject_id,
-        "status": "ready_for_review" if export.get("timeline_event_count", 0) else "insufficient_events",
+        "status": "ready_for_review"
+        if export.get("timeline_event_count", 0)
+        else "insufficient_events",
         "narrative_confidence": export.get("narrative_confidence"),
         "summary": (export.get("plain_text") or "")[:2000],
         "timeline_event_count": export.get("timeline_event_count"),
         "claim_count": export.get("claim_count"),
         "contradiction_count": export.get("contradiction_count"),
         "top_events": story.get("event_sequence", [])[:10],
-        "top_claims": story.get("claim_validation", {}).get("validated_claims", [])[:10],
+        "top_claims": story.get("claim_validation", {}).get("validated_claims", [])[
+            :10
+        ],
         "requires_human_review": True,
         "legal_use_note": "Auto-story output is an analytical aid and must be reviewed before filing, service, or legal use.",
     }
 
 
-def narrative_dashboard_polish_payload(subject_id: int | None = None, root: str | None = None, sort: str = "timestamp", event_type: str | None = None) -> dict[str, Any]:
+def narrative_dashboard_polish_payload(
+    subject_id: int | None = None,
+    root: str | None = None,
+    sort: str = "timestamp",
+    event_type: str | None = None,
+) -> dict[str, Any]:
     story = story_reconstruction_payload(root=root, subject_id=subject_id)
     events = list(story.get("event_sequence", []))
     if event_type:
@@ -101,14 +119,18 @@ def narrative_dashboard_polish_payload(subject_id: int | None = None, root: str 
         evidence_id = claim.get("evidence_id") or "case"
         claims_by_evidence.setdefault(evidence_id, []).append(claim)
     contradiction_actions = []
-    for index, issue in enumerate(story.get("contradictions", {}).get("contradictions", []), start=1):
-        contradiction_actions.append({
-            "id": f"ctr-{index:04d}",
-            "state": "needs_review",
-            "action": "review_and_mark_resolved_or_escalate",
-            "issue": issue,
-            "notes": "Analyst must inspect source claims before using narrative output.",
-        })
+    for index, issue in enumerate(
+        story.get("contradictions", {}).get("contradictions", []), start=1
+    ):
+        contradiction_actions.append(
+            {
+                "id": f"ctr-{index:04d}",
+                "state": "needs_review",
+                "action": "review_and_mark_resolved_or_escalate",
+                "issue": issue,
+                "notes": "Analyst must inspect source claims before using narrative output.",
+            }
+        )
     return {
         "schema": "socmint.narrative_dashboard_polish.v12_6_1",
         "generated_at": utc_now(),
@@ -120,6 +142,8 @@ def narrative_dashboard_polish_payload(subject_id: int | None = None, root: str 
         "contradiction_review_actions": contradiction_actions,
         "narrative_confidence_card": story.get("narrative_confidence", {}),
         "story_export_preview": story.get("court_lawyer_ready_narrative", {}),
-        "dossier_story_layer": dossier_story_layer(subject_id, root=root) if subject_id is not None else None,
+        "dossier_story_layer": dossier_story_layer(subject_id, root=root)
+        if subject_id is not None
+        else None,
         "base_story": story,
     }

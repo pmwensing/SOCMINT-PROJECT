@@ -59,7 +59,9 @@ def test_v10_6_find_export_entry_returns_artifacts(tmp_path):
 
 def test_v10_6_download_path_allows_known_files(tmp_path):
     persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path)
-    resolved = resolve_export_download_path("case-index-106", "sub-index-106", "dossier.html", root=tmp_path)
+    resolved = resolve_export_download_path(
+        "case-index-106", "sub-index-106", "dossier.html", root=tmp_path
+    )
 
     assert resolved["schema"] == "socmint.dossier_export_index.v10_6_0"
     assert resolved["status"] == "ready"
@@ -69,7 +71,9 @@ def test_v10_6_download_path_allows_known_files(tmp_path):
 
 def test_v10_6_download_path_blocks_unknown_files(tmp_path):
     persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path)
-    resolved = resolve_export_download_path("case-index-106", "sub-index-106", "../../secret.txt", root=tmp_path)
+    resolved = resolve_export_download_path(
+        "case-index-106", "sub-index-106", "../../secret.txt", root=tmp_path
+    )
 
     assert resolved["status"] == "blocked"
     assert resolved["reason"] == "unsupported_filename"
@@ -80,4 +84,7 @@ def test_v10_6_index_routes_are_registered():
 
     assert "/api/v1/dossier-builder/v3/export-index" in routes
     assert "/api/v1/dossier-builder/v3/export-index/<case_id>/<subject_id>" in routes
-    assert "/api/v1/dossier-builder/v3/export-download/<case_id>/<subject_id>/<filename>" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/export-download/<case_id>/<subject_id>/<filename>"
+        in routes
+    )

@@ -22,7 +22,11 @@ READY_DELIVERY_STATES = {"ready", "approved", "deliver_ready", "delivery_ready"}
 def _dossier_readiness(payload: dict[str, Any]) -> dict[str, Any]:
     if isinstance(payload.get("dossier_readiness"), dict):
         return deepcopy(payload["dossier_readiness"])
-    readiness_input = payload.get("readiness_input") if isinstance(payload.get("readiness_input"), dict) else {}
+    readiness_input = (
+        payload.get("readiness_input")
+        if isinstance(payload.get("readiness_input"), dict)
+        else {}
+    )
     return compute_dossier_readiness(readiness_input)
 
 
@@ -30,12 +34,22 @@ def _export_blockers(payload: dict[str, Any]) -> list[dict[str, Any]]:
     explicit = payload.get("export_blockers")
     if isinstance(explicit, list):
         return [deepcopy(item) for item in explicit if isinstance(item, dict)]
-    export_decision = payload.get("export_decision") if isinstance(payload.get("export_decision"), dict) else {}
+    export_decision = (
+        payload.get("export_decision")
+        if isinstance(payload.get("export_decision"), dict)
+        else {}
+    )
     blockers = export_decision.get("blockers")
-    return [deepcopy(item) for item in blockers if isinstance(item, dict)] if isinstance(blockers, list) else []
+    return (
+        [deepcopy(item) for item in blockers if isinstance(item, dict)]
+        if isinstance(blockers, list)
+        else []
+    )
 
 
-def _evidence_summary(payload: dict[str, Any], dossier: dict[str, Any]) -> dict[str, Any]:
+def _evidence_summary(
+    payload: dict[str, Any], dossier: dict[str, Any]
+) -> dict[str, Any]:
     explicit = payload.get("evidence_summary")
     if isinstance(explicit, dict):
         summary = deepcopy(explicit)
@@ -52,11 +66,21 @@ def _evidence_summary(payload: dict[str, Any], dossier: dict[str, Any]) -> dict[
 
 
 def _latest_delivery(registry: dict[str, Any]) -> dict[str, Any]:
-    deliveries = registry.get("deliveries") if isinstance(registry.get("deliveries"), list) else []
-    return deepcopy(deliveries[-1]) if deliveries and isinstance(deliveries[-1], dict) else {}
+    deliveries = (
+        registry.get("deliveries")
+        if isinstance(registry.get("deliveries"), list)
+        else []
+    )
+    return (
+        deepcopy(deliveries[-1])
+        if deliveries and isinstance(deliveries[-1], dict)
+        else {}
+    )
 
 
-def _approval_gate(case_id: str, payload: dict[str, Any], registry: dict[str, Any]) -> dict[str, Any]:
+def _approval_gate(
+    case_id: str, payload: dict[str, Any], registry: dict[str, Any]
+) -> dict[str, Any]:
     if isinstance(payload.get("approval_gate"), dict):
         return deepcopy(payload["approval_gate"])
     return build_human_approval_gate(
@@ -71,7 +95,8 @@ def _approval_gate(case_id: str, payload: dict[str, Any], registry: dict[str, An
 
 def _has_delivery_input(payload: dict[str, Any]) -> bool:
     return any(
-        isinstance(payload.get(key), dict) for key in ("registry", "dashboard", "index", "pack", "bundle")
+        isinstance(payload.get(key), dict)
+        for key in ("registry", "dashboard", "index", "pack", "bundle")
     ) or isinstance(payload.get("dashboards"), list)
 
 
@@ -122,18 +147,44 @@ def _delivery_pipeline(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
     if not _has_delivery_pipeline_input(payload):
         return {}
 
-    from .case_delivery_attempt_ledger_v16_1 import build_case_delivery_attempt_ledger_from_request
-    from .case_delivery_exception_review_v16_2 import build_case_delivery_exception_review_from_request
-    from .case_delivery_operations_v16_0 import build_case_delivery_operations_from_request
+    from .case_delivery_attempt_ledger_v16_1 import (
+        build_case_delivery_attempt_ledger_from_request,
+    )
+    from .case_delivery_exception_review_v16_2 import (
+        build_case_delivery_exception_review_from_request,
+    )
+    from .case_delivery_operations_v16_0 import (
+        build_case_delivery_operations_from_request,
+    )
     from .case_delivery_recovery_v16_3 import build_case_delivery_recovery_from_request
 
-    operations = deepcopy(payload["operations"]) if isinstance(payload.get("operations"), dict) else None
-    attempt_ledger = deepcopy(payload["attempt_ledger"]) if isinstance(payload.get("attempt_ledger"), dict) else None
-    exception_review = deepcopy(payload["exception_review"]) if isinstance(payload.get("exception_review"), dict) else None
-    recovery = deepcopy(payload["recovery"]) if isinstance(payload.get("recovery"), dict) else None
+    operations = (
+        deepcopy(payload["operations"])
+        if isinstance(payload.get("operations"), dict)
+        else None
+    )
+    attempt_ledger = (
+        deepcopy(payload["attempt_ledger"])
+        if isinstance(payload.get("attempt_ledger"), dict)
+        else None
+    )
+    exception_review = (
+        deepcopy(payload["exception_review"])
+        if isinstance(payload.get("exception_review"), dict)
+        else None
+    )
+    recovery = (
+        deepcopy(payload["recovery"])
+        if isinstance(payload.get("recovery"), dict)
+        else None
+    )
 
     if operations is None and attempt_ledger is not None:
-        operations = deepcopy(attempt_ledger.get("operations")) if isinstance(attempt_ledger.get("operations"), dict) else {}
+        operations = (
+            deepcopy(attempt_ledger.get("operations"))
+            if isinstance(attempt_ledger.get("operations"), dict)
+            else {}
+        )
     if operations is None and exception_review is not None:
         attempt_ledger = (
             deepcopy(exception_review.get("attempt_ledger"))
@@ -153,7 +204,9 @@ def _delivery_pipeline(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         )
         attempt_ledger = (
             deepcopy(exception_review.get("attempt_ledger"))
-            if isinstance(exception_review and exception_review.get("attempt_ledger"), dict)
+            if isinstance(
+                exception_review and exception_review.get("attempt_ledger"), dict
+            )
             else attempt_ledger
         )
         operations = (
@@ -163,7 +216,9 @@ def _delivery_pipeline(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         )
 
     if attempt_ledger is None:
-        attempt_ledger = build_case_delivery_attempt_ledger_from_request(case_id, payload)
+        attempt_ledger = build_case_delivery_attempt_ledger_from_request(
+            case_id, payload
+        )
     if operations is None and isinstance(attempt_ledger.get("operations"), dict):
         operations = deepcopy(attempt_ledger["operations"])
     if exception_review is None:
@@ -172,7 +227,9 @@ def _delivery_pipeline(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
             {**payload, "attempt_ledger": attempt_ledger},
         )
     if recovery is None:
-        recovery = build_case_delivery_recovery_from_request(case_id, {**payload, "exception_review": exception_review})
+        recovery = build_case_delivery_recovery_from_request(
+            case_id, {**payload, "exception_review": exception_review}
+        )
 
     return {
         "operations": operations or {},
@@ -182,7 +239,9 @@ def _delivery_pipeline(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _gate_check(key: str, label: str, ok: bool, detail: str, href: str | None = None) -> dict[str, Any]:
+def _gate_check(
+    key: str, label: str, ok: bool, detail: str, href: str | None = None
+) -> dict[str, Any]:
     return {
         "key": key,
         "label": label,
@@ -204,7 +263,9 @@ def build_case_delivery_gate(
 ) -> dict[str, Any]:
     latest_delivery = _latest_delivery(registry)
     dossier_state = dossier.get("state")
-    delivery_readiness = latest_delivery.get("readiness") or registry.get("latest_readiness")
+    delivery_readiness = latest_delivery.get("readiness") or registry.get(
+        "latest_readiness"
+    )
     approval_decision = approval.get("decision")
     checks = [
         _gate_check(
@@ -218,21 +279,27 @@ def build_case_delivery_gate(
             "evidence_complete",
             "Evidence complete",
             bool(evidence.get("complete")),
-            "evidence summary is complete" if evidence.get("complete") else "evidence is incomplete",
+            "evidence summary is complete"
+            if evidence.get("complete")
+            else "evidence is incomplete",
             "/evidence/integrity",
         ),
         _gate_check(
             "export_clear",
             "Export clear",
             len(export_blockers) == 0,
-            "no export blockers" if not export_blockers else f"{len(export_blockers)} export blocker(s)",
+            "no export blockers"
+            if not export_blockers
+            else f"{len(export_blockers)} export blocker(s)",
             "/dossier/export-blockers",
         ),
         _gate_check(
             "delivery_registered",
             "Delivery registered",
             bool(latest_delivery.get("delivery_id")),
-            "latest delivery is registered" if latest_delivery.get("delivery_id") else "no delivery registered",
+            "latest delivery is registered"
+            if latest_delivery.get("delivery_id")
+            else "no delivery registered",
             f"/api/v1/v10/final-delivery/cases/{case_id}/registry",
         ),
         _gate_check(
@@ -273,7 +340,9 @@ def build_case_delivery_gate(
     }
 
 
-def build_case_delivery_workspace(case_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+def build_case_delivery_workspace(
+    case_id: str, payload: dict[str, Any] | None = None
+) -> dict[str, Any]:
     safe_payload = deepcopy(payload or {})
     dossier = _dossier_readiness(safe_payload)
     evidence = _evidence_summary(safe_payload, dossier)
@@ -309,5 +378,7 @@ def build_case_delivery_workspace(case_id: str, payload: dict[str, Any] | None =
     }
 
 
-def build_case_delivery_workspace_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def build_case_delivery_workspace_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     return build_case_delivery_workspace(case_id, payload)

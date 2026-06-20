@@ -181,17 +181,14 @@ def build_custody_export_pack(
                     f"Case ID: {case_id}",
                     f"Subject ID: {subject_id}",
                     f"Evidence count: {dashboard_payload.get('evidence_count')}",
-                    (
-                "Custody events: "
-                f"{dashboard_payload.get('custody_event_count')}"
-            ),
+                    (f"Custody events: {dashboard_payload.get('custody_event_count')}"),
                     f"Evidence links: {dashboard_payload.get('link_count')}",
                     f"Missing files: {dashboard_payload.get('missing_file_count')}",
                     "",
                     (
-                "This pack contains custody, hash verification, evidence, "
-                "and link manifests."
-            ),
+                        "This pack contains custody, hash verification, evidence, "
+                        "and link manifests."
+                    ),
                 ]
             ),
         )
@@ -206,9 +203,7 @@ def build_custody_export_pack(
         "zip_path": str(zip_path),
         "manifest_path": str(manifest_path),
         "dashboard_path": str(dashboard_json),
-        "download_url": (
-            f"/evidence/integrity/packs/{zip_path.name}/download"
-        ),
+        "download_url": (f"/evidence/integrity/packs/{zip_path.name}/download"),
         "file_count": len(added),
         "files": added,
     }

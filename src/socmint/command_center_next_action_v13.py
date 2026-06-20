@@ -32,12 +32,16 @@ def dossier_readiness_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
     if not targets:
         blockers.append("Add at least one seed or target to anchor collection.")
     if findings_count <= 0:
-        warnings.append("No findings are available yet; run or import collection before final export.")
+        warnings.append(
+            "No findings are available yet; run or import collection before final export."
+        )
 
     state = "blocked" if blockers else "draft_ready"
     return {
         "state": state,
-        "label": "Draft dossier ready" if state == "draft_ready" else "Needs seed intake",
+        "label": "Draft dossier ready"
+        if state == "draft_ready"
+        else "Needs seed intake",
         "blockers": blockers,
         "warnings": warnings,
     }
@@ -102,8 +106,10 @@ def next_best_action_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
         return {
             "key": "guided_next_action",
             "label": next_action.get("label") or "Do next guided action",
-            "href": next_action.get("href") or guided.get("href", "/investigation/flow"),
-            "reason": next_action.get("reason") or "Guided investigation has pending work.",
+            "href": next_action.get("href")
+            or guided.get("href", "/investigation/flow"),
+            "reason": next_action.get("reason")
+            or "Guided investigation has pending work.",
             "priority": "primary",
         }
     if dossier.get("state") != "exported":

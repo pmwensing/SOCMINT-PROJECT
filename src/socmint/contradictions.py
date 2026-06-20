@@ -70,9 +70,7 @@ def detect_single_value_conflicts(subject_id, assertions):
                 severity=severity,
                 status="open",
                 assertion_ids=[item.id for item in items],
-                summary=(
-                    f"{assertion_type} has {len(values)} conflicting values."
-                ),
+                summary=(f"{assertion_type} has {len(values)} conflicting values."),
                 payload=payload,
             )
         )
@@ -174,12 +172,8 @@ def contradiction_payload(subject_id: int) -> dict:
                 "summary": item.summary,
                 "assertion_ids": _json_loads(item.assertion_ids_json, []),
                 "payload": _json_loads(item.payload_json),
-                "created_at": item.created_at.isoformat()
-                if item.created_at
-                else None,
-                "updated_at": item.updated_at.isoformat()
-                if item.updated_at
-                else None,
+                "created_at": item.created_at.isoformat() if item.created_at else None,
+                "updated_at": item.updated_at.isoformat() if item.updated_at else None,
             }
             for item in contradictions
         ],

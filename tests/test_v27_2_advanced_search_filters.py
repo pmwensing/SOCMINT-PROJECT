@@ -3,11 +3,74 @@ from src.socmint.advanced_search_filters_v27_2 import build_advanced_search_filt
 
 def _payload():
     return {
-        "access_scope": {"mode": "restricted", "allowed_case_ids": ["case-a", "case-b"]},
+        "access_scope": {
+            "mode": "restricted",
+            "allowed_case_ids": ["case-a", "case-b"],
+        },
         "results": [
-            {"result_id": "r1", "record_type": "case", "case_id": "case-a", "score": 10.0, "actor": "alice", "status": "active", "source_action": "portfolio_case", "occurred_at": "2026-06-10T10:00:00+00:00", "matched_terms": ["alpha"], "preview": {"fields": [{"field": "stage", "value": "review", "matched": False}, {"field": "priority", "value": "high", "matched": False}]}, "links": {"primary": "/case-a", "case": "/case-a"}},
-            {"result_id": "r2", "record_type": "finding", "case_id": "case-b", "score": 30.0, "actor": "bob", "status": "open", "source_action": "case_finding_recorded", "occurred_at": "2026-06-15T12:00:00+00:00", "matched_terms": ["reuse"], "preview": {"fields": [{"field": "confidence", "value": "high", "matched": False}, {"field": "priority", "value": "urgent", "matched": False}, {"field": "finding", "value": "Repeated account reuse", "matched": True}]}, "links": {"primary": "/case-b", "case": "/case-b"}},
-            {"result_id": "r3", "record_type": "evidence", "case_id": "case-b", "score": 20.0, "actor": "bob", "status": "verified", "source_action": "case_evidence_promoted", "occurred_at": "2026-06-12T09:00:00+00:00", "matched_terms": ["email"], "preview": {"fields": [{"field": "confidence", "value": "medium", "matched": False}, {"field": "description", "value": "Email message", "matched": True}]}, "links": {"primary": "/case-b", "case": "/case-b"}},
+            {
+                "result_id": "r1",
+                "record_type": "case",
+                "case_id": "case-a",
+                "score": 10.0,
+                "actor": "alice",
+                "status": "active",
+                "source_action": "portfolio_case",
+                "occurred_at": "2026-06-10T10:00:00+00:00",
+                "matched_terms": ["alpha"],
+                "preview": {
+                    "fields": [
+                        {"field": "stage", "value": "review", "matched": False},
+                        {"field": "priority", "value": "high", "matched": False},
+                    ]
+                },
+                "links": {"primary": "/case-a", "case": "/case-a"},
+            },
+            {
+                "result_id": "r2",
+                "record_type": "finding",
+                "case_id": "case-b",
+                "score": 30.0,
+                "actor": "bob",
+                "status": "open",
+                "source_action": "case_finding_recorded",
+                "occurred_at": "2026-06-15T12:00:00+00:00",
+                "matched_terms": ["reuse"],
+                "preview": {
+                    "fields": [
+                        {"field": "confidence", "value": "high", "matched": False},
+                        {"field": "priority", "value": "urgent", "matched": False},
+                        {
+                            "field": "finding",
+                            "value": "Repeated account reuse",
+                            "matched": True,
+                        },
+                    ]
+                },
+                "links": {"primary": "/case-b", "case": "/case-b"},
+            },
+            {
+                "result_id": "r3",
+                "record_type": "evidence",
+                "case_id": "case-b",
+                "score": 20.0,
+                "actor": "bob",
+                "status": "verified",
+                "source_action": "case_evidence_promoted",
+                "occurred_at": "2026-06-12T09:00:00+00:00",
+                "matched_terms": ["email"],
+                "preview": {
+                    "fields": [
+                        {"field": "confidence", "value": "medium", "matched": False},
+                        {
+                            "field": "description",
+                            "value": "Email message",
+                            "matched": True,
+                        },
+                    ]
+                },
+                "links": {"primary": "/case-b", "case": "/case-b"},
+            },
         ],
     }
 

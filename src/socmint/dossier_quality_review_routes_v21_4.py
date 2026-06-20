@@ -59,9 +59,7 @@ def register_dossier_quality_review_routes_v21_4(app):
             return jsonify(
                 {
                     "status": "blocked",
-                    "blockers": [
-                        {"key": "subject_id_required_for_quality_review"}
-                    ],
+                    "blockers": [{"key": "subject_id_required_for_quality_review"}],
                 }
             ), 422
         result = save_dossier_quality_review_snapshot(

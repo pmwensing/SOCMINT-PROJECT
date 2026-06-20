@@ -68,7 +68,13 @@ def test_export_full_entity_dossier_v2_manifest_hashes(tmp_path, monkeypatch):
     assert manifest["artifact_count"] == len(manifest["files"])
 
     roles = {entry["role"] for entry in manifest["files"]}
-    assert {"dossier_json", "dossier_markdown", "dossier_html", "export_manifest", "zip_bundle"} <= roles
+    assert {
+        "dossier_json",
+        "dossier_markdown",
+        "dossier_html",
+        "export_manifest",
+        "zip_bundle",
+    } <= roles
 
     for entry in manifest["files"]:
         assert len(entry["sha256"]) == 64
@@ -108,8 +114,7 @@ def test_dossier_v2_routes_registered():
     assert "/spine/subjects/<int:subject_id>/dossier-v2/export/run" in rules
     assert (
         "/spine/subjects/<int:subject_id>/dossier-v2/export/"
-        "<path:name>/download"
-        in rules
+        "<path:name>/download" in rules
     )
 
 
@@ -168,7 +173,9 @@ def test_entity_dossier_v2_diagnostic_hygiene(monkeypatch, tmp_path):
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path}/socmint.db")
     db.configure_database(f"sqlite:///{tmp_path}/socmint.db")
 
-    subject_id = create_subject("Diagnostic Hygiene", [{"type": "username", "value": "diaguser"}])
+    subject_id = create_subject(
+        "Diagnostic Hygiene", [{"type": "username", "value": "diaguser"}]
+    )
     run_id = db.create_spine_connector_run(
         subject_id=subject_id,
         connector_key="sherlock",
@@ -201,7 +208,11 @@ def test_entity_dossier_v2_diagnostic_hygiene(monkeypatch, tmp_path):
         confidence="0.82",
         source_ref=f"run:{archive_run_id}:archivebox",
         evidence_ref="sha256:archive-diagnostic",
-        payload={"type": "archive_candidate", "connector": "archivebox", "status": "dry_run"},
+        payload={
+            "type": "archive_candidate",
+            "connector": "archivebox",
+            "status": "dry_run",
+        },
     )
     real_run_id = db.create_spine_connector_run(
         subject_id=subject_id,
@@ -226,7 +237,10 @@ def test_entity_dossier_v2_diagnostic_hygiene(monkeypatch, tmp_path):
         normalized_value="https://x.com/diaguser",
         confidence="0.77",
         validation_state="unreviewed",
-        payload={"source_refs": [f"run:{real_run_id}:sherlock"], "evidence_refs": ["sha256:real"]},
+        payload={
+            "source_refs": [f"run:{real_run_id}:sherlock"],
+            "evidence_refs": ["sha256:real"],
+        },
     )
 
     payload = build_full_entity_dossier_v2(subject_id)
@@ -238,6 +252,12 @@ def test_entity_dossier_v2_diagnostic_hygiene(monkeypatch, tmp_path):
     assert payload["sections"]["observations"]["count"] == 1
     assert payload["sections"]["connector_diagnostics"]["count"] == 2
     assert payload["sections"]["dossier_assertions"]["count"] == 1
-    assert payload["sections"]["observations"]["items"][0]["observation_type"] == "profile_url"
-    diagnostic_types = {item["observation_type"] for item in payload["sections"]["connector_diagnostics"]["items"]}
+    assert (
+        payload["sections"]["observations"]["items"][0]["observation_type"]
+        == "profile_url"
+    )
+    diagnostic_types = {
+        item["observation_type"]
+        for item in payload["sections"]["connector_diagnostics"]["items"]
+    }
     assert diagnostic_types == {"connector_no_result", "archive_candidate"}

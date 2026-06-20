@@ -41,7 +41,9 @@ def test_v10_5_safe_slug_normalizes_path_parts():
 
 
 def test_v10_5_persist_export_pack_writes_artifacts(tmp_path):
-    result = persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path)
+    result = persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path
+    )
 
     assert result["schema"] == "socmint.dossier_export_store.v10_5_0"
     assert result["status"] == "ready"
@@ -75,5 +77,11 @@ def test_v10_5_export_store_routes_are_registered():
     routes = {rule.rule for rule in app.url_map.iter_rules()}
 
     assert "/api/v1/dossier-builder/v3/export-store" in routes
-    assert "/api/v1/dossier-builder/v3/export-store/<case_id>/<subject_id>/manifest" in routes
-    assert "/api/v1/dossier-builder/v3/export-store/<case_id>/<subject_id>/summary" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/export-store/<case_id>/<subject_id>/manifest"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/export-store/<case_id>/<subject_id>/summary"
+        in routes
+    )

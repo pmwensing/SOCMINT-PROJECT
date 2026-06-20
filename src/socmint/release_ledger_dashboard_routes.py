@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from flask import Response, jsonify, redirect, render_template, request, session, url_for
+from flask import (
+    Response,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
 from .release_ledger_dashboard import release_ledger_dashboard
 from .release_ledger_dashboard import release_ledger_dashboard_markdown
@@ -34,6 +42,8 @@ def register_release_ledger_dashboard_routes(app):
     def api_release_ledger_dashboard_markdown(case_id: str):
         if not _login_required():
             return Response("login required\n", status=401, mimetype="text/plain")
-        return Response(release_ledger_dashboard_markdown(case_id=case_id), mimetype="text/markdown")
+        return Response(
+            release_ledger_dashboard_markdown(case_id=case_id), mimetype="text/markdown"
+        )
 
     return app

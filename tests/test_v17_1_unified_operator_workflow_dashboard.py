@@ -3,9 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from src.socmint.case_delivery_operations_v16_0 import build_case_delivery_operations
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
-from src.socmint.operator_release_console_routes_v14 import register_operator_release_console_routes_v14
+from src.socmint.operator_release_console_routes_v14 import (
+    register_operator_release_console_routes_v14,
+)
 from src.socmint.unified_operator_workflow_dashboard_routes_v17_1 import (
     register_unified_operator_workflow_dashboard_routes_v17_1,
 )
@@ -61,7 +65,12 @@ def test_v17_1_dashboard_prioritizes_case_delivery_blockers():
     app = _app_with_operator_routes()
     payload = ready_payload(
         approval_decision="pending_review",
-        operations={"state": "ready_for_dispatch", "dispatchable": True, "blockers": [], "next_action": "dispatch_delivery"},
+        operations={
+            "state": "ready_for_dispatch",
+            "dispatchable": True,
+            "blockers": [],
+            "next_action": "dispatch_delivery",
+        },
     )
 
     result = build_unified_operator_workflow_dashboard(
@@ -114,7 +123,10 @@ def test_v17_1_dashboard_api_returns_ready_payload(tmp_path, monkeypatch):
     assert payload["schema"] == UNIFIED_OPERATOR_WORKFLOW_DASHBOARD_SCHEMA
     assert payload["status"] == "ready"
     assert payload["summary"]["recovery_chain_closed"] is True
-    assert payload["recommended_action"]["key"] in {"dispatch_delivery_operations", "refresh_release_health"}
+    assert payload["recommended_action"]["key"] in {
+        "dispatch_delivery_operations",
+        "refresh_release_health",
+    }
 
 
 def test_v17_1_dashboard_ui_renders_for_logged_in_operator(tmp_path, monkeypatch):
@@ -133,9 +145,13 @@ def test_v17_1_dashboard_ui_renders_for_logged_in_operator(tmp_path, monkeypatch
 
 
 def test_v17_1_release_note_changelog_and_template_are_present():
-    note = Path("release/V17_1_UNIFIED_OPERATOR_WORKFLOW_DASHBOARD.md").read_text(encoding="utf-8")
+    note = Path("release/V17_1_UNIFIED_OPERATOR_WORKFLOW_DASHBOARD.md").read_text(
+        encoding="utf-8"
+    )
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
-    template = Path("src/socmint/templates/unified_operator_workflow_dashboard.html").read_text(encoding="utf-8")
+    template = Path(
+        "src/socmint/templates/unified_operator_workflow_dashboard.html"
+    ).read_text(encoding="utf-8")
 
     assert "/api/v1/operator/workflow-dashboard/<case_id>" in note
     assert "/operator/workflow-dashboard" in note

@@ -14,7 +14,9 @@ def complete_rows():
         "artifact_download",
         "retention_run",
     ]
-    return [{"operation": name, "decision": "allow", "case_id": "case-1"} for name in names]
+    return [
+        {"operation": name, "decision": "allow", "case_id": "case-1"} for name in names
+    ]
 
 
 def test_report_passes_complete_rows():
@@ -27,9 +29,9 @@ def test_report_passes_complete_rows():
 
 
 def test_report_lists_missing_rows():
-    report = build_policy_coverage_report([
-        {"operation": "dossier_build", "decision": "allow", "case_id": "case-1"}
-    ])
+    report = build_policy_coverage_report(
+        [{"operation": "dossier_build", "decision": "allow", "case_id": "case-1"}]
+    )
 
     assert report["status"] == "fail"
     assert "connector_run" in report["missing_operations"]

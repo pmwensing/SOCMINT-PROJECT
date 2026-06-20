@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -13,7 +15,10 @@ def _app(tmp_path, monkeypatch):
 
 def test_v22_7_checkpoint_route_requires_login_and_reports_ready(tmp_path, monkeypatch):
     client = _app(tmp_path, monkeypatch).test_client()
-    assert client.get("/api/v1/dossier-release/product-review-checkpoint").status_code == 401
+    assert (
+        client.get("/api/v1/dossier-release/product-review-checkpoint").status_code
+        == 401
+    )
     with client.session_transaction() as sess:
         sess["user"] = "operator"
     response = client.get("/api/v1/dossier-release/product-review-checkpoint")
@@ -26,8 +31,12 @@ def test_v22_7_checkpoint_route_requires_login_and_reports_ready(tmp_path, monke
 
 
 def test_v22_7_browser_runner_and_release_note():
-    script = Path("scripts/run_v22_7_dossier_release_browser_e2e.py").read_text(encoding="utf-8")
-    note = Path("release/V22_7_PRODUCT_REVIEW_BROWSER_E2E_CHECKPOINT.md").read_text(encoding="utf-8")
+    script = Path("scripts/run_v22_7_dossier_release_browser_e2e.py").read_text(
+        encoding="utf-8"
+    )
+    note = Path("release/V22_7_PRODUCT_REVIEW_BROWSER_E2E_CHECKPOINT.md").read_text(
+        encoding="utf-8"
+    )
     required_script_tokens = (
         "release_authorization",
         "release_preview_acknowledged",

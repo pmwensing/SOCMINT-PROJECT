@@ -63,6 +63,8 @@ def register_collaboration_responses_resolution_routes_v26_4(app):
             allowed_case_ids=_allowed_case_ids(),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "collaboration_response_recorded" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "collaboration_response_recorded" else 422
 
     return app

@@ -2,13 +2,27 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index
-from socmint.v10_24_final_delivery_workspace import build_final_delivery_workspace_from_bundle
-from socmint.v10_25_final_delivery_operator_console import build_operator_console_from_workspace
-from socmint.v10_26_final_delivery_audit_trail import build_final_delivery_audit_receipt_from_request
-from socmint.v10_26_final_delivery_audit_trail import build_final_delivery_audit_trail_from_console
-from socmint.v10_26_final_delivery_audit_trail import build_final_delivery_audit_trail_from_request
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index,
+)
+from socmint.v10_24_final_delivery_workspace import (
+    build_final_delivery_workspace_from_bundle,
+)
+from socmint.v10_25_final_delivery_operator_console import (
+    build_operator_console_from_workspace,
+)
+from socmint.v10_26_final_delivery_audit_trail import (
+    build_final_delivery_audit_receipt_from_request,
+)
+from socmint.v10_26_final_delivery_audit_trail import (
+    build_final_delivery_audit_trail_from_console,
+)
+from socmint.v10_26_final_delivery_audit_trail import (
+    build_final_delivery_audit_trail_from_request,
+)
 
 
 def verification_report(status="verified"):
@@ -23,7 +37,9 @@ def verification_report(status="verified"):
         "missing_files": [],
         "unexpected_files": [],
         "manifest": {"file_count": 5, "files": []},
-        "closeout_action": "closeout_ready" if status == "verified" else "regenerate_export",
+        "closeout_action": "closeout_ready"
+        if status == "verified"
+        else "regenerate_export",
         "verification_status": status,
         "failures": [
             {
@@ -52,11 +68,15 @@ def verification_report(status="verified"):
 
 
 def delivery_index(status="verified"):
-    return build_master_delivery_index(verification_report(status), operator="analyst", notes="Ready.")
+    return build_master_delivery_index(
+        verification_report(status), operator="analyst", notes="Ready."
+    )
 
 
 def workspace(status="verified"):
-    bundle = build_master_delivery_export_bundle(delivery_index(status), bundle_name="Audit Package")
+    bundle = build_master_delivery_export_bundle(
+        delivery_index(status), bundle_name="Audit Package"
+    )
     return build_final_delivery_workspace_from_bundle(bundle)
 
 
@@ -101,7 +121,10 @@ def test_audit_id_is_stable_for_equivalent_console_content():
     second = build_final_delivery_audit_trail_from_console(console())
 
     assert first["audit_id"] == second["audit_id"]
-    assert first["generated_at"] != second["generated_at"] or first["audit_id"] == second["audit_id"]
+    assert (
+        first["generated_at"] != second["generated_at"]
+        or first["audit_id"] == second["audit_id"]
+    )
 
 
 def test_receipt_contains_required_summary_fields():
@@ -125,7 +148,9 @@ def test_builds_audit_from_request_console_shape():
 
 
 def test_builds_audit_from_request_index_shape():
-    audit = build_final_delivery_audit_trail_from_request({"index": delivery_index(), "bundle_name": "Index Audit"})
+    audit = build_final_delivery_audit_trail_from_request(
+        {"index": delivery_index(), "bundle_name": "Index Audit"}
+    )
 
     assert audit["readiness"] == "ready"
     assert audit["bundle_name"] == "index-audit"

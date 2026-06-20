@@ -63,7 +63,9 @@ def register_case_team_role_assignment_routes_v26_1(app):
             allowed_case_ids=_allowed_case_ids(),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "case_team_assignment_recorded" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "case_team_assignment_recorded" else 422
 
     @app.post("/api/v1/cases/<case_id>/team/assignments/<assignment_id>/revoke")
     def api_case_team_revocation_post_v26_1(case_id: str, assignment_id: str):
@@ -81,6 +83,8 @@ def register_case_team_role_assignment_routes_v26_1(app):
             allowed_case_ids=_allowed_case_ids(),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "case_team_revocation_recorded" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "case_team_revocation_recorded" else 422
 
     return app

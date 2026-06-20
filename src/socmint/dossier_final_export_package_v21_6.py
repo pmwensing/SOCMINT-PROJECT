@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from . import database
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .dossier_citation_mapping_v21_3 import build_dossier_citation_mapping
 from .dossier_quality_review_v21_4 import build_dossier_quality_review
 from .dossier_section_builder_v21_2 import build_dossier_section_draft
@@ -58,7 +63,9 @@ def build_final_export_package(
             "version": VERSION,
             "case_id": case_id,
             "status": "blocked",
-            "blockers": [{"key": f"latest_supervisor_decision_{approval['result_status']}"}],
+            "blockers": [
+                {"key": f"latest_supervisor_decision_{approval['result_status']}"}
+            ],
             "approval_record": approval,
             "next_action": approval.get("export_preparation", {}).get("next_action"),
         }
@@ -78,19 +85,23 @@ def build_final_export_package(
     review = build_dossier_quality_review(
         case_id, subject_id=subject_id, ledger_payload=ledger_payload
     )
-    if draft.get("status") == "blocked" or citations.get("status") == "blocked" or not review.get("ready"):
+    if (
+        draft.get("status") == "blocked"
+        or citations.get("status") == "blocked"
+        or not review.get("ready")
+    ):
         return {
             "schema": FINAL_EXPORT_SCHEMA,
             "version": VERSION,
             "case_id": case_id,
             "status": "blocked",
             "blockers": [{"key": "current_dossier_not_export_ready"}],
-            "next_action": review.get("next_action") or "resolve_dossier_quality_blockers",
+            "next_action": review.get("next_action")
+            or "resolve_dossier_quality_blockers",
         }
-    if (
-        approval.get("source_review_id") != review.get("review_id")
-        or approval.get("source_review_sha256") != review.get("review_sha256")
-    ):
+    if approval.get("source_review_id") != review.get("review_id") or approval.get(
+        "source_review_sha256"
+    ) != review.get("review_sha256"):
         return {
             "schema": FINAL_EXPORT_SCHEMA,
             "version": VERSION,
@@ -190,7 +201,9 @@ def generate_final_export_package(
     if package.get("status") != "ready":
         return package
     event = {
-        key: value for key, value in package.items() if key not in {"latest_export", "status", "next_action"}
+        key: value
+        for key, value in package.items()
+        if key not in {"latest_export", "status", "next_action"}
     }
     _ensure_storage()
     session = database.Session()

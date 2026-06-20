@@ -2,14 +2,30 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index
-from socmint.v10_24_final_delivery_workspace import build_final_delivery_workspace_from_bundle
-from socmint.v10_25_final_delivery_operator_console import build_operator_console_from_workspace
-from socmint.v10_26_final_delivery_audit_trail import build_final_delivery_audit_trail_from_console
-from socmint.v10_27_final_delivery_evidence_capsule import build_final_delivery_evidence_capsule_from_audit_trail
-from socmint.v10_27_final_delivery_evidence_capsule import build_final_delivery_evidence_capsule_from_request
-from socmint.v10_27_final_delivery_evidence_capsule import build_final_delivery_evidence_capsule_summary_from_request
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index,
+)
+from socmint.v10_24_final_delivery_workspace import (
+    build_final_delivery_workspace_from_bundle,
+)
+from socmint.v10_25_final_delivery_operator_console import (
+    build_operator_console_from_workspace,
+)
+from socmint.v10_26_final_delivery_audit_trail import (
+    build_final_delivery_audit_trail_from_console,
+)
+from socmint.v10_27_final_delivery_evidence_capsule import (
+    build_final_delivery_evidence_capsule_from_audit_trail,
+)
+from socmint.v10_27_final_delivery_evidence_capsule import (
+    build_final_delivery_evidence_capsule_from_request,
+)
+from socmint.v10_27_final_delivery_evidence_capsule import (
+    build_final_delivery_evidence_capsule_summary_from_request,
+)
 
 
 def verification_report(status="verified"):
@@ -24,7 +40,9 @@ def verification_report(status="verified"):
         "missing_files": [],
         "unexpected_files": [],
         "manifest": {"file_count": 5, "files": []},
-        "closeout_action": "closeout_ready" if status == "verified" else "regenerate_export",
+        "closeout_action": "closeout_ready"
+        if status == "verified"
+        else "regenerate_export",
         "verification_status": status,
         "failures": [
             {
@@ -53,11 +71,15 @@ def verification_report(status="verified"):
 
 
 def delivery_index(status="verified"):
-    return build_master_delivery_index(verification_report(status), operator="analyst", notes="Ready.")
+    return build_master_delivery_index(
+        verification_report(status), operator="analyst", notes="Ready."
+    )
 
 
 def audit_trail(status="verified"):
-    bundle = build_master_delivery_export_bundle(delivery_index(status), bundle_name="Capsule Package")
+    bundle = build_master_delivery_export_bundle(
+        delivery_index(status), bundle_name="Capsule Package"
+    )
     workspace = build_final_delivery_workspace_from_bundle(bundle)
     console = build_operator_console_from_workspace(workspace)
     return build_final_delivery_audit_trail_from_console(console)
@@ -75,7 +97,9 @@ def test_builds_capsule_from_ready_audit_trail():
 
 
 def test_builds_capsule_from_review_required_audit_trail():
-    capsule = build_final_delivery_evidence_capsule_from_audit_trail(audit_trail("needs_human_review"))
+    capsule = build_final_delivery_evidence_capsule_from_audit_trail(
+        audit_trail("needs_human_review")
+    )
 
     assert capsule["readiness"] == "review_required"
     assert capsule["operator_receipt"]["export_available"] is False
@@ -83,7 +107,9 @@ def test_builds_capsule_from_review_required_audit_trail():
 
 
 def test_builds_capsule_from_blocked_audit_trail():
-    capsule = build_final_delivery_evidence_capsule_from_audit_trail(audit_trail("failed"))
+    capsule = build_final_delivery_evidence_capsule_from_audit_trail(
+        audit_trail("failed")
+    )
 
     assert capsule["readiness"] == "blocked"
     assert capsule["operator_receipt"]["export_available"] is False
@@ -130,14 +156,18 @@ def test_builds_capsule_from_request_audit_trail_shape():
 
 
 def test_builds_capsule_from_request_index_shape():
-    capsule = build_final_delivery_evidence_capsule_from_request({"index": delivery_index(), "bundle_name": "Index Capsule"})
+    capsule = build_final_delivery_evidence_capsule_from_request(
+        {"index": delivery_index(), "bundle_name": "Index Capsule"}
+    )
 
     assert capsule["readiness"] == "ready"
     assert capsule["bundle_name"] == "index-capsule"
 
 
 def test_summary_from_request_returns_summary_only():
-    summary = build_final_delivery_evidence_capsule_summary_from_request({"audit_trail": audit_trail()})
+    summary = build_final_delivery_evidence_capsule_summary_from_request(
+        {"audit_trail": audit_trail()}
+    )
 
     assert summary["readiness"] == "ready"
     assert "audit_trail" not in summary
@@ -161,6 +191,8 @@ def test_no_connector_execution_function_is_called(monkeypatch):
 
     monkeypatch.setattr(capsule_module, "execute_connector", explode, raising=False)
 
-    capsule = build_final_delivery_evidence_capsule_from_request({"index": delivery_index()})
+    capsule = build_final_delivery_evidence_capsule_from_request(
+        {"index": delivery_index()}
+    )
 
     assert capsule["readiness"] == "ready"

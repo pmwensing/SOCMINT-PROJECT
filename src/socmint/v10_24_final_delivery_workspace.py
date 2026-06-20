@@ -3,8 +3,12 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
-from .dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle
-from .dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_zip
+from .dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle,
+)
+from .dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_zip,
+)
 
 FINAL_DELIVERY_WORKSPACE_SCHEMA = "socmint.v10_24.final_delivery_workspace"
 VERSION = "v10.24.0"
@@ -23,14 +27,27 @@ def operator_actions_for_delivery(delivery_action: str | None) -> list[str]:
 
 
 def package_ready(bundle: dict[str, Any]) -> bool:
-    return bundle.get("delivery_action") == "deliver_ready" and int(bundle.get("file_count") or 0) > 0
+    return (
+        bundle.get("delivery_action") == "deliver_ready"
+        and int(bundle.get("file_count") or 0) > 0
+    )
 
 
-def build_final_delivery_workspace_from_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
+def build_final_delivery_workspace_from_bundle(
+    bundle: dict[str, Any],
+) -> dict[str, Any]:
     safe_bundle = deepcopy(bundle or {})
-    manifest = safe_bundle.get("manifest") if isinstance(safe_bundle.get("manifest"), dict) else {}
-    manifest_files = manifest.get("files") if isinstance(manifest.get("files"), list) else []
-    index = safe_bundle.get("index") if isinstance(safe_bundle.get("index"), dict) else {}
+    manifest = (
+        safe_bundle.get("manifest")
+        if isinstance(safe_bundle.get("manifest"), dict)
+        else {}
+    )
+    manifest_files = (
+        manifest.get("files") if isinstance(manifest.get("files"), list) else []
+    )
+    index = (
+        safe_bundle.get("index") if isinstance(safe_bundle.get("index"), dict) else {}
+    )
     findings = index.get("findings") if isinstance(index.get("findings"), list) else []
     failure_count = int(index.get("failure_count") or 0)
     warning_count = int(index.get("warning_count") or 0)
@@ -57,8 +74,12 @@ def build_final_delivery_workspace_from_bundle(bundle: dict[str, Any]) -> dict[s
     }
 
 
-def build_final_delivery_workspace_from_index(index: dict[str, Any], *, bundle_name: str | None = None) -> dict[str, Any]:
-    bundle = build_master_delivery_export_bundle(deepcopy(index or {}), bundle_name=bundle_name)
+def build_final_delivery_workspace_from_index(
+    index: dict[str, Any], *, bundle_name: str | None = None
+) -> dict[str, Any]:
+    bundle = build_master_delivery_export_bundle(
+        deepcopy(index or {}), bundle_name=bundle_name
+    )
     return build_final_delivery_workspace_from_bundle(bundle)
 
 
@@ -66,13 +87,25 @@ def build_final_delivery_bundle_from_request(payload: dict[str, Any]) -> dict[st
     safe_payload = deepcopy(payload or {})
     if isinstance(safe_payload.get("bundle"), dict):
         return safe_payload["bundle"]
-    index = safe_payload.get("index") if isinstance(safe_payload.get("index"), dict) else safe_payload
-    return build_master_delivery_export_bundle(index, bundle_name=safe_payload.get("bundle_name"))
+    index = (
+        safe_payload.get("index")
+        if isinstance(safe_payload.get("index"), dict)
+        else safe_payload
+    )
+    return build_master_delivery_export_bundle(
+        index, bundle_name=safe_payload.get("bundle_name")
+    )
 
 
-def build_final_delivery_workspace_from_request(payload: dict[str, Any]) -> dict[str, Any]:
-    return build_final_delivery_workspace_from_bundle(build_final_delivery_bundle_from_request(payload))
+def build_final_delivery_workspace_from_request(
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    return build_final_delivery_workspace_from_bundle(
+        build_final_delivery_bundle_from_request(payload)
+    )
 
 
 def build_final_delivery_export_zip_from_request(payload: dict[str, Any]) -> bytes:
-    return build_master_delivery_export_zip(build_final_delivery_bundle_from_request(payload))
+    return build_master_delivery_export_zip(
+        build_final_delivery_bundle_from_request(payload)
+    )

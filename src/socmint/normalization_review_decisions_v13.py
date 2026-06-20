@@ -19,7 +19,12 @@ def _load_payload(value: str | None) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
-def review_observation(observation_id: int, decision: str, actor: str | None = None, note: str | None = None) -> dict[str, Any]:
+def review_observation(
+    observation_id: int,
+    decision: str,
+    actor: str | None = None,
+    note: str | None = None,
+) -> dict[str, Any]:
     if decision not in ALLOWED_DECISIONS:
         raise ValueError("Invalid review decision.")
     db.ensure_configured()
@@ -27,7 +32,12 @@ def review_observation(observation_id: int, decision: str, actor: str | None = N
     try:
         item = session.query(db.SpineObservation).filter_by(id=observation_id).first()
         if not item:
-            return {"schema": SCHEMA, "kind": "observation", "id": observation_id, "status": "not_found"}
+            return {
+                "schema": SCHEMA,
+                "kind": "observation",
+                "id": observation_id,
+                "status": "not_found",
+            }
         payload = _load_payload(item.payload_json)
         payload["review_state"] = decision
         payload["review"] = {"actor": actor, "note": note, "decision": decision}
@@ -44,7 +54,9 @@ def review_observation(observation_id: int, decision: str, actor: str | None = N
         session.close()
 
 
-def review_account_discovery(discovery_id: int, decision: str, actor: str | None = None, note: str | None = None) -> dict[str, Any]:
+def review_account_discovery(
+    discovery_id: int, decision: str, actor: str | None = None, note: str | None = None
+) -> dict[str, Any]:
     if decision not in ALLOWED_DECISIONS:
         raise ValueError("Invalid review decision.")
     updated = db.update_account_discovery_review(
@@ -54,7 +66,12 @@ def review_account_discovery(discovery_id: int, decision: str, actor: str | None
         note=note,
     )
     if not updated:
-        return {"schema": SCHEMA, "kind": "account_discovery", "id": discovery_id, "status": "not_found"}
+        return {
+            "schema": SCHEMA,
+            "kind": "account_discovery",
+            "id": discovery_id,
+            "status": "not_found",
+        }
     return {
         "schema": SCHEMA,
         "kind": "account_discovery",
@@ -64,7 +81,13 @@ def review_account_discovery(discovery_id: int, decision: str, actor: str | None
     }
 
 
-def apply_normalization_review_decision(kind: str, item_id: int, decision: str, actor: str | None = None, note: str | None = None) -> dict[str, Any]:
+def apply_normalization_review_decision(
+    kind: str,
+    item_id: int,
+    decision: str,
+    actor: str | None = None,
+    note: str | None = None,
+) -> dict[str, Any]:
     if kind == "observation":
         return review_observation(item_id, decision, actor=actor, note=note)
     if kind == "account_discovery":

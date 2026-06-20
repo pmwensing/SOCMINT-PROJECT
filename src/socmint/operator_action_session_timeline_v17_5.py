@@ -4,7 +4,9 @@ from copy import deepcopy
 from typing import Any
 
 
-OPERATOR_ACTION_SESSION_TIMELINE_SCHEMA = "socmint.operator_action_session_timeline.v17_5"
+OPERATOR_ACTION_SESSION_TIMELINE_SCHEMA = (
+    "socmint.operator_action_session_timeline.v17_5"
+)
 VERSION = "v17.5.0"
 SESSION_KEY = "operator_action_history_v17_5"
 DEFAULT_MAX_ENTRIES = 20
@@ -41,7 +43,9 @@ def append_operator_action_history(
     *,
     max_entries: int = DEFAULT_MAX_ENTRIES,
 ) -> list[dict[str, Any]]:
-    safe_history = [deepcopy(item) for item in (history or []) if isinstance(item, dict)]
+    safe_history = [
+        deepcopy(item) for item in (history or []) if isinstance(item, dict)
+    ]
     entry = _timeline_entry(action_receipt, verification)
     if not entry.get("action_receipt_id"):
         return safe_history[-max_entries:]
@@ -87,5 +91,7 @@ def build_operator_action_session_timeline(
         "confirmation_required_count": confirmation_required_count,
         "entries": entries,
         "persistence": "flask_session_only",
-        "next_action": "review_operator_action_history" if entries else "launch_operator_action",
+        "next_action": "review_operator_action_history"
+        if entries
+        else "launch_operator_action",
     }

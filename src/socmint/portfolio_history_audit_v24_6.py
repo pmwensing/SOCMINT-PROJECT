@@ -56,19 +56,23 @@ def _audit_events() -> list[dict[str, Any]]:
                 "case_id": row.target_value,
                 "details": details,
             }
-            events.append({
-                "history_event_id": f"audit-{row.id}",
-                "event_type": event_type,
-                "occurred_at": row.created_at.isoformat() if row.created_at else None,
-                "actor": row.actor,
-                "case_id": row.target_value,
-                "source_action": row.action,
-                "source_record_id": row.id,
-                "source_binding": binding,
-                "source_binding_sha256": _sha(binding),
-                "details": details,
-                "synthetic_checkpoint": False,
-            })
+            events.append(
+                {
+                    "history_event_id": f"audit-{row.id}",
+                    "event_type": event_type,
+                    "occurred_at": row.created_at.isoformat()
+                    if row.created_at
+                    else None,
+                    "actor": row.actor,
+                    "case_id": row.target_value,
+                    "source_action": row.action,
+                    "source_record_id": row.id,
+                    "source_binding": binding,
+                    "source_binding_sha256": _sha(binding),
+                    "details": details,
+                    "synthetic_checkpoint": False,
+                }
+            )
         return events
     finally:
         session.close()
@@ -103,9 +107,7 @@ def _checkpoint(
     }
 
 
-def build_portfolio_history_audit(
-    *, now: dt.datetime | None = None
-) -> dict[str, Any]:
+def build_portfolio_history_audit(*, now: dt.datetime | None = None) -> dict[str, Any]:
     current_time = now or dt.datetime.now(dt.UTC)
     if current_time.tzinfo is None:
         current_time = current_time.replace(tzinfo=dt.UTC)
@@ -118,18 +120,22 @@ def build_portfolio_history_audit(
 
     occurred_at = current_time.isoformat()
     events = _audit_events()
-    events.extend([
-        _checkpoint("portfolio_snapshot", occurred_at, portfolio),
-        _checkpoint("stage_snapshot", occurred_at, stage),
-        _checkpoint("assignment_snapshot", occurred_at, workload),
-        _checkpoint("blocked_overdue_detection", occurred_at, blocked),
-        _checkpoint("metrics_checkpoint", occurred_at, metrics),
-    ])
-    events.sort(key=lambda item: (
-        item.get("occurred_at") or "",
-        int(item.get("source_record_id") or 10**18),
-        item["history_event_id"],
-    ))
+    events.extend(
+        [
+            _checkpoint("portfolio_snapshot", occurred_at, portfolio),
+            _checkpoint("stage_snapshot", occurred_at, stage),
+            _checkpoint("assignment_snapshot", occurred_at, workload),
+            _checkpoint("blocked_overdue_detection", occurred_at, blocked),
+            _checkpoint("metrics_checkpoint", occurred_at, metrics),
+        ]
+    )
+    events.sort(
+        key=lambda item: (
+            item.get("occurred_at") or "",
+            int(item.get("source_record_id") or 10**18),
+            item["history_event_id"],
+        )
+    )
 
     counts = Counter(item["event_type"] for item in events)
     actors = Counter(str(item.get("actor") or "unknown") for item in events)
@@ -171,8 +177,12 @@ def build_portfolio_history_audit(
         "event_count": len(events),
         "event_type_counts": dict(sorted(counts.items())),
         "actor_counts": dict(sorted(actors.items())),
-        "case_count": len({item.get("case_id") for item in events if item.get("case_id")}),
-        "source_bound_event_count": sum(1 for item in events if item.get("source_binding_sha256")),
+        "case_count": len(
+            {item.get("case_id") for item in events if item.get("case_id")}
+        ),
+        "source_bound_event_count": sum(
+            1 for item in events if item.get("source_binding_sha256")
+        ),
         "current_portfolio_state": current_state,
         "current_portfolio_state_sha256": current_state_sha256,
         "source_records_mutated": False,

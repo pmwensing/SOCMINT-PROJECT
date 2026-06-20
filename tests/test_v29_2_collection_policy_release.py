@@ -2,7 +2,9 @@ from pathlib import Path
 
 
 def test_v29_2_release_note_and_no_migration():
-    note = Path("release/V29_2_AUTHORIZATION_SCOPE_COLLECTION_POLICY.md").read_text(encoding="utf-8")
+    note = Path("release/V29_2_AUTHORIZATION_SCOPE_COLLECTION_POLICY.md").read_text(
+        encoding="utf-8"
+    )
     for phrase in (
         "Authorization, Scope, and Collection Policy",
         "permitted source classes",
@@ -23,5 +25,10 @@ def test_v29_2_release_note_and_no_migration():
         "no migration",
     ):
         assert phrase in note
-    migrations = [path for directory in (Path("migrations"), Path("alembic")) if directory.exists() for path in directory.rglob("*v29_2*")]
+    migrations = [
+        path
+        for directory in (Path("migrations"), Path("alembic"))
+        if directory.exists()
+        for path in directory.rglob("*v29_2*")
+    ]
     assert migrations == []

@@ -32,9 +32,13 @@ def test_connector_report_passes_complete_metadata():
 
 
 def test_connector_report_fails_missing_policy_metadata_and_test_mode():
-    report = build_connector_compliance_report([
-        connector_entry(name="incomplete", policy_metadata={}, dry_run_supported=False)
-    ])
+    report = build_connector_compliance_report(
+        [
+            connector_entry(
+                name="incomplete", policy_metadata={}, dry_run_supported=False
+            )
+        ]
+    )
 
     assert report["status"] == "fail"
     checks = {item["check"] for item in report["findings"]}
@@ -43,13 +47,18 @@ def test_connector_report_fails_missing_policy_metadata_and_test_mode():
 
 
 def test_elevated_risk_connector_requires_review_flag():
-    report = build_connector_compliance_report([
-        connector_entry(
-            name="review_required_adapter",
-            risk_level="high",
-            policy_metadata={"human_review_required": False, "public_source_only": True},
-        )
-    ])
+    report = build_connector_compliance_report(
+        [
+            connector_entry(
+                name="review_required_adapter",
+                risk_level="high",
+                policy_metadata={
+                    "human_review_required": False,
+                    "public_source_only": True,
+                },
+            )
+        ]
+    )
 
     assert report["status"] == "fail"
     assert any(item["check"] == "high_risk_human_review" for item in report["findings"])

@@ -13,7 +13,12 @@ class _Route:
 
 
 def _fixture_tree(root: Path) -> None:
-    from src.socmint.search_reporting_product_review_v27_7 import REQUIRED_ASSETS, REQUIRED_MODULES, REQUIRED_NOTES
+    from src.socmint.search_reporting_product_review_v27_7 import (
+        REQUIRED_ASSETS,
+        REQUIRED_MODULES,
+        REQUIRED_NOTES,
+    )
+
     for item in (*REQUIRED_MODULES, *REQUIRED_ASSETS, *REQUIRED_NOTES):
         path = root / item
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -47,7 +52,9 @@ def test_v27_7_product_review_blocks_missing_duplicate_and_migration(tmp_path):
     migration = tmp_path / "migrations/v27_7_bad.py"
     migration.parent.mkdir(parents=True, exist_ok=True)
     migration.write_text("bad\n", encoding="utf-8")
-    routes = [_Route(rule) for rule in REQUIRED_ROUTES if rule != "/global-search/history"]
+    routes = [
+        _Route(rule) for rule in REQUIRED_ROUTES if rule != "/global-search/history"
+    ]
     routes.extend([_Route("/global-search"), _Route("/global-search")])
     result = build_search_reporting_product_review(tmp_path, routes=routes)
     assert result["status"] == "blocked"

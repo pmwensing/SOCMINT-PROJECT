@@ -60,7 +60,9 @@ def _check_item(item: dict[str, str], root: str | Path = ".") -> dict[str, Any]:
     elif kind == "glob":
         pattern = item.get("pattern", "*")
         exists = path.is_dir() and any(path.glob(pattern))
-        detail["matches"] = sorted(str(p) for p in path.glob(pattern))[:20] if path.is_dir() else []
+        detail["matches"] = (
+            sorted(str(p) for p in path.glob(pattern))[:20] if path.is_dir() else []
+        )
     else:
         detail["error"] = f"unknown kind {kind}"
 

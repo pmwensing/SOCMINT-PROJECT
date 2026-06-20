@@ -45,7 +45,9 @@ def _retention_policies() -> list[dict[str, Any]]:
         return [dict(item) for item in DEFAULT_RETENTION_POLICIES]
     if not isinstance(value, list):
         return [dict(item) for item in DEFAULT_RETENTION_POLICIES]
-    policies = [item for item in value if isinstance(item, dict) and item.get("policy_id")]
+    policies = [
+        item for item in value if isinstance(item, dict) and item.get("policy_id")
+    ]
     return policies or [dict(item) for item in DEFAULT_RETENTION_POLICIES]
 
 

@@ -30,7 +30,9 @@ def test_full_report_retention_accepts_invalid_keep_latest(monkeypatch):
         "full_report_export_history",
         lambda subject_id, limit=500: {"exports": []},
     )
-    monkeypatch.setattr(full_report_retention, "load_pins", lambda: {"schema": "test", "pins": {}})
+    monkeypatch.setattr(
+        full_report_retention, "load_pins", lambda: {"schema": "test", "pins": {}}
+    )
 
     # Static source regression for guarded integer parsing in both UI and API paths.
     source = Path("src/socmint/full_report_retention.py").read_text()

@@ -4,7 +4,14 @@ from collections import Counter
 from datetime import datetime, timezone
 from typing import Any
 
-from .recovery_operations_v29_5 import PLAN_TYPES, REQUEST_STATES, current_retry_requests, history, interventions, recovery_plans
+from .recovery_operations_v29_5 import (
+    PLAN_TYPES,
+    REQUEST_STATES,
+    current_retry_requests,
+    history,
+    interventions,
+    recovery_plans,
+)
 
 SCHEMA = "socmint.recovery_operations_workspace.v29_5"
 VERSION = "v29.5.0"
@@ -28,7 +35,9 @@ def build_recovery_operations_workspace() -> dict[str, Any]:
     operator_events = interventions()
     events = history()
     now = datetime.now(timezone.utc)
-    request_counts = Counter(str(item.get("request_state") or "unknown") for item in requests)
+    request_counts = Counter(
+        str(item.get("request_state") or "unknown") for item in requests
+    )
     pending = [item for item in requests if item.get("request_state") == "pending"]
     approved = [item for item in requests if item.get("request_state") == "approved"]
     executable_window = []
@@ -39,15 +48,33 @@ def build_recovery_operations_workspace() -> dict[str, Any]:
         window_end = _parse(item.get("retry_window_ends_at"))
         if window_end and now >= window_end:
             expired_window.append(item)
-            findings.append({"severity":"high","key":"approved_retry_window_expired","retry_request_id":item.get("retry_request_id")})
+            findings.append(
+                {
+                    "severity": "high",
+                    "key": "approved_retry_window_expired",
+                    "retry_request_id": item.get("retry_request_id"),
+                }
+            )
         elif not earliest or now >= earliest:
             executable_window.append(item)
         else:
-            findings.append({"severity":"low","key":"approved_retry_waiting_for_backoff","retry_request_id":item.get("retry_request_id")})
+            findings.append(
+                {
+                    "severity": "low",
+                    "key": "approved_retry_waiting_for_backoff",
+                    "retry_request_id": item.get("retry_request_id"),
+                }
+            )
     plan_job_ids = {str(item.get("collection_job_id") or "") for item in plans}
     for item in approved:
         if str(item.get("collection_job_id") or "") not in plan_job_ids:
-            findings.append({"severity":"medium","key":"approved_retry_without_recovery_plan","retry_request_id":item.get("retry_request_id")})
+            findings.append(
+                {
+                    "severity": "medium",
+                    "key": "approved_retry_without_recovery_plan",
+                    "retry_request_id": item.get("retry_request_id"),
+                }
+            )
     return {
         "schema": SCHEMA,
         "version": VERSION,

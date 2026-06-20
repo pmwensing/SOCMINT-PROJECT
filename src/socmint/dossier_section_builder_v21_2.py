@@ -65,8 +65,7 @@ def _section_completeness(section: dict[str, Any]) -> dict[str, Any]:
         for finding in findings
     )
     citation_complete = all(
-        bool((finding.get("provenance") or {}).get("claim_ids"))
-        for finding in findings
+        bool((finding.get("provenance") or {}).get("claim_ids")) for finding in findings
     )
     source_complete = all(
         bool(
@@ -93,7 +92,9 @@ def _section_completeness(section: dict[str, Any]) -> dict[str, Any]:
     return {
         **checks,
         "complete": all(required),
-        "score": round((sum(bool(value) for value in required) / len(required)) * 100, 2),
+        "score": round(
+            (sum(bool(value) for value in required) / len(required)) * 100, 2
+        ),
         "missing": [key for key, value in checks.items() if not value],
     }
 
@@ -156,12 +157,10 @@ def build_dossier_section_draft(
         "case_id": case_id,
         "subject_id": subject_id,
         "source_package_id": workspace["source_identity"].get("package_id"),
-        "source_manifest_sha256": workspace["source_identity"].get(
-            "manifest_sha256"
-        ),
-        "source_import_record_id": workspace["package_import"].get(
-            "latest_import", {}
-        ).get("import_record_id"),
+        "source_manifest_sha256": workspace["source_identity"].get("manifest_sha256"),
+        "source_import_record_id": workspace["package_import"]
+        .get("latest_import", {})
+        .get("import_record_id"),
         "source_arrangement_record_id": arrangement.get("arrangement_record_id"),
         "source_arrangement_sha256": arrangement.get("arrangement_sha256"),
         "sections": sections,
@@ -182,26 +181,18 @@ def build_dossier_section_draft(
         "complete_section_count": complete_count,
         "incomplete_section_count": len(substantive) - complete_count,
         "completeness_percent": (
-            round((complete_count / len(substantive)) * 100, 2)
-            if substantive
-            else 0.0
+            round((complete_count / len(substantive)) * 100, 2) if substantive else 0.0
         ),
         "sections": sections,
         "source_package_id": draft_content["source_package_id"],
         "source_manifest_sha256": draft_content["source_manifest_sha256"],
         "source_import_record_id": draft_content["source_import_record_id"],
-        "source_arrangement_record_id": draft_content[
-            "source_arrangement_record_id"
-        ],
-        "source_arrangement_sha256": draft_content[
-            "source_arrangement_sha256"
-        ],
+        "source_arrangement_record_id": draft_content["source_arrangement_record_id"],
+        "source_arrangement_sha256": draft_content["source_arrangement_sha256"],
         "source_records_mutated": False,
         "latest_snapshot": _latest_snapshot(case_id),
         "next_action": (
-            "review_dossier_draft"
-            if draft_complete
-            else "complete_dossier_sections"
+            "review_dossier_draft" if draft_complete else "complete_dossier_sections"
         ),
     }
 

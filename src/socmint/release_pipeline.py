@@ -18,7 +18,12 @@ REQUIRED_RELEASE_CHECKS = [
 
 def compose_file_status(root: str | Path = ".") -> dict[str, Any]:
     root_path = Path(root)
-    candidates = [root_path / "docker-compose.yml", root_path / "docker-compose.yaml", root_path / "compose.yml", root_path / "compose.yaml"]
+    candidates = [
+        root_path / "docker-compose.yml",
+        root_path / "docker-compose.yaml",
+        root_path / "compose.yml",
+        root_path / "compose.yaml",
+    ]
     found = [str(path) for path in candidates if path.exists()]
     return {
         "schema": RELEASE_PIPELINE_SCHEMA,
@@ -30,8 +35,12 @@ def compose_file_status(root: str | Path = ".") -> dict[str, Any]:
 def release_pipeline_check(root: str | Path = ".") -> dict[str, Any]:
     compose = compose_file_status(root)
     scripts = {
-        "production_smoke": Path(root, "scripts", "production_smoke.py").exists() or Path(root, "scripts", "production_smoke.sh").exists(),
-        "backup_restore_smoke": Path(root, "scripts", "backup_restore_smoke.py").exists() or Path(root, "scripts", "backup_restore_smoke.sh").exists(),
+        "production_smoke": Path(root, "scripts", "production_smoke.py").exists()
+        or Path(root, "scripts", "production_smoke.sh").exists(),
+        "backup_restore_smoke": Path(
+            root, "scripts", "backup_restore_smoke.py"
+        ).exists()
+        or Path(root, "scripts", "backup_restore_smoke.sh").exists(),
         "test_script_directory": Path(root, "scripts").exists(),
     }
     checks = {

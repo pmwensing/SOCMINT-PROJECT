@@ -39,14 +39,23 @@ def evidence_to_dossier_traceability(subject_id: str) -> dict[str, Any]:
 
     all_files = files_under([Path("storage"), Path("data"), Path("release")])
     dossier_files = [
-        p for p in all_files
+        p
+        for p in all_files
         if p.suffix.lower() in {".json", ".md", ".txt", ".html", ".pdf"}
-        and (sid in p.name.lower() or "dossier" in p.name.lower() or "report" in p.name.lower())
+        and (
+            sid in p.name.lower()
+            or "dossier" in p.name.lower()
+            or "report" in p.name.lower()
+        )
     ][:100]
 
     evidence_files = [
-        p for p in all_files
-        if any(x in str(p).lower() for x in ["evidence", "artifact", "vault", "connector", "source"])
+        p
+        for p in all_files
+        if any(
+            x in str(p).lower()
+            for x in ["evidence", "artifact", "vault", "connector", "source"]
+        )
     ][:300]
 
     manifest = [
@@ -63,7 +72,13 @@ def evidence_to_dossier_traceability(subject_id: str) -> dict[str, Any]:
     linked_claims = min(total_claims, len(evidence_files))
     coverage = round((linked_claims / total_claims) * 100, 2) if total_claims else 0.0
 
-    status = "pass" if coverage >= 80 else "warn" if coverage >= 40 or total_claims == 0 else "fail"
+    status = (
+        "pass"
+        if coverage >= 80
+        else "warn"
+        if coverage >= 40 or total_claims == 0
+        else "fail"
+    )
 
     out = {
         "status": status,
@@ -75,7 +90,9 @@ def evidence_to_dossier_traceability(subject_id: str) -> dict[str, Any]:
         "unresolved_claims": max(total_claims - linked_claims, 0),
         "dossier_files": [str(p) for p in dossier_files],
         "evidence_manifest": manifest,
-        "recommended_fixes": [] if status == "pass" else [
+        "recommended_fixes": []
+        if status == "pass"
+        else [
             "Attach evidence IDs/source URLs to unsupported claims.",
             "Include source manifest in dossier export.",
             "Regenerate dossier after artifact linking.",
@@ -84,5 +101,7 @@ def evidence_to_dossier_traceability(subject_id: str) -> dict[str, Any]:
 
     dest = Path("storage/traceability")
     dest.mkdir(parents=True, exist_ok=True)
-    (dest / f"{safe_id(subject_id)}_traceability.json").write_text(json.dumps(out, indent=2))
+    (dest / f"{safe_id(subject_id)}_traceability.json").write_text(
+        json.dumps(out, indent=2)
+    )
     return out

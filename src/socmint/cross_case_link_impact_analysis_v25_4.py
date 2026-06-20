@@ -57,11 +57,17 @@ def build_cross_case_link_impact_analysis(
     graph: dict[str, Any] | None = None,
     workload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    registry = links if links is not None else confirmed_link_registry(
-        allowed_case_ids=allowed_case_ids
+    registry = (
+        links
+        if links is not None
+        else confirmed_link_registry(allowed_case_ids=allowed_case_ids)
     )
     link = next(
-        (item for item in registry if item.get("confirmed_link_id") == confirmed_link_id),
+        (
+            item
+            for item in registry
+            if item.get("confirmed_link_id") == confirmed_link_id
+        ),
         None,
     )
     if link is None:
@@ -75,9 +81,13 @@ def build_cross_case_link_impact_analysis(
             "graph_mutated": False,
         }
 
-    case_ids = sorted({str(value) for value in link.get("case_ids") or [] if str(value)})
+    case_ids = sorted(
+        {str(value) for value in link.get("case_ids") or [] if str(value)}
+    )
     case_set = set(case_ids)
-    if allowed_case_ids is not None and any(case_id not in allowed_case_ids for case_id in case_ids):
+    if allowed_case_ids is not None and any(
+        case_id not in allowed_case_ids for case_id in case_ids
+    ):
         return {
             "schema": SCHEMA,
             "version": VERSION,
@@ -88,10 +98,14 @@ def build_cross_case_link_impact_analysis(
             "graph_mutated": False,
         }
 
-    graph_payload = graph if graph is not None else build_cross_case_relationship_graph(
-        allowed_case_ids=allowed_case_ids
+    graph_payload = (
+        graph
+        if graph is not None
+        else build_cross_case_relationship_graph(allowed_case_ids=allowed_case_ids)
     )
-    workload_payload = workload if workload is not None else build_workload_assignment_monitoring()
+    workload_payload = (
+        workload if workload is not None else build_workload_assignment_monitoring()
+    )
 
     impacted_nodes = [
         node
@@ -106,9 +120,8 @@ def build_cross_case_link_impact_analysis(
     impacted_entities = [
         node
         for node in impacted_nodes
-        if node.get("node_type") in {
-            "entity", "identifier", "infrastructure", "evidence", "temporal"
-        }
+        if node.get("node_type")
+        in {"entity", "identifier", "infrastructure", "evidence", "temporal"}
     ]
 
     workload_entries = [
@@ -119,53 +132,70 @@ def build_cross_case_link_impact_analysis(
     review_queues = []
     for entry in workload_entries:
         reviewer = str(entry.get("assigned_reviewer") or "").strip()
-        review_queues.append({
-            "case_id": entry.get("case_id"),
-            "review_state": entry.get("review_state"),
-            "assigned_reviewer": reviewer or None,
-            "assignment_age_hours": entry.get("assignment_age_hours"),
-            "reviewer_queue": "/case-intelligence-review/my-assignments",
-            "supervisor_queue": (
-                f"/case-intelligence-review/supervisor-queue?assigned_reviewer={reviewer}"
-                if reviewer
-                else "/case-intelligence-review/supervisor-queue"
-            ),
-        })
+        review_queues.append(
+            {
+                "case_id": entry.get("case_id"),
+                "review_state": entry.get("review_state"),
+                "assigned_reviewer": reviewer or None,
+                "assignment_age_hours": entry.get("assignment_age_hours"),
+                "reviewer_queue": "/case-intelligence-review/my-assignments",
+                "supervisor_queue": (
+                    f"/case-intelligence-review/supervisor-queue?assigned_reviewer={reviewer}"
+                    if reviewer
+                    else "/case-intelligence-review/supervisor-queue"
+                ),
+            }
+        )
 
     closure_states = []
     archive_records = []
     for case_id in case_ids:
         history = build_case_closure_history(case_id)
-        closure_states.append({
-            "case_id": case_id,
-            "current_closure_state": history.get("current_closure_state"),
-            "current_archive_state": history.get("current_archive_state"),
-            "retention_disposition": history.get("retention_disposition"),
-            "reopen_status": history.get("reopen_status"),
-            "unresolved_actions": history.get("unresolved_actions") or [],
-            "history_event_count": history.get("event_count"),
-        })
-        archive_event = (history.get("latest_events") or {}).get("archive_generation") or {}
-        if archive_event:
-            archive_records.append({
+        closure_states.append(
+            {
                 "case_id": case_id,
-                "timeline_id": archive_event.get("timeline_id"),
-                "actor": archive_event.get("actor"),
-                "occurred_at": archive_event.get("occurred_at"),
-                "details": archive_event.get("details") or {},
-            })
+                "current_closure_state": history.get("current_closure_state"),
+                "current_archive_state": history.get("current_archive_state"),
+                "retention_disposition": history.get("retention_disposition"),
+                "reopen_status": history.get("reopen_status"),
+                "unresolved_actions": history.get("unresolved_actions") or [],
+                "history_event_count": history.get("event_count"),
+            }
+        )
+        archive_event = (history.get("latest_events") or {}).get(
+            "archive_generation"
+        ) or {}
+        if archive_event:
+            archive_records.append(
+                {
+                    "case_id": case_id,
+                    "timeline_id": archive_event.get("timeline_id"),
+                    "actor": archive_event.get("actor"),
+                    "occurred_at": archive_event.get("occurred_at"),
+                    "details": archive_event.get("details") or {},
+                }
+            )
 
     package_records = _package_records(case_set)
     evidence_packages = [
-        record for record in package_records
-        if record.get("action") in {"dossier_final_export_package", "dossier_delivery_receipt", "dossier_recipient_acknowledgement"}
+        record
+        for record in package_records
+        if record.get("action")
+        in {
+            "dossier_final_export_package",
+            "dossier_delivery_receipt",
+            "dossier_recipient_acknowledgement",
+        }
     ]
     archive_record_ids = {item.get("timeline_id") for item in archive_records}
-    archive_records.extend([
-        record for record in package_records
-        if record.get("action") == "case_archive_package_generated"
-        and record.get("record_id") not in archive_record_ids
-    ])
+    archive_records.extend(
+        [
+            record
+            for record in package_records
+            if record.get("action") == "case_archive_package_generated"
+            and record.get("record_id") not in archive_record_ids
+        ]
+    )
 
     impact_core = {
         "confirmed_link_id": confirmed_link_id,
@@ -188,8 +218,12 @@ def build_cross_case_link_impact_analysis(
         "version": VERSION,
         "status": "ready",
         "access_scope": {
-            "mode": "restricted" if allowed_case_ids is not None else "all_visible_cases",
-            "allowed_case_ids": sorted(allowed_case_ids) if allowed_case_ids is not None else None,
+            "mode": "restricted"
+            if allowed_case_ids is not None
+            else "all_visible_cases",
+            "allowed_case_ids": sorted(allowed_case_ids)
+            if allowed_case_ids is not None
+            else None,
         },
         "impact": impact_core,
         "impact_sha256": _sha(impact_core),
@@ -209,7 +243,9 @@ def build_cross_case_link_impact_analysis(
             "confirmed_link_sha256": link.get("confirmed_link_sha256"),
             "registry_record_id": link.get("registry_record_id"),
             "accepted_review_decision_id": link.get("accepted_review_decision_id"),
-            "accepted_review_decision_sha256": link.get("accepted_review_decision_sha256"),
+            "accepted_review_decision_sha256": link.get(
+                "accepted_review_decision_sha256"
+            ),
             "source_occurrences_sha256": link.get("source_occurrences_sha256"),
         },
         "graph_binding": {

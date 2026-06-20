@@ -12,7 +12,9 @@ V11_READINESS_SCHEMA = "socmint.v11_readiness.v11_6"
 CURRENT_BASELINE = "v11.6"
 
 
-def _check(name: str, passed: bool, summary: str, details: dict[str, Any] | None = None) -> dict[str, Any]:
+def _check(
+    name: str, passed: bool, summary: str, details: dict[str, Any] | None = None
+) -> dict[str, Any]:
     return {
         "name": name,
         "passed": bool(passed),
@@ -47,34 +49,58 @@ def v11_readiness_summary() -> dict[str, Any]:
             "subject_workflow_smoke",
             True,
             "Subject workflow, dossier export, and export-history smoke are present in the v11 test chain.",
-            {"targets": ["make test-subject-workflow-v11-2", "make test-subject-workflow-v11-3"]},
+            {
+                "targets": [
+                    "make test-subject-workflow-v11-2",
+                    "make test-subject-workflow-v11-3",
+                ]
+            },
         ),
         _check(
             "test_data_hygiene",
             test_data.get("status") == "clean",
-            "Smoke/test data cleanup state is clean." if test_data.get("status") == "clean" else "Smoke/test data cleanup is needed.",
+            "Smoke/test data cleanup state is clean."
+            if test_data.get("status") == "clean"
+            else "Smoke/test data cleanup is needed.",
             test_data.get("counts", {}),
         ),
         _check(
             "runtime_import_health",
             runtime.get("status") == "pass",
-            "Runtime import health passed." if runtime.get("status") == "pass" else "Runtime import health needs review.",
+            "Runtime import health passed."
+            if runtime.get("status") == "pass"
+            else "Runtime import health needs review.",
             {
                 "source_hits": (runtime.get("source_scan") or {}).get("hit_count"),
-                "import_failures": (runtime.get("package_probe") or {}).get("failure_count"),
+                "import_failures": (runtime.get("package_probe") or {}).get(
+                    "failure_count"
+                ),
             },
         ),
         _check(
             "tor_status",
             tor.get("status") == "ready",
-            "Tor hidden service is ready." if tor.get("status") == "ready" else "Tor hidden service is not ready or not configured.",
-            {"status": tor.get("status"), "enabled": tor.get("enabled"), "onion_hostname": tor.get("onion_hostname")},
+            "Tor hidden service is ready."
+            if tor.get("status") == "ready"
+            else "Tor hidden service is not ready or not configured.",
+            {
+                "status": tor.get("status"),
+                "enabled": tor.get("enabled"),
+                "onion_hostname": tor.get("onion_hostname"),
+            },
         ),
         _check(
             "worker_status",
             failed == 0 and stale == 0,
-            "Worker queue has no failed or stale jobs." if failed == 0 and stale == 0 else "Worker queue needs operator attention.",
-            {"queue_depth": queued, "running": running, "failed": failed, "stale_running_jobs": stale},
+            "Worker queue has no failed or stale jobs."
+            if failed == 0 and stale == 0
+            else "Worker queue needs operator attention.",
+            {
+                "queue_depth": queued,
+                "running": running,
+                "failed": failed,
+                "stale_running_jobs": stale,
+            },
         ),
     ]
 
@@ -82,7 +108,11 @@ def v11_readiness_summary() -> dict[str, Any]:
     total = len(checks)
     all_passed = passed == total
     blocking = [item for item in checks if not item["passed"]]
-    next_action = "Ready for v11 release gate review." if all_passed else f"Resolve {len(blocking)} blocking readiness check(s)."
+    next_action = (
+        "Ready for v11 release gate review."
+        if all_passed
+        else f"Resolve {len(blocking)} blocking readiness check(s)."
+    )
 
     return {
         "schema": V11_READINESS_SCHEMA,

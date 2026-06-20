@@ -6,11 +6,17 @@ from typing import Any
 
 from . import database
 from .case_team_role_assignment_v26_1 import current_case_team
-from .collaboration_requests_handoffs_v26_3 import build_workspace as build_requests_workspace
-from .collaboration_responses_resolution_v26_4 import build_collaboration_response_workspace
+from .collaboration_requests_handoffs_v26_3 import (
+    build_workspace as build_requests_workspace,
+)
+from .collaboration_responses_resolution_v26_4 import (
+    build_collaboration_response_workspace,
+)
 from .collaboration_workspace_v26_0 import build_collaboration_workspace
 from .dossier_assembly_workspace_v21_0 import _ensure_storage, _json_details, _sha
-from .team_workload_collaboration_queue_v26_5 import build_team_workload_collaboration_queue
+from .team_workload_collaboration_queue_v26_5 import (
+    build_team_workload_collaboration_queue,
+)
 
 SCHEMA = "socmint.collaboration_history_audit.v26_6"
 VERSION = "v26.6.0"
@@ -45,8 +51,13 @@ def _visible(case_id: str, allowed_case_ids: set[str] | None) -> bool:
 
 def _affected_user(details: dict[str, Any]) -> str | None:
     for key in (
-        "user_identity", "mentioned_user", "requested_from", "handoff_to",
-        "responding_user", "acknowledged_by", "read_by_user",
+        "user_identity",
+        "mentioned_user",
+        "requested_from",
+        "handoff_to",
+        "responding_user",
+        "acknowledged_by",
+        "read_by_user",
     ):
         value = str(details.get(key) or "").strip()
         if value:
@@ -74,7 +85,9 @@ def _state_pair(action: str, details: dict[str, Any]) -> tuple[str | None, str |
         binding = details.get("previous_response_binding") or {}
         return binding.get("response_type"), details.get("response_type")
     binding = details.get("request_binding") or details.get("handoff_binding") or {}
-    return binding.get("workflow_status"), details.get("workflow_status") or details.get("status")
+    return binding.get("workflow_status"), details.get(
+        "workflow_status"
+    ) or details.get("status")
 
 
 def _persisted_events(allowed_case_ids: set[str] | None) -> list[dict[str, Any]]:
@@ -100,26 +113,31 @@ def _persisted_events(allowed_case_ids: set[str] | None) -> list[dict[str, Any]]
                 "target_value": row.target_value,
                 "details": details,
             }
-            result.append({
-                "history_event_id": f"collaboration-audit-{row.id}",
-                "event_type": ACTION_TYPES[row.action],
-                "occurred_at": row.created_at.isoformat() if row.created_at else None,
-                "actor": row.actor,
-                "affected_user": _affected_user(details),
-                "case_id": case_id,
-                "source_action": row.action,
-                "source_record_id": row.id,
-                "source_binding": binding,
-                "source_binding_sha256": _sha(binding),
-                "access_scope": details.get("workspace_access_scope") or {
+            result.append(
+                {
+                    "history_event_id": f"collaboration-audit-{row.id}",
+                    "event_type": ACTION_TYPES[row.action],
+                    "occurred_at": row.created_at.isoformat()
+                    if row.created_at
+                    else None,
+                    "actor": row.actor,
+                    "affected_user": _affected_user(details),
                     "case_id": case_id,
-                    "case_access_required": True,
-                },
-                "previous_state": previous_state,
-                "new_state": new_state,
-                "details": details,
-                "synthetic_checkpoint": False,
-            })
+                    "source_action": row.action,
+                    "source_record_id": row.id,
+                    "source_binding": binding,
+                    "source_binding_sha256": _sha(binding),
+                    "access_scope": details.get("workspace_access_scope")
+                    or {
+                        "case_id": case_id,
+                        "case_access_required": True,
+                    },
+                    "previous_state": previous_state,
+                    "new_state": new_state,
+                    "details": details,
+                    "synthetic_checkpoint": False,
+                }
+            )
         return result
     finally:
         session.close()
@@ -172,17 +190,21 @@ def build_collaboration_history_audit(
     )
     events = _persisted_events(allowed_case_ids)
     events.append(_checkpoint(generated_at, queue))
-    events.sort(key=lambda item: (
-        str(item.get("occurred_at") or ""),
-        int(item.get("source_record_id") or 10**18),
-        str(item.get("history_event_id") or ""),
-    ))
+    events.sort(
+        key=lambda item: (
+            str(item.get("occurred_at") or ""),
+            int(item.get("source_record_id") or 10**18),
+            str(item.get("history_event_id") or ""),
+        )
+    )
 
-    visible_case_ids = sorted({
-        str(item.get("case_id"))
-        for item in workspace.get("participating_cases") or []
-        if item.get("case_id")
-    })
+    visible_case_ids = sorted(
+        {
+            str(item.get("case_id"))
+            for item in workspace.get("participating_cases") or []
+            if item.get("case_id")
+        }
+    )
     active_team = []
     current_owner = None
     open_requests = []
@@ -191,12 +213,14 @@ def build_collaboration_history_audit(
     for case_id in visible_case_ids:
         for assignment in current_case_team(case_id):
             if assignment.get("assignment_status") == "active":
-                active_team.append({
-                    "case_id": case_id,
-                    "user_identity": assignment.get("user_identity"),
-                    "role": assignment.get("role"),
-                    "assignment_id": assignment.get("case_team_assignment_id"),
-                })
+                active_team.append(
+                    {
+                        "case_id": case_id,
+                        "user_identity": assignment.get("user_identity"),
+                        "role": assignment.get("role"),
+                        "assignment_id": assignment.get("case_team_assignment_id"),
+                    }
+                )
                 if assignment.get("role") == "case_owner":
                     current_owner = assignment.get("user_identity")
         request_state = build_requests_workspace(case_id)
@@ -227,12 +251,16 @@ def build_collaboration_history_audit(
     actor_counts = Counter(str(item.get("actor") or "unknown") for item in events)
     access_scope = {
         "mode": "restricted" if allowed_case_ids is not None else "all_visible_cases",
-        "allowed_case_ids": sorted(allowed_case_ids) if allowed_case_ids is not None else None,
+        "allowed_case_ids": sorted(allowed_case_ids)
+        if allowed_case_ids is not None
+        else None,
     }
     return {
         "schema": SCHEMA,
         "version": VERSION,
-        "status": "attention_required" if any(current_state["unresolved_actions"].values()) else "ready",
+        "status": "attention_required"
+        if any(current_state["unresolved_actions"].values())
+        else "ready",
         "generated_at": generated_at,
         "user_identity": user,
         "access_scope": access_scope,
@@ -241,7 +269,9 @@ def build_collaboration_history_audit(
         "event_type_counts": dict(sorted(event_counts.items())),
         "actor_counts": dict(sorted(actor_counts.items())),
         "case_count": len(visible_case_ids),
-        "source_bound_event_count": sum(1 for item in events if item.get("source_binding_sha256")),
+        "source_bound_event_count": sum(
+            1 for item in events if item.get("source_binding_sha256")
+        ),
         "current_collaboration_state": current_state,
         "current_collaboration_state_sha256": _sha(current_state),
         "source_records_mutated": False,

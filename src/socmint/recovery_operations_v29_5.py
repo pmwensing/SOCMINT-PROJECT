@@ -5,7 +5,12 @@ from typing import Any
 
 from . import database
 from .collection_job_contract_v29_1 import find_contract, transition_collection_job
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 
 SCHEMA = "socmint.retry_recovery_operator_intervention.v29_5"
 VERSION = "v29.5.0"
@@ -17,7 +22,13 @@ ACTIONS = (
 )
 REQUEST_STATES = ("pending", "approved", "denied", "superseded")
 PLAN_TYPES = ("retry", "manual_review", "cancel", "supersede", "resolve_blocker")
-INTERVENTION_TYPES = ("manual_review", "resolve_blocker", "cancel", "supersede", "quarantine_review")
+INTERVENTION_TYPES = (
+    "manual_review",
+    "resolve_blocker",
+    "cancel",
+    "supersede",
+    "quarantine_review",
+)
 
 
 def blocked(key: str) -> dict[str, Any]:
@@ -70,11 +81,19 @@ def history() -> list[dict[str, Any]]:
         session.close()
 
 
-def _record(action: str, actor: str, target: str, event: dict[str, Any], ip_address: str | None) -> dict[str, Any]:
+def _record(
+    action: str, actor: str, target: str, event: dict[str, Any], ip_address: str | None
+) -> dict[str, Any]:
     _ensure_storage()
     session = database.Session()
     try:
-        row = database.AuditLog(actor=actor, action=action, target_value=target, ip_address=ip_address, details=_canonical(event))
+        row = database.AuditLog(
+            actor=actor,
+            action=action,
+            target_value=target,
+            ip_address=ip_address,
+            details=_canonical(event),
+        )
         session.add(row)
         session.commit()
         session.refresh(row)
@@ -97,28 +116,63 @@ def current_retry_requests() -> list[dict[str, Any]]:
         if not request_id:
             continue
         if event.get("event_type") == "retry_requested":
-            requests[request_id] = {**event, "request_state": "pending", "decision": None}
+            requests[request_id] = {
+                **event,
+                "request_state": "pending",
+                "decision": None,
+            }
         elif event.get("event_type") == "retry_decided" and request_id in requests:
             item = dict(requests[request_id])
-            item["request_state"] = "approved" if event.get("approved") is True else "denied"
+            item["request_state"] = (
+                "approved" if event.get("approved") is True else "denied"
+            )
             item["decision"] = event
             requests[request_id] = item
-    return sorted(requests.values(), key=lambda item: str(item.get("recorded_at") or ""), reverse=True)
+    return sorted(
+        requests.values(),
+        key=lambda item: str(item.get("recorded_at") or ""),
+        reverse=True,
+    )
 
 
 def find_retry_request(retry_request_id: str) -> dict[str, Any] | None:
-    return next((item for item in current_retry_requests() if item.get("retry_request_id") == retry_request_id), None)
+    return next(
+        (
+            item
+            for item in current_retry_requests()
+            if item.get("retry_request_id") == retry_request_id
+        ),
+        None,
+    )
 
 
 def recovery_plans() -> list[dict[str, Any]]:
-    return [item for item in history() if item.get("event_type") == "recovery_plan_created"]
+    return [
+        item for item in history() if item.get("event_type") == "recovery_plan_created"
+    ]
 
 
 def interventions() -> list[dict[str, Any]]:
-    return [item for item in history() if item.get("event_type") == "operator_intervention_recorded"]
+    return [
+        item
+        for item in history()
+        if item.get("event_type") == "operator_intervention_recorded"
+    ]
 
 
-def request_retry(*, actor: str, collection_job_id: str, idempotency_key: str, backoff_seconds: int, earliest_retry_at: str, retry_window_ends_at: str, max_attempts: int, reason: str, confirmed: bool, ip_address: str | None = None) -> dict[str, Any]:
+def request_retry(
+    *,
+    actor: str,
+    collection_job_id: str,
+    idempotency_key: str,
+    backoff_seconds: int,
+    earliest_retry_at: str,
+    retry_window_ends_at: str,
+    max_attempts: int,
+    reason: str,
+    confirmed: bool,
+    ip_address: str | None = None,
+) -> dict[str, Any]:
     contract = find_contract(collection_job_id)
     if contract is None:
         return blocked("collection_job_contract_required")
@@ -147,11 +201,15 @@ def request_retry(*, actor: str, collection_job_id: str, idempotency_key: str, b
     if earliest and window_end and earliest >= window_end:
         return blocked("retry_window_invalid")
     for item in current_retry_requests():
-        if item.get("idempotency_key") == idempotency_key and item.get("request_state") in {"pending", "approved"}:
+        if item.get("idempotency_key") == idempotency_key and item.get(
+            "request_state"
+        ) in {"pending", "approved"}:
             return blocked("active_retry_idempotency_key_must_be_unique")
     job_binding = {
         "collection_job_id": collection_job_id,
-        "collection_job_event_sha256": (contract.get("transition_history") or [contract])[-1].get("collection_job_event_sha256"),
+        "collection_job_event_sha256": (
+            contract.get("transition_history") or [contract]
+        )[-1].get("collection_job_event_sha256"),
         "current_state": contract.get("current_state"),
         "attempt_number": current_attempt,
         "failure_category": contract.get("failure_category"),
@@ -188,10 +246,22 @@ def request_retry(*, actor: str, collection_job_id: str, idempotency_key: str, b
         "legacy_scan_job_mutated": False,
     }
     result = _record(ACTIONS[0], actor, collection_job_id, event, ip_address)
-    return {**result, "status": "collection_retry_requested", "next_action": "review_retry_request"}
+    return {
+        **result,
+        "status": "collection_retry_requested",
+        "next_action": "review_retry_request",
+    }
 
 
-def decide_retry(*, actor: str, retry_request_id: str, approved: bool, decision_reason: str, confirmed: bool, ip_address: str | None = None) -> dict[str, Any]:
+def decide_retry(
+    *,
+    actor: str,
+    retry_request_id: str,
+    approved: bool,
+    decision_reason: str,
+    confirmed: bool,
+    ip_address: str | None = None,
+) -> dict[str, Any]:
     request_record = find_retry_request(retry_request_id)
     if request_record is None:
         return blocked("retry_request_required")
@@ -228,10 +298,26 @@ def decide_retry(*, actor: str, retry_request_id: str, approved: bool, decision_
         "connector_execution_performed": False,
     }
     result = _record(ACTIONS[1], actor, retry_request_id, event, ip_address)
-    return {**result, "status": "collection_retry_decided", "next_action": "create_recovery_plan" if approved else "review_denied_retry"}
+    return {
+        **result,
+        "status": "collection_retry_decided",
+        "next_action": "create_recovery_plan" if approved else "review_denied_retry",
+    }
 
 
-def create_recovery_plan(*, actor: str, collection_job_id: str, retry_request_id: str, plan_type: str, steps: Any, operator_required: bool, replacement_job_id: str, reason: str, confirmed: bool, ip_address: str | None = None) -> dict[str, Any]:
+def create_recovery_plan(
+    *,
+    actor: str,
+    collection_job_id: str,
+    retry_request_id: str,
+    plan_type: str,
+    steps: Any,
+    operator_required: bool,
+    replacement_job_id: str,
+    reason: str,
+    confirmed: bool,
+    ip_address: str | None = None,
+) -> dict[str, Any]:
     contract = find_contract(collection_job_id)
     if contract is None:
         return blocked("collection_job_contract_required")
@@ -250,7 +336,9 @@ def create_recovery_plan(*, actor: str, collection_job_id: str, retry_request_id
             return blocked("approved_retry_request_required")
         if retry_record.get("collection_job_id") != collection_job_id:
             return blocked("retry_request_job_binding_mismatch")
-    normalized_steps = [str(item).strip() for item in (steps or []) if str(item).strip()]
+    normalized_steps = [
+        str(item).strip() for item in (steps or []) if str(item).strip()
+    ]
     if not normalized_steps:
         return blocked("recovery_plan_steps_required")
     plan = {
@@ -259,13 +347,17 @@ def create_recovery_plan(*, actor: str, collection_job_id: str, retry_request_id
         "operator_required": bool(operator_required),
         "replacement_job_id": str(replacement_job_id or "").strip() or None,
         "retry_request_id": retry_request_id or None,
-        "requested_attempt_number": retry_record.get("requested_attempt_number") if retry_record else None,
+        "requested_attempt_number": retry_record.get("requested_attempt_number")
+        if retry_record
+        else None,
     }
     job_binding = {
         "collection_job_id": collection_job_id,
         "current_state": contract.get("current_state"),
         "attempt_number": contract.get("attempt_number"),
-        "collection_job_event_sha256": (contract.get("transition_history") or [contract])[-1].get("collection_job_event_sha256"),
+        "collection_job_event_sha256": (
+            contract.get("transition_history") or [contract]
+        )[-1].get("collection_job_event_sha256"),
     }
     content = {
         "event_type": "recovery_plan_created",
@@ -289,10 +381,27 @@ def create_recovery_plan(*, actor: str, collection_job_id: str, retry_request_id
         "legacy_scan_job_mutated": False,
     }
     result = _record(ACTIONS[2], actor, collection_job_id, event, ip_address)
-    return {**result, "status": "collection_recovery_plan_created", "next_action": "operator_intervention_required" if operator_required else "dispatch_recovery_separately"}
+    return {
+        **result,
+        "status": "collection_recovery_plan_created",
+        "next_action": "operator_intervention_required"
+        if operator_required
+        else "dispatch_recovery_separately",
+    }
 
 
-def record_operator_intervention(*, actor: str, collection_job_id: str, intervention_type: str, resolution: str, replacement_job_id: str, apply_terminal_transition: bool, reason: str, confirmed: bool, ip_address: str | None = None) -> dict[str, Any]:
+def record_operator_intervention(
+    *,
+    actor: str,
+    collection_job_id: str,
+    intervention_type: str,
+    resolution: str,
+    replacement_job_id: str,
+    apply_terminal_transition: bool,
+    reason: str,
+    confirmed: bool,
+    ip_address: str | None = None,
+) -> dict[str, Any]:
     contract = find_contract(collection_job_id)
     if contract is None:
         return blocked("collection_job_contract_required")
@@ -327,13 +436,17 @@ def record_operator_intervention(*, actor: str, collection_job_id: str, interven
         "resolution": resolution,
         "replacement_job_id": replacement_job_id or None,
         "terminal_transition_applied": bool(transition_result),
-        "transition_event_sha256": (transition_result or {}).get("collection_job_event_sha256"),
+        "transition_event_sha256": (transition_result or {}).get(
+            "collection_job_event_sha256"
+        ),
     }
     job_binding = {
         "collection_job_id": collection_job_id,
         "current_state_before_intervention": contract.get("current_state"),
         "attempt_number": contract.get("attempt_number"),
-        "collection_job_event_sha256": (contract.get("transition_history") or [contract])[-1].get("collection_job_event_sha256"),
+        "collection_job_event_sha256": (
+            contract.get("transition_history") or [contract]
+        )[-1].get("collection_job_event_sha256"),
     }
     content = {
         "event_type": "operator_intervention_recorded",
@@ -358,5 +471,13 @@ def record_operator_intervention(*, actor: str, collection_job_id: str, interven
         "evidence_mutated": False,
     }
     result = _record(ACTIONS[3], actor, collection_job_id, event, ip_address)
-    next_action = "review_terminal_collection_state" if transition_result else "apply_resolution_through_controlled_workflow"
-    return {**result, "status": "collection_operator_intervention_recorded", "next_action": next_action}
+    next_action = (
+        "review_terminal_collection_state"
+        if transition_result
+        else "apply_resolution_through_controlled_workflow"
+    )
+    return {
+        **result,
+        "status": "collection_operator_intervention_recorded",
+        "next_action": next_action,
+    }

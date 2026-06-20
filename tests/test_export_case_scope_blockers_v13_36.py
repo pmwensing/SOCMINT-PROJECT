@@ -67,9 +67,13 @@ def test_export_verification_blocks_manifest_case_tampering(tmp_path):
     manifest["case_id"] = "case-other"
     manifest_path.write_text(json.dumps(manifest, sort_keys=True), encoding="utf-8")
 
-    hashes = verify_artifact_hashes("subject-scope-136", "case-scope-136", root=tmp_path)
+    hashes = verify_artifact_hashes(
+        "subject-scope-136", "case-scope-136", root=tmp_path
+    )
     index = verify_manifest_index("subject-scope-136", "case-scope-136", root=tmp_path)
-    decision = export_gate_decision("subject-scope-136", "case-scope-136", root=tmp_path)
+    decision = export_gate_decision(
+        "subject-scope-136", "case-scope-136", root=tmp_path
+    )
 
     assert hashes["status"] == "blocked"
     assert hashes["scope"]["checks"]["case_match"] is False
@@ -89,9 +93,13 @@ def test_export_verification_allows_matching_scope(tmp_path):
         expected_case_id="case-scope-136",
     )
 
-    hashes = verify_artifact_hashes("subject-scope-136", "case-scope-136", root=tmp_path)
+    hashes = verify_artifact_hashes(
+        "subject-scope-136", "case-scope-136", root=tmp_path
+    )
     index = verify_manifest_index("subject-scope-136", "case-scope-136", root=tmp_path)
-    decision = export_gate_decision("subject-scope-136", "case-scope-136", root=tmp_path)
+    decision = export_gate_decision(
+        "subject-scope-136", "case-scope-136", root=tmp_path
+    )
 
     assert hashes["status"] == "pass"
     assert index["status"] == "pass"

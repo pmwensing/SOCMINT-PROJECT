@@ -30,9 +30,12 @@ def release_ledger_dashboard(case_id: str) -> dict:
                 "seal_id": seal.get("seal_id"),
                 "released_at": seal.get("created_at"),
                 "actor": seal.get("actor"),
-                "zip_sha256": seal.get("zip_sha256") or verification.get("manifest", {}).get("zip_sha256"),
-                "zip_path": seal.get("zip_path") or verification.get("manifest", {}).get("zip_path"),
-                "verification_status": seal.get("verification_status") or verification.get("status"),
+                "zip_sha256": seal.get("zip_sha256")
+                or verification.get("manifest", {}).get("zip_sha256"),
+                "zip_path": seal.get("zip_path")
+                or verification.get("manifest", {}).get("zip_path"),
+                "verification_status": seal.get("verification_status")
+                or verification.get("status"),
                 "safe_to_distribute": entry.get("safe_to_distribute"),
                 "certified": entry.get("certified"),
                 "blockers": entry.get("blockers", []),

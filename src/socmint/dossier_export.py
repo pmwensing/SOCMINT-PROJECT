@@ -189,17 +189,13 @@ def render_text_lines(payload: dict) -> list[str]:
     ]
 
     for item in dossier["assertions"][:40]:
-        lines.append(
-            f"[{item['confidence']:.3f}] {item['type']}: {item['value']}"
-        )
+        lines.append(f"[{item['confidence']:.3f}] {item['type']}: {item['value']}")
 
     contradictions = payload["contradictions"]["contradictions"]
     if contradictions:
         lines.extend(["", "Contradictions"])
         for item in contradictions[:30]:
-            lines.append(
-                f"{item['severity']} {item['type']}: {item['summary']}"
-            )
+            lines.append(f"{item['severity']} {item['type']}: {item['summary']}")
 
     return lines
 
@@ -228,7 +224,9 @@ def simple_pdf(lines: list[str]) -> bytes:
     )
     objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
     objects.append(
-        b"<< /Length " + str(len(stream)).encode("ascii") + b" >>\nstream\n"
+        b"<< /Length "
+        + str(len(stream)).encode("ascii")
+        + b" >>\nstream\n"
         + stream
         + b"\nendstream"
     )

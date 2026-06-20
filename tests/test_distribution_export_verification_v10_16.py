@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.distribution_actions import record_distribution_action
-from src.socmint.distribution_export_verification import distribution_export_verification_markdown
+from src.socmint.distribution_export_verification import (
+    distribution_export_verification_markdown,
+)
 from src.socmint.distribution_export_verification import verify_distribution_export
 from src.socmint.distribution_packet_export import build_distribution_packet_export
 from src.socmint.dossier_export_store import persist_export_pack
@@ -31,7 +33,9 @@ def _evidence():
 
 def _built_export(tmp_path, monkeypatch, subject_id="subject-export-verify-safe"):
     monkeypatch.chdir(tmp_path)
-    persist_export_pack(_subject(subject_id), _evidence(), analyst_reviewed=True, audit=True)
+    persist_export_pack(
+        _subject(subject_id), _evidence(), analyst_reviewed=True, audit=True
+    )
     record_distribution_action(
         case_id="case-export-verify-1016",
         subject_id=subject_id,
@@ -60,7 +64,10 @@ def test_v10_16_verifies_clean_distribution_export(tmp_path, monkeypatch):
     assert result["verified"] is True
     assert result["blockers"] == []
     assert result["zip_status"]["required_missing"] == []
-    assert result["zip_status"]["actual_artifact_count"] == result["zip_status"]["expected_artifact_count"]
+    assert (
+        result["zip_status"]["actual_artifact_count"]
+        == result["zip_status"]["expected_artifact_count"]
+    )
     assert all(item["verified"] for item in result["file_checks"])
 
 
@@ -90,9 +97,13 @@ def test_v10_16_detects_zip_hash_mismatch(tmp_path, monkeypatch):
 
 
 def test_v10_16_detects_missing_source_file(tmp_path, monkeypatch):
-    subject_id = _built_export(tmp_path, monkeypatch, "subject-export-verify-missing-source")
+    subject_id = _built_export(
+        tmp_path, monkeypatch, "subject-export-verify-missing-source"
+    )
     clean = verify_distribution_export("case-export-verify-1016", subject_id)
-    artifact_check = next(item for item in clean["file_checks"] if item["role"] == "dossier_artifact")
+    artifact_check = next(
+        item for item in clean["file_checks"] if item["role"] == "dossier_artifact"
+    )
     Path(artifact_check["path"]).unlink()
 
     result = verify_distribution_export("case-export-verify-1016", subject_id)
@@ -105,7 +116,9 @@ def test_v10_16_detects_missing_source_file(tmp_path, monkeypatch):
 def test_v10_16_markdown_report_contains_status(tmp_path, monkeypatch):
     subject_id = _built_export(tmp_path, monkeypatch, "subject-export-verify-md")
 
-    markdown = distribution_export_verification_markdown("case-export-verify-1016", subject_id)
+    markdown = distribution_export_verification_markdown(
+        "case-export-verify-1016", subject_id
+    )
 
     assert "Distribution Export Verification" in markdown
     assert "Status: pass" in markdown
@@ -116,12 +129,20 @@ def test_v10_16_markdown_report_contains_status(tmp_path, monkeypatch):
 def test_v10_16_verification_routes_are_registered():
     routes = {rule.rule for rule in app.url_map.iter_rules()}
 
-    assert "/api/v1/dossier-builder/v3/distribution-export/<case_id>/<subject_id>/verify" in routes
-    assert "/api/v1/dossier-builder/v3/distribution-export/<case_id>/<subject_id>/verify/markdown" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/distribution-export/<case_id>/<subject_id>/verify"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/distribution-export/<case_id>/<subject_id>/verify/markdown"
+        in routes
+    )
 
 
 def test_v10_16_verification_api_requires_login():
     client = app.test_client()
-    response = client.get("/api/v1/dossier-builder/v3/distribution-export/case/subject/verify")
+    response = client.get(
+        "/api/v1/dossier-builder/v3/distribution-export/case/subject/verify"
+    )
 
     assert response.status_code == 401

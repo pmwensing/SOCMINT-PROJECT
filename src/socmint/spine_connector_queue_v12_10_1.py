@@ -12,7 +12,9 @@ def spine_requested_by(subject_id: int, actor: str | None = None) -> str:
     return f"spine:{subject_id}:{safe_actor}"
 
 
-def queue_subject_connector_jobs(subject_id: int, connectors: list[str] | None = None, actor: str | None = None) -> dict[str, Any]:
+def queue_subject_connector_jobs(
+    subject_id: int, connectors: list[str] | None = None, actor: str | None = None
+) -> dict[str, Any]:
     subject = db.get_spine_subject(subject_id)
     if not subject:
         raise ValueError("Subject not found.")
@@ -23,8 +25,10 @@ def queue_subject_connector_jobs(subject_id: int, connectors: list[str] | None =
 
     for seed in db.list_spine_seeds(subject_id):
         compatible = [
-            key for key in selected
-            if key in HIGH_VALUE_CONNECTORS and seed.seed_type in HIGH_VALUE_CONNECTORS[key]["seed_types"]
+            key
+            for key in selected
+            if key in HIGH_VALUE_CONNECTORS
+            and seed.seed_type in HIGH_VALUE_CONNECTORS[key]["seed_types"]
         ]
         if not compatible:
             continue
@@ -36,7 +40,14 @@ def queue_subject_connector_jobs(subject_id: int, connectors: list[str] | None =
             requested_by=spine_requested_by(subject_id, actor),
         )
         job_ids.append(job.id)
-        seed_rows.append({"seed_id": seed.id, "seed_type": seed.seed_type, "job_id": job.id, "connectors": compatible})
+        seed_rows.append(
+            {
+                "seed_id": seed.id,
+                "seed_type": seed.seed_type,
+                "job_id": job.id,
+                "connectors": compatible,
+            }
+        )
 
     return {
         "schema": "socmint.spine_connector_queue.v12_10_1",
