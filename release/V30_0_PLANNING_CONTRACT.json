@@ -13,7 +13,7 @@
     {"slice": "v30.4", "title": "Confidence Model and Explainability", "mode": "confidence_gate", "implemented": true},
     {"slice": "v30.5", "title": "Human Analytic Review and Decision Record", "mode": "human_review", "implemented": true},
     {"slice": "v30.6", "title": "Dossier Contribution and Reassessment", "mode": "contribution_gate", "implemented": true},
-    {"slice": "v30.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": false}
+    {"slice": "v30.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": true}
   ],
   "entry_gate": {
     "roadmap_defined": true,
@@ -25,7 +25,7 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "entry_gate_status": "v30_7_checkpoint_implemented_validation_pending"
+    "entry_gate_status": "v30_closed"
   },
   "scope_boundaries": {
     "connector_execution": false,
@@ -61,20 +61,23 @@
   ],
   "closure_contract": {
     "focused_tests_required": true,
-    "focused_tests_passed": null,
-    "focused_tests_failed": null,
+    "focused_tests_passed": 3,
+    "focused_tests_failed": 0,
     "v30_regression_required": true,
-    "v30_regression_passed": null,
-    "v30_regression_failed": null,
+    "v30_regression_passed": 24,
+    "v30_regression_failed": 0,
     "full_suite_required": true,
-    "full_suite_passed": null,
-    "full_suite_failed": null,
+    "full_suite_passed": 1500,
+    "full_suite_failed": 0,
+    "lint_required": true,
+    "lint_status": "passed",
     "browser_e2e_required": true,
-    "browser_passed_count": null,
-    "browser_failed_count": null,
+    "browser_passed_count": 8,
+    "browser_failed_count": 0,
     "browser_report": "release/V30_7_BROWSER_E2E_REPORT.json",
-    "v30_closed": false,
-    "next_action": "run_v30_7_closure_gates"
+    "v30_closed": true,
+    "closed_at": "2026-06-20",
+    "next_action": "begin_v31_planning"
   },
-  "next_action": "run_v30_7_closure_gates"
+  "next_action": "begin_v31_planning"
 }
