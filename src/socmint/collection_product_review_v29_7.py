@@ -6,29 +6,37 @@ from typing import Any
 
 SCHEMA = "socmint.collection_product_review.v29_7"
 VERSION = "v29.7.0"
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 REQUIRED_MODULES = (
     "src/socmint/collection_operations_workspace_v29_0.py",
     "src/socmint/collection_operations_routes_v29_0.py",
     "src/socmint/collection_job_contract_v29_1.py",
+    "src/socmint/collection_job_workspace_v29_1.py",
     "src/socmint/collection_job_routes_v29_1.py",
     "src/socmint/collection_policy_v29_2.py",
+    "src/socmint/collection_policy_workspace_v29_2.py",
     "src/socmint/collection_policy_routes_v29_2.py",
     "src/socmint/connector_adapter_contract_v29_3.py",
+    "src/socmint/connector_adapter_workspace_v29_3.py",
     "src/socmint/connector_adapter_routes_v29_3.py",
     "src/socmint/evidence_ingestion_v29_4.py",
+    "src/socmint/evidence_ingestion_workspace_v29_4.py",
     "src/socmint/evidence_ingestion_routes_v29_4.py",
     "src/socmint/recovery_operations_v29_5.py",
+    "src/socmint/recovery_operations_workspace_v29_5.py",
     "src/socmint/recovery_operations_routes_v29_5.py",
     "src/socmint/collection_quality_v29_6.py",
+    "src/socmint/collection_quality_workspace_v29_6.py",
     "src/socmint/collection_quality_routes_v29_6.py",
+    "src/socmint/collection_product_review_routes_v29_7.py",
 )
 
 REQUIRED_ASSETS = (
     "src/socmint/templates/collection_operations_v29_0.html",
-    "src/socmint/templates/collection_jobs_v29_1.html",
+    "src/socmint/templates/collection_job_contract_v29_1.html",
     "src/socmint/templates/collection_policy_v29_2.html",
-    "src/socmint/templates/connector_adapter_v29_3.html",
+    "src/socmint/templates/connector_adapter_contract_v29_3.html",
     "src/socmint/templates/evidence_ingestion_v29_4.html",
     "src/socmint/templates/recovery_operations_v29_5.html",
     "src/socmint/templates/collection_quality_v29_6.html",
@@ -37,27 +45,19 @@ REQUIRED_ASSETS = (
 )
 
 REQUIRED_ROUTES = (
-    "/collection-operations",
-    "/api/v1/collection-operations",
-    "/collection-operations/jobs",
-    "/api/v1/collection-operations/jobs",
-    "/collection-operations/policies",
-    "/api/v1/collection-operations/policies",
-    "/collection-operations/adapters",
-    "/api/v1/collection-operations/adapters",
-    "/collection-operations/evidence",
-    "/api/v1/collection-operations/evidence",
-    "/collection-operations/recovery",
-    "/api/v1/collection-operations/recovery",
-    "/collection-operations/quality",
-    "/api/v1/collection-operations/quality",
-    "/collection-operations/product-review",
-    "/api/v1/collection-operations/product-review-checkpoint",
+    "/collection-operations", "/api/v1/collection-operations",
+    "/collection-operations/jobs", "/api/v1/collection-operations/jobs",
+    "/collection-operations/policies", "/api/v1/collection-operations/policies",
+    "/collection-operations/adapters", "/api/v1/collection-operations/adapters",
+    "/collection-operations/evidence", "/api/v1/collection-operations/evidence",
+    "/collection-operations/recovery", "/api/v1/collection-operations/recovery",
+    "/collection-operations/quality", "/api/v1/collection-operations/quality",
+    "/collection-operations/product-review", "/api/v1/collection-operations/product-review-checkpoint",
 )
 
 
-def build_collection_product_review(root: str | Path = ".", *, routes: list[Any] | None = None) -> dict[str, Any]:
-    root_path = Path(root)
+def build_collection_product_review(root: str | Path | None = None, *, routes: list[Any] | None = None) -> dict[str, Any]:
+    root_path = Path(root) if root is not None else REPO_ROOT
     blockers: list[dict[str, str]] = []
 
     def check_paths(paths: tuple[str, ...], key: str) -> list[dict[str, Any]]:
@@ -116,19 +116,13 @@ def build_collection_product_review(root: str | Path = ".", *, routes: list[Any]
     ]
 
     return {
-        "schema": SCHEMA,
-        "version": VERSION,
+        "schema": SCHEMA, "version": VERSION,
         "status": "ready_for_browser_e2e" if not blockers else "blocked",
         "ready": not blockers,
-        "module_checks": module_checks,
-        "asset_checks": asset_checks,
-        "route_checks": route_checks,
-        "duplicate_routes": duplicate_routes,
-        "migration_artifacts": migrations,
-        "journey": journey,
-        "journey_step_count": len(journey),
-        "blocker_count": len(blockers),
-        "blockers": blockers,
+        "module_checks": module_checks, "asset_checks": asset_checks,
+        "route_checks": route_checks, "duplicate_routes": duplicate_routes,
+        "migration_artifacts": migrations, "journey": journey,
+        "journey_step_count": len(journey), "blocker_count": len(blockers), "blockers": blockers,
         "administrator_authorization_validated": True,
         "unauthenticated_redirect_validated": True,
         "immutable_raw_evidence_validated": True,
