@@ -4,13 +4,11 @@
 
 Convert accepted collection outputs into explainable, reviewable, and explicitly confidence-scored analytic contributions without collapsing evidence, observations, assessments, or human judgment into one opaque result.
 
-v30 begins after the v29 collection program proved authorized ingestion, provenance, quality, trust, and human-controlled dossier eligibility. The next gap is the analytic layer between accepted observations and consequential dossier conclusions.
-
 ## Primary workspace
 
 **Analytic Review Workspace**
 
-v30.0 implements the read-only workspace. v30.1 adds an append-only Corroboration Claim Contract for proposed claims bound to case, entity, purpose, and typed source references.
+v30.0 implements the read-only workspace. v30.1 adds append-only corroboration claims. v30.2 binds those claims to accepted evidence and derived observations through deterministic source manifests.
 
 ## Roadmap
 
@@ -18,8 +16,8 @@ v30.0 implements the read-only workspace. v30.1 adds an append-only Corroboratio
 |---|---|---|---|
 | v30.0 | Analytic Review Workspace and Planning Baseline | Establish the inventory, route, findings, and safe program boundaries. | Implemented |
 | v30.1 | Corroboration Claim Contract | Define append-only analytic claims with explicit case, entity, actor, purpose, and source bindings. | Implemented |
-| v30.2 | Evidence and Observation Linkage | Bind claims to immutable evidence and normalized observations using deterministic hashes. | Next |
-| v30.3 | Contradiction and Disagreement Handling | Preserve conflicting evidence and analyst disagreement without destructive overwrite. | Planned |
+| v30.2 | Evidence and Observation Linkage | Bind claims to immutable evidence and normalized observations using deterministic hashes. | Implemented |
+| v30.3 | Contradiction and Disagreement Handling | Preserve conflicting evidence and analyst disagreement without destructive overwrite. | Next |
 | v30.4 | Confidence Model and Explainability | Produce bounded confidence assessments with visible inputs, limitations, and reasons. | Planned |
 | v30.5 | Human Analytic Review and Decision Record | Require explicit analyst review before consequential use. | Planned |
 | v30.6 | Dossier Contribution and Reassessment | Approve, hold, reject, or reassess analytic contributions while preserving prior decisions. | Planned |
@@ -28,10 +26,10 @@ v30.0 implements the read-only workspace. v30.1 adds an append-only Corroboratio
 ## Implemented boundaries
 
 - v30.0 remains read-only.
-- v30.1 claim creation is append-only through the existing audit-log storage contract.
-- Claim IDs and source bindings are deterministic.
-- Claims begin as `proposed` and may only transition to `withdrawn` in v30.1.
-- Truth, confidence, human-review completion, and dossier eligibility are not assigned.
+- v30.1 claim creation and withdrawal are append-only.
+- v30.2 linkage records are append-only and validate accepted artifacts, observations, and observation-to-artifact consistency.
+- Claim, evidence, and observation records are not rewritten.
+- Truth, confidence, review completion, and dossier eligibility are not assigned.
 - No database migration was introduced.
 
 ## Production invariants
@@ -47,9 +45,9 @@ v30.0 implements the read-only workspace. v30.1 adds an append-only Corroboratio
 ## Validation contract
 
 ```bash
-python3 -m pytest -q tests/test_v30_0*.py tests/test_v30_1*.py
+python3 -m pytest -q tests/test_v30_0*.py tests/test_v30_1*.py tests/test_v30_2*.py
 python3 -m pytest -q tests/test_v30*.py
 python3 -m pytest -q
 ```
 
-The program remains open. The next implementation target is v30.2 Evidence and Observation Linkage.
+The program remains open. The next implementation target is v30.3 Contradiction and Disagreement Handling.
