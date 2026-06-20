@@ -74,7 +74,7 @@
     "browser_e2e_required": true,
     "browser_passed_count": 8,
     "browser_failed_count": 0,
-    "browser_report": "release/V30_7_BROWSER_E2E_REPORT.json",
+    "browser_report": "release/V30_7_PRODUCT_REVIEW_BROWSER_E2E_CHECKPOINT.md",
     "v30_closed": true,
     "closed_at": "2026-06-20",
     "next_action": "begin_v31_planning"
