@@ -4,6 +4,7 @@ from collections import Counter, defaultdict
 from typing import Any
 
 from . import database
+from .analytic_conflict_v30_3 import current_conflicts
 from .claim_source_linkage_v30_2 import claim_linkages
 from .collection_quality_v29_6 import contribution_reviews, quality_assessments
 from .corroboration_claim_v30_1 import current_claims
@@ -11,34 +12,19 @@ from .evidence_ingestion_v29_4 import current_artifacts, observations
 from .report_review import list_enrichment_review_items, review_summary, safe_rows, table_exists
 
 SCHEMA = "socmint.analytic_review_workspace.v30_0"
-VERSION = "v30.2.0"
+VERSION = "v30.3.0"
 
 
 def _claim_inventory() -> list[dict[str, Any]]:
     if not table_exists("spine_dossier_assertions"):
         return []
-    return safe_rows(
-        """
-        SELECT id, subject_id, assertion_type, normalized_value, confidence,
-               validation_state, created_at
-        FROM spine_dossier_assertions
-        ORDER BY id DESC
-        LIMIT 500
-        """
-    )
+    return safe_rows("SELECT id, subject_id, assertion_type, normalized_value, confidence, validation_state, created_at FROM spine_dossier_assertions ORDER BY id DESC LIMIT 500")
 
 
 def _review_decisions() -> list[dict[str, Any]]:
     if not table_exists("review_decisions"):
         return []
-    return safe_rows(
-        """
-        SELECT *
-        FROM review_decisions
-        ORDER BY id DESC
-        LIMIT 500
-        """
-    )
+    return safe_rows("SELECT * FROM review_decisions ORDER BY id DESC LIMIT 500")
 
 
 def _contradictions(claims: list[dict[str, Any]], obs: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -53,23 +39,14 @@ def _contradictions(claims: list[dict[str, Any]], obs: list[dict[str, Any]]) -> 
             sources[(subject, kind)].append(str(item.get("claim_id") or f"assertion:{item.get('id')}"))
     for item in obs:
         binding = item.get("contract_binding") or {}
+        observation = item.get("observation") or {}
         subject = str(binding.get("entity_id") or binding.get("case_id") or item.get("artifact_id") or "")
-        kind = str(item.get("observation_type") or (item.get("observation") or {}).get("observation_type") or "unknown")
-        value = str(item.get("normalized_value") or (item.get("observation") or {}).get("normalized_value") or "").strip()
+        kind = str(item.get("observation_type") or observation.get("observation_type") or "unknown")
+        value = str(item.get("normalized_value") or observation.get("normalized_value") or "").strip()
         if value:
             grouped[(subject, kind)].add(value)
             sources[(subject, kind)].append(str(item.get("observation_id") or item.get("artifact_event_id") or "observation"))
-    return [
-        {
-            "subject_key": subject,
-            "claim_type": kind,
-            "distinct_values": sorted(values),
-            "source_refs": sources[(subject, kind)],
-            "status": "requires_human_review",
-        }
-        for (subject, kind), values in grouped.items()
-        if len(values) > 1
-    ]
+    return [{"subject_key": subject, "claim_type": kind, "distinct_values": sorted(values), "source_refs": sources[(subject, kind)], "status": "requires_human_review"} for (subject, kind), values in grouped.items() if len(values) > 1]
 
 
 def build_analytic_review_workspace() -> dict[str, Any]:
@@ -79,40 +56,15 @@ def build_analytic_review_workspace() -> dict[str, Any]:
     legacy_claims = _claim_inventory()
     v30_claims = current_claims()
     linkages = claim_linkages()
+    conflicts = current_conflicts()
     claims = [*legacy_claims, *v30_claims]
     quality = quality_assessments()
     contribution = contribution_reviews()
     review_items = list_enrichment_review_items(limit=500)
     decisions = _review_decisions()
-    contradictions = _contradictions(claims, obs)
+    detected_contradictions = _contradictions(claims, obs)
 
-    confidence_records = [
-        {
-            "record_type": "claim",
-            "record_id": f"assertion:{item.get('id')}",
-            "confidence": item.get("confidence"),
-            "review_state": item.get("validation_state"),
-        }
-        for item in legacy_claims
-        if item.get("confidence") is not None
-    ] + [
-        {
-            "record_type": "review_item",
-            "record_id": item.id,
-            "confidence": item.confidence,
-            "review_state": item.status,
-        }
-        for item in review_items
-        if item.confidence is not None
-    ] + [
-        {
-            "record_type": "collection_quality",
-            "record_id": item.get("quality_assessment_id"),
-            "confidence": item.get("quality_score"),
-            "review_state": item.get("trust_tier"),
-        }
-        for item in quality
-    ]
+    confidence_records = [{"record_type": "claim", "record_id": f"assertion:{item.get('id')}", "confidence": item.get("confidence"), "review_state": item.get("validation_state")} for item in legacy_claims if item.get("confidence") is not None] + [{"record_type": "review_item", "record_id": item.id, "confidence": item.confidence, "review_state": item.status} for item in review_items if item.confidence is not None] + [{"record_type": "collection_quality", "record_id": item.get("quality_assessment_id"), "confidence": item.get("quality_score"), "review_state": item.get("trust_tier")} for item in quality]
 
     approved = [item for item in contribution if item.get("decision") == "approved"]
     held = [item for item in contribution if item.get("decision") == "held"]
@@ -120,14 +72,14 @@ def build_analytic_review_workspace() -> dict[str, Any]:
     pending_quality = [item for item in quality if not any(r.get("quality_assessment_id") == item.get("quality_assessment_id") for r in contribution)]
     linked_claim_ids = {str(item.get("claim_id")) for item in linkages}
     unlinked_claims = [item for item in v30_claims if item.get("claim_state") == "proposed" and str(item.get("claim_id")) not in linked_claim_ids]
+    unresolved_conflicts = [item for item in conflicts if item.get("resolution") == "unresolved"]
 
     findings: list[dict[str, Any]] = []
-    if contradictions:
-        findings.append({"severity": "high", "key": "contradictory_claim_values_present", "count": len(contradictions)})
-    unreviewed_claims = [
-        item for item in legacy_claims
-        if str(item.get("validation_state") or "").lower() in {"", "pending", "unreviewed", "needs_review"}
-    ] + [item for item in v30_claims if item.get("claim_state") == "proposed"]
+    if detected_contradictions:
+        findings.append({"severity": "high", "key": "contradictory_claim_values_present", "count": len(detected_contradictions)})
+    if unresolved_conflicts:
+        findings.append({"severity": "high", "key": "analytic_conflicts_unresolved", "count": len(unresolved_conflicts)})
+    unreviewed_claims = [item for item in legacy_claims if str(item.get("validation_state") or "").lower() in {"", "pending", "unreviewed", "needs_review"}] + [item for item in v30_claims if item.get("claim_state") == "proposed"]
     if unreviewed_claims:
         findings.append({"severity": "medium", "key": "claims_require_review", "count": len(unreviewed_claims)})
     if unlinked_claims:
@@ -155,21 +107,19 @@ def build_analytic_review_workspace() -> dict[str, Any]:
         "claim_source_linkage_inventory": linkages,
         "claim_source_linkage_count": len(linkages),
         "unlinked_corroboration_claim_count": len(unlinked_claims),
+        "analytic_conflict_inventory": conflicts,
+        "analytic_conflict_count": len(conflicts),
+        "unresolved_analytic_conflict_count": len(unresolved_conflicts),
         "confidence_inventory": confidence_records,
         "confidence_record_count": len(confidence_records),
         "review_item_inventory": [item.__dict__ for item in review_items],
         "review_item_count": len(review_items),
         "review_decision_inventory": decisions,
         "review_decision_count": len(decisions),
-        "contradiction_inventory": contradictions,
-        "contradiction_count": len(contradictions),
+        "contradiction_inventory": detected_contradictions,
+        "contradiction_count": len(detected_contradictions),
         "dossier_contribution_inventory": contribution,
-        "dossier_contribution_summary": {
-            "approved": len(approved),
-            "held": len(held),
-            "rejected": len(rejected),
-            "pending_review": len(pending_quality),
-        },
+        "dossier_contribution_summary": {"approved": len(approved), "held": len(held), "rejected": len(rejected), "pending_review": len(pending_quality)},
         "quality_assessment_count": len(quality),
         "review_summary": review_summary(),
         "confidence_state_counts": dict(sorted(Counter(str(item.get("review_state") or "unknown") for item in confidence_records).items())),
@@ -181,5 +131,5 @@ def build_analytic_review_workspace() -> dict[str, Any]:
         "review_decisions_mutated": False,
         "dossier_mutated": False,
         "connector_execution_performed": False,
-        "next_action": "review_contradictions_and_disagreement",
+        "next_action": "assess_confidence_and_explainability",
     }
