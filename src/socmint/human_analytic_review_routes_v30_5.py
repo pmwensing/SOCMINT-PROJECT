@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, request, session
 
+from .analytic_dossier_contribution_routes_v30_6 import register_analytic_dossier_contribution_routes_v30_6
 from .human_analytic_review_v30_5 import current_review_decisions, record_human_review, reviews_for_claim
 from .user_account_workspace_v28_1 import actor_is_administrator
 
@@ -63,4 +64,5 @@ def register_human_analytic_review_routes_v30_5(app):
         code = 200 if result.get("status") == "human_analytic_review_recorded" else 422
         return jsonify(result), code
 
+    register_analytic_dossier_contribution_routes_v30_6(app)
     return app
