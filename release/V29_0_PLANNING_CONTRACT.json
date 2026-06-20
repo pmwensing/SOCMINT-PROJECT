@@ -1,6 +1,6 @@
 {
   "schema": "socmint.v29.planning_contract.v29_0",
-  "version": "v29.6.0",
+  "version": "v29.7.0",
   "program": "Connector and Collection Operations",
   "primary_workspace": "Collection Operations Workspace",
   "production_objective": "Operationalize repeatable, authorized, observable ingestion into the existing intelligence spine while keeping connectors subordinate to dossier value.",
@@ -58,9 +58,11 @@
     "v29_regression_required": true,
     "full_suite_required": true,
     "browser_e2e_required": true,
-    "browser_failed_count": null,
+    "browser_passed_count": 9,
+    "browser_failed_count": 0,
+    "browser_report": "release/V29_7_BROWSER_E2E_REPORT.json",
     "v29_closed": false,
-    "next_action": "complete_v29_7_product_review_and_browser_e2e_checkpoint"
+    "next_action": "confirm_focused_v29_and_full_suite_results"
   },
-  "next_action": "validate_v29_6_collection_quality_trust_and_dossier_contribution"
+  "next_action": "confirm_v29_7_regression_and_full_suite_evidence"
 }
