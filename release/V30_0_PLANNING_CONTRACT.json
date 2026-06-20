@@ -1,6 +1,6 @@
 {
   "schema": "socmint.v30.planning_contract.v30_0",
-  "version": "v30.6.0",
+  "version": "v30.7.0",
   "program": "Corroboration, Analytic Confidence, and Review",
   "primary_workspace": "Analytic Review Workspace",
   "production_objective": "Convert accepted collection outputs into explainable, reviewable, and explicitly confidence-scored analytic contributions without collapsing evidence, observations, assessments, or human judgment into one opaque result.",
@@ -25,7 +25,7 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "entry_gate_status": "v30_6_dossier_contribution_implemented"
+    "entry_gate_status": "v30_7_checkpoint_implemented_validation_pending"
   },
   "scope_boundaries": {
     "connector_execution": false,
@@ -61,12 +61,20 @@
   ],
   "closure_contract": {
     "focused_tests_required": true,
+    "focused_tests_passed": null,
+    "focused_tests_failed": null,
     "v30_regression_required": true,
+    "v30_regression_passed": null,
+    "v30_regression_failed": null,
     "full_suite_required": true,
+    "full_suite_passed": null,
+    "full_suite_failed": null,
     "browser_e2e_required": true,
+    "browser_passed_count": null,
     "browser_failed_count": null,
+    "browser_report": "release/V30_7_BROWSER_E2E_REPORT.json",
     "v30_closed": false,
-    "next_action": "implement_v30_7_product_review_and_browser_e2e_checkpoint"
+    "next_action": "run_v30_7_closure_gates"
   },
-  "next_action": "implement_v30_7_product_review_and_browser_e2e_checkpoint"
+  "next_action": "run_v30_7_closure_gates"
 }
