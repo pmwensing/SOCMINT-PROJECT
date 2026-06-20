@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h1>Analytic Review Workspace</h1>
+  <p>Read-only inventory of evidence, observations, claims, confidence, review decisions, contradictions, and dossier contribution readiness.</p>
+  <p><a href="/collection-operations">Collection Operations</a> · <a href="/collection-operations/quality">Collection Quality</a></p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel">
+  <h2>Inventory summary</h2>
+  <ul>
+    <li>Evidence: {{ payload.evidence_count }}</li>
+    <li>Observations: {{ payload.observation_count }}</li>
+    <li>Claims: {{ payload.claim_count }}</li>
+    <li>Confidence records: {{ payload.confidence_record_count }}</li>
+    <li>Review items: {{ payload.review_item_count }}</li>
+    <li>Review decisions: {{ payload.review_decision_count }}</li>
+    <li>Contradictions: {{ payload.contradiction_count }}</li>
+    <li>Findings: {{ payload.analytic_finding_count }}</li>
+  </ul>
+  <p>Dossier contribution readiness: {{ payload.dossier_contribution_summary }}</p>
+</section>
+<section class="panel"><h2>Analytic findings</h2><pre>{{ payload.analytic_findings | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Contradictions</h2><pre>{{ payload.contradiction_inventory | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Claims</h2><pre>{{ payload.claim_inventory | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Confidence</h2><pre>{{ payload.confidence_inventory | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Review decisions</h2><pre>{{ payload.review_decision_inventory | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Dossier contribution readiness</h2><pre>{{ payload.dossier_contribution_inventory | tojson(indent=2) }}</pre></section>
+{% endif %}
+{% endblock %}
