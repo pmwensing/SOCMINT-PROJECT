@@ -5,11 +5,12 @@ from typing import Any
 
 from . import database
 from .collection_quality_v29_6 import contribution_reviews, quality_assessments
+from .corroboration_claim_v30_1 import current_claims
 from .evidence_ingestion_v29_4 import current_artifacts, observations
 from .report_review import list_enrichment_review_items, review_summary, safe_rows, table_exists
 
 SCHEMA = "socmint.analytic_review_workspace.v30_0"
-VERSION = "v30.0.0"
+VERSION = "v30.1.0"
 
 
 def _claim_inventory() -> list[dict[str, Any]]:
@@ -43,12 +44,12 @@ def _contradictions(claims: list[dict[str, Any]], obs: list[dict[str, Any]]) -> 
     grouped: dict[tuple[str, str], set[str]] = defaultdict(set)
     sources: dict[tuple[str, str], list[str]] = defaultdict(list)
     for item in claims:
-        subject = str(item.get("subject_id") or "")
-        kind = str(item.get("assertion_type") or "unknown")
+        subject = str(item.get("entity_id") or item.get("subject_id") or "")
+        kind = str(item.get("claim_type") or item.get("assertion_type") or "unknown")
         value = str(item.get("normalized_value") or "").strip()
         if value:
             grouped[(subject, kind)].add(value)
-            sources[(subject, kind)].append(f"assertion:{item.get('id')}")
+            sources[(subject, kind)].append(str(item.get("claim_id") or f"assertion:{item.get('id')}"))
     for item in obs:
         binding = item.get("contract_binding") or {}
         subject = str(binding.get("entity_id") or binding.get("case_id") or item.get("artifact_id") or "")
@@ -74,7 +75,9 @@ def build_analytic_review_workspace() -> dict[str, Any]:
     database.ensure_configured()
     artifacts = current_artifacts()
     obs = observations()
-    claims = _claim_inventory()
+    legacy_claims = _claim_inventory()
+    v30_claims = current_claims()
+    claims = [*legacy_claims, *v30_claims]
     quality = quality_assessments()
     contribution = contribution_reviews()
     review_items = list_enrichment_review_items(limit=500)
@@ -88,7 +91,7 @@ def build_analytic_review_workspace() -> dict[str, Any]:
             "confidence": item.get("confidence"),
             "review_state": item.get("validation_state"),
         }
-        for item in claims
+        for item in legacy_claims
         if item.get("confidence") is not None
     ] + [
         {
@@ -117,10 +120,13 @@ def build_analytic_review_workspace() -> dict[str, Any]:
     findings: list[dict[str, Any]] = []
     if contradictions:
         findings.append({"severity": "high", "key": "contradictory_claim_values_present", "count": len(contradictions)})
-    unreviewed_claims = [item for item in claims if str(item.get("validation_state") or "").lower() in {"", "pending", "unreviewed", "needs_review"}]
+    unreviewed_claims = [
+        item for item in legacy_claims
+        if str(item.get("validation_state") or "").lower() in {"", "pending", "unreviewed", "needs_review"}
+    ] + [item for item in v30_claims if item.get("claim_state") == "proposed"]
     if unreviewed_claims:
         findings.append({"severity": "medium", "key": "claims_require_review", "count": len(unreviewed_claims)})
-    missing_confidence = [item for item in claims if item.get("confidence") is None]
+    missing_confidence = [item for item in legacy_claims if item.get("confidence") is None]
     if missing_confidence:
         findings.append({"severity": "medium", "key": "claims_missing_confidence", "count": len(missing_confidence)})
     if pending_quality:
@@ -137,6 +143,9 @@ def build_analytic_review_workspace() -> dict[str, Any]:
         "observation_count": len(obs),
         "claim_inventory": claims,
         "claim_count": len(claims),
+        "legacy_claim_count": len(legacy_claims),
+        "corroboration_claim_inventory": v30_claims,
+        "corroboration_claim_count": len(v30_claims),
         "confidence_inventory": confidence_records,
         "confidence_record_count": len(confidence_records),
         "review_item_inventory": [item.__dict__ for item in review_items],
@@ -163,5 +172,5 @@ def build_analytic_review_workspace() -> dict[str, Any]:
         "review_decisions_mutated": False,
         "dossier_mutated": False,
         "connector_execution_performed": False,
-        "next_action": "define_v30_1_corroboration_claim_contract",
+        "next_action": "bind_claim_evidence_and_observations",
     }
