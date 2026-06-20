@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+from .collection_quality_routes_v29_6 import register_collection_quality_routes_v29_6
 from .recovery_operations_v29_5 import create_recovery_plan, decide_retry, record_operator_intervention, request_retry
 from .recovery_operations_workspace_v29_5 import build_recovery_operations_workspace
 from .user_account_workspace_v28_1 import actor_is_administrator
@@ -73,4 +74,5 @@ def register_recovery_operations_routes_v29_5(app):
         result = record_operator_intervention(actor=actor, collection_job_id=collection_job_id, intervention_type=str(payload.get("intervention_type") or ""), resolution=str(payload.get("resolution") or ""), replacement_job_id=str(payload.get("replacement_job_id") or ""), apply_terminal_transition=payload.get("apply_terminal_transition") is True, reason=str(payload.get("reason") or ""), confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr)
         return jsonify(result), _code(result, "collection_operator_intervention_recorded")
 
+    register_collection_quality_routes_v29_6(app)
     return app
