@@ -13,11 +13,6 @@ Validate the complete v30 analytic-review product surface, route chain, release 
 - browser checks for workspace, product review, workspace API, claims, conflicts, human reviews, dossier contributions, and checkpoint readiness
 - focused product-review and route tests
 
-## Routes
-
-- `GET /analytic-review/product-review`
-- `GET /api/v1/analytic-review/product-review-checkpoint`
-
 ## Closure results
 
 - focused v30.7 tests: 3 passed, 0 failed
@@ -29,11 +24,3 @@ Validate the complete v30 analytic-review product surface, route chain, release 
 ## Closure status
 
 v30.7 is implemented and v30 is closed. The next action is v31 planning.
-
-## Safety boundaries
-
-- no connector execution
-- no evidence, observation, claim, confidence, review, conflict, or dossier rewrite
-- no automatic truth or high-confidence assignment
-- no automatic dossier mutation
-- no v30 migration
