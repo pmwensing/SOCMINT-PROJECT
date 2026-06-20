@@ -2,7 +2,7 @@
 {% block content %}
 <section class="panel">
   <h1>Analytic Review Workspace</h1>
-  <p>Read-only inventory of evidence, observations, claims, source linkages, conflicts, confidence, review decisions, and dossier contribution readiness.</p>
+  <p>Read-only inventory of evidence, observations, claims, source linkages, conflicts, confidence, human reviews, and dossier contribution readiness.</p>
   <p><a href="/collection-operations">Collection Operations</a> · <a href="/collection-operations/quality">Collection Quality</a></p>
 </section>
 {% if payload.status == 'forbidden' %}
@@ -21,15 +21,19 @@
     <li>Unresolved conflicts: {{ payload.unresolved_analytic_conflict_count }}</li>
     <li>Analytic confidence assessments: {{ payload.analytic_confidence_count }}</li>
     <li>Linked claims awaiting confidence: {{ payload.unassessed_linked_claim_count }}</li>
+    <li>Human analytic reviews: {{ payload.human_analytic_review_count }}</li>
+    <li>Claims awaiting human review: {{ payload.awaiting_human_review_count }}</li>
+    <li>Human review decisions: {{ payload.human_analytic_review_summary }}</li>
     <li>Confidence records: {{ payload.confidence_record_count }}</li>
     <li>Review items: {{ payload.review_item_count }}</li>
-    <li>Review decisions: {{ payload.review_decision_count }}</li>
+    <li>Legacy review decisions: {{ payload.review_decision_count }}</li>
     <li>Contradictions: {{ payload.contradiction_count }}</li>
     <li>Findings: {{ payload.analytic_finding_count }}</li>
   </ul>
   <p>Dossier contribution readiness: {{ payload.dossier_contribution_summary }}</p>
 </section>
 <section class="panel"><h2>Analytic findings</h2><pre>{{ payload.analytic_findings | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Human analytic reviews</h2><pre>{{ payload.human_analytic_review_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Recorded conflicts</h2><pre>{{ payload.analytic_conflict_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Detected contradictions</h2><pre>{{ payload.contradiction_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Analytic confidence assessments</h2><pre>{{ payload.analytic_confidence_inventory | tojson(indent=2) }}</pre></section>
@@ -37,7 +41,7 @@
 <section class="panel"><h2>v30 corroboration claims</h2><pre>{{ payload.corroboration_claim_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>All claims</h2><pre>{{ payload.claim_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Combined confidence inventory</h2><pre>{{ payload.confidence_inventory | tojson(indent=2) }}</pre></section>
-<section class="panel"><h2>Review decisions</h2><pre>{{ payload.review_decision_inventory | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Legacy review decisions</h2><pre>{{ payload.review_decision_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Dossier contribution readiness</h2><pre>{{ payload.dossier_contribution_inventory | tojson(indent=2) }}</pre></section>
 {% endif %}
 {% endblock %}
