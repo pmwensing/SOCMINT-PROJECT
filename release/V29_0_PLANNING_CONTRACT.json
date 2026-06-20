@@ -22,7 +22,7 @@
     {"slice": "v29.4", "title": "Evidence-Safe Ingestion and Provenance", "mode": "evidence_registration", "implemented": true},
     {"slice": "v29.5", "title": "Retry, Recovery, and Operator Intervention", "mode": "controlled_recovery", "implemented": true},
     {"slice": "v29.6", "title": "Collection Quality, Trust, and Dossier Contribution", "mode": "quality_gate", "implemented": true},
-    {"slice": "v29.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": false}
+    {"slice": "v29.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": true}
   ],
   "entry_gate": {
     "roadmap_defined": true,
@@ -55,14 +55,20 @@
   },
   "closure_contract": {
     "focused_tests_required": true,
+    "focused_tests_passed": 3,
+    "focused_tests_failed": 0,
     "v29_regression_required": true,
+    "v29_regression_passed": 29,
+    "v29_regression_failed": 0,
     "full_suite_required": true,
+    "full_suite_passed": 1476,
+    "full_suite_failed": 0,
     "browser_e2e_required": true,
     "browser_passed_count": 9,
     "browser_failed_count": 0,
     "browser_report": "release/V29_7_BROWSER_E2E_REPORT.json",
-    "v29_closed": false,
-    "next_action": "confirm_focused_v29_and_full_suite_results"
+    "v29_closed": true,
+    "next_action": "begin_v30"
   },
-  "next_action": "confirm_v29_7_regression_and_full_suite_evidence"
+  "next_action": "begin_v30"
 }
