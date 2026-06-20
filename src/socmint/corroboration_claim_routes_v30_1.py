@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, request, session
 
+from .claim_source_linkage_routes_v30_2 import register_claim_source_linkage_routes_v30_2
 from .corroboration_claim_v30_1 import change_claim_state, create_corroboration_claim, current_claims
 from .user_account_workspace_v28_1 import actor_is_administrator
 
@@ -30,11 +31,7 @@ def register_corroboration_claim_routes_v30_1(app):
         actor, error = _authorized()
         if error:
             return error
-        return jsonify({
-            "schema": "socmint.corroboration_claims.v30_1",
-            "version": "v30.1.0",
-            "claims": current_claims(),
-        })
+        return jsonify({"schema": "socmint.corroboration_claims.v30_1", "version": "v30.1.0", "claims": current_claims()})
 
     @app.post("/api/v1/analytic-review/claims")
     def api_corroboration_claim_create_post_v30_1():
@@ -42,18 +39,7 @@ def register_corroboration_claim_routes_v30_1(app):
         if error:
             return error
         payload = _payload()
-        result = create_corroboration_claim(
-            actor=actor,
-            case_id=str(payload.get("case_id") or ""),
-            entity_id=str(payload.get("entity_id") or ""),
-            claim_type=str(payload.get("claim_type") or ""),
-            normalized_value=str(payload.get("normalized_value") or ""),
-            purpose=str(payload.get("purpose") or ""),
-            source_refs=payload.get("source_refs"),
-            reason=str(payload.get("reason") or ""),
-            confirmed=payload.get("confirmed") is True,
-            ip_address=request.remote_addr,
-        )
+        result = create_corroboration_claim(actor=actor, case_id=str(payload.get("case_id") or ""), entity_id=str(payload.get("entity_id") or ""), claim_type=str(payload.get("claim_type") or ""), normalized_value=str(payload.get("normalized_value") or ""), purpose=str(payload.get("purpose") or ""), source_refs=payload.get("source_refs"), reason=str(payload.get("reason") or ""), confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr)
         return jsonify(result), _code(result, "corroboration_claim_created")
 
     @app.post("/api/v1/analytic-review/claims/<claim_id>/state")
@@ -62,14 +48,8 @@ def register_corroboration_claim_routes_v30_1(app):
         if error:
             return error
         payload = _payload()
-        result = change_claim_state(
-            actor=actor,
-            claim_id=claim_id,
-            to_state=str(payload.get("to_state") or ""),
-            reason=str(payload.get("reason") or ""),
-            confirmed=payload.get("confirmed") is True,
-            ip_address=request.remote_addr,
-        )
+        result = change_claim_state(actor=actor, claim_id=claim_id, to_state=str(payload.get("to_state") or ""), reason=str(payload.get("reason") or ""), confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr)
         return jsonify(result), _code(result, "corroboration_claim_state_changed")
 
+    register_claim_source_linkage_routes_v30_2(app)
     return app
