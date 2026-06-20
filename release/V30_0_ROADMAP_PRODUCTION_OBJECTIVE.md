@@ -21,13 +21,13 @@ v30.0 implements the read-only workspace. v30.1 adds append-only corroboration c
 | v30.4 | Confidence Model and Explainability | Produce bounded confidence assessments with visible inputs, limitations, and reasons. | Implemented |
 | v30.5 | Human Analytic Review and Decision Record | Require explicit analyst review before consequential use. | Implemented |
 | v30.6 | Dossier Contribution and Reassessment | Approve, hold, reject, withdraw, or reassess analytic contributions while preserving prior decisions. | Implemented |
-| v30.7 | Product Review and Browser E2E Checkpoint | Validate the complete browser workflow and close v30 only after all gates pass. | Implemented |
+| v30.7 | Product Review and Browser E2E Checkpoint | Validate the complete browser workflow and close v30 only after all gates pass. | Implemented; v30 closed |
 
 ## Closure results
 
-- focused v30.7 tests: 3 passed
-- v30 regression tests: 24 passed
-- full project suite: 1500 passed
+- focused v30.7 tests: 3 passed, 0 failed
+- complete v30 regression: 24 passed, 0 failed
+- full project suite: 1500 passed, 0 failed
 - Ruff lint: passed
 - browser E2E: 8 passed, 0 failed
 
