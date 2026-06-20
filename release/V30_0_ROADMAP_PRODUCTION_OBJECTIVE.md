@@ -10,33 +10,30 @@ v30 begins after the v29 collection program proved authorized ingestion, provena
 
 **Analytic Review Workspace**
 
-The initial workspace should be read-only. It should inventory existing evidence, observations, candidate claims, corroboration relationships, contradictions, confidence records, human review decisions, and dossier contribution readiness before any new write contract is introduced.
+v30.0 now implements the initial read-only workspace. It inventories existing evidence, observations, claims, confidence records, review decisions, contradictions, and dossier contribution readiness before any new write contract is introduced.
 
 ## Roadmap
 
-| Slice | Title | Purpose |
-|---|---|---|
-| v30.0 | Analytic Review Workspace and Planning Baseline | Establish the inventory, route, findings, and safe program boundaries. |
-| v30.1 | Corroboration Claim Contract | Define append-only analytic claims with explicit case, entity, actor, purpose, and source bindings. |
-| v30.2 | Evidence and Observation Linkage | Bind claims to immutable evidence and normalized observations using deterministic hashes. |
-| v30.3 | Contradiction and Disagreement Handling | Preserve conflicting evidence and analyst disagreement without destructive overwrite. |
-| v30.4 | Confidence Model and Explainability | Produce bounded confidence assessments with visible inputs, limitations, and reasons. |
-| v30.5 | Human Analytic Review and Decision Record | Require explicit analyst review before consequential use. |
-| v30.6 | Dossier Contribution and Reassessment | Approve, hold, reject, or reassess analytic contributions while preserving prior decisions. |
-| v30.7 | Product Review and Browser E2E Checkpoint | Validate the complete browser workflow and close v30 only after all gates pass. |
+| Slice | Title | Purpose | Status |
+|---|---|---|---|
+| v30.0 | Analytic Review Workspace and Planning Baseline | Establish the inventory, route, findings, and safe program boundaries. | Implemented |
+| v30.1 | Corroboration Claim Contract | Define append-only analytic claims with explicit case, entity, actor, purpose, and source bindings. | Planned |
+| v30.2 | Evidence and Observation Linkage | Bind claims to immutable evidence and normalized observations using deterministic hashes. | Planned |
+| v30.3 | Contradiction and Disagreement Handling | Preserve conflicting evidence and analyst disagreement without destructive overwrite. | Planned |
+| v30.4 | Confidence Model and Explainability | Produce bounded confidence assessments with visible inputs, limitations, and reasons. | Planned |
+| v30.5 | Human Analytic Review and Decision Record | Require explicit analyst review before consequential use. | Planned |
+| v30.6 | Dossier Contribution and Reassessment | Approve, hold, reject, or reassess analytic contributions while preserving prior decisions. | Planned |
+| v30.7 | Product Review and Browser E2E Checkpoint | Validate the complete browser workflow and close v30 only after all gates pass. | Planned |
 
 ## Entry-gate definition
 
-Planning may be considered complete when:
+The entry gate is now `v30_0_read_only_baseline_implemented`:
 
-- the roadmap, production objective, primary workspace, and workflow spine are explicit;
-- existing evidence, observation, confidence, review, and dossier contracts have been inventoried;
-- no authoritative equivalent workspace or route already exists;
-- claim, corroboration, contradiction, confidence, and review boundaries are defined;
-- runtime code, routes, and migrations remain absent until the baseline inventory proves the need;
-- closure gates are defined before implementation begins.
-
-The current entry-gate status is `planning_complete_runtime_not_started`.
+- roadmap, production objective, primary workspace, and workflow spine are explicit;
+- existing evidence, observation, confidence, review, and dossier contracts are reused;
+- runtime and routes exist for the read-only baseline;
+- no migration was introduced;
+- closure gates remain defined before write-path implementation begins.
 
 ## Production boundaries
 
@@ -61,27 +58,25 @@ v30 must not:
 - Reassessment preserves earlier decisions and their supporting context.
 - Dossier contribution requires explicit approval.
 
-## First implementation target
+## v30.0 implementation
 
-v30.0 should add a read-only Analytic Review Workspace with:
+The read-only Analytic Review Workspace provides:
 
-- an inventory of existing analytic and evidence records;
-- candidate claim and corroboration summaries;
-- contradiction and disagreement findings;
-- confidence and review readiness findings;
-- route and migration drift checks;
-- no analytic mutation;
-- no dossier mutation;
-- focused tests and a release note.
+- existing evidence and observation inventory;
+- existing dossier assertion and confidence inventory;
+- review-item and review-decision inventory;
+- contradiction findings for conflicting normalized claim values;
+- collection-quality and dossier-contribution readiness summaries;
+- explicit no-mutation and no-execution guarantees;
+- administrator-only UI and API routes;
+- focused tests.
 
 ## Validation contract
 
-Each v30 slice must provide focused tests. Program closure requires:
-
 ```bash
+python3 -m pytest -q tests/test_v30_0*.py
 python3 -m pytest -q tests/test_v30*.py
 python3 -m pytest -q
-python3 scripts/run_v30_7_analytic_review_browser_e2e.py --json
 ```
 
-The program remains open until the v30.7 browser report records zero failures and the planning contract explicitly marks `v30_closed` as true.
+The program remains open. The next implementation target is v30.1 Corroboration Claim Contract.
