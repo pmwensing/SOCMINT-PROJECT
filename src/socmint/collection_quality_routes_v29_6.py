@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+from .collection_product_review_routes_v29_7 import register_collection_product_review_routes_v29_7
 from .collection_quality_v29_6 import assess_collection_quality, review_dossier_contribution
 from .collection_quality_workspace_v29_6 import build_collection_quality_workspace
 from .user_account_workspace_v28_1 import actor_is_administrator
@@ -60,4 +61,5 @@ def register_collection_quality_routes_v29_6(app):
         result = review_dossier_contribution(actor=actor, quality_assessment_id=quality_assessment_id, decision=str(payload.get("decision") or ""), rationale=str(payload.get("rationale") or ""), confirmed=payload.get("confirmed") is True, ip_address=request.remote_addr)
         return jsonify(result), _code(result, "dossier_contribution_reviewed")
 
+    register_collection_product_review_routes_v29_7(app)
     return app
