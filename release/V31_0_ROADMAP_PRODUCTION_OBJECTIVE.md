@@ -5,13 +5,7 @@ v31.0 is implemented on the Ruff-clean `master` baseline.
 ## Status
 
 - v31.0 Publication Review Workspace: implemented
-- CI: passed
-- Full Verification: passed
-- v12.10.19 verification: passed
 - v31.1 Publication Candidate Contract: next
-
-## Safety
-
 - no automatic publication
 - no release approval
 - no dossier mutation
