@@ -4,6 +4,7 @@ from src.socmint import publication_review_workspace_v31_0 as workspace
 def test_v31_0_builds_read_only_inventory(monkeypatch, tmp_path):
     monkeypatch.setattr(workspace.database, "ensure_configured", lambda: None)
     monkeypatch.setattr(workspace, "_release_records", lambda: [])
+    monkeypatch.setattr(workspace, "current_publication_candidates", lambda: [])
     monkeypatch.setattr(
         workspace,
         "current_contribution_decisions",
@@ -25,6 +26,7 @@ def test_v31_0_builds_read_only_inventory(monkeypatch, tmp_path):
     assert result["read_only"] is True
     assert result["publication_ready"] is True
     assert result["approved_contribution_count"] == 1
+    assert result["publication_candidate_count"] == 0
     assert result["automatic_publication_performed"] is False
     assert result["dossier_mutated"] is False
 
@@ -32,6 +34,7 @@ def test_v31_0_builds_read_only_inventory(monkeypatch, tmp_path):
 def test_v31_0_surfaces_blockers(monkeypatch, tmp_path):
     monkeypatch.setattr(workspace.database, "ensure_configured", lambda: None)
     monkeypatch.setattr(workspace, "_release_records", lambda: [])
+    monkeypatch.setattr(workspace, "current_publication_candidates", lambda: [])
     monkeypatch.setattr(
         workspace,
         "current_contribution_decisions",
