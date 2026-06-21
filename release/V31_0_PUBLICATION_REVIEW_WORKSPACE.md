@@ -1,5 +1,5 @@
 # v31 — Publication Workflow
 
-Implemented slices: v31.0 through v31.5.
+Implemented slices: v31.0 through v31.6.
 
-Next: v31.6 Supersession and Revision History.
+Next: v31.7 Product Review and Browser E2E.
