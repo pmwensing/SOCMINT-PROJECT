@@ -1,6 +1,6 @@
 {
   "schema": "socmint.v31.planning_contract.v31_0",
-  "version": "v31.6.0",
+  "version": "v31.7.0",
   "program": "Operational Analytic Workflow and Dossier Publication",
   "primary_workspace": "Publication Review Workspace",
   "roadmap": [
@@ -11,19 +11,20 @@
     {"slice": "v31.4", "title": "Human Release Approval", "implemented": true},
     {"slice": "v31.5", "title": "Immutable Published Revision", "implemented": true},
     {"slice": "v31.6", "title": "Supersession and Revision History", "implemented": true},
-    {"slice": "v31.7", "title": "Product Review and Browser E2E", "implemented": false}
+    {"slice": "v31.7", "title": "Product Review and Browser E2E", "implemented": true}
   ],
   "entry_gate": {
     "planning_complete": true,
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "status": "v31_6_supersession_and_revision_history_implemented"
+    "status": "v31_7_product_review_and_browser_e2e_implemented"
   },
   "validation": {
     "ci": "pending",
     "full_verification": "pending",
-    "v12_10_19_verify": "pending"
+    "v12_10_19_verify": "pending",
+    "browser_e2e": "pending"
   },
   "closure_contract": {
     "focused_tests_required": true,
@@ -31,7 +32,7 @@
     "full_suite_required": true,
     "browser_e2e_required": true,
     "v31_closed": false,
-    "next_action": "implement_v31_7_product_review_and_browser_e2e"
+    "next_action": "confirm_test_gates_and_close_v31"
   },
-  "next_action": "implement_v31_7_product_review_and_browser_e2e"
+  "next_action": "confirm_test_gates_and_close_v31"
 }
