@@ -33,6 +33,10 @@ Provide a read-only publication-readiness view over approved v30 dossier contrib
 - no connector execution
 - no database migration
 
+## Validation
+
+The v31.0 branch is rebased onto the Ruff-clean `master`; CI and regression validation are authoritative.
+
 ## Next action
 
 Validate v31.0 and implement v31.1 Publication Candidate Contract.
