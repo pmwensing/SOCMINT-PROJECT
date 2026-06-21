@@ -3,8 +3,6 @@
   "version": "v31.0.0",
   "program": "Operational Analytic Workflow and Dossier Publication",
   "primary_workspace": "Publication Review Workspace",
-  "production_objective": "Move approved v30 dossier contributions through controlled draft revision, human release approval, and immutable publication.",
-  "workflow_spine": ["approved_dossier_contribution", "publication_candidate", "draft_revision", "editorial_validation", "human_release_approval", "published_revision", "supersession"],
   "roadmap": [
     {"slice": "v31.0", "title": "Publication Review Workspace", "implemented": true},
     {"slice": "v31.1", "title": "Publication Candidate Contract", "implemented": false},
@@ -15,10 +13,25 @@
     {"slice": "v31.6", "title": "Supersession and Revision History", "implemented": false},
     {"slice": "v31.7", "title": "Product Review and Browser E2E", "implemented": false}
   ],
-  "entry_gate": {"planning_complete": true, "runtime_code_added": true, "route_added": true, "migration_added": false, "status": "v31_0_publication_review_workspace_implemented"},
-  "boundaries": {"automatic_publication": false, "automatic_release_approval": false, "published_revision_mutation": false, "source_record_rewrite": false, "migration_without_proven_gap": false},
-  "invariants": {"approved_v30_contribution_required": true, "draft_and_published_revisions_separate": true, "human_release_approval_required": true, "published_revisions_immutable": true, "supersession_preserves_history": true, "existing_dossier_pipeline_authoritative": true},
-  "validation": {"ci": "passed", "full_verification": "passed", "v12_10_19_verify": "passed"},
-  "closure_contract": {"focused_tests_required": true, "v31_regression_required": true, "full_suite_required": true, "browser_e2e_required": true, "v31_closed": false, "next_action": "implement_v31_1_publication_candidate_contract"},
+  "entry_gate": {
+    "planning_complete": true,
+    "runtime_code_added": true,
+    "route_added": true,
+    "migration_added": false,
+    "status": "v31_0_publication_review_workspace_implemented"
+  },
+  "validation": {
+    "ci": "passed",
+    "full_verification": "passed",
+    "v12_10_19_verify": "passed"
+  },
+  "closure_contract": {
+    "focused_tests_required": true,
+    "v31_regression_required": true,
+    "full_suite_required": true,
+    "browser_e2e_required": true,
+    "v31_closed": false,
+    "next_action": "implement_v31_1_publication_candidate_contract"
+  },
   "next_action": "implement_v31_1_publication_candidate_contract"
 }
