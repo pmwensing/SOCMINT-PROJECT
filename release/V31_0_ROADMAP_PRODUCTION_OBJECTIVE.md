@@ -35,15 +35,6 @@ approved dossier contribution
 | v31.6 | Supersession and Revision History | Preserve prior revisions while allowing controlled replacement. | Planned |
 | v31.7 | Product Review and Browser E2E | Validate the complete workflow and close v31. | Planned |
 
-## Implemented boundaries
-
-- the Publication Review Workspace is read-only;
-- only approved v30 dossier-contribution decisions are publication inputs;
-- existing dossier assembly, export, and release contracts remain authoritative;
-- draft and published release records are inventoried without mutation;
-- no automatic publication or release approval is available;
-- no database migration was introduced.
-
 ## Validation contract
 
 ```bash
@@ -53,4 +44,4 @@ python3 -m pytest -q
 python3 -m ruff check src tests scripts
 ```
 
-The next action is `implement_v31_1_publication_candidate_contract`.
+The branch is rebased onto the Ruff-clean `master`. The next action is `implement_v31_1_publication_candidate_contract`.
