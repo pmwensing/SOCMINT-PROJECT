@@ -14,7 +14,7 @@ Validate the complete v31 publication workflow, required modules, assets, routes
 - seven-step workflow inventory
 - administrator-only UI and API
 - headless Chrome browser E2E with ten checks
-- focused checkpoint and route tests
+- focused checkpoint, route, and browser-contract tests
 
 ## Routes
 
