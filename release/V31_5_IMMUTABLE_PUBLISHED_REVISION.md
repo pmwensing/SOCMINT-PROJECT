@@ -10,6 +10,7 @@ Create a sealed, append-only published dossier revision only after explicit v31.
 - immutable published content snapshot
 - provenance binding to the draft revision, publication candidate, approved contribution, editorial validation, source manifest, and human release approval
 - integrity hashes for content, provenance, and metadata
+- the latest human release decision must be approved and match the current draft revision
 - one-time use of each release approval
 - administrator-only publication APIs
 - case-level publication history inventory
