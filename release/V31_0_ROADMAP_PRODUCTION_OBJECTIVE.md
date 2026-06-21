@@ -1,13 +1,7 @@
 # v31 — Operational Analytic Workflow and Dossier Publication
 
-## Status
+Implemented: v31.0 Publication Review Workspace, v31.1 Publication Candidate Contract, and v31.2 Draft Dossier Revision Assembly.
 
-- v31.0 Publication Review Workspace: implemented
-- v31.1 Publication Candidate Contract: implemented
-- v31.2 Draft Dossier Revision Assembly: next
-- no automatic publication
-- no release approval
-- no dossier mutation
-- no migration
+Next: v31.3 Editorial Validation and Policy Gate.
 
-Next action: `implement_v31_2_draft_dossier_revision_assembly`.
+Safety remains unchanged: no automatic publication, no release approval, no published revision mutation, and no migration.
