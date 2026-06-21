@@ -1,13 +1,13 @@
 {
   "schema": "socmint.v31.planning_contract.v31_0",
-  "version": "v31.2.0",
+  "version": "v31.3.0",
   "program": "Operational Analytic Workflow and Dossier Publication",
   "primary_workspace": "Publication Review Workspace",
   "roadmap": [
     {"slice": "v31.0", "title": "Publication Review Workspace", "implemented": true},
     {"slice": "v31.1", "title": "Publication Candidate Contract", "implemented": true},
     {"slice": "v31.2", "title": "Draft Dossier Revision Assembly", "implemented": true},
-    {"slice": "v31.3", "title": "Editorial Validation and Policy Gate", "implemented": false},
+    {"slice": "v31.3", "title": "Editorial Validation and Policy Gate", "implemented": true},
     {"slice": "v31.4", "title": "Human Release Approval", "implemented": false},
     {"slice": "v31.5", "title": "Immutable Published Revision", "implemented": false},
     {"slice": "v31.6", "title": "Supersession and Revision History", "implemented": false},
@@ -18,7 +18,7 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "status": "v31_2_draft_dossier_revision_assembly_implemented"
+    "status": "v31_3_editorial_validation_and_policy_gate_implemented"
   },
   "validation": {
     "ci": "pending",
@@ -31,7 +31,7 @@
     "full_suite_required": true,
     "browser_e2e_required": true,
     "v31_closed": false,
-    "next_action": "implement_v31_3_editorial_validation_and_policy_gate"
+    "next_action": "implement_v31_4_human_release_approval"
   },
-  "next_action": "implement_v31_3_editorial_validation_and_policy_gate"
+  "next_action": "implement_v31_4_human_release_approval"
 }
