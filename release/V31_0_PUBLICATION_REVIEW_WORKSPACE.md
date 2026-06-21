@@ -35,7 +35,7 @@ Provide a read-only publication-readiness view over approved v30 dossier contrib
 
 ## Validation
 
-The branch is based on the Ruff-clean `master`; CI and project regression validation are authoritative.
+The branch is rebased onto the Ruff-clean `master`; CI and project regression validation are authoritative.
 
 ## Next action
 
