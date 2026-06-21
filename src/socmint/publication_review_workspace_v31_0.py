@@ -7,9 +7,10 @@ from typing import Any
 from . import database
 from .analytic_dossier_contribution_v30_6 import current_contribution_decisions
 from .dossier_assembly_workspace_v21_0 import _ensure_storage, _json_details
+from .publication_candidate_v31_1 import current_publication_candidates
 
 SCHEMA = "socmint.publication_review_workspace.v31_0"
-VERSION = "v31.0.0"
+VERSION = "v31.1.0"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOSSIER_CONTRACTS = (
     "src/socmint/dossier_assembly_workspace_v21_0.py",
@@ -63,6 +64,10 @@ def build_publication_review_workspace(root: str | Path | None = None) -> dict[s
     root_path = Path(root) if root is not None else REPO_ROOT
     contributions = current_contribution_decisions()
     approved = [item for item in contributions if item.get("decision") == "approved"]
+    candidates = current_publication_candidates()
+    proposed_candidates = [
+        item for item in candidates if item.get("candidate_state") == "proposed"
+    ]
     releases = _release_records()
     contracts = [
         {"path": path, "available": (root_path / path).exists()}
@@ -88,17 +93,45 @@ def build_publication_review_workspace(root: str | Path | None = None) -> dict[s
     no_target = [item for item in approved if not item.get("target_section")]
     blockers: list[dict[str, Any]] = []
     if missing:
-        blockers.append({"key": "dossier_contracts_missing", "count": len(missing), "paths": missing})
+        blockers.append(
+            {"key": "dossier_contracts_missing", "count": len(missing), "paths": missing}
+        )
     if no_case:
-        blockers.append({"key": "approved_contributions_missing_case_binding", "count": len(no_case)})
+        blockers.append(
+            {
+                "key": "approved_contributions_missing_case_binding",
+                "count": len(no_case),
+            }
+        )
     if no_target:
-        blockers.append({"key": "approved_contributions_missing_target_section", "count": len(no_target)})
+        blockers.append(
+            {
+                "key": "approved_contributions_missing_target_section",
+                "count": len(no_target),
+            }
+        )
     ready = bool(approved) and not blockers
     findings = []
     if approved:
-        findings.append({"severity": "info", "key": "approved_v30_contributions_available", "count": len(approved)})
+        findings.append(
+            {
+                "severity": "info",
+                "key": "approved_v30_contributions_available",
+                "count": len(approved),
+            }
+        )
     else:
-        findings.append({"severity": "medium", "key": "no_approved_v30_contributions", "count": 0})
+        findings.append(
+            {"severity": "medium", "key": "no_approved_v30_contributions", "count": 0}
+        )
+    if proposed_candidates:
+        findings.append(
+            {
+                "severity": "info",
+                "key": "proposed_publication_candidates_available",
+                "count": len(proposed_candidates),
+            }
+        )
     return {
         "schema": SCHEMA,
         "version": VERSION,
@@ -108,19 +141,28 @@ def build_publication_review_workspace(root: str | Path | None = None) -> dict[s
         "approved_contribution_inventory": approved,
         "approved_contribution_count": len(approved),
         "all_contribution_decision_count": len(contributions),
-        "approved_contribution_case_count": len({str(i.get("case_id")) for i in approved if i.get("case_id")}),
+        "approved_contribution_case_count": len(
+            {str(item.get("case_id")) for item in approved if item.get("case_id")}
+        ),
+        "publication_candidate_inventory": candidates,
+        "publication_candidate_count": len(candidates),
+        "proposed_publication_candidate_count": len(proposed_candidates),
         "dossier_contract_inventory": contracts,
         "dossier_contract_count": len(contracts),
         "missing_dossier_contract_count": len(missing),
         "release_record_inventory": releases,
         "release_record_count": len(releases),
-        "release_action_counts": dict(sorted(Counter(str(i.get("action") or "unknown") for i in releases).items())),
+        "release_action_counts": dict(
+            sorted(Counter(str(item.get("action") or "unknown") for item in releases).items())
+        ),
         "draft_revision_inventory": drafts,
         "draft_revision_count": len(drafts),
         "published_revision_inventory": published,
         "published_revision_count": len(published),
         "release_history_case_count": len(by_case),
-        "approved_with_release_history_count": len([i for i in approved if str(i.get("case_id") or "") in by_case]),
+        "approved_with_release_history_count": len(
+            [item for item in approved if str(item.get("case_id") or "") in by_case]
+        ),
         "human_release_ready_count": len(approved) - len(no_case) - len(no_target),
         "blockers": blockers,
         "blocker_count": len(blockers),
@@ -131,5 +173,17 @@ def build_publication_review_workspace(root: str | Path | None = None) -> dict[s
         "dossier_mutated": False,
         "published_revision_mutated": False,
         "connector_execution_performed": False,
-        "next_action": "create_publication_candidate_contract" if ready else (blockers[0]["key"] if blockers else "await_approved_v30_contribution"),
+        "next_action": (
+            "assemble_draft_dossier_revision"
+            if proposed_candidates
+            else (
+                "create_publication_candidate_contract"
+                if ready
+                else (
+                    blockers[0]["key"]
+                    if blockers
+                    else "await_approved_v30_contribution"
+                )
+            )
+        ),
     }
