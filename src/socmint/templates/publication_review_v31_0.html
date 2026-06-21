@@ -2,7 +2,7 @@
 {% block content %}
 <section class="panel">
   <h1>Publication Review Workspace</h1>
-  <p>Read-only inventory of approved v30 contributions, publication candidates, draft dossier revisions, release history, blockers, and publication readiness.</p>
+  <p>Read-only inventory of approved contributions, publication candidates, draft revisions, editorial policy gates, release history, blockers, and publication readiness.</p>
   <p><a href="/analytic-review">Analytic Review Workspace</a> · <a href="/dossier-release">Dossier Release Workspace</a></p>
 </section>
 {% if payload.status == 'forbidden' %}
@@ -14,15 +14,17 @@
     <li>Publication ready: {{ payload.publication_ready }}</li>
     <li>Approved v30 contributions: {{ payload.approved_contribution_count }}</li>
     <li>Publication candidates: {{ payload.publication_candidate_count }}</li>
-    <li>Proposed candidates: {{ payload.proposed_publication_candidate_count }}</li>
     <li>Draft dossier revisions: {{ payload.draft_dossier_revision_count }}</li>
-    <li>Release previews: {{ payload.release_preview_count }}</li>
+    <li>Editorial validations: {{ payload.editorial_validation_count }}</li>
+    <li>Passed editorial gates: {{ payload.passed_editorial_validation_count }}</li>
+    <li>Needs revision: {{ payload.needs_revision_validation_count }}</li>
     <li>Published revisions: {{ payload.published_revision_count }}</li>
     <li>Blockers: {{ payload.blocker_count }}</li>
   </ul>
 </section>
-<section class="panel"><h2>Publication candidates</h2><pre>{{ payload.publication_candidate_inventory | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Editorial validations</h2><pre>{{ payload.editorial_validation_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Draft dossier revisions</h2><pre>{{ payload.draft_dossier_revision_inventory | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Publication candidates</h2><pre>{{ payload.publication_candidate_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Publication blockers</h2><pre>{{ payload.blockers | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Publication findings</h2><pre>{{ payload.publication_findings | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Approved v30 contributions</h2><pre>{{ payload.approved_contribution_inventory | tojson(indent=2) }}</pre></section>
