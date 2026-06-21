@@ -35,8 +35,8 @@ Provide a read-only publication-readiness view over approved v30 dossier contrib
 
 ## Validation
 
-The v31.0 branch is rebased onto the Ruff-clean `master`; CI and regression validation are authoritative.
+The branch is based on the Ruff-clean `master`; CI and project regression validation are authoritative.
 
 ## Next action
 
-Validate v31.0 and implement v31.1 Publication Candidate Contract.
+Implement v31.1 Publication Candidate Contract.
