@@ -16,6 +16,8 @@ def test_v31_7_browser_e2e_covers_complete_publication_workflow():
         '"published_revisions_api"',
         '"supersessions_api"',
         '"checkpoint_ready"',
+        'register_publication_review_routes_v31_0(app)',
+        'session["is_admin"] = True',
         'shutil.which("chromedriver")',
     ):
         assert required in content
