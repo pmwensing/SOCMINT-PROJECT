@@ -50,6 +50,7 @@ approved dossier contribution
 python3 -m pytest -q tests/test_v31_0*.py
 python3 -m pytest -q tests/test_v31*.py
 python3 -m pytest -q
+python3 -m ruff check src tests scripts
 ```
 
 The next action is `implement_v31_1_publication_candidate_contract`.
