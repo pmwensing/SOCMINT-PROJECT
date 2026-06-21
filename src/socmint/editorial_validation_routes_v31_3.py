@@ -7,6 +7,9 @@ from .editorial_validation_v31_3 import (
     run_editorial_validation,
     validations_for_revision,
 )
+from .human_release_approval_routes_v31_4 import (
+    register_human_release_approval_routes_v31_4,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -75,4 +78,5 @@ def register_editorial_validation_routes_v31_3(app):
             "status"
         ) == "editorial_validation_recorded" else 422
 
+    register_human_release_approval_routes_v31_4(app)
     return app
