@@ -7,10 +7,11 @@ from typing import Any
 from . import database
 from .analytic_dossier_contribution_v30_6 import current_contribution_decisions
 from .dossier_assembly_workspace_v21_0 import _ensure_storage, _json_details
+from .draft_dossier_revision_v31_2 import current_draft_revisions
 from .publication_candidate_v31_1 import current_publication_candidates
 
 SCHEMA = "socmint.publication_review_workspace.v31_0"
-VERSION = "v31.1.0"
+VERSION = "v31.2.0"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOSSIER_CONTRACTS = (
     "src/socmint/dossier_assembly_workspace_v21_0.py",
@@ -68,6 +69,7 @@ def build_publication_review_workspace(root: str | Path | None = None) -> dict[s
     proposed_candidates = [
         item for item in candidates if item.get("candidate_state") == "proposed"
     ]
+    draft_revisions = current_draft_revisions()
     releases = _release_records()
     contracts = [
         {"path": path, "available": (root_path / path).exists()}
@@ -77,7 +79,7 @@ def build_publication_review_workspace(root: str | Path | None = None) -> dict[s
     by_case: dict[str, list[dict[str, Any]]] = {}
     for item in releases:
         by_case.setdefault(str(item.get("case_id") or "unknown"), []).append(item)
-    drafts = [
+    release_previews = [
         item
         for item in releases
         if item.get("action")
@@ -132,6 +134,14 @@ def build_publication_review_workspace(root: str | Path | None = None) -> dict[s
                 "count": len(proposed_candidates),
             }
         )
+    if draft_revisions:
+        findings.append(
+            {
+                "severity": "info",
+                "key": "draft_dossier_revisions_available",
+                "count": len(draft_revisions),
+            }
+        )
     return {
         "schema": SCHEMA,
         "version": VERSION,
@@ -147,6 +157,8 @@ def build_publication_review_workspace(root: str | Path | None = None) -> dict[s
         "publication_candidate_inventory": candidates,
         "publication_candidate_count": len(candidates),
         "proposed_publication_candidate_count": len(proposed_candidates),
+        "draft_dossier_revision_inventory": draft_revisions,
+        "draft_dossier_revision_count": len(draft_revisions),
         "dossier_contract_inventory": contracts,
         "dossier_contract_count": len(contracts),
         "missing_dossier_contract_count": len(missing),
@@ -155,8 +167,8 @@ def build_publication_review_workspace(root: str | Path | None = None) -> dict[s
         "release_action_counts": dict(
             sorted(Counter(str(item.get("action") or "unknown") for item in releases).items())
         ),
-        "draft_revision_inventory": drafts,
-        "draft_revision_count": len(drafts),
+        "release_preview_inventory": release_previews,
+        "release_preview_count": len(release_previews),
         "published_revision_inventory": published,
         "published_revision_count": len(published),
         "release_history_case_count": len(by_case),
@@ -174,15 +186,19 @@ def build_publication_review_workspace(root: str | Path | None = None) -> dict[s
         "published_revision_mutated": False,
         "connector_execution_performed": False,
         "next_action": (
-            "assemble_draft_dossier_revision"
-            if proposed_candidates
+            "run_editorial_validation_and_policy_gate"
+            if draft_revisions
             else (
-                "create_publication_candidate_contract"
-                if ready
+                "assemble_draft_dossier_revision"
+                if proposed_candidates
                 else (
-                    blockers[0]["key"]
-                    if blockers
-                    else "await_approved_v30_contribution"
+                    "create_publication_candidate_contract"
+                    if ready
+                    else (
+                        blockers[0]["key"]
+                        if blockers
+                        else "await_approved_v30_contribution"
+                    )
                 )
             )
         ),
