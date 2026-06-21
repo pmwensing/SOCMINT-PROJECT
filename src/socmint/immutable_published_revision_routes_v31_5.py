@@ -7,6 +7,9 @@ from .immutable_published_revision_v31_5 import (
     current_published_revisions,
     published_revisions_for_case,
 )
+from .publication_supersession_routes_v31_6 import (
+    register_publication_supersession_routes_v31_6,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -73,4 +76,5 @@ def register_immutable_published_revision_routes_v31_5(app):
             "status"
         ) == "published_revision_created" else 422
 
+    register_publication_supersession_routes_v31_6(app)
     return app
