@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from flask import jsonify, request, session
 
+from .publication_product_review_routes_v31_7 import (
+    register_publication_product_review_routes_v31_7,
+)
 from .publication_supersession_v31_6 import (
     record_publication_supersession,
     revision_history_for_case,
@@ -62,4 +65,5 @@ def register_publication_supersession_routes_v31_6(app):
         )
         return jsonify(result), 201 if result.get("status") == "supersession_recorded" else 422
 
+    register_publication_product_review_routes_v31_7(app)
     return app
