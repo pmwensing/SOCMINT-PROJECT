@@ -1,5 +1,5 @@
 # v31 — Publication Workflow
 
-v31.0, v31.1, and v31.2 are implemented.
+Implemented slices: v31.0, v31.1, v31.2, and v31.3.
 
-Next action: v31.3 Editorial Validation and Policy Gate.
+Next: v31.4 Human Release Approval.
