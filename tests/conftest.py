@@ -28,3 +28,4 @@ def isolate_v31_0_workspace_append_only_inventories(request, monkeypatch):
 
     monkeypatch.setattr(workspace, "current_draft_revisions", lambda: [])
     monkeypatch.setattr(workspace, "current_editorial_validations", lambda: [])
+    monkeypatch.setattr(workspace, "current_release_approvals", lambda: [])
