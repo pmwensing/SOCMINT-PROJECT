@@ -1,6 +1,6 @@
 # v31 — Publication Workflow
 
-## Implemented
+Implemented:
 
 - v31.0 Publication Review Workspace
 - v31.1 Publication Candidate Contract
