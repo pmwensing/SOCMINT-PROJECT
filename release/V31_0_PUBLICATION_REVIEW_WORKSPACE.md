@@ -1,7 +1,14 @@
-# v31.0 — Publication Review Workspace
+# v31 — Publication Workflow
 
-Implemented on the Ruff-clean `master` baseline.
+## Implemented
 
-Validation is enforced by CI, SOCMINT Full Verification, and v12.10.19 verification.
+- v31.0 Publication Review Workspace
+- v31.1 Publication Candidate Contract
 
-Next action: v31.1 Publication Candidate Contract.
+## Current safety boundary
+
+Publication candidates are append-only and require an approved v30 dossier contribution. No draft revision, release approval, publication, dossier mutation, or migration is performed.
+
+## Next action
+
+Implement v31.2 Draft Dossier Revision Assembly.
