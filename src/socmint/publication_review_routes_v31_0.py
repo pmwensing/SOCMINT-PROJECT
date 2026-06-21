@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, session, url_for
 
+from .publication_candidate_routes_v31_1 import (
+    register_publication_candidate_routes_v31_1,
+)
 from .publication_review_workspace_v31_0 import build_publication_review_workspace
 from .user_account_workspace_v28_1 import actor_is_administrator
 
@@ -33,4 +36,5 @@ def register_publication_review_routes_v31_0(app):
             return jsonify({"error": "administrator required"}), 403
         return jsonify(build_publication_review_workspace())
 
+    register_publication_candidate_routes_v31_1(app)
     return app
