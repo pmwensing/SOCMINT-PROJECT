@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h1>Publication Product Review</h1>
+  <p>Closure checkpoint for the v31 publication workflow.</p>
+</section>
+{% if payload.status == 'forbidden' %}
+<section class="panel"><h2>Access denied</h2><p>{{ payload.error }}</p></section>
+{% else %}
+<section class="panel">
+  <h2>Checkpoint</h2>
+  <ul>
+    <li>Ready: {{ payload.ready }}</li>
+    <li>Journey steps: {{ payload.journey_step_count }}</li>
+    <li>Blockers: {{ payload.blocker_count }}</li>
+    <li>Unexpected migrations: {{ payload.migration_artifacts | length }}</li>
+  </ul>
+</section>
+<section class="panel"><h2>Journey</h2><pre>{{ payload.journey | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Modules</h2><pre>{{ payload.module_checks | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Assets</h2><pre>{{ payload.asset_checks | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Routes</h2><pre>{{ payload.route_checks | tojson(indent=2) }}</pre></section>
+<section class="panel"><h2>Blockers</h2><pre>{{ payload.blockers | tojson(indent=2) }}</pre></section>
+{% endif %}
+{% endblock %}
