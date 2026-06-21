@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import jsonify, request, session
 
 from .human_release_approval_v31_4 import approvals_for_revision, current_release_approvals, record_human_release_decision
+from .immutable_published_revision_routes_v31_5 import register_immutable_published_revision_routes_v31_5
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -52,4 +53,5 @@ def register_human_release_approval_routes_v31_4(app):
         )
         return jsonify(result), 201 if result.get("status") in {"approved", "returned", "held"} else 422
 
+    register_immutable_published_revision_routes_v31_5(app)
     return app
