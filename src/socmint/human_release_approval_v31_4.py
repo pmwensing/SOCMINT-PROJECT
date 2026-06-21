@@ -5,7 +5,7 @@ from typing import Any
 from . import database
 from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
 from .draft_dossier_revision_v31_2 import current_draft_revisions
-from .editorial_validation_v31_3 import current_editorial_validations
+from .editorial_validation_v31_3 import validations_for_revision
 
 SCHEMA = "socmint.human_release_approval.v31_4"
 VERSION = "v31.4.0"
@@ -79,11 +79,7 @@ def find_draft_revision(draft_revision_id: str) -> dict[str, Any] | None:
 
 
 def latest_editorial_validation(draft_revision_id: str) -> dict[str, Any] | None:
-    rows = [
-        item
-        for item in current_editorial_validations()
-        if item.get("draft_revision_id") == draft_revision_id
-    ]
+    rows = validations_for_revision(draft_revision_id)
     return rows[-1] if rows else None
 
 
@@ -188,7 +184,11 @@ def record_human_release_decision(
         "approval_binding_sha256": _sha(binding),
         "publication_eligibility": {
             "eligible": decision == "approve",
-            "status": "ready_for_immutable_publication" if decision == "approve" else "not_ready",
+            "status": (
+                "ready_for_immutable_publication"
+                if decision == "approve"
+                else "not_ready"
+            ),
             "next_action": next_action,
         },
         "draft_revision_mutated": False,
