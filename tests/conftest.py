@@ -21,9 +21,10 @@ for path in (PROJECT_ROOT, SRC_ROOT):
 
 
 @pytest.fixture(autouse=True)
-def isolate_v31_0_workspace_draft_inventory(request, monkeypatch):
+def isolate_v31_0_workspace_append_only_inventories(request, monkeypatch):
     if request.node.path.name != "test_v31_0_publication_review_workspace.py":
         return
     from src.socmint import publication_review_workspace_v31_0 as workspace
 
     monkeypatch.setattr(workspace, "current_draft_revisions", lambda: [])
+    monkeypatch.setattr(workspace, "current_editorial_validations", lambda: [])
