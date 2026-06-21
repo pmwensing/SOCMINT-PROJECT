@@ -30,7 +30,7 @@ APPROVAL = {
 
 def test_v31_5_requires_approved_human_release(monkeypatch):
     monkeypatch.setattr(published, "find_draft_revision", lambda revision_id: REVISION)
-    monkeypatch.setattr(published, "latest_approved_release", lambda revision_id: None)
+    monkeypatch.setattr(published, "latest_release_decision", lambda revision_id: None)
 
     result = published.create_immutable_published_revision(
         publisher="admin",
@@ -47,7 +47,7 @@ def test_v31_5_requires_approved_human_release(monkeypatch):
 
 def test_v31_5_creates_sealed_revision_without_mutating_sources(monkeypatch):
     monkeypatch.setattr(published, "find_draft_revision", lambda revision_id: REVISION)
-    monkeypatch.setattr(published, "latest_approved_release", lambda revision_id: APPROVAL)
+    monkeypatch.setattr(published, "latest_release_decision", lambda revision_id: APPROVAL)
     monkeypatch.setattr(published, "published_revision_history", lambda: [])
     monkeypatch.setattr(
         published,
@@ -77,7 +77,7 @@ def test_v31_5_creates_sealed_revision_without_mutating_sources(monkeypatch):
 
 def test_v31_5_prevents_reusing_release_approval(monkeypatch):
     monkeypatch.setattr(published, "find_draft_revision", lambda revision_id: REVISION)
-    monkeypatch.setattr(published, "latest_approved_release", lambda revision_id: APPROVAL)
+    monkeypatch.setattr(published, "latest_release_decision", lambda revision_id: APPROVAL)
     monkeypatch.setattr(
         published,
         "published_revision_history",
