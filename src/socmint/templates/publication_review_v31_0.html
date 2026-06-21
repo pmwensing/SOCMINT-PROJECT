@@ -16,11 +16,11 @@
     <li>Editorial validations: {{ payload.editorial_validation_count }}</li>
     <li>Human release decisions: {{ payload.human_release_approval_count }}</li>
     <li>Approved releases: {{ payload.approved_release_count }}</li>
-    <li>Held releases: {{ payload.held_release_count }}</li>
-    <li>Returned releases: {{ payload.returned_release_count }}</li>
-    <li>Published revisions: {{ payload.published_revision_count }}</li>
+    <li>Immutable published revisions: {{ payload.published_revision_count }}</li>
+    <li>Distribution records: {{ payload.distribution_record_count }}</li>
   </ul>
 </section>
+<section class="panel"><h2>Immutable published revisions</h2><pre>{{ payload.published_revision_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Human release decisions</h2><pre>{{ payload.human_release_approval_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Editorial validations</h2><pre>{{ payload.editorial_validation_inventory | tojson(indent=2) }}</pre></section>
 <section class="panel"><h2>Draft revisions</h2><pre>{{ payload.draft_dossier_revision_inventory | tojson(indent=2) }}</pre></section>
