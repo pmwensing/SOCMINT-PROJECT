@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -20,7 +22,9 @@ def _payload():
         "archive_ready": True,
         "blocker_count": 0,
         "blockers": [],
-        "release_history": {"closure_summary": {"case_id": "case-alpha", "closure_ready": True}},
+        "release_history": {
+            "closure_summary": {"case_id": "case-alpha", "closure_ready": True}
+        },
         "delivery_recovery_state": {
             "delivery_failed": False,
             "delivery_succeeded": True,
@@ -47,14 +51,24 @@ def _payload():
 def test_v23_1_route_and_ui(tmp_path, monkeypatch):
     from src.socmint import case_closure_routes_v23_0 as routes
 
-    monkeypatch.setattr(routes, "build_case_closure_workspace", lambda case_id: _payload())
-    monkeypatch.setattr(routes, "latest_closure_readiness_review", lambda case_id: _payload()["latest_readiness_review"])
-    monkeypatch.setattr(routes, "review_case_closure_readiness", lambda *a, **k: {
-        "status": "review_recorded",
-        "review_record_id": 81,
-        "decision": "ready",
-        "ready_for_supervisor_closure_decision": True,
-    })
+    monkeypatch.setattr(
+        routes, "build_case_closure_workspace", lambda case_id: _payload()
+    )
+    monkeypatch.setattr(
+        routes,
+        "latest_closure_readiness_review",
+        lambda case_id: _payload()["latest_readiness_review"],
+    )
+    monkeypatch.setattr(
+        routes,
+        "review_case_closure_readiness",
+        lambda *a, **k: {
+            "status": "review_recorded",
+            "review_record_id": 81,
+            "decision": "ready",
+            "ready_for_supervisor_closure_decision": True,
+        },
+    )
 
     client = _app(tmp_path, monkeypatch).test_client()
     with client.session_transaction() as sess:
@@ -80,16 +94,23 @@ def test_v23_1_route_and_ui(tmp_path, monkeypatch):
     assert b"Closure Readiness Review" in ui.data
     assert b"record-closure-readiness-review" in ui.data
     assert b"closure-readiness-1" in ui.data
-    assert b"does not close the case, assign retention, or generate an archive package" in ui.data
+    assert (
+        b"does not close the case, assign retention, or generate an archive package"
+        in ui.data
+    )
     assert response.status_code == 200
     assert response.get_json()["review_record_id"] == 81
 
 
 def test_v23_1_release_note_client_and_no_migration():
     note = Path("release/V23_1_CLOSURE_READINESS_REVIEW.md").read_text(encoding="utf-8")
-    script = Path("src/socmint/static/case_closure_workspace_v23_0.js").read_text(encoding="utf-8")
+    script = Path("src/socmint/static/case_closure_workspace_v23_0.js").read_text(
+        encoding="utf-8"
+    )
     migrations = [
-        path for directory in (Path("migrations"), Path("alembic")) if directory.exists()
+        path
+        for directory in (Path("migrations"), Path("alembic"))
+        if directory.exists()
         for path in directory.rglob("*v23_1*")
     ]
     assert "immutable closure-readiness review" in note

@@ -14,7 +14,15 @@ def _login_required() -> bool:
 
 def _dashboard_payload(case_id: str | None, subject_id: str | None = None) -> dict:
     if not case_id:
-        return {"case_id": "", "subject_id": subject_id or "", "index": None, "summary": None, "entry": None, "markdown": "", "status": "empty"}
+        return {
+            "case_id": "",
+            "subject_id": subject_id or "",
+            "index": None,
+            "summary": None,
+            "entry": None,
+            "markdown": "",
+            "status": "empty",
+        }
     payload = {
         "case_id": case_id,
         "subject_id": subject_id or "",
@@ -25,7 +33,9 @@ def _dashboard_payload(case_id: str | None, subject_id: str | None = None) -> di
         "status": "ready",
     }
     if subject_id:
-        payload["entry"] = certification_index_entry(case_id=case_id, subject_id=subject_id)
+        payload["entry"] = certification_index_entry(
+            case_id=case_id, subject_id=subject_id
+        )
     return payload
 
 
@@ -36,7 +46,11 @@ def register_certification_dashboard_routes(app):
             return redirect(url_for("dashboard.login"))
         case_id = (request.args.get("case_id") or "").strip()
         subject_id = (request.args.get("subject_id") or "").strip() or None
-        return render_template("certification_dashboard.html", title="Certification Index Dashboard", payload=_dashboard_payload(case_id=case_id or None, subject_id=subject_id))
+        return render_template(
+            "certification_dashboard.html",
+            title="Certification Index Dashboard",
+            payload=_dashboard_payload(case_id=case_id or None, subject_id=subject_id),
+        )
 
     @app.get("/api/v1/dossier-builder/v3/certification-dashboard/<case_id>")
     def api_dossier_certification_dashboard(case_id: str):

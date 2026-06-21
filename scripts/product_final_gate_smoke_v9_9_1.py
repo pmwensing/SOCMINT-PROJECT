@@ -72,18 +72,42 @@ def main() -> int:
                 and payload.get("status") == "blocked"
                 and payload.get("approved") is False
             )
-            print(("[PASS]" if ok else "[FAIL]"), "deny approval when RC warn", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "deny approval when RC warn",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("deny approval when RC warn", response.status_code, response.get_data(as_text=True)[:1500]))
+                failures.append(
+                    (
+                        "deny approval when RC warn",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1500],
+                    )
+                )
 
             write_stage_artifacts()
 
             response = client.get("/api/v1/product/final-gate")
             payload = response.get_json() if response.is_json else {}
-            ok = response.status_code == 200 and payload.get("rc_status") == "pass" and payload.get("can_approve") is True
-            print(("[PASS]" if ok else "[FAIL]"), "GET final gate ready", response.status_code)
+            ok = (
+                response.status_code == 200
+                and payload.get("rc_status") == "pass"
+                and payload.get("can_approve") is True
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET final gate ready",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET final gate ready", response.status_code, response.get_data(as_text=True)[:1500]))
+                failures.append(
+                    (
+                        "GET final gate ready",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1500],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final-gate/signoff",
@@ -97,9 +121,19 @@ def main() -> int:
                 and payload.get("signoff", {}).get("approved") is True
                 and payload.get("gate", {}).get("gate_status") == "approved"
             )
-            print(("[PASS]" if ok else "[FAIL]"), "approve final gate", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "approve final gate",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("approve final gate", response.status_code, response.get_data(as_text=True)[:2000]))
+                failures.append(
+                    (
+                        "approve final gate",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2000],
+                    )
+                )
 
             response = client.get("/api/v1/product/final-gate/signoff-audit")
             audit = response.get_json() if response.is_json else {}
@@ -110,9 +144,19 @@ def main() -> int:
                 and any(event.get("action") == "approve_denied" for event in events)
                 and any(event.get("action") == "signoff_approve" for event in events)
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET signoff audit", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET signoff audit",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET signoff audit", response.status_code, response.get_data(as_text=True)[:2000]))
+                failures.append(
+                    (
+                        "GET signoff audit",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final-gate/write",
@@ -127,33 +171,75 @@ def main() -> int:
                 and json_path.exists()
                 and md_path.exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "write final gate manifest", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write final gate manifest",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write final gate manifest", response.status_code, response.get_data(as_text=True)[:2000]))
+                failures.append(
+                    (
+                        "write final gate manifest",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2000],
+                    )
+                )
 
             if json_path.exists():
                 data = json.loads(json_path.read_text())
-                ok = data.get("gate_status") == "approved" and data.get("signoff", {}).get("approved") is True
+                ok = (
+                    data.get("gate_status") == "approved"
+                    and data.get("signoff", {}).get("approved") is True
+                )
                 print(("[PASS]" if ok else "[FAIL]"), "final gate manifest content")
                 if not ok:
-                    failures.append(("final gate manifest content", 0, json.dumps(data, indent=2)[:2500]))
+                    failures.append(
+                        (
+                            "final gate manifest content",
+                            0,
+                            json.dumps(data, indent=2)[:2500],
+                        )
+                    )
 
             response = client.get("/product/final-gate")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Final Product Gate" in body and "Approve RC" in body and "Block RC" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET final gate UI", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Final Product Gate" in body
+                and "Approve RC" in body
+                and "Block RC" in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET final gate UI",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET final gate UI", response.status_code, body[:2000]))
+                failures.append(
+                    ("GET final gate UI", response.status_code, body[:2000])
+                )
 
             response = client.get("/product/release-candidate")
             body = response.get_data(as_text=True)
             ok = response.status_code == 200 and "Open Final Product Gate" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET RC console final gate link", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET RC console final gate link",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET RC console final gate link", response.status_code, body[:2000]))
+                failures.append(
+                    (
+                        "GET RC console final gate link",
+                        response.status_code,
+                        body[:2000],
+                    )
+                )
 
             # Restore in case later checks expect it on disk.
-            missing.write_text(STAGE_ARTIFACTS[missing.as_posix().replace(str(ROOT) + "/", "")])
+            missing.write_text(
+                STAGE_ARTIFACTS[missing.as_posix().replace(str(ROOT) + "/", "")]
+            )
 
             if failures:
                 for name, status, body in failures:

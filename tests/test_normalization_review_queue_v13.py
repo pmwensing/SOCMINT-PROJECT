@@ -1,5 +1,7 @@
 from socmint.dashboard import create_app
-from socmint.normalization_review_queue_routes_v13 import register_normalization_review_queue_routes
+from socmint.normalization_review_queue_routes_v13 import (
+    register_normalization_review_queue_routes,
+)
 from socmint.normalization_review_queue_v13 import account_item
 from socmint.normalization_review_queue_v13 import loads_dict
 

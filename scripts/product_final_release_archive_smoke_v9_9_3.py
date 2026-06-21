@@ -60,18 +60,45 @@ def main() -> int:
                 json={"decision": "approve", "reason": "approve archive smoke"},
                 headers={"X-CSRF-Token": "v993-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("gate", {}).get("gate_status") == "approved"
-            print(("[PASS]" if ok else "[FAIL]"), "approve final gate", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("gate", {}).get("gate_status") == "approved"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "approve final gate",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("approve final gate", response.status_code, response.get_data(as_text=True)[:2000]))
+                failures.append(
+                    (
+                        "approve final gate",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2000],
+                    )
+                )
 
-            client.post("/api/v1/product/final-gate/write", headers={"X-CSRF-Token": "v993-csrf"})
+            client.post(
+                "/api/v1/product/final-gate/write",
+                headers={"X-CSRF-Token": "v993-csrf"},
+            )
 
             package_root = Path("storage/product_packages/v9_9_3_archive_smoke_package")
             package_root.mkdir(parents=True, exist_ok=True)
-            (package_root / "PACKAGE_MANIFEST.json").write_text(json.dumps({"selected_count": 1, "copied_artifact_count": 1, "metadata_file_count": 2}, indent=2))
+            (package_root / "PACKAGE_MANIFEST.json").write_text(
+                json.dumps(
+                    {
+                        "selected_count": 1,
+                        "copied_artifact_count": 1,
+                        "metadata_file_count": 2,
+                    },
+                    indent=2,
+                )
+            )
             (package_root / "PACKAGE_INDEX.md").write_text("# package index\n")
-            package_zip = Path("storage/product_packages/v9_9_3_archive_smoke_package.zip")
+            package_zip = Path(
+                "storage/product_packages/v9_9_3_archive_smoke_package.zip"
+            )
             with zipfile.ZipFile(package_zip, "w") as zf:
                 zf.writestr("PACKAGE_MANIFEST.json", "{}")
                 zf.writestr("PACKAGE_INDEX.md", "# index\n")
@@ -84,10 +111,24 @@ def main() -> int:
             )
             published = response.get_json() if response.is_json else {}
             release_root = Path(published.get("release_path", ""))
-            ok = response.status_code == 200 and published.get("status") == "published" and release_root.exists()
-            print(("[PASS]" if ok else "[FAIL]"), "publish final release", response.status_code)
+            ok = (
+                response.status_code == 200
+                and published.get("status") == "published"
+                and release_root.exists()
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "publish final release",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("publish final release", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "publish final release",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
             response = client.post(
                 f"/api/v1/product/final-release/archive/{release_name}/create",
@@ -103,11 +144,22 @@ def main() -> int:
                 and zip_path.exists()
                 and tar_path.exists()
                 and integrity_path.exists()
-                and seal.get("integrity_manifest", {}).get("required_all_present") is True
+                and seal.get("integrity_manifest", {}).get("required_all_present")
+                is True
             )
-            print(("[PASS]" if ok else "[FAIL]"), "create archive integrity seal", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "create archive integrity seal",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("create archive integrity seal", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "create archive integrity seal",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             if zip_path.exists():
                 with zipfile.ZipFile(zip_path) as zf:
@@ -120,22 +172,53 @@ def main() -> int:
                 }
                 ok = (
                     required.issubset(entries)
-                    and any("V9_9_0_RELEASE_CANDIDATE_MANIFEST.json" in item for item in entries)
-                    and any("V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json" in item for item in entries)
-                    and any("release_candidate_signoff_audit.json" in item for item in entries)
+                    and any(
+                        "V9_9_0_RELEASE_CANDIDATE_MANIFEST.json" in item
+                        for item in entries
+                    )
+                    and any(
+                        "V9_9_1_FINAL_PRODUCT_GATE_MANIFEST.json" in item
+                        for item in entries
+                    )
+                    and any(
+                        "release_candidate_signoff_audit.json" in item
+                        for item in entries
+                    )
                     and any(item.endswith(".zip") for item in entries)
                 )
-                print(("[PASS]" if ok else "[FAIL]"), "ZIP contains required release evidence")
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    "ZIP contains required release evidence",
+                )
                 if not ok:
-                    failures.append(("ZIP contains required release evidence", 0, json.dumps(sorted(entries), indent=2)[:3000]))
+                    failures.append(
+                        (
+                            "ZIP contains required release evidence",
+                            0,
+                            json.dumps(sorted(entries), indent=2)[:3000],
+                        )
+                    )
 
             if tar_path.exists():
                 with tarfile.open(tar_path, "r:gz") as tf:
                     entries = set(tf.getnames())
-                ok = "RELEASE_NOTES.md" in entries and "PUBLISH_MANIFEST.json" in entries and "INTEGRITY_MANIFEST.json" in entries
-                print(("[PASS]" if ok else "[FAIL]"), "TAR contains required release evidence")
+                ok = (
+                    "RELEASE_NOTES.md" in entries
+                    and "PUBLISH_MANIFEST.json" in entries
+                    and "INTEGRITY_MANIFEST.json" in entries
+                )
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    "TAR contains required release evidence",
+                )
                 if not ok:
-                    failures.append(("TAR contains required release evidence", 0, json.dumps(sorted(entries), indent=2)[:3000]))
+                    failures.append(
+                        (
+                            "TAR contains required release evidence",
+                            0,
+                            json.dumps(sorted(entries), indent=2)[:3000],
+                        )
+                    )
 
             if integrity_path.exists():
                 integrity = json.loads(integrity_path.read_text())
@@ -146,26 +229,68 @@ def main() -> int:
                 )
                 print(("[PASS]" if ok else "[FAIL]"), "integrity manifest checksums")
                 if not ok:
-                    failures.append(("integrity manifest checksums", 0, json.dumps(integrity, indent=2)[:3000]))
+                    failures.append(
+                        (
+                            "integrity manifest checksums",
+                            0,
+                            json.dumps(integrity, indent=2)[:3000],
+                        )
+                    )
 
             response = client.get("/api/v1/product/final-release/archives")
             payload = response.get_json() if response.is_json else {}
-            found = any(item.get("release_name") == release_name and item.get("archive_zip_exists") for item in payload.get("releases", []))
-            ok = response.status_code == 200 and payload.get("version") == "9.9.3" and found
-            print(("[PASS]" if ok else "[FAIL]"), "GET archive inventory", response.status_code)
+            found = any(
+                item.get("release_name") == release_name
+                and item.get("archive_zip_exists")
+                for item in payload.get("releases", [])
+            )
+            ok = (
+                response.status_code == 200
+                and payload.get("version") == "9.9.3"
+                and found
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET archive inventory",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET archive inventory", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "GET archive inventory",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
-            response = client.get(f"/product/final-release/archive/download/{release_name}.zip")
+            response = client.get(
+                f"/product/final-release/archive/download/{release_name}.zip"
+            )
             ok = response.status_code == 200 and response.data[:2] == b"PK"
-            print(("[PASS]" if ok else "[FAIL]"), "download archive ZIP", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "download archive ZIP",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("download archive ZIP", response.status_code, response.get_data(as_text=True)[:1000]))
+                failures.append(
+                    (
+                        "download archive ZIP",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1000],
+                    )
+                )
 
             response = client.get("/product/final-release/archive")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Final Release Archive + Integrity Seal" in body and release_name in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET archive UI", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Final Release Archive + Integrity Seal" in body
+                and release_name in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"), "GET archive UI", response.status_code
+            )
             if not ok:
                 failures.append(("GET archive UI", response.status_code, body[:2000]))
 

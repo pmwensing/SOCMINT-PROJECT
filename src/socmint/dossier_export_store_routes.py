@@ -34,7 +34,11 @@ def register_dossier_export_store_routes(app):
     def api_dossier_export_manifest(case_id: str, subject_id: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
-        return jsonify(load_export_manifest(subject_id=subject_id, case_id=case_id, actor=_actor(), audit=True))
+        return jsonify(
+            load_export_manifest(
+                subject_id=subject_id, case_id=case_id, actor=_actor(), audit=True
+            )
+        )
 
     @app.get("/api/v1/dossier-builder/v3/export-store/<case_id>/<subject_id>/summary")
     def api_dossier_export_store_summary(case_id: str, subject_id: str):

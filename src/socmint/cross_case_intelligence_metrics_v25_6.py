@@ -71,9 +71,7 @@ def build_cross_case_intelligence_metrics(
 
     correlation_sections = candidates.get("correlations") or {}
     candidate_items = [
-        item
-        for section in correlation_sections.values()
-        for item in section or []
+        item for section in correlation_sections.values() for item in section or []
     ]
     candidate_ids = {
         str(item.get("correlation_id"))
@@ -95,7 +93,9 @@ def build_cross_case_intelligence_metrics(
     }
 
     review_histories = registry.get("review_histories") or {}
-    reviews = [review for history in review_histories.values() for review in history or []]
+    reviews = [
+        review for history in review_histories.values() for review in history or []
+    ]
     latest_reviews = [history[-1] for history in review_histories.values() if history]
     disposition_counts = Counter(
         str(review.get("decision") or "unknown") for review in reviews
@@ -120,13 +120,19 @@ def build_cross_case_intelligence_metrics(
     analyst_throughput = []
     for analyst in sorted(analyst_counts):
         active_days = max(1, len(analyst_dates[analyst]))
-        analyst_throughput.append({
-            "analyst": analyst,
-            "review_count": analyst_counts[analyst],
-            "active_review_days": len(analyst_dates[analyst]),
-            "reviews_per_active_day": round(analyst_counts[analyst] / active_days, 2),
-            "disposition_counts": dict(sorted(analyst_dispositions[analyst].items())),
-        })
+        analyst_throughput.append(
+            {
+                "analyst": analyst,
+                "review_count": analyst_counts[analyst],
+                "active_review_days": len(analyst_dates[analyst]),
+                "reviews_per_active_day": round(
+                    analyst_counts[analyst] / active_days, 2
+                ),
+                "disposition_counts": dict(
+                    sorted(analyst_dispositions[analyst].items())
+                ),
+            }
+        )
 
     confirmed_links = registry.get("confirmed_links") or []
     confirmed_link_ids = {
@@ -140,7 +146,10 @@ def build_cross_case_intelligence_metrics(
         for case_id in link.get("case_ids") or []
     }
     confirmed_occurrences = sum(
-        int(link.get("source_occurrence_count") or len(link.get("source_occurrences") or []))
+        int(
+            link.get("source_occurrence_count")
+            or len(link.get("source_occurrences") or [])
+        )
         for link in confirmed_links
     )
     accepted_reviews = int(disposition_counts.get("accept", 0))
@@ -150,7 +159,9 @@ def build_cross_case_intelligence_metrics(
     edges = graph.get("graph", {}).get("edges") or []
     node_count = len(nodes)
     edge_count = len(edges)
-    possible_undirected_edges = (node_count * (node_count - 1)) / 2 if node_count > 1 else 0
+    possible_undirected_edges = (
+        (node_count * (node_count - 1)) / 2 if node_count > 1 else 0
+    )
     density_percent = min(100.0, _percent(edge_count, possible_undirected_edges))
     degree_counts: Counter[str] = Counter()
     for edge in edges:
@@ -189,17 +200,19 @@ def build_cross_case_intelligence_metrics(
             )
         )
         impact_breadth_values.append(float(breadth))
-        impact_rows.append({
-            "confirmed_link_id": link_id,
-            "impact_sha256": impact.get("impact_sha256"),
-            "breadth_score": breadth,
-            "affected_cases": counts.get("affected_cases", 0),
-            "affected_entities": counts.get("affected_entities", 0),
-            "evidence_packages": counts.get("evidence_packages", 0),
-            "review_queue_entries": counts.get("review_queue_entries", 0),
-            "closure_states": counts.get("closure_states", 0),
-            "archive_records": counts.get("archive_records", 0),
-        })
+        impact_rows.append(
+            {
+                "confirmed_link_id": link_id,
+                "impact_sha256": impact.get("impact_sha256"),
+                "breadth_score": breadth,
+                "affected_cases": counts.get("affected_cases", 0),
+                "affected_entities": counts.get("affected_entities", 0),
+                "evidence_packages": counts.get("evidence_packages", 0),
+                "review_queue_entries": counts.get("review_queue_entries", 0),
+                "closure_states": counts.get("closure_states", 0),
+                "archive_records": counts.get("archive_records", 0),
+            }
+        )
 
     review_coverage = min(
         100.0,
@@ -239,9 +252,13 @@ def build_cross_case_intelligence_metrics(
         "candidate_volume": {
             "total": len(candidate_items),
             "by_category": candidate_by_category,
-            "repeated_patterns": int(candidates.get("counts", {}).get("repeated_patterns") or 0),
+            "repeated_patterns": int(
+                candidates.get("counts", {}).get("repeated_patterns") or 0
+            ),
             "visible_cases": visible_cases,
-            "source_records": int(candidates.get("counts", {}).get("source_records") or 0),
+            "source_records": int(
+                candidates.get("counts", {}).get("source_records") or 0
+            ),
         },
         "review_dispositions": {
             "total_reviews": len(reviews),
@@ -273,7 +290,9 @@ def build_cross_case_intelligence_metrics(
             "confirmed_case_reach_percent": cross_case_reach,
             "average_cases_per_confirmed_link": _mean(cases_per_confirmed_link),
             "median_cases_per_confirmed_link": _median(cases_per_confirmed_link),
-            "maximum_cases_per_confirmed_link": int(max(cases_per_confirmed_link)) if cases_per_confirmed_link else 0,
+            "maximum_cases_per_confirmed_link": int(max(cases_per_confirmed_link))
+            if cases_per_confirmed_link
+            else 0,
         },
         "source_occurrence_coverage": {
             "candidate_occurrences": candidate_occurrences,
@@ -284,7 +303,9 @@ def build_cross_case_intelligence_metrics(
             "analyzed_links": len(impact_rows),
             "average_breadth_score": _mean(impact_breadth_values),
             "median_breadth_score": _median(impact_breadth_values),
-            "maximum_breadth_score": int(max(impact_breadth_values)) if impact_breadth_values else 0,
+            "maximum_breadth_score": int(max(impact_breadth_values))
+            if impact_breadth_values
+            else 0,
             "links": impact_rows,
         },
         "analyst_throughput": {
@@ -306,8 +327,12 @@ def build_cross_case_intelligence_metrics(
         "status": "ready",
         "generated_at": generated_at.isoformat(),
         "access_scope": {
-            "mode": "restricted" if allowed_case_ids is not None else "all_visible_cases",
-            "allowed_case_ids": sorted(allowed_case_ids) if allowed_case_ids is not None else None,
+            "mode": "restricted"
+            if allowed_case_ids is not None
+            else "all_visible_cases",
+            "allowed_case_ids": sorted(allowed_case_ids)
+            if allowed_case_ids is not None
+            else None,
         },
         "metrics": metrics_core,
         "metrics_sha256": _sha(metrics_core),

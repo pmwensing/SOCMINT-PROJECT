@@ -35,8 +35,12 @@ def _evidence():
 
 
 def test_v10_11_artifact_digest_summary_lists_hashes(tmp_path):
-    persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True)
-    summary = artifact_digest_summary("subject-cert-1011", "case-cert-1011", root=tmp_path)
+    persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True
+    )
+    summary = artifact_digest_summary(
+        "subject-cert-1011", "case-cert-1011", root=tmp_path
+    )
 
     assert summary["schema"] == "socmint.dossier_export_certification.v10_11_0"
     assert summary["status"] == "ready"
@@ -45,10 +49,18 @@ def test_v10_11_artifact_digest_summary_lists_hashes(tmp_path):
 
 
 def test_v10_11_certification_bundle_certifies_when_gate_allows(tmp_path):
-    persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True)
-    bundle = export_certification_bundle("subject-cert-1011", "case-cert-1011", root=tmp_path)
-    summary = export_certification_summary("subject-cert-1011", "case-cert-1011", root=tmp_path)
-    statement = export_certification_statement("subject-cert-1011", "case-cert-1011", root=tmp_path)
+    persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=True
+    )
+    bundle = export_certification_bundle(
+        "subject-cert-1011", "case-cert-1011", root=tmp_path
+    )
+    summary = export_certification_summary(
+        "subject-cert-1011", "case-cert-1011", root=tmp_path
+    )
+    statement = export_certification_statement(
+        "subject-cert-1011", "case-cert-1011", root=tmp_path
+    )
 
     assert bundle["schema"] == "socmint.dossier_export_certification.v10_11_0"
     assert bundle["status"] == "certified"
@@ -60,10 +72,18 @@ def test_v10_11_certification_bundle_certifies_when_gate_allows(tmp_path):
 
 
 def test_v10_11_certification_blocks_without_audit_coverage(tmp_path):
-    persist_export_pack(_subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False)
-    bundle = export_certification_bundle("subject-cert-1011", "case-cert-1011", root=tmp_path)
-    summary = export_certification_summary("subject-cert-1011", "case-cert-1011", root=tmp_path)
-    statement = export_certification_statement("subject-cert-1011", "case-cert-1011", root=tmp_path)
+    persist_export_pack(
+        _subject(), _evidence(), analyst_reviewed=True, root=tmp_path, audit=False
+    )
+    bundle = export_certification_bundle(
+        "subject-cert-1011", "case-cert-1011", root=tmp_path
+    )
+    summary = export_certification_summary(
+        "subject-cert-1011", "case-cert-1011", root=tmp_path
+    )
+    statement = export_certification_statement(
+        "subject-cert-1011", "case-cert-1011", root=tmp_path
+    )
 
     assert bundle["status"] == "not_certified"
     assert bundle["certified"] is False
@@ -75,6 +95,15 @@ def test_v10_11_certification_blocks_without_audit_coverage(tmp_path):
 def test_v10_11_certification_routes_are_registered():
     routes = {rule.rule for rule in app.url_map.iter_rules()}
 
-    assert "/api/v1/dossier-builder/v3/export-certification/<case_id>/<subject_id>" in routes
-    assert "/api/v1/dossier-builder/v3/export-certification/<case_id>/<subject_id>/summary" in routes
-    assert "/api/v1/dossier-builder/v3/export-certification/<case_id>/<subject_id>/statement" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/export-certification/<case_id>/<subject_id>"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/export-certification/<case_id>/<subject_id>/summary"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/export-certification/<case_id>/<subject_id>/statement"
+        in routes
+    )

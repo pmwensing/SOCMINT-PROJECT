@@ -1,4 +1,6 @@
-from socmint.claim_evidence_ledger_ui_routes_v13 import register_claim_evidence_ledger_ui_routes
+from socmint.claim_evidence_ledger_ui_routes_v13 import (
+    register_claim_evidence_ledger_ui_routes,
+)
 from socmint.dashboard import create_app
 
 

@@ -2,13 +2,21 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.socmint.case_delivery_recovery_action_receipt_v16_4 import build_case_delivery_recovery_action_receipt
-from src.socmint.case_delivery_recovery_closure_audit_package_v16_8 import build_case_delivery_recovery_closure_audit_package
+from src.socmint.case_delivery_recovery_action_receipt_v16_4 import (
+    build_case_delivery_recovery_action_receipt,
+)
+from src.socmint.case_delivery_recovery_closure_audit_package_v16_8 import (
+    build_case_delivery_recovery_closure_audit_package,
+)
 from src.socmint.case_delivery_recovery_closure_audit_package_verification_v16_9 import (
     verify_case_delivery_recovery_closure_audit_package,
 )
-from src.socmint.case_delivery_recovery_closure_record_v16_6 import build_case_delivery_recovery_closure_record
-from src.socmint.case_delivery_recovery_closure_record_verification_v16_7 import verify_case_delivery_recovery_closure_record
+from src.socmint.case_delivery_recovery_closure_record_v16_6 import (
+    build_case_delivery_recovery_closure_record,
+)
+from src.socmint.case_delivery_recovery_closure_record_verification_v16_7 import (
+    verify_case_delivery_recovery_closure_record,
+)
 from src.socmint.case_delivery_recovery_finalization_record_v16_10 import (
     CASE_DELIVERY_RECOVERY_FINALIZATION_RECORD_SCHEMA,
 )
@@ -16,7 +24,9 @@ from src.socmint.case_delivery_recovery_finalization_record_v16_10 import (
     build_case_delivery_recovery_finalization_record,
 )
 from src.socmint.case_delivery_recovery_v16_3 import build_case_delivery_recovery
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
 from tests.test_v15_case_delivery_workspace import ready_payload
 
@@ -54,8 +64,12 @@ def _finalization_artifacts():
             ],
         },
     )["receipt"]
-    closure = build_case_delivery_recovery_closure_record(recovery, receipt, closer="delivery-owner")["closure"]
-    closure_verification = verify_case_delivery_recovery_closure_record(closure, recovery, receipt)
+    closure = build_case_delivery_recovery_closure_record(
+        recovery, receipt, closer="delivery-owner"
+    )["closure"]
+    closure_verification = verify_case_delivery_recovery_closure_record(
+        closure, recovery, receipt
+    )
     audit_package = build_case_delivery_recovery_closure_audit_package(
         recovery,
         receipt,
@@ -74,7 +88,9 @@ def _finalization_artifacts():
 
 
 def test_case_delivery_recovery_finalization_record_finalizes_verified_audit_package():
-    recovery, receipt, closure, audit_package, audit_verification = _finalization_artifacts()
+    recovery, receipt, closure, audit_package, audit_verification = (
+        _finalization_artifacts()
+    )
 
     result = build_case_delivery_recovery_finalization_record(
         recovery,
@@ -100,7 +116,9 @@ def test_case_delivery_recovery_finalization_record_finalizes_verified_audit_pac
 
 
 def test_case_delivery_recovery_finalization_record_id_is_deterministic_and_finalizer_sensitive():
-    recovery, receipt, closure, audit_package, audit_verification = _finalization_artifacts()
+    recovery, receipt, closure, audit_package, audit_verification = (
+        _finalization_artifacts()
+    )
 
     first = build_case_delivery_recovery_finalization_record(
         recovery,
@@ -127,13 +145,25 @@ def test_case_delivery_recovery_finalization_record_id_is_deterministic_and_fina
         finalizer="other-owner",
     )
 
-    assert first["finalization"]["finalization_id"] == second["finalization"]["finalization_id"]
-    assert first["finalization"]["finalization_id"] != changed["finalization"]["finalization_id"]
+    assert (
+        first["finalization"]["finalization_id"]
+        == second["finalization"]["finalization_id"]
+    )
+    assert (
+        first["finalization"]["finalization_id"]
+        != changed["finalization"]["finalization_id"]
+    )
 
 
 def test_case_delivery_recovery_finalization_record_blocks_failed_audit_verification():
-    recovery, receipt, closure, audit_package, _audit_verification = _finalization_artifacts()
-    failed_verification = {"status": "blocked", "verified": False, "blockers": [{"key": "tampered", "detail": "tampered"}]}
+    recovery, receipt, closure, audit_package, _audit_verification = (
+        _finalization_artifacts()
+    )
+    failed_verification = {
+        "status": "blocked",
+        "verified": False,
+        "blockers": [{"key": "tampered", "detail": "tampered"}],
+    }
 
     result = build_case_delivery_recovery_finalization_record(
         recovery,
@@ -148,11 +178,15 @@ def test_case_delivery_recovery_finalization_record_blocks_failed_audit_verifica
     assert result["finalized"] is False
     assert result["ready_for_delivery_continuation"] is False
     assert result["finalization"] is None
-    assert any(blocker["key"] == "audit_verification_blocked" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "audit_verification_blocked" for blocker in result["blockers"]
+    )
 
 
 def test_case_delivery_recovery_finalization_record_blocks_linkage_mismatch():
-    recovery, receipt, closure, audit_package, audit_verification = _finalization_artifacts()
+    recovery, receipt, closure, audit_package, audit_verification = (
+        _finalization_artifacts()
+    )
     tampered_package = {**audit_package, "receipt_id": "other-receipt"}
 
     result = build_case_delivery_recovery_finalization_record(
@@ -165,10 +199,15 @@ def test_case_delivery_recovery_finalization_record_blocks_linkage_mismatch():
     )
 
     assert result["status"] == "blocked"
-    assert any(blocker["key"] == "audit_package_receipt_mismatch" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "audit_package_receipt_mismatch"
+        for blocker in result["blockers"]
+    )
 
 
-def test_case_delivery_recovery_finalization_record_route_requires_login(tmp_path, monkeypatch):
+def test_case_delivery_recovery_finalization_record_route_requires_login(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -184,7 +223,9 @@ def test_case_delivery_recovery_finalization_record_route_requires_login(tmp_pat
     assert response.status_code == 401
 
 
-def test_case_delivery_recovery_finalization_record_route_returns_finalized(tmp_path, monkeypatch):
+def test_case_delivery_recovery_finalization_record_route_returns_finalized(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -194,7 +235,9 @@ def test_case_delivery_recovery_finalization_record_route_returns_finalized(tmp_
         sess["is_admin"] = False
         sess["_csrf_token"] = "test-csrf"
 
-    recovery, receipt, closure, audit_package, audit_verification = _finalization_artifacts()
+    recovery, receipt, closure, audit_package, audit_verification = (
+        _finalization_artifacts()
+    )
     response = client.post(
         "/api/v1/case-delivery/case-1/recovery-finalization-record",
         json={
@@ -217,7 +260,9 @@ def test_case_delivery_recovery_finalization_record_route_returns_finalized(tmp_
 
 
 def test_v16_10_release_note_and_changelog_are_present():
-    note = Path("release/V16_10_DELIVERY_RECOVERY_FINALIZATION_RECORD.md").read_text(encoding="utf-8")
+    note = Path("release/V16_10_DELIVERY_RECOVERY_FINALIZATION_RECORD.md").read_text(
+        encoding="utf-8"
+    )
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "/api/v1/case-delivery/<case_id>/recovery-finalization-record" in note

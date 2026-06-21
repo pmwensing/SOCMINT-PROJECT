@@ -5,14 +5,18 @@ from src.socmint.security_audit import validate_secret_value
 
 
 def test_secret_scanner_detects_realistic_tokens():
-    findings = scan_text_for_secrets("STRIPE_SECRET=sk_test_1234567890abcdefABCDEF", "sample.env")
+    findings = scan_text_for_secrets(
+        "STRIPE_SECRET=sk_test_1234567890abcdefABCDEF", "sample.env"
+    )
     assert findings
     assert findings[0]["type"] in {"stripe_secret", "generic_password_assignment"}
     assert "sample.env" == findings[0]["path"]
 
 
 def test_secret_scanner_ignores_documented_placeholders():
-    findings = scan_text_for_secrets("SOCMINT_SECRET_KEY=replace-with-a-long-random-secret", ".env.example")
+    findings = scan_text_for_secrets(
+        "SOCMINT_SECRET_KEY=replace-with-a-long-random-secret", ".env.example"
+    )
     assert findings == []
 
 

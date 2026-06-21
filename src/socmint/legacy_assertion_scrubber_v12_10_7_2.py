@@ -56,7 +56,9 @@ def assertion_promotion_gate(assertion: dict[str, Any]) -> dict[str, Any]:
         "original_type": assertion_type,
         "safe_type": safe_type,
         "reason_labels": sorted(set(reason_labels)),
-        "ui_badge": "Legacy assertion suppressed: not identity evidence" if blocked else "Assertion allowed",
+        "ui_badge": "Legacy assertion suppressed: not identity evidence"
+        if blocked
+        else "Assertion allowed",
     }
 
 
@@ -77,14 +79,32 @@ def apply_assertion_scrub_gate(assertion: dict[str, Any]) -> dict[str, Any]:
     return assertion
 
 
-def apply_assertion_scrub_gates(assertions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def apply_assertion_scrub_gates(
+    assertions: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     return [apply_assertion_scrub_gate(item) for item in assertions]
 
 
-def scrub_summary(assertions: list[dict[str, Any]], observations: list[dict[str, Any]] | None = None, alias_graph: dict[str, Any] | None = None) -> dict[str, Any]:
-    blocked_assertions = sum(1 for item in assertions if item.get("legacy_assertion_scrub", {}).get("blocked"))
-    blocked_observations = sum(1 for item in observations or [] if item.get("promotion_blocked") or item.get("promotion_gate", {}).get("blocked"))
-    blocked_aliases = int(((alias_graph or {}).get("promotion_gates") or {}).get("blocked_alias_count", 0) or 0)
+def scrub_summary(
+    assertions: list[dict[str, Any]],
+    observations: list[dict[str, Any]] | None = None,
+    alias_graph: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    blocked_assertions = sum(
+        1
+        for item in assertions
+        if item.get("legacy_assertion_scrub", {}).get("blocked")
+    )
+    blocked_observations = sum(
+        1
+        for item in observations or []
+        if item.get("promotion_blocked")
+        or item.get("promotion_gate", {}).get("blocked")
+    )
+    blocked_aliases = int(
+        ((alias_graph or {}).get("promotion_gates") or {}).get("blocked_alias_count", 0)
+        or 0
+    )
 
     reason_counts: dict[str, int] = {}
     for item in assertions:
@@ -93,7 +113,9 @@ def scrub_summary(assertions: list[dict[str, Any]], observations: list[dict[str,
     for item in observations or []:
         for reason in item.get("promotion_block_reason_labels") or []:
             reason_counts[reason] = reason_counts.get(reason, 0) + 1
-    for reason, count in (((alias_graph or {}).get("promotion_gates") or {}).get("reason_counts") or {}).items():
+    for reason, count in (
+        ((alias_graph or {}).get("promotion_gates") or {}).get("reason_counts") or {}
+    ).items():
         reason_counts[reason] = reason_counts.get(reason, 0) + int(count or 0)
 
     return {
@@ -101,13 +123,17 @@ def scrub_summary(assertions: list[dict[str, Any]], observations: list[dict[str,
         "blocked_assertion_count": blocked_assertions,
         "blocked_observation_count": blocked_observations,
         "blocked_alias_count": blocked_aliases,
-        "blocked_total_count": blocked_assertions + blocked_observations + blocked_aliases,
+        "blocked_total_count": blocked_assertions
+        + blocked_observations
+        + blocked_aliases,
         "reason_counts": reason_counts,
         "rule": "Legacy asset/CDN profile/url assertions and bogus phone-like assertions are suppressed before dossier use.",
     }
 
 
-def scrub_legacy_assertions(subject_id: int, actor: str | None = None, dry_run: bool = False) -> dict[str, Any]:
+def scrub_legacy_assertions(
+    subject_id: int, actor: str | None = None, dry_run: bool = False
+) -> dict[str, Any]:
     db.ensure_configured()
     session = db.Session()
     changed: list[dict[str, Any]] = []
@@ -149,7 +175,11 @@ def scrub_legacy_assertions(subject_id: int, actor: str | None = None, dry_run: 
 
             payload = safe_json(row.payload_json, {})
             payload["legacy_assertion_scrub"] = gate
-            payload["reason_labels"] = sorted(set((payload.get("reason_labels") or []) + gate.get("reason_labels", [])))
+            payload["reason_labels"] = sorted(
+                set(
+                    (payload.get("reason_labels") or []) + gate.get("reason_labels", [])
+                )
+            )
             payload["scrubbed_by"] = SCHEMA
             payload["scrub_actor"] = actor
 

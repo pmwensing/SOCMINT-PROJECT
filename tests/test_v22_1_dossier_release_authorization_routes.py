@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -26,12 +28,14 @@ def test_v22_1_authorization_route_and_ui(tmp_path, monkeypatch):
         },
         "approval_state": {"approval_id": "approval-1"},
         "integrity_state": {"content_sha256": "b" * 64},
-        "recipient_catalog": [{
-            "recipient_id": "recipient-1",
-            "display_name": "Authorized Recipient",
-            "organization": "Example Agency",
-            "allowed_channels": ["secure_portal"],
-        }],
+        "recipient_catalog": [
+            {
+                "recipient_id": "recipient-1",
+                "display_name": "Authorized Recipient",
+                "organization": "Example Agency",
+                "allowed_channels": ["secure_portal"],
+            }
+        ],
         "selected_recipient": None,
         "available_channels": ["secure_portal"],
         "selected_channel": None,
@@ -44,13 +48,19 @@ def test_v22_1_authorization_route_and_ui(tmp_path, monkeypatch):
             "handoff_context": {},
         },
     }
-    monkeypatch.setattr(routes, "build_dossier_release_workspace", lambda *a, **k: workspace)
+    monkeypatch.setattr(
+        routes, "build_dossier_release_workspace", lambda *a, **k: workspace
+    )
     monkeypatch.setattr(routes, "latest_release_authorization", lambda case_id: None)
-    monkeypatch.setattr(routes, "authorize_dossier_release", lambda *a, **k: {
-        "status": "authorized",
-        "authorization_record_id": 31,
-        "transmission_performed": False,
-    })
+    monkeypatch.setattr(
+        routes,
+        "authorize_dossier_release",
+        lambda *a, **k: {
+            "status": "authorized",
+            "authorization_record_id": 31,
+            "transmission_performed": False,
+        },
+    )
 
     client = _app(tmp_path, monkeypatch).test_client()
     with client.session_transaction() as sess:
@@ -78,8 +88,12 @@ def test_v22_1_authorization_route_and_ui(tmp_path, monkeypatch):
 
 
 def test_v22_1_release_note_client_and_no_migration():
-    note = Path("release/V22_1_RECIPIENT_DELIVERY_AUTHORIZATION.md").read_text(encoding="utf-8")
-    script = Path("src/socmint/static/dossier_release_workspace_v22_0.js").read_text(encoding="utf-8")
+    note = Path("release/V22_1_RECIPIENT_DELIVERY_AUTHORIZATION.md").read_text(
+        encoding="utf-8"
+    )
+    script = Path("src/socmint/static/dossier_release_workspace_v22_0.js").read_text(
+        encoding="utf-8"
+    )
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

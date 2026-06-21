@@ -42,14 +42,20 @@ def _record_for_model(obj: Any) -> dict[str, Any]:
 
 def _apply_scope(obj: Any, scoped: dict[str, Any]) -> bool:
     changed = False
-    for attr in ["correlation_scope_id", "correlation_scope_state", "correlation_scope_reason"]:
+    for attr in [
+        "correlation_scope_id",
+        "correlation_scope_state",
+        "correlation_scope_reason",
+    ]:
         if hasattr(obj, attr) and getattr(obj, attr, None) != scoped.get(attr):
             setattr(obj, attr, scoped.get(attr))
             changed = True
     return changed
 
 
-def backfill_correlation_scopes(limit_per_table: int = 10000, commit: bool = True) -> dict[str, Any]:
+def backfill_correlation_scopes(
+    limit_per_table: int = 10000, commit: bool = True
+) -> dict[str, Any]:
     db.ensure_configured()
     summary: dict[str, Any] = {
         "schema": SCHEMA,
@@ -90,14 +96,20 @@ def db_scope_proof_payload(limit_per_table: int = 1000) -> dict[str, Any]:
         "version": VERSION,
         "status": "ok",
         "tables": {},
-        "scope_columns": ["correlation_scope_id", "correlation_scope_state", "correlation_scope_reason"],
+        "scope_columns": [
+            "correlation_scope_id",
+            "correlation_scope_state",
+            "correlation_scope_reason",
+        ],
         "quarantine_first": True,
     }
 
     with db.Session() as session:
         for table_name, model in MODEL_TABLES:
             rows = session.query(model).limit(limit_per_table).all()
-            scoped_count = sum(1 for row in rows if getattr(row, "correlation_scope_id", None))
+            scoped_count = sum(
+                1 for row in rows if getattr(row, "correlation_scope_id", None)
+            )
             payload["tables"][table_name] = {
                 "row_count_sampled": len(rows),
                 "scoped_count": scoped_count,
@@ -106,9 +118,15 @@ def db_scope_proof_payload(limit_per_table: int = 1000) -> dict[str, Any]:
                     {
                         "id": getattr(row, "id", None),
                         "subject_id": getattr(row, "subject_id", None),
-                        "correlation_scope_id": getattr(row, "correlation_scope_id", None),
-                        "correlation_scope_state": getattr(row, "correlation_scope_state", None),
-                        "correlation_scope_reason": getattr(row, "correlation_scope_reason", None),
+                        "correlation_scope_id": getattr(
+                            row, "correlation_scope_id", None
+                        ),
+                        "correlation_scope_state": getattr(
+                            row, "correlation_scope_state", None
+                        ),
+                        "correlation_scope_reason": getattr(
+                            row, "correlation_scope_reason", None
+                        ),
                     }
                     for row in rows[:5]
                 ],
@@ -118,20 +136,24 @@ def db_scope_proof_payload(limit_per_table: int = 1000) -> dict[str, Any]:
 
 
 def two_initial_search_db_isolation_proof() -> dict[str, Any]:
-    first = backfill_record_scope({
-        "subject_id": "subject-demo",
-        "seed_id": "seed-a",
-        "connector_run_id": "run-a",
-        "finding_type": "profile_url",
-        "value": "https://social.example/alex-smith",
-    })
-    second = backfill_record_scope({
-        "subject_id": "subject-demo",
-        "seed_id": "seed-b",
-        "connector_run_id": "run-b",
-        "finding_type": "profile_url",
-        "value": "https://social.example/alex-smith",
-    })
+    first = backfill_record_scope(
+        {
+            "subject_id": "subject-demo",
+            "seed_id": "seed-a",
+            "connector_run_id": "run-a",
+            "finding_type": "profile_url",
+            "value": "https://social.example/alex-smith",
+        }
+    )
+    second = backfill_record_scope(
+        {
+            "subject_id": "subject-demo",
+            "seed_id": "seed-b",
+            "connector_run_id": "run-b",
+            "finding_type": "profile_url",
+            "value": "https://social.example/alex-smith",
+        }
+    )
 
     decision = scoped_promotion_decision(
         finding_record=second,

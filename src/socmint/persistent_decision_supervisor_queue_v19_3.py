@@ -171,7 +171,9 @@ def build_persistent_decision_supervisor_queue(
                     "review_state": details.get("review_state") or "unreviewed",
                     "review_note": details.get("review_note") or "",
                     "legacy_reviewer": row.actor,
-                    "reviewed_at": row.created_at.isoformat() if row.created_at else None,
+                    "reviewed_at": row.created_at.isoformat()
+                    if row.created_at
+                    else None,
                 }
         latest_assignments: dict[int, dict[str, Any]] = {}
         for row in assignments:
@@ -182,7 +184,9 @@ def build_persistent_decision_supervisor_queue(
                     "assigned_reviewer": details.get("assigned_reviewer"),
                     "assignment_note": details.get("assignment_note") or "",
                     "assigned_by": row.actor,
-                    "assigned_at": row.created_at.isoformat() if row.created_at else None,
+                    "assigned_at": row.created_at.isoformat()
+                    if row.created_at
+                    else None,
                     "assignment_record_id": row.id,
                 }
 

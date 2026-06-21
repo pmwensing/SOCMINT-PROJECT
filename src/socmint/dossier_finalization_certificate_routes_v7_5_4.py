@@ -23,7 +23,12 @@ def _unwrap_report(payload: dict) -> tuple[dict, str | None, str | None, str | N
             payload.get("reviewer"),
             payload.get("notes"),
         )
-    return payload, payload.get("packet_name"), payload.get("reviewer"), payload.get("notes")
+    return (
+        payload,
+        payload.get("packet_name"),
+        payload.get("reviewer"),
+        payload.get("notes"),
+    )
 
 
 def _zip_certificate_from_payload(payload: dict) -> dict:
@@ -33,13 +38,19 @@ def _zip_certificate_from_payload(payload: dict) -> dict:
     notes = payload.get("notes")
     if not isinstance(encoded, str) or not encoded.strip():
         report = _failed_base64_report("zip_base64 is missing or empty.")
-        return build_verification_certificate(report, packet_name=packet_name, reviewer=reviewer, notes=notes)
+        return build_verification_certificate(
+            report, packet_name=packet_name, reviewer=reviewer, notes=notes
+        )
     try:
         zip_bytes = base64.b64decode(encoded, validate=True)
     except Exception:
         report = _failed_base64_report("zip_base64 is invalid base64.")
-        return build_verification_certificate(report, packet_name=packet_name, reviewer=reviewer, notes=notes)
-    return build_certificate_from_zip_bytes(zip_bytes, packet_name=packet_name, reviewer=reviewer, notes=notes)
+        return build_verification_certificate(
+            report, packet_name=packet_name, reviewer=reviewer, notes=notes
+        )
+    return build_certificate_from_zip_bytes(
+        zip_bytes, packet_name=packet_name, reviewer=reviewer, notes=notes
+    )
 
 
 def register_dossier_finalization_certificate_routes(app):
@@ -47,16 +58,28 @@ def register_dossier_finalization_certificate_routes(app):
     def api_finalization_certificate():
         payload = _request_payload()
         report, packet_name, reviewer, notes = _unwrap_report(payload)
-        return jsonify(build_verification_certificate(report, packet_name=packet_name, reviewer=reviewer, notes=notes))
+        return jsonify(
+            build_verification_certificate(
+                report, packet_name=packet_name, reviewer=reviewer, notes=notes
+            )
+        )
 
-    @app.post("/api/v1/dossier-builder/v3/intelligence/finalization/certificate/markdown")
+    @app.post(
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/markdown"
+    )
     def api_finalization_certificate_markdown():
         payload = _request_payload()
         report, packet_name, reviewer, notes = _unwrap_report(payload)
-        certificate = build_verification_certificate(report, packet_name=packet_name, reviewer=reviewer, notes=notes)
-        return Response(render_certificate_markdown(certificate), mimetype="text/markdown")
+        certificate = build_verification_certificate(
+            report, packet_name=packet_name, reviewer=reviewer, notes=notes
+        )
+        return Response(
+            render_certificate_markdown(certificate), mimetype="text/markdown"
+        )
 
-    @app.post("/api/v1/dossier-builder/v3/intelligence/finalization/certificate/from-zip")
+    @app.post(
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/from-zip"
+    )
     def api_finalization_certificate_from_zip():
         return jsonify(_zip_certificate_from_payload(_request_payload()))
 

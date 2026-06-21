@@ -18,7 +18,12 @@ STRICT_MUTATION_PREFIXES = (
     "/api/v1/admin",
 )
 
-EXPORT_ROUTES = ("/api/v1/exports", "export-preflight", "ultimate-dossier", "export-quality")
+EXPORT_ROUTES = (
+    "/api/v1/exports",
+    "export-preflight",
+    "ultimate-dossier",
+    "export-quality",
+)
 
 
 def _requires_strict_review(row: dict[str, Any]) -> bool:
@@ -36,16 +41,32 @@ def route_enforcement_report(app) -> dict[str, Any]:
         route = row.get("route", "")
         if _requires_strict_review(row):
             if not row.get("auth_required"):
-                violations.append({"route": route, "issue": "mutating route missing auth requirement"})
+                violations.append(
+                    {"route": route, "issue": "mutating route missing auth requirement"}
+                )
             if row.get("responsible_use_required") and not row.get("quota_key"):
-                warnings.append({"route": route, "issue": "responsible-use mutation has no inferred quota key"})
+                warnings.append(
+                    {
+                        "route": route,
+                        "issue": "responsible-use mutation has no inferred quota key",
+                    }
+                )
             if not row.get("audit_event_required"):
-                violations.append({"route": route, "issue": "mutating route missing audit requirement"})
+                violations.append(
+                    {
+                        "route": route,
+                        "issue": "mutating route missing audit requirement",
+                    }
+                )
         if any(marker in route for marker in EXPORT_ROUTES) and row.get("mutating"):
             if not row.get("auth_required"):
-                violations.append({"route": route, "issue": "export mutation must require auth"})
+                violations.append(
+                    {"route": route, "issue": "export mutation must require auth"}
+                )
             if not row.get("audit_event_required"):
-                violations.append({"route": route, "issue": "export mutation must require audit"})
+                violations.append(
+                    {"route": route, "issue": "export mutation must require audit"}
+                )
 
     status = "pass" if not violations else "fail"
     return {

@@ -96,10 +96,13 @@ def build_search_reporting_product_review(
     for route in routes or []:
         rule = str(getattr(route, "rule", route))
         methods = getattr(route, "methods", None)
-        method_tuple = tuple(sorted(
-            method for method in (methods or {"UNKNOWN"})
-            if method not in {"HEAD", "OPTIONS"}
-        ))
+        method_tuple = tuple(
+            sorted(
+                method
+                for method in (methods or {"UNKNOWN"})
+                if method not in {"HEAD", "OPTIONS"}
+            )
+        )
         route_rules.add(rule)
         route_keys.append((rule, method_tuple))
 
@@ -126,7 +129,9 @@ def build_search_reporting_product_review(
         if path.is_file() and "v27" in path.name.lower()
     )
     if migrations:
-        blockers.append({"key": "unexpected_v27_migration", "detail": ", ".join(migrations)})
+        blockers.append(
+            {"key": "unexpected_v27_migration", "detail": ", ".join(migrations)}
+        )
 
     journey = [
         {"step": "global_search", "route": "/global-search"},
@@ -163,5 +168,7 @@ def build_search_reporting_product_review(
         "source_records_mutated": False,
         "checkpoint_record_created": False,
         "v27_closed_when_browser_e2e_passes": True,
-        "next_action": "run_v27_browser_e2e" if not blockers else "resolve_v27_product_blockers",
+        "next_action": "run_v27_browser_e2e"
+        if not blockers
+        else "resolve_v27_product_blockers",
     }

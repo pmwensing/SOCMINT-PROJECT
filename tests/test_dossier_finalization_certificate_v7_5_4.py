@@ -2,9 +2,15 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from socmint.dossier_finalization_certificate_v7_5_4 import build_certificate_from_packet
-from socmint.dossier_finalization_certificate_v7_5_4 import build_certificate_from_zip_bytes
-from socmint.dossier_finalization_certificate_v7_5_4 import build_verification_certificate
+from socmint.dossier_finalization_certificate_v7_5_4 import (
+    build_certificate_from_packet,
+)
+from socmint.dossier_finalization_certificate_v7_5_4 import (
+    build_certificate_from_zip_bytes,
+)
+from socmint.dossier_finalization_certificate_v7_5_4 import (
+    build_verification_certificate,
+)
 from socmint.dossier_finalization_certificate_v7_5_4 import certificate_digest
 from socmint.dossier_finalization_certificate_v7_5_4 import render_certificate_markdown
 from socmint.dossier_finalization_certificate_v7_5_4 import summarize_certificate
@@ -15,9 +21,25 @@ from socmint.dossier_finalization_export_v7_5_2 import build_finalization_export
 def base_payload():
     return {
         "quality_gate": {"status": "pass", "finding_count": 0},
-        "export_enforcement": {"status": "allowed", "allowed": True, "final_export_blocked": False},
-        "evidence_manifest": {"status": "pass", "appendix_summary": {"missing_ref_count": 0, "missing_hash_count": 0, "missing_source_count": 0}},
-        "identity_confidence": {"status": "pass", "contradiction_count": 0, "low_confidence_count": 0, "needs_review_count": 0},
+        "export_enforcement": {
+            "status": "allowed",
+            "allowed": True,
+            "final_export_blocked": False,
+        },
+        "evidence_manifest": {
+            "status": "pass",
+            "appendix_summary": {
+                "missing_ref_count": 0,
+                "missing_hash_count": 0,
+                "missing_source_count": 0,
+            },
+        },
+        "identity_confidence": {
+            "status": "pass",
+            "contradiction_count": 0,
+            "low_confidence_count": 0,
+            "needs_review_count": 0,
+        },
         "connector_compliance": {"status": "pass", "finding_count": 0},
         "policy_coverage": {"status": "pass", "finding_count": 0},
     }
@@ -42,7 +64,9 @@ def verified_report():
 
 def review_report():
     report = verified_report()
-    report.update({"status": "needs_human_review", "verified": False, "warning_count": 1})
+    report.update(
+        {"status": "needs_human_review", "verified": False, "warning_count": 1}
+    )
     report["warnings"] = [
         {
             "severity": "warn",
@@ -71,9 +95,13 @@ def failed_report():
 
 
 def test_builds_valid_certificate_from_verified_report():
-    cert = build_verification_certificate(verified_report(), packet_name="packet-a", reviewer="analyst")
+    cert = build_verification_certificate(
+        verified_report(), packet_name="packet-a", reviewer="analyst"
+    )
 
-    assert cert["schema"] == "socmint.v7_5_4.dossier_finalization_verification_certificate"
+    assert (
+        cert["schema"] == "socmint.v7_5_4.dossier_finalization_verification_certificate"
+    )
     assert cert["status"] == "valid"
     assert cert["valid"] is True
     assert cert["verification_status"] == "verified"
@@ -107,7 +135,10 @@ def test_certificate_summary_is_compact():
     cert = build_verification_certificate(verified_report(), packet_name="packet-a")
     summary = summarize_certificate(cert)
 
-    assert summary["schema"] == "socmint.v7_5_4.dossier_finalization_verification_certificate.summary"
+    assert (
+        summary["schema"]
+        == "socmint.v7_5_4.dossier_finalization_verification_certificate.summary"
+    )
     assert summary["status"] == "valid"
     assert summary["packet_name"] == "packet-a"
     assert "findings" not in summary
@@ -115,7 +146,9 @@ def test_certificate_summary_is_compact():
 
 
 def test_markdown_includes_required_headings():
-    markdown = render_certificate_markdown(build_verification_certificate(verified_report()))
+    markdown = render_certificate_markdown(
+        build_verification_certificate(verified_report())
+    )
 
     assert "# SOCMINT v7.5.4 Finalization Verification Certificate" in markdown
     assert "Status: VALID" in markdown
@@ -127,7 +160,9 @@ def test_markdown_includes_required_headings():
 
 
 def test_markdown_prints_none_for_empty_findings():
-    markdown = render_certificate_markdown(build_verification_certificate(verified_report()))
+    markdown = render_certificate_markdown(
+        build_verification_certificate(verified_report())
+    )
 
     assert "## Findings" in markdown
     assert "None." in markdown

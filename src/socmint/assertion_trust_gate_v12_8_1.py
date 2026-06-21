@@ -5,7 +5,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from .assertion_trust_v12_8 import build_assertion_trust, corroboration_dashboard_payload
+from .assertion_trust_v12_8 import (
+    build_assertion_trust,
+    corroboration_dashboard_payload,
+)
 
 SCHEMA = "socmint.assertion_trust_gate.v12_8_1"
 REPORT_SCHEMA = "socmint.assertion_trust_report.v12_8_1"
@@ -15,13 +18,26 @@ def utc_now() -> str:
     return datetime.now(UTC).isoformat()
 
 
-def assertion_trust_summary(subject_id: int | None = None, root: str | None = None) -> dict[str, Any]:
+def assertion_trust_summary(
+    subject_id: int | None = None, root: str | None = None
+) -> dict[str, Any]:
     trust = build_assertion_trust(subject_id=subject_id, root=root)
     assertions = trust.get("assertions", [])
-    dossier_ready = [row for row in assertions if row.get("release_state") == "dossier-ready"]
-    review_queue = [row for row in assertions if row.get("release_state") in {"analyst-review", "hold", "low-confidence"}]
+    dossier_ready = [
+        row for row in assertions if row.get("release_state") == "dossier-ready"
+    ]
+    review_queue = [
+        row
+        for row in assertions
+        if row.get("release_state") in {"analyst-review", "hold", "low-confidence"}
+    ]
     hold = [row for row in assertions if row.get("release_state") == "hold"]
-    low_confidence = [row for row in assertions if row.get("release_state") == "low-confidence" or float(row.get("trust_score") or 0) < 0.5]
+    low_confidence = [
+        row
+        for row in assertions
+        if row.get("release_state") == "low-confidence"
+        or float(row.get("trust_score") or 0) < 0.5
+    ]
     excluded = {row.get("assertion_id") for row in hold + low_confidence}
     return {
         "schema": SCHEMA,
@@ -35,12 +51,16 @@ def assertion_trust_summary(subject_id: int | None = None, root: str | None = No
         "avg_trust_score": trust.get("summary", {}).get("avg_trust_score", 0),
         "dossier_ready_assertions": dossier_ready,
         "analyst_review_queue": review_queue,
-        "excluded_from_dossier_ready": [row for row in assertions if row.get("assertion_id") in excluded],
+        "excluded_from_dossier_ready": [
+            row for row in assertions if row.get("assertion_id") in excluded
+        ],
         "raw_trust": trust,
     }
 
 
-def assertion_release_gate(subject_id: int | None = None, root: str | None = None) -> dict[str, Any]:
+def assertion_release_gate(
+    subject_id: int | None = None, root: str | None = None
+) -> dict[str, Any]:
     summary = assertion_trust_summary(subject_id=subject_id, root=root)
     checks = [
         {
@@ -56,7 +76,12 @@ def assertion_release_gate(subject_id: int | None = None, root: str | None = Non
         },
         {
             "name": "low_confidence_excluded_from_dossier_ready",
-            "status": "pass" if all(float(row.get("trust_score") or 0) >= 0.5 for row in summary["dossier_ready_assertions"]) else "fail",
+            "status": "pass"
+            if all(
+                float(row.get("trust_score") or 0) >= 0.5
+                for row in summary["dossier_ready_assertions"]
+            )
+            else "fail",
             "actual": summary["low_confidence_count"],
         },
         {
@@ -72,13 +97,23 @@ def assertion_release_gate(subject_id: int | None = None, root: str | None = Non
     ]
     fail_count = sum(1 for item in checks if item["status"] == "fail")
     review_count = sum(1 for item in checks if item["status"] == "review")
-    decision = "pass" if fail_count == 0 and review_count == 0 else "review" if fail_count == 0 else "fail"
+    decision = (
+        "pass"
+        if fail_count == 0 and review_count == 0
+        else "review"
+        if fail_count == 0
+        else "fail"
+    )
     return {
         "schema": SCHEMA,
         "generated_at": utc_now(),
         "subject_id": subject_id,
         "status": decision,
-        "release_gate_decision": "GO" if decision == "pass" else "HOLD" if decision == "review" else "FAIL",
+        "release_gate_decision": "GO"
+        if decision == "pass"
+        else "HOLD"
+        if decision == "review"
+        else "FAIL",
         "checks": checks,
         "summary": summary,
     }
@@ -89,7 +124,9 @@ def assertion_trust_report_root(root: str | None = None) -> Path:
     return base / "assertion_trust_reports"
 
 
-def write_assertion_trust_report(subject_id: int | None = None, root: str | None = None) -> dict[str, Any]:
+def write_assertion_trust_report(
+    subject_id: int | None = None, root: str | None = None
+) -> dict[str, Any]:
     gate = assertion_release_gate(subject_id=subject_id, root=root)
     out = assertion_trust_report_root(root)
     out.mkdir(parents=True, exist_ok=True)
@@ -114,13 +151,19 @@ def write_assertion_trust_report(subject_id: int | None = None, root: str | None
         "",
     ]
     for check in gate.get("checks", []):
-        lines.append(f"- `{check.get('status')}` — {check.get('name')}: `{check.get('actual')}`")
+        lines.append(
+            f"- `{check.get('status')}` — {check.get('name')}: `{check.get('actual')}`"
+        )
     lines.extend(["", "## Dossier-Ready Assertions", ""])
     for row in gate.get("summary", {}).get("dossier_ready_assertions", []):
-        lines.append(f"- `{row.get('trust_rating')}` `{row.get('trust_score')}` — {row.get('subject')} {row.get('predicate')} = {row.get('value')}")
+        lines.append(
+            f"- `{row.get('trust_rating')}` `{row.get('trust_score')}` — {row.get('subject')} {row.get('predicate')} = {row.get('value')}"
+        )
     lines.extend(["", "## Analyst Review Queue", ""])
     for row in gate.get("summary", {}).get("analyst_review_queue", []):
-        lines.append(f"- `{row.get('release_state')}` `{row.get('trust_score')}` — {row.get('assertion_id')} — {row.get('subject')} {row.get('predicate')} = {row.get('value')}")
+        lines.append(
+            f"- `{row.get('release_state')}` `{row.get('trust_score')}` — {row.get('assertion_id')} — {row.get('subject')} {row.get('predicate')} = {row.get('value')}"
+        )
     md_path.write_text("\n".join(lines) + "\n")
     return {
         "schema": REPORT_SCHEMA,
@@ -134,7 +177,9 @@ def write_assertion_trust_report(subject_id: int | None = None, root: str | None
     }
 
 
-def assertion_command_center_card(subject_id: int | None = None, root: str | None = None) -> dict[str, Any]:
+def assertion_command_center_card(
+    subject_id: int | None = None, root: str | None = None
+) -> dict[str, Any]:
     gate = assertion_release_gate(subject_id=subject_id, root=root)
     summary = gate.get("summary", {})
     return {
@@ -150,11 +195,15 @@ def assertion_command_center_card(subject_id: int | None = None, root: str | Non
     }
 
 
-def assertion_trust_dashboard_plus(subject_id: int | None = None, root: str | None = None) -> dict[str, Any]:
+def assertion_trust_dashboard_plus(
+    subject_id: int | None = None, root: str | None = None
+) -> dict[str, Any]:
     return {
         "schema": "socmint.assertion_trust_dashboard_plus.v12_8_1",
         "generated_at": utc_now(),
         "subject_id": subject_id,
-        "corroboration": corroboration_dashboard_payload(subject_id=subject_id, root=root),
+        "corroboration": corroboration_dashboard_payload(
+            subject_id=subject_id, root=root
+        ),
         "gate": assertion_release_gate(subject_id=subject_id, root=root),
     }

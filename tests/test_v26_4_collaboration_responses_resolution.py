@@ -24,24 +24,32 @@ class _FakeSession:
 def _patch_recording(monkeypatch):
     monkeypatch.setattr(service, "_ensure_storage", lambda: None)
     monkeypatch.setattr(service.database, "Session", _FakeSession)
-    monkeypatch.setattr(service, "_case_state", lambda case_id: {
-        "portfolio_schema": "socmint.portfolio_operations_dashboard.v24_0",
-        "portfolio_version": "v24.0.0",
-        "case": {"case_id": case_id, "stage": "active", "status": "operational"},
-    })
+    monkeypatch.setattr(
+        service,
+        "_case_state",
+        lambda case_id: {
+            "portfolio_schema": "socmint.portfolio_operations_dashboard.v24_0",
+            "portfolio_version": "v24.0.0",
+            "case": {"case_id": case_id, "stage": "active", "status": "operational"},
+        },
+    )
     monkeypatch.setattr(service, "latest_response_state", lambda *args, **kwargs: None)
 
 
 def test_v26_4_records_response_bound_to_request(monkeypatch):
     _patch_recording(monkeypatch)
-    monkeypatch.setattr(service, "_source_item", lambda *args: {
-        "collaboration_request_id": "request-1",
-        "collaboration_request_sha256": "r" * 64,
-        "action_record_id": 55,
-        "workflow_status": "requested",
-        "requested_by": "paul",
-        "requested_from": "alice",
-    })
+    monkeypatch.setattr(
+        service,
+        "_source_item",
+        lambda *args: {
+            "collaboration_request_id": "request-1",
+            "collaboration_request_sha256": "r" * 64,
+            "action_record_id": 55,
+            "workflow_status": "requested",
+            "requested_by": "paul",
+            "requested_from": "alice",
+        },
+    )
 
     result = service.record_collaboration_response(
         "case-a",
@@ -68,21 +76,27 @@ def test_v26_4_records_response_bound_to_request(monkeypatch):
 
 def test_v26_4_escalation_then_resolution_binds_previous_response(monkeypatch):
     _patch_recording(monkeypatch)
-    monkeypatch.setattr(service, "_source_item", lambda *args: {
-        "collaboration_handoff_id": "handoff-1",
-        "collaboration_handoff_sha256": "h" * 64,
-        "action_record_id": 60,
-        "workflow_status": "accepted",
-        "handoff_from": "paul",
-        "handoff_to": "bob",
-    })
+    monkeypatch.setattr(
+        service,
+        "_source_item",
+        lambda *args: {
+            "collaboration_handoff_id": "handoff-1",
+            "collaboration_handoff_sha256": "h" * 64,
+            "action_record_id": 60,
+            "workflow_status": "accepted",
+            "handoff_from": "paul",
+            "handoff_to": "bob",
+        },
+    )
     previous = {
         "collaboration_response_id": "response-1",
         "collaboration_response_sha256": "p" * 64,
         "response_type": "escalation",
         "action_record_id": 70,
     }
-    monkeypatch.setattr(service, "latest_response_state", lambda *args, **kwargs: previous)
+    monkeypatch.setattr(
+        service, "latest_response_state", lambda *args, **kwargs: previous
+    )
 
     result = service.record_collaboration_response(
         "case-a",
@@ -97,7 +111,9 @@ def test_v26_4_escalation_then_resolution_binds_previous_response(monkeypatch):
     )
 
     assert result["response_type"] == "resolution"
-    assert result["previous_response_binding"]["collaboration_response_id"] == "response-1"
+    assert (
+        result["previous_response_binding"]["collaboration_response_id"] == "response-1"
+    )
     assert result["previous_response_binding_sha256"]
     assert result["resolution_code"] == "resolved_reassignment"
 
@@ -115,11 +131,15 @@ def test_v26_4_blocks_invalid_access_superseded_note_and_terminal_response(monke
     )
     assert denied["blockers"][0]["key"] == "case_access_required"
 
-    monkeypatch.setattr(service, "_source_item", lambda *args: {
-        "collaboration_note_id": "note-1",
-        "collaboration_note_sha256": "n" * 64,
-        "note_status": "superseded",
-    })
+    monkeypatch.setattr(
+        service,
+        "_source_item",
+        lambda *args: {
+            "collaboration_note_id": "note-1",
+            "collaboration_note_sha256": "n" * 64,
+            "note_status": "superseded",
+        },
+    )
     superseded = service.record_collaboration_response(
         "case-a",
         target_type="note",
@@ -132,14 +152,20 @@ def test_v26_4_blocks_invalid_access_superseded_note_and_terminal_response(monke
     )
     assert superseded["blockers"][0]["key"] == "active_collaboration_note_required"
 
-    monkeypatch.setattr(service, "_source_item", lambda *args: {
-        "collaboration_request_id": "request-1",
-        "collaboration_request_sha256": "r" * 64,
-        "workflow_status": "accepted",
-    })
-    monkeypatch.setattr(service, "latest_response_state", lambda *args, **kwargs: {
-        "response_type": "resolution"
-    })
+    monkeypatch.setattr(
+        service,
+        "_source_item",
+        lambda *args: {
+            "collaboration_request_id": "request-1",
+            "collaboration_request_sha256": "r" * 64,
+            "workflow_status": "accepted",
+        },
+    )
+    monkeypatch.setattr(
+        service,
+        "latest_response_state",
+        lambda *args, **kwargs: {"response_type": "resolution"},
+    )
     terminal = service.record_collaboration_response(
         "case-a",
         target_type="request",

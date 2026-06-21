@@ -112,30 +112,75 @@ def _finding(component: str, severity: str, code: str, detail: str) -> dict[str,
 
 def _checklist() -> list[dict[str, Any]]:
     return [
-        {"id": "identity", "label": "Confirm subject identity confidence and contradiction status.", "required": True},
-        {"id": "claims", "label": "Confirm every report claim has source/evidence/confidence context.", "required": True},
-        {"id": "evidence", "label": "Confirm evidence manifest has no missing hash/source fields.", "required": True},
-        {"id": "connectors", "label": "Confirm connector compliance metadata is complete or not applicable.", "required": True},
-        {"id": "policy", "label": "Confirm governance/policy coverage includes dossier build/export and artifact operations.", "required": True},
-        {"id": "export", "label": "Confirm final export mode is allowed.", "required": True},
-        {"id": "warnings", "label": "Confirm analyst reviewed all warnings before disclosure/export.", "required": True},
+        {
+            "id": "identity",
+            "label": "Confirm subject identity confidence and contradiction status.",
+            "required": True,
+        },
+        {
+            "id": "claims",
+            "label": "Confirm every report claim has source/evidence/confidence context.",
+            "required": True,
+        },
+        {
+            "id": "evidence",
+            "label": "Confirm evidence manifest has no missing hash/source fields.",
+            "required": True,
+        },
+        {
+            "id": "connectors",
+            "label": "Confirm connector compliance metadata is complete or not applicable.",
+            "required": True,
+        },
+        {
+            "id": "policy",
+            "label": "Confirm governance/policy coverage includes dossier build/export and artifact operations.",
+            "required": True,
+        },
+        {
+            "id": "export",
+            "label": "Confirm final export mode is allowed.",
+            "required": True,
+        },
+        {
+            "id": "warnings",
+            "label": "Confirm analyst reviewed all warnings before disclosure/export.",
+            "required": True,
+        },
     ]
 
 
-def _component_reports(payload: dict[str, Any], connectors: list[dict[str, Any]] | None, policy_events: list[dict[str, Any]] | None, export_mode: str) -> dict[str, Any]:
+def _component_reports(
+    payload: dict[str, Any],
+    connectors: list[dict[str, Any]] | None,
+    policy_events: list[dict[str, Any]] | None,
+    export_mode: str,
+) -> dict[str, Any]:
     reports: dict[str, Any] = {}
     quality = _as_dict(payload.get("quality_gate") or payload.get("dossier_quality"))
     reports["quality_gate"] = quality or evaluate_dossier_quality(payload)
 
-    export = _as_dict(payload.get("export_enforcement") or payload.get("export_decision"))
-    reports["export_enforcement"] = export or evaluate_dossier_export({**payload, "quality_gate": reports["quality_gate"]}, mode=export_mode)
+    export = _as_dict(
+        payload.get("export_enforcement") or payload.get("export_decision")
+    )
+    reports["export_enforcement"] = export or evaluate_dossier_export(
+        {**payload, "quality_gate": reports["quality_gate"]}, mode=export_mode
+    )
 
-    evidence = _as_dict(payload.get("evidence_manifest") or payload.get("evidence_appendix"))
-    raw_evidence = payload.get("evidence") if isinstance(payload.get("evidence"), list) else None
-    reports["evidence_manifest"] = evidence or build_evidence_manifest(payload, raw_evidence=raw_evidence)
+    evidence = _as_dict(
+        payload.get("evidence_manifest") or payload.get("evidence_appendix")
+    )
+    raw_evidence = (
+        payload.get("evidence") if isinstance(payload.get("evidence"), list) else None
+    )
+    reports["evidence_manifest"] = evidence or build_evidence_manifest(
+        payload, raw_evidence=raw_evidence
+    )
 
     identity = _as_dict(payload.get("identity_confidence"))
-    reports["identity_confidence"] = identity or build_identity_confidence_report(payload)
+    reports["identity_confidence"] = identity or build_identity_confidence_report(
+        payload
+    )
 
     connector_report = _as_dict(payload.get("connector_compliance"))
     if connector_report:
@@ -173,60 +218,170 @@ def _evidence_incomplete(report: dict[str, Any]) -> bool:
         "missing_ref_count",
     )
     summary = _as_dict(report.get("appendix_summary"))
-    return any(_nonempty(report.get(k)) for k in keys) or any(_as_int(report.get(k)) > 0 for k in count_keys) or any(_as_int(summary.get(k)) > 0 for k in count_keys)
+    return (
+        any(_nonempty(report.get(k)) for k in keys)
+        or any(_as_int(report.get(k)) > 0 for k in count_keys)
+        or any(_as_int(summary.get(k)) > 0 for k in count_keys)
+    )
 
 
 def _evidence_warn(report: dict[str, Any], status: str) -> bool:
     if status in {"missing", "warn"}:
         return True
-    return any(_as_int(report.get(k)) > 0 for k in ("weak_evidence_count", "unresolved_count", "warning_count"))
+    return any(
+        _as_int(report.get(k)) > 0
+        for k in ("weak_evidence_count", "unresolved_count", "warning_count")
+    )
 
 
-def _evaluate_components(reports: dict[str, Any], export_mode: str) -> tuple[dict[str, str], list[dict[str, Any]], list[dict[str, Any]]]:
+def _evaluate_components(
+    reports: dict[str, Any], export_mode: str
+) -> tuple[dict[str, str], list[dict[str, Any]], list[dict[str, Any]]]:
     statuses = {
         "quality_gate": _normalize_report_status(_as_dict(reports.get("quality_gate"))),
-        "export_enforcement": _normalize_export_status(_as_dict(reports.get("export_enforcement"))),
-        "evidence_manifest": _normalize_report_status(_as_dict(reports.get("evidence_manifest"))),
-        "identity_confidence": _normalize_report_status(_as_dict(reports.get("identity_confidence"))),
-        "connector_compliance": _normalize_report_status(_as_dict(reports.get("connector_compliance")), allow_warn=False),
-        "policy_coverage": _normalize_report_status(_as_dict(reports.get("policy_coverage"))),
+        "export_enforcement": _normalize_export_status(
+            _as_dict(reports.get("export_enforcement"))
+        ),
+        "evidence_manifest": _normalize_report_status(
+            _as_dict(reports.get("evidence_manifest"))
+        ),
+        "identity_confidence": _normalize_report_status(
+            _as_dict(reports.get("identity_confidence"))
+        ),
+        "connector_compliance": _normalize_report_status(
+            _as_dict(reports.get("connector_compliance")), allow_warn=False
+        ),
+        "policy_coverage": _normalize_report_status(
+            _as_dict(reports.get("policy_coverage"))
+        ),
     }
     blocking: list[dict[str, Any]] = []
     warnings: list[dict[str, Any]] = []
 
     if statuses["quality_gate"] == "fail":
-        blocking.append(_finding("quality_gate", "block", "quality_gate_failed", "Dossier quality gate failed."))
+        blocking.append(
+            _finding(
+                "quality_gate",
+                "block",
+                "quality_gate_failed",
+                "Dossier quality gate failed.",
+            )
+        )
     elif statuses["quality_gate"] in {"warn", "missing"}:
-        warnings.append(_finding("quality_gate", "warn", "quality_gate_review_needed", "Dossier quality gate needs review or is missing."))
+        warnings.append(
+            _finding(
+                "quality_gate",
+                "warn",
+                "quality_gate_review_needed",
+                "Dossier quality gate needs review or is missing.",
+            )
+        )
 
     if export_mode == "final" and statuses["export_enforcement"] == "block":
-        blocking.append(_finding("export_enforcement", "block", "export_blocked", "Final export is blocked by export enforcement."))
+        blocking.append(
+            _finding(
+                "export_enforcement",
+                "block",
+                "export_blocked",
+                "Final export is blocked by export enforcement.",
+            )
+        )
     elif statuses["export_enforcement"] == "missing":
-        warnings.append(_finding("export_enforcement", "warn", "export_enforcement_review_needed", "Export enforcement report is missing."))
+        warnings.append(
+            _finding(
+                "export_enforcement",
+                "warn",
+                "export_enforcement_review_needed",
+                "Export enforcement report is missing.",
+            )
+        )
 
     evidence_report = _as_dict(reports.get("evidence_manifest"))
     if _evidence_incomplete(evidence_report):
         statuses["evidence_manifest"] = "fail"
-        blocking.append(_finding("evidence_manifest", "block", "evidence_lineage_incomplete", "Evidence lineage has missing refs, hashes, sources, or source URLs."))
+        blocking.append(
+            _finding(
+                "evidence_manifest",
+                "block",
+                "evidence_lineage_incomplete",
+                "Evidence lineage has missing refs, hashes, sources, or source URLs.",
+            )
+        )
     elif _evidence_warn(evidence_report, statuses["evidence_manifest"]):
-        warnings.append(_finding("evidence_manifest", "warn", "evidence_review_needed", "Evidence manifest needs human review."))
+        warnings.append(
+            _finding(
+                "evidence_manifest",
+                "warn",
+                "evidence_review_needed",
+                "Evidence manifest needs human review.",
+            )
+        )
 
     identity_report = _as_dict(reports.get("identity_confidence"))
-    if statuses["identity_confidence"] == "fail" or _as_int(identity_report.get("contradiction_count")) > 0:
+    if (
+        statuses["identity_confidence"] == "fail"
+        or _as_int(identity_report.get("contradiction_count")) > 0
+    ):
         statuses["identity_confidence"] = "fail"
-        blocking.append(_finding("identity_confidence", "block", "identity_contradiction", "Identity confidence report contains contradictions or failed checks."))
-    elif statuses["identity_confidence"] == "warn" or _as_int(identity_report.get("low_confidence_count")) > 0 or _as_int(identity_report.get("needs_review_count")) > 0:
-        warnings.append(_finding("identity_confidence", "warn", "identity_review_needed", "Identity confidence requires analyst review."))
+        blocking.append(
+            _finding(
+                "identity_confidence",
+                "block",
+                "identity_contradiction",
+                "Identity confidence report contains contradictions or failed checks.",
+            )
+        )
+    elif (
+        statuses["identity_confidence"] == "warn"
+        or _as_int(identity_report.get("low_confidence_count")) > 0
+        or _as_int(identity_report.get("needs_review_count")) > 0
+    ):
+        warnings.append(
+            _finding(
+                "identity_confidence",
+                "warn",
+                "identity_review_needed",
+                "Identity confidence requires analyst review.",
+            )
+        )
 
     if statuses["connector_compliance"] == "fail":
-        blocking.append(_finding("connector_compliance", "block", "connector_compliance_failed", "Connector compliance report failed."))
+        blocking.append(
+            _finding(
+                "connector_compliance",
+                "block",
+                "connector_compliance_failed",
+                "Connector compliance report failed.",
+            )
+        )
     elif statuses["connector_compliance"] == "missing":
-        warnings.append(_finding("connector_compliance", "warn", "connector_compliance_missing", "Connector compliance report or input is missing."))
+        warnings.append(
+            _finding(
+                "connector_compliance",
+                "warn",
+                "connector_compliance_missing",
+                "Connector compliance report or input is missing.",
+            )
+        )
 
     if statuses["policy_coverage"] == "fail":
-        blocking.append(_finding("policy_coverage", "block", "policy_coverage_failed", "Policy coverage report failed."))
+        blocking.append(
+            _finding(
+                "policy_coverage",
+                "block",
+                "policy_coverage_failed",
+                "Policy coverage report failed.",
+            )
+        )
     elif statuses["policy_coverage"] in {"warn", "missing"}:
-        warnings.append(_finding("policy_coverage", "warn", "policy_coverage_review_needed", "Policy coverage report needs review or is missing."))
+        warnings.append(
+            _finding(
+                "policy_coverage",
+                "warn",
+                "policy_coverage_review_needed",
+                "Policy coverage report needs review or is missing.",
+            )
+        )
 
     return statuses, blocking, warnings
 
@@ -253,7 +408,13 @@ def build_dossier_finalization_packet(
     mode = str(export_mode or "final").strip().lower()
     reports = _component_reports(payload, connectors, policy_events, mode)
     statuses, blocking, warnings = _evaluate_components(reports, mode)
-    decision = DECISION_BLOCKED if blocking else DECISION_REVIEW if warnings else DECISION_READY
+    decision = (
+        DECISION_BLOCKED
+        if blocking
+        else DECISION_REVIEW
+        if warnings
+        else DECISION_READY
+    )
     packet = {
         "schema": FINALIZATION_SCHEMA,
         "approved_line": APPROVED_LINE,
@@ -263,11 +424,15 @@ def build_dossier_finalization_packet(
         "ready": decision == DECISION_READY,
         "blocking_count": len(blocking),
         "warning_count": len(warnings),
-        "component_status": {component: statuses.get(component, "missing") for component in COMPONENTS},
+        "component_status": {
+            component: statuses.get(component, "missing") for component in COMPONENTS
+        },
         "blocking_findings": blocking,
         "warnings": warnings,
         "human_review_checklist": _checklist(),
-        "recommended_actions": list(dict.fromkeys(item["action"] for item in [*blocking, *warnings])),
+        "recommended_actions": list(
+            dict.fromkeys(item["action"] for item in [*blocking, *warnings])
+        ),
         "component_reports": reports,
     }
     packet["summary"] = summarize_finalization_decision(packet)
@@ -282,7 +447,12 @@ def attach_dossier_finalization(
     export_mode: str = "final",
 ) -> dict[str, Any]:
     enriched = dict(dossier_payload or {})
-    enriched["dossier_finalization"] = build_dossier_finalization_packet(dossier_payload or {}, connectors=connectors, policy_events=policy_events, export_mode=export_mode)
+    enriched["dossier_finalization"] = build_dossier_finalization_packet(
+        dossier_payload or {},
+        connectors=connectors,
+        policy_events=policy_events,
+        export_mode=export_mode,
+    )
     return enriched
 
 
@@ -293,7 +463,10 @@ def _decision_label(decision: Any) -> str:
 def _lines_for_findings(items: list[dict[str, Any]]) -> list[str]:
     if not items:
         return ["None."]
-    return [f"- **{item.get('component')}** `{item.get('code')}`: {item.get('detail')} Action: {item.get('action')}" for item in items]
+    return [
+        f"- **{item.get('component')}** `{item.get('code')}`: {item.get('detail')} Action: {item.get('action')}"
+        for item in items
+    ]
 
 
 def render_finalization_markdown(packet: dict[str, Any]) -> str:
@@ -309,7 +482,10 @@ def render_finalization_markdown(packet: dict[str, Any]) -> str:
         "",
     ]
     if component_status:
-        lines.extend(f"- **{component}**: `{status}`" for component, status in sorted(component_status.items()))
+        lines.extend(
+            f"- **{component}**: `{status}`"
+            for component, status in sorted(component_status.items())
+        )
     else:
         lines.append("None.")
     lines.extend(["", "## Blocking Findings", ""])
@@ -318,7 +494,10 @@ def render_finalization_markdown(packet: dict[str, Any]) -> str:
     lines.extend(_lines_for_findings(list(packet.get("warnings") or [])))
     lines.extend(["", "## Human Review Checklist", ""])
     if checklist:
-        lines.extend(f"- [{' ' if item.get('required') else 'x'}] {item.get('label')}" for item in checklist)
+        lines.extend(
+            f"- [{' ' if item.get('required') else 'x'}] {item.get('label')}"
+            for item in checklist
+        )
     else:
         lines.append("None.")
     lines.extend(["", "## Recommended Actions", ""])

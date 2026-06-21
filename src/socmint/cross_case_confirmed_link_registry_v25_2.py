@@ -9,7 +9,12 @@ from .cross_case_correlation_review_v25_1 import (
     correlation_review_history,
     latest_correlation_review,
 )
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 
 SCHEMA = "socmint.cross_case_confirmed_link_registry.v25_2"
 VERSION = "v25.2.0"
@@ -45,7 +50,9 @@ def _existing_for_review(review_decision_id: str) -> dict[str, Any] | None:
                 return {
                     **details,
                     "registry_record_id": row.id,
-                    "registered_at": row.created_at.isoformat() if row.created_at else None,
+                    "registered_at": row.created_at.isoformat()
+                    if row.created_at
+                    else None,
                     "registered_by": row.actor,
                 }
         return None
@@ -81,15 +88,23 @@ def register_confirmed_cross_case_link(
 
     candidate = review.get("candidate_snapshot") or {}
     occurrences = list(candidate.get("occurrences") or [])
-    case_ids = sorted({str(value) for value in candidate.get("case_ids") or [] if str(value)})
+    case_ids = sorted(
+        {str(value) for value in candidate.get("case_ids") or [] if str(value)}
+    )
     if not occurrences or len(case_ids) < 2:
         return _blocked(correlation_id, "accepted_review_source_occurrences_required")
-    if allowed_case_ids is not None and any(case_id not in allowed_case_ids for case_id in case_ids):
+    if allowed_case_ids is not None and any(
+        case_id not in allowed_case_ids for case_id in case_ids
+    ):
         return _blocked(correlation_id, "confirmed_link_case_access_required")
 
     existing = _existing_for_review(review_id)
     if existing is not None:
-        return {**existing, "status": "confirmed_link_already_registered", "duplicate": True}
+        return {
+            **existing,
+            "status": "confirmed_link_already_registered",
+            "duplicate": True,
+        }
 
     occurrence_snapshot = sorted(
         occurrences,
@@ -182,14 +197,20 @@ def confirmed_link_registry(
         for row in rows:
             details = _json_details(row)
             case_ids = {str(value) for value in details.get("case_ids") or []}
-            if allowed_case_ids is not None and any(case_id not in allowed_case_ids for case_id in case_ids):
+            if allowed_case_ids is not None and any(
+                case_id not in allowed_case_ids for case_id in case_ids
+            ):
                 continue
-            links.append({
-                **details,
-                "registry_record_id": row.id,
-                "registered_at": row.created_at.isoformat() if row.created_at else None,
-                "registered_by": row.actor,
-            })
+            links.append(
+                {
+                    **details,
+                    "registry_record_id": row.id,
+                    "registered_at": row.created_at.isoformat()
+                    if row.created_at
+                    else None,
+                    "registered_by": row.actor,
+                }
+            )
         return links
     finally:
         session.close()
@@ -205,10 +226,15 @@ def _all_review_histories() -> dict[str, list[dict[str, Any]]]:
             .order_by(database.AuditLog.created_at.asc(), database.AuditLog.id.asc())
             .all()
         )
-        correlation_ids = sorted({str(row.target_value) for row in rows if row.target_value})
+        correlation_ids = sorted(
+            {str(row.target_value) for row in rows if row.target_value}
+        )
     finally:
         session.close()
-    return {correlation_id: correlation_review_history(correlation_id) for correlation_id in correlation_ids}
+    return {
+        correlation_id: correlation_review_history(correlation_id)
+        for correlation_id in correlation_ids
+    }
 
 
 def _review_visible(review: dict[str, Any], allowed_case_ids: set[str] | None) -> bool:
@@ -229,7 +255,9 @@ def build_confirmed_link_registry_workspace(
     registered_review_ids = {link.get("accepted_review_decision_id") for link in links}
 
     for correlation_id, history in _all_review_histories().items():
-        visible = [review for review in history if _review_visible(review, allowed_case_ids)]
+        visible = [
+            review for review in history if _review_visible(review, allowed_case_ids)
+        ]
         if not visible:
             continue
         visible_histories[correlation_id] = visible
@@ -238,17 +266,22 @@ def build_confirmed_link_registry_workspace(
         latest = visible[-1]
         candidate = latest.get("candidate_snapshot") or {}
         case_ids = sorted({str(value) for value in candidate.get("case_ids") or []})
-        if latest.get("decision") == "accept" and latest.get("review_decision_id") not in registered_review_ids:
-            accepted_pending.append({
-                "correlation_id": correlation_id,
-                "review_decision_id": latest.get("review_decision_id"),
-                "review_decision_sha256": latest.get("review_decision_sha256"),
-                "reviewer": latest.get("reviewer"),
-                "reason": latest.get("reason"),
-                "case_ids": case_ids,
-                "category": candidate.get("category"),
-                "match_value": candidate.get("match_value"),
-            })
+        if (
+            latest.get("decision") == "accept"
+            and latest.get("review_decision_id") not in registered_review_ids
+        ):
+            accepted_pending.append(
+                {
+                    "correlation_id": correlation_id,
+                    "review_decision_id": latest.get("review_decision_id"),
+                    "review_decision_sha256": latest.get("review_decision_sha256"),
+                    "reviewer": latest.get("reviewer"),
+                    "reason": latest.get("reason"),
+                    "case_ids": case_ids,
+                    "category": candidate.get("category"),
+                    "match_value": candidate.get("match_value"),
+                }
+            )
 
     accepted_pending.sort(
         key=lambda item: (item["correlation_id"], item.get("review_decision_id") or "")
@@ -258,8 +291,12 @@ def build_confirmed_link_registry_workspace(
         "version": VERSION,
         "status": "ready",
         "access_scope": {
-            "mode": "restricted" if allowed_case_ids is not None else "all_visible_cases",
-            "allowed_case_ids": sorted(allowed_case_ids) if allowed_case_ids is not None else None,
+            "mode": "restricted"
+            if allowed_case_ids is not None
+            else "all_visible_cases",
+            "allowed_case_ids": sorted(allowed_case_ids)
+            if allowed_case_ids is not None
+            else None,
         },
         "confirmed_links": links,
         "confirmed_link_count": len(links),

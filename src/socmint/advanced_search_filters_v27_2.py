@@ -49,8 +49,12 @@ def _preview_map(item: dict[str, Any]) -> dict[str, str]:
 
 def _search_text(item: dict[str, Any]) -> str:
     parts = [
-        item.get("case_id"), item.get("record_type"), item.get("actor"), item.get("status"),
-        item.get("source_action"), *(item.get("matched_terms") or []),
+        item.get("case_id"),
+        item.get("record_type"),
+        item.get("actor"),
+        item.get("status"),
+        item.get("source_action"),
+        *(item.get("matched_terms") or []),
     ]
     parts.extend(_preview_map(item).values())
     return " ".join(str(part or "") for part in parts).lower()
@@ -59,7 +63,9 @@ def _search_text(item: dict[str, Any]) -> str:
 def _facet_value(item: dict[str, Any], name: str) -> str:
     preview = _preview_map(item)
     if name == "stage":
-        return preview.get("stage") or (item.get("status") if item.get("record_type") == "case" else "unspecified")
+        return preview.get("stage") or (
+            item.get("status") if item.get("record_type") == "case" else "unspecified"
+        )
     if name == "confidence":
         return preview.get("confidence") or "unspecified"
     if name == "priority":
@@ -87,17 +93,55 @@ def _exact_matches(item: dict[str, Any], constraints: dict[str, str]) -> bool:
 
 def _sort(results: list[dict[str, Any]], mode: str) -> None:
     if mode == "newest":
-        results.sort(key=lambda item: (item.get("occurred_at") or "", item.get("score") or 0, item.get("result_id") or ""), reverse=True)
+        results.sort(
+            key=lambda item: (
+                item.get("occurred_at") or "",
+                item.get("score") or 0,
+                item.get("result_id") or "",
+            ),
+            reverse=True,
+        )
     elif mode == "oldest":
-        results.sort(key=lambda item: (item.get("occurred_at") or "9999", -(item.get("score") or 0), item.get("result_id") or ""))
+        results.sort(
+            key=lambda item: (
+                item.get("occurred_at") or "9999",
+                -(item.get("score") or 0),
+                item.get("result_id") or "",
+            )
+        )
     elif mode == "case":
-        results.sort(key=lambda item: (item.get("case_id") or "", -(item.get("score") or 0), item.get("result_id") or ""))
+        results.sort(
+            key=lambda item: (
+                item.get("case_id") or "",
+                -(item.get("score") or 0),
+                item.get("result_id") or "",
+            )
+        )
     elif mode == "type":
-        results.sort(key=lambda item: (item.get("record_type") or "", -(item.get("score") or 0), item.get("result_id") or ""))
+        results.sort(
+            key=lambda item: (
+                item.get("record_type") or "",
+                -(item.get("score") or 0),
+                item.get("result_id") or "",
+            )
+        )
     elif mode == "actor":
-        results.sort(key=lambda item: (item.get("actor") or "", -(item.get("score") or 0), item.get("result_id") or ""))
+        results.sort(
+            key=lambda item: (
+                item.get("actor") or "",
+                -(item.get("score") or 0),
+                item.get("result_id") or "",
+            )
+        )
     else:
-        results.sort(key=lambda item: (item.get("score") or 0, item.get("occurred_at") or "", item.get("result_id") or ""), reverse=True)
+        results.sort(
+            key=lambda item: (
+                item.get("score") or 0,
+                item.get("occurred_at") or "",
+                item.get("result_id") or "",
+            ),
+            reverse=True,
+        )
 
 
 def build_advanced_search_filters(
@@ -141,13 +185,26 @@ def build_advanced_search_filters(
     priority_set = _values(priorities)
     includes = {item.lower() for item in _values(include_terms)}
     excludes = {item.lower() for item in _values(exclude_terms)}
-    constraints = {str(key): str(value) for key, value in (exact_fields or {}).items() if str(key) and str(value)}
+    constraints = {
+        str(key): str(value)
+        for key, value in (exact_fields or {}).items()
+        if str(key) and str(value)
+    }
     start = _date(date_from)
     end = _date(date_to, end=True)
 
     facet_source = defaultdict(Counter)
     for item in candidates:
-        for name in ("record_type", "case_id", "actor", "status", "stage", "source_action", "confidence", "priority"):
+        for name in (
+            "record_type",
+            "case_id",
+            "actor",
+            "status",
+            "stage",
+            "source_action",
+            "confidence",
+            "priority",
+        ):
             facet_source[name][_facet_value(item, name)] += 1
 
     results = []
@@ -204,14 +261,22 @@ def build_advanced_search_filters(
         "limit": safe_limit,
     }
     applied_filter_count = sum(
-        bool(value) for key, value in active_filters.items() if key not in {"sort", "limit"}
+        bool(value)
+        for key, value in active_filters.items()
+        if key not in {"sort", "limit"}
     )
-    facets = {name: dict(sorted(values.items())) for name, values in facet_source.items()}
+    facets = {
+        name: dict(sorted(values.items())) for name, values in facet_source.items()
+    }
     filtered_facets = defaultdict(Counter)
     for item in results:
         for name in facets:
             filtered_facets[name][_facet_value(item, name)] += 1
-    core = {"query": query, "active_filters": active_filters, "result_ids": [item.get("result_id") for item in results]}
+    core = {
+        "query": query,
+        "active_filters": active_filters,
+        "result_ids": [item.get("result_id") for item in results],
+    }
     return {
         "schema": SCHEMA,
         "version": VERSION,
@@ -221,7 +286,10 @@ def build_advanced_search_filters(
         "active_filters": active_filters,
         "active_filter_count": applied_filter_count,
         "facets": facets,
-        "filtered_facets": {name: dict(sorted(values.items())) for name, values in filtered_facets.items()},
+        "filtered_facets": {
+            name: dict(sorted(values.items()))
+            for name, values in filtered_facets.items()
+        },
         "excluded_counts": dict(sorted(excluded_counts.items())),
         "candidate_count": len(candidates),
         "result_count": len(results),
@@ -234,5 +302,7 @@ def build_advanced_search_filters(
         "filter_record_created": False,
         "case_access_scope_changed": False,
         "relevance_is_not_confidence": True,
-        "next_action": "review_filtered_results" if results else "broaden_advanced_filters",
+        "next_action": "review_filtered_results"
+        if results
+        else "broaden_advanced_filters",
     }

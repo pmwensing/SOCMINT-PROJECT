@@ -52,7 +52,9 @@ REQUIRED_ROUTES = (
 )
 
 
-def build_analytic_product_review(root: str | Path | None = None, *, routes: list[Any] | None = None) -> dict[str, Any]:
+def build_analytic_product_review(
+    root: str | Path | None = None, *, routes: list[Any] | None = None
+) -> dict[str, Any]:
     root_path = Path(root) if root is not None else REPO_ROOT
     blockers: list[dict[str, str]] = []
 
@@ -73,7 +75,13 @@ def build_analytic_product_review(root: str | Path | None = None, *, routes: lis
     for route in routes or []:
         rule = str(getattr(route, "rule", route))
         methods = getattr(route, "methods", None)
-        method_tuple = tuple(sorted(method for method in (methods or {"UNKNOWN"}) if method not in {"HEAD", "OPTIONS"}))
+        method_tuple = tuple(
+            sorted(
+                method
+                for method in (methods or {"UNKNOWN"})
+                if method not in {"HEAD", "OPTIONS"}
+            )
+        )
         route_rules.add(rule)
         route_keys.append((rule, method_tuple))
 
@@ -87,7 +95,8 @@ def build_analytic_product_review(root: str | Path | None = None, *, routes: lis
     duplicate_routes = [
         {"route": rule, "methods": list(methods), "count": count}
         for (rule, methods), count in Counter(route_keys).items()
-        if count > 1 and rule.startswith(("/analytic-review", "/api/v1/analytic-review"))
+        if count > 1
+        and rule.startswith(("/analytic-review", "/api/v1/analytic-review"))
     ]
     if duplicate_routes:
         blockers.append({"key": "duplicate_v30_route", "detail": str(duplicate_routes)})
@@ -100,7 +109,9 @@ def build_analytic_product_review(root: str | Path | None = None, *, routes: lis
         if path.is_file() and "v30" in path.name.lower()
     )
     if migrations:
-        blockers.append({"key": "unexpected_v30_migration", "detail": ", ".join(migrations)})
+        blockers.append(
+            {"key": "unexpected_v30_migration", "detail": ", ".join(migrations)}
+        )
 
     journey = [
         {"step": "analytic_workspace", "route": "/analytic-review"},
@@ -109,7 +120,10 @@ def build_analytic_product_review(root: str | Path | None = None, *, routes: lis
         {"step": "conflicts", "route": "/api/v1/analytic-review/conflicts"},
         {"step": "confidence", "contract": "v30.4"},
         {"step": "human_review", "route": "/api/v1/analytic-review/human-reviews"},
-        {"step": "dossier_contribution", "route": "/api/v1/analytic-review/dossier-contributions"},
+        {
+            "step": "dossier_contribution",
+            "route": "/api/v1/analytic-review/dossier-contributions",
+        },
     ]
 
     return {
@@ -135,5 +149,7 @@ def build_analytic_product_review(root: str | Path | None = None, *, routes: lis
         "separate_dossier_contribution_gate_validated": True,
         "automatic_dossier_mutation_unavailable_validated": True,
         "v30_closed_when_all_closure_gates_pass": True,
-        "next_action": "run_v30_browser_e2e" if not blockers else "resolve_v30_product_blockers",
+        "next_action": "run_v30_browser_e2e"
+        if not blockers
+        else "resolve_v30_product_blockers",
     }

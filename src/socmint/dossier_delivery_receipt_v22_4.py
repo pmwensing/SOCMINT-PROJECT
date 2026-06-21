@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from . import database
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .dossier_secure_distribution_v22_3 import latest_secure_distribution
 
 SCHEMA = "socmint.dossier_delivery_receipt.v22_4"
@@ -70,7 +75,8 @@ def build_delivery_receipt_state(case_id: str) -> dict[str, Any]:
     acknowledgement_matches = bool(
         acknowledgement
         and receipt
-        and acknowledgement.get("delivery_receipt_id") == receipt.get("delivery_receipt_id")
+        and acknowledgement.get("delivery_receipt_id")
+        == receipt.get("delivery_receipt_id")
         and acknowledgement.get("delivery_receipt_sha256")
         == receipt.get("delivery_receipt_sha256")
     )
@@ -152,8 +158,12 @@ def record_delivery_receipt(
         "provider_message_id": str(provider_message_id or "").strip(),
         "transport_status": str(transport_status or "").strip(),
         "failure_code": str(failure_code or "").strip() if result == "failed" else "",
-        "failure_detail": str(failure_detail or "").strip() if result == "failed" else "",
-        "delivered_at": str(delivered_at or "").strip() if result == "delivered" else "",
+        "failure_detail": str(failure_detail or "").strip()
+        if result == "failed"
+        else "",
+        "delivered_at": str(delivered_at or "").strip()
+        if result == "delivered"
+        else "",
         "note": str(note or "").strip(),
     }
     receipt_sha256 = _sha(content)

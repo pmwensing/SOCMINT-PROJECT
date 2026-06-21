@@ -4,7 +4,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from . import database
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .saved_search_view_events_v27_3 import find_view
 
 SCHEMA = "socmint.watchlist_monitoring.v27_4"
@@ -81,7 +86,10 @@ def current_watchlists() -> list[dict[str, Any]]:
                 "last_change_detected": event.get("change_detected"),
                 "last_notification_triggered": event.get("notification_triggered"),
             }
-    return sorted(items.values(), key=lambda item: (str(item.get("owner") or ""), str(item.get("name") or "")))
+    return sorted(
+        items.values(),
+        key=lambda item: (str(item.get("owner") or ""), str(item.get("name") or "")),
+    )
 
 
 def visible_watchlists(user: str) -> list[dict[str, Any]]:
@@ -89,10 +97,19 @@ def visible_watchlists(user: str) -> list[dict[str, Any]]:
 
 
 def find_watchlist(watchlist_id: str, user: str) -> dict[str, Any] | None:
-    return next((item for item in visible_watchlists(user) if item.get("watchlist_id") == watchlist_id), None)
+    return next(
+        (
+            item
+            for item in visible_watchlists(user)
+            if item.get("watchlist_id") == watchlist_id
+        ),
+        None,
+    )
 
 
-def _record(action: str, event: dict[str, Any], actor: str, ip: str | None) -> dict[str, Any]:
+def _record(
+    action: str, event: dict[str, Any], actor: str, ip: str | None
+) -> dict[str, Any]:
     _ensure_storage()
     session = database.Session()
     try:
@@ -183,7 +200,11 @@ def create_watchlist(
         "watchlist_grants_access": False,
     }
     result = _record(ACTIONS[0], event, owner, ip_address)
-    return {**result, "status": "watchlist_created", "next_action": "run_watchlist_monitoring"}
+    return {
+        **result,
+        "status": "watchlist_created",
+        "next_action": "run_watchlist_monitoring",
+    }
 
 
 def set_watchlist_status(
@@ -196,7 +217,9 @@ def set_watchlist_status(
     ip_address: str | None = None,
 ) -> dict[str, Any]:
     watchlist = find_watchlist(watchlist_id, actor)
-    event_type = "paused" if status == "paused" else "resumed" if status == "active" else ""
+    event_type = (
+        "paused" if status == "paused" else "resumed" if status == "active" else ""
+    )
     if watchlist is None:
         return blocked("watchlist_required")
     if confirmed is not True:
@@ -234,7 +257,11 @@ def set_watchlist_status(
     }
     action = ACTIONS[1] if event_type == "paused" else ACTIONS[2]
     result = _record(action, event, actor, ip_address)
-    return {**result, "status": f"watchlist_{event_type}", "next_action": "review_watchlist_monitoring"}
+    return {
+        **result,
+        "status": f"watchlist_{event_type}",
+        "next_action": "review_watchlist_monitoring",
+    }
 
 
 def next_due_at(watchlist: dict[str, Any], now: datetime | None = None) -> str | None:
@@ -247,5 +274,9 @@ def next_due_at(watchlist: dict[str, Any], now: datetime | None = None) -> str |
     base = datetime.fromisoformat(str(base_text).replace("Z", "+00:00"))
     if base.tzinfo is None:
         base = base.replace(tzinfo=timezone.utc)
-    delta = {"hourly": timedelta(hours=1), "daily": timedelta(days=1), "weekly": timedelta(days=7)}[cadence]
+    delta = {
+        "hourly": timedelta(hours=1),
+        "daily": timedelta(days=1),
+        "weekly": timedelta(days=7),
+    }[cadence]
     return (base.astimezone(timezone.utc) + delta).isoformat()

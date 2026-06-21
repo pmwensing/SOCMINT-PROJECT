@@ -5,13 +5,27 @@ import json
 import zipfile
 from copy import deepcopy
 
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle_files
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle_from_verification_report
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_zip
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import safe_bundle_name
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import sha256_bytes
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle,
+)
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle_files,
+)
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle_from_verification_report,
+)
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_zip,
+)
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    safe_bundle_name,
+)
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    sha256_bytes,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index,
+)
 
 REQUIRED_FILES = {
     "README.md",
@@ -43,13 +57,20 @@ def verification_report():
 
 
 def delivery_index():
-    return build_master_delivery_index(verification_report(), operator="analyst", notes="Ready.")
+    return build_master_delivery_index(
+        verification_report(), operator="analyst", notes="Ready."
+    )
 
 
 def test_builds_bundle_from_deliver_ready_index():
-    bundle = build_master_delivery_export_bundle(delivery_index(), bundle_name="Master Delivery")
+    bundle = build_master_delivery_export_bundle(
+        delivery_index(), bundle_name="Master Delivery"
+    )
 
-    assert bundle["schema"] == "socmint.v7_5_14.dossier_finalization_master_delivery_export_bundle"
+    assert (
+        bundle["schema"]
+        == "socmint.v7_5_14.dossier_finalization_master_delivery_export_bundle"
+    )
     assert bundle["approved_line"] == "v7.5.14"
     assert bundle["bundle_name"] == "master-delivery"
     assert bundle["delivery_action"] == "deliver_ready"
@@ -67,7 +88,10 @@ def test_required_files_are_present_exactly():
 def test_manifest_has_five_rows_and_correct_file_count():
     bundle = build_master_delivery_export_bundle(delivery_index())
 
-    assert bundle["manifest"]["schema"] == "socmint.v7_5_14.dossier_finalization_master_delivery_export_manifest"
+    assert (
+        bundle["manifest"]["schema"]
+        == "socmint.v7_5_14.dossier_finalization_master_delivery_export_manifest"
+    )
     assert bundle["manifest"]["file_count"] == 5
     assert len(bundle["manifest"]["files"]) == 5
     assert {row["path"] for row in bundle["manifest"]["files"]} == REQUIRED_FILES
@@ -103,8 +127,12 @@ def test_safe_bundle_name_normalizes_unsafe_names():
 
 
 def test_readme_contains_delivery_action_and_verification_status():
-    bundle = build_master_delivery_export_bundle(delivery_index(), bundle_name="Delivery")
-    readme = build_master_delivery_export_bundle_files(bundle)["README.md"].decode("utf-8")
+    bundle = build_master_delivery_export_bundle(
+        delivery_index(), bundle_name="Delivery"
+    )
+    readme = build_master_delivery_export_bundle_files(bundle)["README.md"].decode(
+        "utf-8"
+    )
 
     assert "# SOCMINT v7.5.14 Master Delivery Package Export Bundle" in readme
     assert "Bundle name: delivery" in readme
@@ -115,7 +143,9 @@ def test_readme_contains_delivery_action_and_verification_status():
 
 def test_markdown_file_comes_from_v7513_renderer():
     bundle = build_master_delivery_export_bundle(delivery_index())
-    markdown = build_master_delivery_export_bundle_files(bundle)["master_delivery_index.md"].decode("utf-8")
+    markdown = build_master_delivery_export_bundle_files(bundle)[
+        "master_delivery_index.md"
+    ].decode("utf-8")
 
     assert "# SOCMINT v7.5.13 Master Dossier Delivery Index" in markdown
     assert "Delivery action: DELIVER_READY" in markdown
@@ -124,7 +154,11 @@ def test_markdown_file_comes_from_v7513_renderer():
 def test_summary_file_matches_index_summary():
     index = delivery_index()
     bundle = build_master_delivery_export_bundle(index)
-    summary = json.loads(build_master_delivery_export_bundle_files(bundle)["master_delivery_index_summary.json"])
+    summary = json.loads(
+        build_master_delivery_export_bundle_files(bundle)[
+            "master_delivery_index_summary.json"
+        ]
+    )
 
     assert summary == index["summary"]
 

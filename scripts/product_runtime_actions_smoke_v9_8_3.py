@@ -46,8 +46,17 @@ def main() -> int:
                 if endpoint == "/product/build-control":
                     ok = ok and "Runtime Actions" in body
                 if endpoint == "/api/v1/product/runtime-actions":
-                    ok = ok and response.is_json and response.get_json().get("version") == "9.8.3"
-                print(("[PASS]" if ok else "[FAIL]"), "GET", endpoint, response.status_code)
+                    ok = (
+                        ok
+                        and response.is_json
+                        and response.get_json().get("version") == "9.8.3"
+                    )
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    "GET",
+                    endpoint,
+                    response.status_code,
+                )
                 if not ok:
                     failures.append(("GET", endpoint, response.status_code, body[:800]))
 
@@ -62,9 +71,21 @@ def main() -> int:
             for endpoint in post_checks:
                 response = client.post(endpoint, headers={"X-CSRF-Token": "v983-csrf"})
                 ok = response.status_code in {200, 302}
-                print(("[PASS]" if ok else "[FAIL]"), "POST", endpoint, response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    "POST",
+                    endpoint,
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append(("POST", endpoint, response.status_code, response.get_data(as_text=True)[:800]))
+                    failures.append(
+                        (
+                            "POST",
+                            endpoint,
+                            response.status_code,
+                            response.get_data(as_text=True)[:800],
+                        )
+                    )
 
             if failures:
                 for method, endpoint, status, body in failures:

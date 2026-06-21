@@ -40,30 +40,38 @@ def _export_event() -> dict:
         "export_package_sha256": "a" * 64,
         "dossier_content": {
             "section_count": 1,
-            "sections": [{
-                "section_id": "key_findings",
-                "title": "Key Findings",
-                "position": 1,
-                "citation_ready_narrative": "Reviewed evidence supports the approved finding.",
-                "findings": [{
-                    "finding_id": "finding-1",
-                    "citation_ready_text": "The reviewed account is attributable to the subject [C1].",
-                }],
-            }],
+            "sections": [
+                {
+                    "section_id": "key_findings",
+                    "title": "Key Findings",
+                    "position": 1,
+                    "citation_ready_narrative": "Reviewed evidence supports the approved finding.",
+                    "findings": [
+                        {
+                            "finding_id": "finding-1",
+                            "citation_ready_text": "The reviewed account is attributable to the subject [C1].",
+                        }
+                    ],
+                }
+            ],
         },
-        "citation_catalog": [{
-            "label": "C1",
-            "claim_id": "claim-1",
-            "claim_value": "account attribution",
-            "source": "browser_e2e_fixture",
-            "evidence_refs": ["evidence-1"],
-            "artifact_links": [{
-                "artifact_id": "artifact-1",
-                "path": "evidence/report.pdf",
-                "sha256": "b" * 64,
-                "media_type": "application/pdf",
-            }],
-        }],
+        "citation_catalog": [
+            {
+                "label": "C1",
+                "claim_id": "claim-1",
+                "claim_value": "account attribution",
+                "source": "browser_e2e_fixture",
+                "evidence_refs": ["evidence-1"],
+                "artifact_links": [
+                    {
+                        "artifact_id": "artifact-1",
+                        "path": "evidence/report.pdf",
+                        "sha256": "b" * 64,
+                        "media_type": "application/pdf",
+                    }
+                ],
+            }
+        ],
         "source_manifest": {"package_id": "findings-package-1"},
         "approval_record": {
             "approval_id": "approval-v22-browser",
@@ -96,18 +104,21 @@ def _app(db: Path):
     os.environ["DATABASE_URL"] = f"sqlite:///{db}"
     os.environ["SOCMINT_DATA_DIR"] = str(db.parent)
     os.environ["SOCMINT_SECRET_KEY"] = (
-        "v22-browser-e2e-stable-high-entropy-secret-"
-        "f82c2368ab4d49d6a1e4fe799c591205"
+        "v22-browser-e2e-stable-high-entropy-secret-f82c2368ab4d49d6a1e4fe799c591205"
     )
     os.environ["SOCMINT_AUTO_CREATE_DB"] = "true"
-    os.environ["SOCMINT_AUTHORIZED_RECIPIENTS"] = json.dumps([{
-        "recipient_id": "recipient-v22",
-        "display_name": "V22 Authorized Recipient",
-        "organization": "SOCMINT Validation",
-        "role": "case officer",
-        "authorized": True,
-        "allowed_channels": ["secure_portal"],
-    }])
+    os.environ["SOCMINT_AUTHORIZED_RECIPIENTS"] = json.dumps(
+        [
+            {
+                "recipient_id": "recipient-v22",
+                "display_name": "V22 Authorized Recipient",
+                "organization": "SOCMINT Validation",
+                "role": "case officer",
+                "authorized": True,
+                "allowed_channels": ["secure_portal"],
+            }
+        ]
+    )
 
     from src.socmint import database
     from src.socmint.dashboard import create_app
@@ -123,12 +134,14 @@ def _app(db: Path):
     _ensure_storage()
     session = database.Session()
     try:
-        session.add(database.AuditLog(
-            actor="supervisor",
-            action=FINAL_EXPORT_ACTION,
-            target_value=CASE_ID,
-            details=_canonical(_export_event()),
-        ))
+        session.add(
+            database.AuditLog(
+                actor="supervisor",
+                action=FINAL_EXPORT_ACTION,
+                target_value=CASE_ID,
+                details=_canonical(_export_event()),
+            )
+        )
         session.commit()
     finally:
         session.close()
@@ -176,20 +189,26 @@ def run(output: Path) -> dict:
             base = f"http://127.0.0.1:{server.server_port}"
             browser.get(base + "/")
             serializer = app.session_interface.get_signing_serializer(app)
-            browser.add_cookie({
-                "name": app.config.get("SESSION_COOKIE_NAME", "session"),
-                "value": serializer.dumps({
-                    "user": "supervisor",
-                    "_csrf_token": "v22-csrf",
-                }),
-                "path": "/",
-            })
+            browser.add_cookie(
+                {
+                    "name": app.config.get("SESSION_COOKIE_NAME", "session"),
+                    "value": serializer.dumps(
+                        {
+                            "user": "supervisor",
+                            "_csrf_token": "v22-csrf",
+                        }
+                    ),
+                    "path": "/",
+                }
+            )
 
             workspace = base + f"/dossier-release/{CASE_ID}"
             browser.get(workspace)
-            wait.until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "[data-dossier-release-workspace]")
-            ))
+            wait.until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, "[data-dossier-release-workspace]")
+                )
+            )
             _check(report, "release_workspace_render", True)
             _check(
                 report,
@@ -213,7 +232,11 @@ def run(output: Path) -> dict:
                 "[data-dossier-release-workspace]",
                 "authorize-release-selection",
             )
-            _check(report, "release_authorization", "V22 Authorized Recipient" in browser.page_source)
+            _check(
+                report,
+                "release_authorization",
+                "V22 Authorized Recipient" in browser.page_source,
+            )
 
             browser.find_element(By.ID, "release-preview-note").send_keys(
                 "Reviewed exact release material."
@@ -237,20 +260,36 @@ def run(output: Path) -> dict:
                 "[data-dossier-release-workspace]",
                 "dispatch-secure-distribution",
             )
-            _check(report, "secure_distribution", "Latest distribution" in browser.page_source)
+            _check(
+                report,
+                "secure_distribution",
+                "Latest distribution" in browser.page_source,
+            )
 
-            Select(browser.find_element(By.ID, "delivery-result")).select_by_value("delivered")
-            browser.find_element(By.ID, "provider-message-id").send_keys("provider-v22-1")
+            Select(browser.find_element(By.ID, "delivery-result")).select_by_value(
+                "delivered"
+            )
+            browser.find_element(By.ID, "provider-message-id").send_keys(
+                "provider-v22-1"
+            )
             browser.find_element(By.ID, "transport-status").send_keys("delivered")
-            browser.find_element(By.ID, "delivered-at").send_keys("2026-06-14T20:15:00Z")
+            browser.find_element(By.ID, "delivered-at").send_keys(
+                "2026-06-14T20:15:00Z"
+            )
             _reload_after_click(
                 browser,
                 wait,
                 "[data-dossier-release-workspace]",
                 "record-delivery-receipt",
             )
-            _check(report, "delivery_receipt", "Delivery succeeded" in browser.page_source)
-            _check(report, "acknowledgement_outstanding", "Acknowledgement outstanding" in browser.page_source)
+            _check(
+                report, "delivery_receipt", "Delivery succeeded" in browser.page_source
+            )
+            _check(
+                report,
+                "acknowledgement_outstanding",
+                "Acknowledgement outstanding" in browser.page_source,
+            )
 
             browser.find_element(By.ID, "recipient-acknowledged").click()
             browser.find_element(By.ID, "recipient-ack-name").send_keys(
@@ -279,11 +318,21 @@ def run(output: Path) -> dict:
             )
 
             browser.get(base + f"/dossier-release/{CASE_ID}/history")
-            wait.until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "[data-dossier-release-history]")
-            ))
-            _check(report, "consolidated_history", "Consolidated Timeline" in browser.page_source)
-            _check(report, "closure_ready", "delivered_and_acknowledged" in browser.page_source)
+            wait.until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, "[data-dossier-release-history]")
+                )
+            )
+            _check(
+                report,
+                "consolidated_history",
+                "Consolidated Timeline" in browser.page_source,
+            )
+            _check(
+                report,
+                "closure_ready",
+                "delivered_and_acknowledged" in browser.page_source,
+            )
 
             browser.get(base + "/api/v1/dossier-release/product-review-checkpoint")
             checkpoint = json.loads(browser.find_element(By.TAG_NAME, "body").text)

@@ -35,9 +35,7 @@ def build_reviewer_work_queue(reviewer: str) -> dict[str, Any]:
                 1 for item in entries if item.get("review_state") == "unreviewed"
             ),
             "needs_follow_up": sum(
-                1
-                for item in entries
-                if item.get("review_state") == "needs_follow_up"
+                1 for item in entries if item.get("review_state") == "needs_follow_up"
             ),
             "reviewed": sum(
                 1 for item in entries if item.get("review_state") == "reviewed"
@@ -47,9 +45,7 @@ def build_reviewer_work_queue(reviewer: str) -> dict[str, Any]:
             ),
         },
         "allowed_review_states": sorted(REVIEWER_STATES),
-        "next_action": (
-            "review_assigned_decisions" if entries else "await_assignment"
-        ),
+        "next_action": ("review_assigned_decisions" if entries else "await_assignment"),
     }
 
 

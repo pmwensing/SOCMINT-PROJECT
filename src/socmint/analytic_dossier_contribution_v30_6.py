@@ -4,7 +4,12 @@ from typing import Any
 
 from . import database
 from .corroboration_claim_v30_1 import find_claim
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .human_analytic_review_v30_5 import latest_review
 
 SCHEMA = "socmint.analytic_dossier_contribution.v30_6"
@@ -50,7 +55,9 @@ def contribution_history() -> list[dict[str, Any]]:
 
 def contributions_for_claim(claim_id: str | None = None) -> list[dict[str, Any]]:
     rows = contribution_history()
-    return [row for row in rows if row.get("claim_id") == claim_id] if claim_id else rows
+    return (
+        [row for row in rows if row.get("claim_id") == claim_id] if claim_id else rows
+    )
 
 
 def latest_contribution(claim_id: str) -> dict[str, Any] | None:
@@ -72,7 +79,9 @@ def current_contribution_decisions() -> list[dict[str, Any]]:
     return sorted(latest.values(), key=lambda item: str(item.get("claim_id")))
 
 
-def _record(actor: str, claim_id: str, event: dict[str, Any], ip_address: str | None) -> dict[str, Any]:
+def _record(
+    actor: str, claim_id: str, event: dict[str, Any], ip_address: str | None
+) -> dict[str, Any]:
     _ensure_storage()
     session = database.Session()
     try:
@@ -148,7 +157,9 @@ def review_dossier_contribution(
         "human_review_id": human_review.get("human_review_id"),
         "human_review_sha256": human_review.get("human_review_sha256"),
         "human_review_decision": human_review.get("decision"),
-        "supersedes_contribution_id": prior.get("dossier_contribution_id") if prior else None,
+        "supersedes_contribution_id": prior.get("dossier_contribution_id")
+        if prior
+        else None,
     }
     content = {
         "event_type": ACTION,
@@ -162,7 +173,9 @@ def review_dossier_contribution(
         "contribution_binding_sha256": _sha(binding),
         "reason": reason,
         "is_reassessment": prior is not None,
-        "supersedes_contribution_id": prior.get("dossier_contribution_id") if prior else None,
+        "supersedes_contribution_id": prior.get("dossier_contribution_id")
+        if prior
+        else None,
         "dossier_contribution_authorized": decision == "approved",
         "dossier_mutation_performed": False,
         "claim_mutated": False,
@@ -177,12 +190,17 @@ def review_dossier_contribution(
         "dossier_contribution_id": f"dossier-contribution-{digest[:24]}",
         "dossier_contribution_sha256": digest,
     }
-    if any(item.get("dossier_contribution_sha256") == digest for item in contributions_for_claim(claim_id)):
+    if any(
+        item.get("dossier_contribution_sha256") == digest
+        for item in contributions_for_claim(claim_id)
+    ):
         return blocked("dossier_contribution_record_already_exists")
 
     result = _record(actor, claim_id, event, ip_address)
     return {
         **result,
         "status": "analytic_dossier_contribution_reviewed",
-        "next_action": "contribute_through_existing_dossier_pipeline" if decision == "approved" else "retain_contribution_history",
+        "next_action": "contribute_through_existing_dossier_pipeline"
+        if decision == "approved"
+        else "retain_contribution_history",
     }

@@ -48,8 +48,16 @@ def test_v26_5_aggregates_my_work_overdue_escalations_and_load():
     }
     teams = {
         "case-a": [
-            {"assignment_status": "active", "user_identity": "alice", "role": "reviewer"},
-            {"assignment_status": "active", "user_identity": "paul", "role": "lead_analyst"},
+            {
+                "assignment_status": "active",
+                "user_identity": "alice",
+                "role": "reviewer",
+            },
+            {
+                "assignment_status": "active",
+                "user_identity": "paul",
+                "role": "lead_analyst",
+            },
         ],
         "case-b": [
             {"assignment_status": "active", "user_identity": "bob", "role": "analyst"},
@@ -105,9 +113,17 @@ def test_v26_5_aggregates_my_work_overdue_escalations_and_load():
         "workload_imbalance": 0,
     }
     assert result["overdue_items"][0]["overdue_hours"] == 2.0
-    assert result["unassigned_work"][0]["links"]["reviewer_queue"] == "/case-intelligence-review/queue"
-    assert result["supervisor_escalations"][0]["links"]["supervisor_queue"] == "/case-intelligence-review/supervisor-queue"
-    loads = {item["user_identity"]: item for item in result["collaboration_load_by_user"]}
+    assert (
+        result["unassigned_work"][0]["links"]["reviewer_queue"]
+        == "/case-intelligence-review/queue"
+    )
+    assert (
+        result["supervisor_escalations"][0]["links"]["supervisor_queue"]
+        == "/case-intelligence-review/supervisor-queue"
+    )
+    loads = {
+        item["user_identity"]: item for item in result["collaboration_load_by_user"]
+    }
     assert loads["paul"]["total_collaboration_load"] == 3
     assert loads["alice"]["total_collaboration_load"] == 2
     assert len(result["queue_sha256"]) == 64

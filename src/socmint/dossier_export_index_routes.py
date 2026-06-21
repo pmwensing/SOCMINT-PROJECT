@@ -28,7 +28,9 @@ def register_dossier_export_index_routes(app):
             return jsonify({"error": "login required"}), 401
         return jsonify(find_export_entry(case_id=case_id, subject_id=subject_id))
 
-    @app.get("/api/v1/dossier-builder/v3/export-download/<case_id>/<subject_id>/<filename>")
+    @app.get(
+        "/api/v1/dossier-builder/v3/export-download/<case_id>/<subject_id>/<filename>"
+    )
     def api_dossier_export_download(case_id: str, subject_id: str, filename: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
@@ -41,6 +43,8 @@ def register_dossier_export_index_routes(app):
         )
         if resolved["status"] != "ready":
             return jsonify(resolved), 404 if resolved["status"] == "missing" else 400
-        return send_file(resolved["path"], as_attachment=True, download_name=resolved["filename"])
+        return send_file(
+            resolved["path"], as_attachment=True, download_name=resolved["filename"]
+        )
 
     return app

@@ -2,19 +2,41 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle_zip
-from socmint.dossier_finalization_certificate_bundle_verify_v7_5_6 import verify_certificate_bundle
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle,
+)
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle_zip,
+)
+from socmint.dossier_finalization_certificate_bundle_verify_v7_5_6 import (
+    verify_certificate_bundle,
+)
 from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import ACTION_ARCHIVE
-from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import ACTION_REGENERATE
+from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    ACTION_REGENERATE,
+)
 from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import ACTION_REVIEW
-from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import build_handoff_index
-from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import build_handoff_index_from_bundle
-from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import build_handoff_index_from_zip_bytes
-from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import recommended_action
-from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import render_handoff_index_markdown
-from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import summarize_handoff_index
-from socmint.dossier_finalization_certificate_v7_5_4 import build_verification_certificate
+from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    build_handoff_index,
+)
+from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    build_handoff_index_from_bundle,
+)
+from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    build_handoff_index_from_zip_bytes,
+)
+from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    recommended_action,
+)
+from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    render_handoff_index_markdown,
+)
+from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    summarize_handoff_index,
+)
+from socmint.dossier_finalization_certificate_v7_5_4 import (
+    build_verification_certificate,
+)
 
 
 def verified_report():
@@ -40,7 +62,9 @@ def verified_report():
                 }
             ]
         },
-        "file_results": [{"path": "certificate.json", "hash_match": True, "size_match": True}],
+        "file_results": [
+            {"path": "certificate.json", "hash_match": True, "size_match": True}
+        ],
         "failures": [],
         "warnings": [],
         "summary": {"status": "verified", "verified": True},
@@ -49,7 +73,15 @@ def verified_report():
 
 def review_report():
     report = verified_report()
-    report.update({"status": "needs_human_review", "verified": False, "warning_count": 1, "certificate_status": "needs_human_review", "certificate_valid": False})
+    report.update(
+        {
+            "status": "needs_human_review",
+            "verified": False,
+            "warning_count": 1,
+            "certificate_status": "needs_human_review",
+            "certificate_valid": False,
+        }
+    )
     report["warnings"] = [
         {
             "severity": "warn",
@@ -64,7 +96,15 @@ def review_report():
 
 def failed_report():
     report = verified_report()
-    report.update({"status": "failed", "verified": False, "failure_count": 1, "certificate_status": "failed", "certificate_valid": False})
+    report.update(
+        {
+            "status": "failed",
+            "verified": False,
+            "failure_count": 1,
+            "certificate_status": "failed",
+            "certificate_valid": False,
+        }
+    )
     report["failures"] = [
         {
             "severity": "fail",
@@ -95,14 +135,21 @@ def base_v753_report():
 
 
 def valid_bundle():
-    certificate = build_verification_certificate(base_v753_report(), packet_name="packet-a")
+    certificate = build_verification_certificate(
+        base_v753_report(), packet_name="packet-a"
+    )
     return build_certificate_bundle(certificate, bundle_name="bundle-a")
 
 
 def test_builds_archive_ready_index_from_verified_report():
-    index = build_handoff_index(verified_report(), bundle_name="bundle-a", operator="analyst")
+    index = build_handoff_index(
+        verified_report(), bundle_name="bundle-a", operator="analyst"
+    )
 
-    assert index["schema"] == "socmint.v7_5_7.dossier_finalization_certificate_handoff_index"
+    assert (
+        index["schema"]
+        == "socmint.v7_5_7.dossier_finalization_certificate_handoff_index"
+    )
     assert index["recommended_action"] == ACTION_ARCHIVE
     assert index["verified"] is True
     assert index["certificate_status"] == "valid"
@@ -160,7 +207,10 @@ def test_summary_is_compact_and_excludes_full_file_index_and_findings():
     index = build_handoff_index(verified_report(), bundle_name="bundle-a")
     summary = summarize_handoff_index(index)
 
-    assert summary["schema"] == "socmint.v7_5_7.dossier_finalization_certificate_handoff_index.summary"
+    assert (
+        summary["schema"]
+        == "socmint.v7_5_7.dossier_finalization_certificate_handoff_index.summary"
+    )
     assert summary["recommended_action"] == ACTION_ARCHIVE
     assert summary["bundle_name"] == "bundle-a"
     assert "file_index" not in summary
@@ -186,7 +236,10 @@ def test_markdown_prints_none_for_empty_findings():
 
 
 def test_recommended_action_handles_unknown_status_as_regenerate():
-    assert recommended_action({"status": "mystery", "certificate_status": "valid"}) == ACTION_REGENERATE
+    assert (
+        recommended_action({"status": "mystery", "certificate_status": "valid"})
+        == ACTION_REGENERATE
+    )
 
 
 def test_input_verification_report_is_not_mutated():

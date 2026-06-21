@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -46,7 +48,9 @@ def test_v22_6_history_routes_and_ui(tmp_path, monkeypatch):
             },
         ],
     }
-    monkeypatch.setattr(routes, "build_release_delivery_history", lambda case_id: payload)
+    monkeypatch.setattr(
+        routes, "build_release_delivery_history", lambda case_id: payload
+    )
 
     client = _app(tmp_path, monkeypatch).test_client()
     assert client.get("/api/v1/dossier-release/case-alpha/history").status_code == 401
@@ -60,14 +64,19 @@ def test_v22_6_history_routes_and_ui(tmp_path, monkeypatch):
     assert b"Case Closure Summary" in ui.data
     assert b"Consolidated Timeline" in ui.data
     assert b"delivered_and_acknowledged" in ui.data
-    assert b"does not mutate authorization, preview, dispatch, receipt, acknowledgement, recall, or reissue records" in ui.data
+    assert (
+        b"does not mutate authorization, preview, dispatch, receipt, acknowledgement, recall, or reissue records"
+        in ui.data
+    )
     assert api.status_code == 200
     assert api.get_json()["closure_ready"] is True
     assert api.get_json()["timeline_event_count"] == 4
 
 
 def test_v22_6_release_note_and_no_migration():
-    note = Path("release/V22_6_RELEASE_DELIVERY_HISTORY_CASE_CLOSURE_SUMMARY.md").read_text(encoding="utf-8")
+    note = Path(
+        "release/V22_6_RELEASE_DELIVERY_HISTORY_CASE_CLOSURE_SUMMARY.md"
+    ).read_text(encoding="utf-8")
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

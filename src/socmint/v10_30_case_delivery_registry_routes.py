@@ -15,11 +15,19 @@ def _request_payload() -> dict:
 def register_v10_30_case_delivery_registry_routes(app):
     @app.post("/api/v1/v10/final-delivery/cases/<case_id>/registry")
     def api_v10_case_delivery_registry(case_id: str):
-        return jsonify(build_case_delivery_registry_from_request(case_id, _request_payload()))
+        return jsonify(
+            build_case_delivery_registry_from_request(case_id, _request_payload())
+        )
 
     @app.post("/api/v1/v10/final-delivery/cases/<case_id>/registry/summaries")
     def api_v10_case_delivery_registry_summaries(case_id: str):
-        return jsonify({"summaries": build_case_delivery_summaries_from_request(case_id, _request_payload())})
+        return jsonify(
+            {
+                "summaries": build_case_delivery_summaries_from_request(
+                    case_id, _request_payload()
+                )
+            }
+        )
 
     @app.post("/api/v1/v10/final-delivery/cases/<case_id>/registry/delivery")
     def api_v10_case_delivery_registry_delivery(case_id: str):

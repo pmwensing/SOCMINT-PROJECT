@@ -56,10 +56,12 @@ def register_dossier_final_export_routes_v21_6(app):
             return jsonify({"error": "login required"}), 401
         subject_id = _subject_id()
         if subject_id is None:
-            return jsonify({
-                "status": "blocked",
-                "blockers": [{"key": "subject_id_required_for_final_export"}],
-            }), 422
+            return jsonify(
+                {
+                    "status": "blocked",
+                    "blockers": [{"key": "subject_id_required_for_final_export"}],
+                }
+            ), 422
         result = generate_final_export_package(
             case_id,
             subject_id=subject_id,

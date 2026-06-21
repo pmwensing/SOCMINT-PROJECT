@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from src.socmint.analytic_product_review_v30_7 import REQUIRED_ASSETS, REQUIRED_MODULES, build_analytic_product_review
+from src.socmint.analytic_product_review_v30_7 import (
+    REQUIRED_ASSETS,
+    REQUIRED_MODULES,
+    build_analytic_product_review,
+)
 
 
 class Route:

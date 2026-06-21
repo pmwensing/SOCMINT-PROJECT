@@ -14,10 +14,16 @@ SUPPORTING_ALIAS_TYPES = {"username", "handle", "visual_hash", "text_hash"}
 
 
 def _state(candidate: dict[str, Any]) -> str:
-    return str((candidate.get("analyst_review") or {}).get("review_state") or "unreviewed").strip().lower()
+    return (
+        str((candidate.get("analyst_review") or {}).get("review_state") or "unreviewed")
+        .strip()
+        .lower()
+    )
 
 
-def _candidate_aliases(alias_graph: dict[str, Any], candidate_id: str) -> list[dict[str, Any]]:
+def _candidate_aliases(
+    alias_graph: dict[str, Any], candidate_id: str
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for alias in alias_graph.get("aliases", []) or []:
         if candidate_id in (alias.get("candidate_ids") or []):
@@ -26,7 +32,11 @@ def _candidate_aliases(alias_graph: dict[str, Any], candidate_id: str) -> list[d
 
 
 def _collision_ids(alias_graph: dict[str, Any]) -> set[str]:
-    return {row.get("alias_id") for row in alias_graph.get("collision_sets", []) or [] if row.get("status") == "reverse_collision_review"}
+    return {
+        row.get("alias_id")
+        for row in alias_graph.get("collision_sets", []) or []
+        if row.get("status") == "reverse_collision_review"
+    }
 
 
 def _evidence_ready(candidate: dict[str, Any]) -> bool:
@@ -41,29 +51,53 @@ def _evidence_ready(candidate: dict[str, Any]) -> bool:
     )
 
 
-def _decision(candidate: dict[str, Any], aliases: list[dict[str, Any]], collided_alias_ids: set[str]) -> tuple[str, list[str]]:
+def _decision(
+    candidate: dict[str, Any],
+    aliases: list[dict[str, Any]],
+    collided_alias_ids: set[str],
+) -> tuple[str, list[str]]:
     reasons: list[str] = []
     state = _state(candidate)
-    if state in FAIL_STATES or candidate.get("dossier_assertion_gate", {}).get("suppressed"):
+    if state in FAIL_STATES or candidate.get("dossier_assertion_gate", {}).get(
+        "suppressed"
+    ):
         return "FAIL", ["candidate was rejected or suppressed by analyst review"]
     if state in HOLD_STATES:
         reasons.append("candidate profile still requires analyst review")
     if not _evidence_ready(candidate):
         reasons.append("captured profile evidence or fingerprint hashes are missing")
 
-    strong = [alias for alias in aliases if alias.get("alias_type") in STRONG_ALIAS_TYPES and alias.get("analyst_state") == "confirmed"]
-    supporting = [alias for alias in aliases if alias.get("alias_type") in SUPPORTING_ALIAS_TYPES and alias.get("analyst_state") == "confirmed"]
-    collisions = [alias for alias in aliases if alias.get("alias_id") in collided_alias_ids]
+    strong = [
+        alias
+        for alias in aliases
+        if alias.get("alias_type") in STRONG_ALIAS_TYPES
+        and alias.get("analyst_state") == "confirmed"
+    ]
+    supporting = [
+        alias
+        for alias in aliases
+        if alias.get("alias_type") in SUPPORTING_ALIAS_TYPES
+        and alias.get("analyst_state") == "confirmed"
+    ]
+    collisions = [
+        alias for alias in aliases if alias.get("alias_id") in collided_alias_ids
+    ]
     if collisions:
         reasons.append("one or more aliases appear in reverse-collision review sets")
     if not strong and len(supporting) < 2:
-        reasons.append("identity link needs a confirmed strong alias or two confirmed supporting aliases")
+        reasons.append(
+            "identity link needs a confirmed strong alias or two confirmed supporting aliases"
+        )
     if reasons:
         return "HOLD", reasons
-    return "GO", ["accepted candidate has reviewed evidence and confirmed alias support"]
+    return "GO", [
+        "accepted candidate has reviewed evidence and confirmed alias support"
+    ]
 
 
-def build_identity_link_hypotheses(alias_graph: dict[str, Any], profile_payload: dict[str, Any]) -> dict[str, Any]:
+def build_identity_link_hypotheses(
+    alias_graph: dict[str, Any], profile_payload: dict[str, Any]
+) -> dict[str, Any]:
     collided_alias_ids = _collision_ids(alias_graph)
     hypotheses: list[dict[str, Any]] = []
     for candidate in profile_payload.get("candidates", []) or []:
@@ -73,8 +107,14 @@ def build_identity_link_hypotheses(alias_graph: dict[str, Any], profile_payload:
         aliases = _candidate_aliases(alias_graph, candidate_id)
         decision, reasons = _decision(candidate, aliases, collided_alias_ids)
         fp = candidate.get("profile_fingerprint") or {}
-        strong_aliases = [alias for alias in aliases if alias.get("alias_type") in STRONG_ALIAS_TYPES]
-        supporting_aliases = [alias for alias in aliases if alias.get("alias_type") in SUPPORTING_ALIAS_TYPES]
+        strong_aliases = [
+            alias for alias in aliases if alias.get("alias_type") in STRONG_ALIAS_TYPES
+        ]
+        supporting_aliases = [
+            alias
+            for alias in aliases
+            if alias.get("alias_type") in SUPPORTING_ALIAS_TYPES
+        ]
         hypotheses.append(
             {
                 "hypothesis_id": f"identity-link-{candidate_id}",
@@ -89,7 +129,13 @@ def build_identity_link_hypotheses(alias_graph: dict[str, Any], profile_payload:
                 "alias_count": len(aliases),
                 "strong_alias_count": len(strong_aliases),
                 "supporting_alias_count": len(supporting_aliases),
-                "collision_alias_count": len([alias for alias in aliases if alias.get("alias_id") in collided_alias_ids]),
+                "collision_alias_count": len(
+                    [
+                        alias
+                        for alias in aliases
+                        if alias.get("alias_id") in collided_alias_ids
+                    ]
+                ),
                 "evidence_ready": _evidence_ready(candidate),
                 "dossier_assertion_ready": decision == "GO",
                 "alias_ids": [alias.get("alias_id") for alias in aliases],
@@ -109,7 +155,9 @@ def build_identity_link_hypotheses(alias_graph: dict[str, Any], profile_payload:
     }
 
 
-def export_identity_link_hypothesis_report(payload: dict[str, Any], fmt: str = "json") -> tuple[str, str, str]:
+def export_identity_link_hypothesis_report(
+    payload: dict[str, Any], fmt: str = "json"
+) -> tuple[str, str, str]:
     fmt = (fmt or "json").lower().strip()
     if fmt in {"md", "markdown"}:
         lines = [
@@ -140,4 +188,8 @@ def export_identity_link_hypothesis_report(payload: dict[str, Any], fmt: str = "
                 ]
             )
         return "text/markdown", "identity-link-hypotheses.md", "\n".join(lines)
-    return "application/json", "identity-link-hypotheses.json", json.dumps(payload, indent=2, sort_keys=True)
+    return (
+        "application/json",
+        "identity-link-hypotheses.json",
+        json.dumps(payload, indent=2, sort_keys=True),
+    )

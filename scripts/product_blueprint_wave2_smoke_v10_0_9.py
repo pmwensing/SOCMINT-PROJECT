@@ -33,7 +33,10 @@ def first_endpoint_for(app, route: str) -> str | None:
 
 
 def has_dashboard_fallback(app, route: str) -> bool:
-    return any(rule.rule == route and rule.endpoint.startswith("dashboard.") for rule in app.url_map.iter_rules())
+    return any(
+        rule.rule == route and rule.endpoint.startswith("dashboard.")
+        for rule in app.url_map.iter_rules()
+    )
 
 
 def main() -> int:
@@ -58,32 +61,76 @@ def main() -> int:
             response = client.get("/api/v1/product/v10/blueprint-guardrails")
             wave1 = response.get_json() if response.is_json else {}
             ok = response.status_code == 200 and wave1.get("status") == "pass"
-            print(("[PASS]" if ok else "[FAIL]"), "Wave 1 guardrails still pass", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "Wave 1 guardrails still pass",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("Wave 1 guardrails still pass", response.status_code, response.get_data(as_text=True)[:4000]))
+                failures.append(
+                    (
+                        "Wave 1 guardrails still pass",
+                        response.status_code,
+                        response.get_data(as_text=True)[:4000],
+                    )
+                )
 
             for route, owner in WAVE2_ROUTES.items():
                 endpoint = first_endpoint_for(app, route)
                 ok = bool(endpoint and endpoint.startswith(owner + "."))
-                print(("[PASS]" if ok else "[FAIL]"), f"Wave 2 endpoint ownership {route}", endpoint)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"Wave 2 endpoint ownership {route}",
+                    endpoint,
+                )
                 if not ok:
-                    failures.append((f"Wave 2 endpoint ownership {route}", 0, f"endpoint={endpoint!r}, expected={owner!r}"))
+                    failures.append(
+                        (
+                            f"Wave 2 endpoint ownership {route}",
+                            0,
+                            f"endpoint={endpoint!r}, expected={owner!r}",
+                        )
+                    )
 
                 ok = has_dashboard_fallback(app, route)
-                print(("[PASS]" if ok else "[FAIL]"), f"Wave 2 dashboard fallback {route}", 0)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"Wave 2 dashboard fallback {route}",
+                    0,
+                )
                 if not ok:
-                    failures.append((f"Wave 2 dashboard fallback {route}", 0, "missing dashboard fallback"))
+                    failures.append(
+                        (
+                            f"Wave 2 dashboard fallback {route}",
+                            0,
+                            "missing dashboard fallback",
+                        )
+                    )
 
                 ok = not any(token in route.lower() for token in FORBIDDEN)
-                print(("[PASS]" if ok else "[FAIL]"), f"Wave 2 no blocked action token {route}", 0)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"Wave 2 no blocked action token {route}",
+                    0,
+                )
                 if not ok:
                     failures.append((f"Wave 2 blocked action token {route}", 0, route))
 
                 response = client.get(route)
                 ok = response.status_code == 200
-                print(("[PASS]" if ok else "[FAIL]"), f"GET Wave 2 moved route {route}", response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"GET Wave 2 moved route {route}",
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append((f"GET Wave 2 moved route {route}", response.status_code, response.get_data(as_text=True)[:2500]))
+                    failures.append(
+                        (
+                            f"GET Wave 2 moved route {route}",
+                            response.status_code,
+                            response.get_data(as_text=True)[:2500],
+                        )
+                    )
 
             response = client.get("/api/v1/product/v10/blueprint-wave2")
             payload = response.get_json() if response.is_json else {}
@@ -94,14 +141,26 @@ def main() -> int:
                 and payload.get("wave1_status") == "pass"
                 and payload.get("wave2_route_count") == len(WAVE2_ROUTES)
                 and payload.get("wave2_failed_route_count") == 0
-                and payload.get("no_post_write_build_download_archive_routes_moved") is True
+                and payload.get("no_post_write_build_download_archive_routes_moved")
+                is True
                 and payload.get("rollback_ready_count") == len(WAVE2_ROUTES)
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET Wave 2 API", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"), "GET Wave 2 API", response.status_code
+            )
             if not ok:
-                failures.append(("GET Wave 2 API", response.status_code, response.get_data(as_text=True)[:7000]))
+                failures.append(
+                    (
+                        "GET Wave 2 API",
+                        response.status_code,
+                        response.get_data(as_text=True)[:7000],
+                    )
+                )
 
-            response = client.post("/api/v1/product/v10/blueprint-wave2/write", headers={"X-CSRF-Token": "v1009-csrf"})
+            response = client.post(
+                "/api/v1/product/v10/blueprint-wave2/write",
+                headers={"X-CSRF-Token": "v1009-csrf"},
+            )
             written = response.get_json() if response.is_json else {}
             ok = (
                 response.status_code == 200
@@ -110,24 +169,48 @@ def main() -> int:
                 and Path("release/V10_0_9_BLUEPRINT_WAVE2_REPORT.json").exists()
                 and Path("release/V10_0_9_BLUEPRINT_WAVE2_REPORT.md").exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "write Wave 2 report", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write Wave 2 report",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write Wave 2 report", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "write Wave 2 report",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.get("/product/v10/blueprint-wave2")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Blueprint Migration Wave 2" in body and "Wave 2 Routes" in body
+            ok = (
+                response.status_code == 200
+                and "Blueprint Migration Wave 2" in body
+                and "Wave 2 Routes" in body
+            )
             print(("[PASS]" if ok else "[FAIL]"), "GET Wave 2 UI", response.status_code)
             if not ok:
                 failures.append(("GET Wave 2 UI", response.status_code, body[:2500]))
 
-            for route in ["/product/v10", "/product/v10/blueprint-guardrails", "/product/v10/migration-plan"]:
+            for route in [
+                "/product/v10",
+                "/product/v10/blueprint-guardrails",
+                "/product/v10/migration-plan",
+            ]:
                 response = client.get(route)
                 body = response.get_data(as_text=True)
                 ok = response.status_code == 200 and "Open Blueprint Wave 2" in body
-                print(("[PASS]" if ok else "[FAIL]"), f"Wave 2 link {route}", response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"Wave 2 link {route}",
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append((f"Wave 2 link {route}", response.status_code, body[:2500]))
+                    failures.append(
+                        (f"Wave 2 link {route}", response.status_code, body[:2500])
+                    )
 
             if failures:
                 for name, status, body in failures:

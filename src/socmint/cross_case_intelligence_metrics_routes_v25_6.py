@@ -34,9 +34,7 @@ def register_cross_case_intelligence_metrics_routes_v25_6(app):
         if not session.get("user"):
             return jsonify({"error": "login required"}), 401
         return jsonify(
-            build_cross_case_intelligence_metrics(
-                allowed_case_ids=_allowed_case_ids()
-            )
+            build_cross_case_intelligence_metrics(allowed_case_ids=_allowed_case_ids())
         )
 
     return app

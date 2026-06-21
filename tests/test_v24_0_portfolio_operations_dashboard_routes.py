@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -35,7 +37,12 @@ def test_v24_0_routes_and_ui(tmp_path, monkeypatch):
                 "stage": "active",
                 "status": "blocked",
                 "blocked": True,
-                "blockers": [{"key": "citation_required", "source_action": "dossier_quality_review"}],
+                "blockers": [
+                    {
+                        "key": "citation_required",
+                        "source_action": "dossier_quality_review",
+                    }
+                ],
                 "event_count": 3,
                 "latest_action": "dossier_quality_review",
                 "latest_actor": "operator",
@@ -100,7 +107,9 @@ def test_v24_0_routes_and_ui(tmp_path, monkeypatch):
 
 
 def test_v24_0_release_note_and_no_migration():
-    note = Path("release/V24_0_PORTFOLIO_OPERATIONS_DASHBOARD.md").read_text(encoding="utf-8")
+    note = Path("release/V24_0_PORTFOLIO_OPERATIONS_DASHBOARD.md").read_text(
+        encoding="utf-8"
+    )
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))
@@ -108,7 +117,9 @@ def test_v24_0_release_note_and_no_migration():
         for path in directory.rglob("*v24_0*")
     ]
     assert "existing case-targeted audit events" in note
-    assert "active, blocked, delivered, closed, archived, reopened, and unstarted" in note
+    assert (
+        "active, blocked, delivered, closed, archived, reopened, and unstarted" in note
+    )
     assert "direct navigation" in note
     assert "read-only" in note
     assert migrations == []

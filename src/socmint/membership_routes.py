@@ -34,7 +34,9 @@ def register_membership_routes(app):
     def api_account_membership():
         if not _login_required():
             return jsonify({"error": "login required"}), 401
-        return jsonify(ensure_default_membership(session["user"], actor=session.get("user")))
+        return jsonify(
+            ensure_default_membership(session["user"], actor=session.get("user"))
+        )
 
     @app.post("/api/v1/account/gate")
     def api_account_gate():

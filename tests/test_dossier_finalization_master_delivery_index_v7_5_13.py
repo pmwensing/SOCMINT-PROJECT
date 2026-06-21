@@ -2,15 +2,31 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import build_closeout_export_bundle
-from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import build_closeout_export_zip
+from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import (
+    build_closeout_export_bundle,
+)
+from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import (
+    build_closeout_export_zip,
+)
 from socmint.dossier_finalization_closeout_report_v7_5_10 import build_closeout_report
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index_from_bundle
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index_from_zip_bytes
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import recommended_delivery_action
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import render_master_delivery_index_markdown
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import summarize_master_delivery_index
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index_from_bundle,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index_from_zip_bytes,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    recommended_delivery_action,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    render_master_delivery_index_markdown,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    summarize_master_delivery_index,
+)
 
 
 def verified_report():
@@ -35,7 +51,14 @@ def verified_report():
 
 def review_report():
     report = verified_report()
-    report.update({"status": "needs_human_review", "verified": False, "warning_count": 1, "closeout_action": "regenerate_export"})
+    report.update(
+        {
+            "status": "needs_human_review",
+            "verified": False,
+            "warning_count": 1,
+            "closeout_action": "regenerate_export",
+        }
+    )
     report["warnings"] = [
         {
             "severity": "warn",
@@ -93,9 +116,13 @@ def test_recommended_delivery_action_mapping():
 
 
 def test_builds_deliver_ready_index_from_verified_report():
-    index = build_master_delivery_index(verified_report(), operator="analyst", notes="Ready.")
+    index = build_master_delivery_index(
+        verified_report(), operator="analyst", notes="Ready."
+    )
 
-    assert index["schema"] == "socmint.v7_5_13.dossier_finalization_master_delivery_index"
+    assert (
+        index["schema"] == "socmint.v7_5_13.dossier_finalization_master_delivery_index"
+    )
     assert index["approved_line"] == "v7.5.13"
     assert index["delivery_action"] == "deliver_ready"
     assert index["verified"] is True
@@ -119,7 +146,9 @@ def test_builds_regenerate_export_index_from_failed_report():
 
 
 def test_builds_index_from_v7511_bundle():
-    index = build_master_delivery_index_from_bundle(closeout_bundle(), operator="analyst")
+    index = build_master_delivery_index_from_bundle(
+        closeout_bundle(), operator="analyst"
+    )
 
     assert index["delivery_action"] == "deliver_ready"
     assert index["verification_status"] == "verified"
@@ -150,14 +179,19 @@ def test_summary_is_compact():
     index = build_master_delivery_index(verified_report())
     summary = summarize_master_delivery_index(index)
 
-    assert summary["schema"] == "socmint.v7_5_13.dossier_finalization_master_delivery_index.summary"
+    assert (
+        summary["schema"]
+        == "socmint.v7_5_13.dossier_finalization_master_delivery_index.summary"
+    )
     assert summary["delivery_action"] == "deliver_ready"
     assert "findings" not in summary
     assert "verification_summary" not in summary
 
 
 def test_markdown_includes_required_headings():
-    markdown = render_master_delivery_index_markdown(build_master_delivery_index(verified_report(), notes="Ready."))
+    markdown = render_master_delivery_index_markdown(
+        build_master_delivery_index(verified_report(), notes="Ready.")
+    )
 
     assert "# SOCMINT v7.5.13 Master Dossier Delivery Index" in markdown
     assert "Delivery action: DELIVER_READY" in markdown

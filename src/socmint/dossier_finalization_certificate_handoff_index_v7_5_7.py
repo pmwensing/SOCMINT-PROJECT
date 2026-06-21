@@ -4,11 +4,17 @@ from copy import deepcopy
 from datetime import UTC, datetime
 from typing import Any
 
-from .dossier_finalization_certificate_bundle_verify_v7_5_6 import verify_certificate_bundle
-from .dossier_finalization_certificate_bundle_verify_v7_5_6 import verify_certificate_bundle_zip
+from .dossier_finalization_certificate_bundle_verify_v7_5_6 import (
+    verify_certificate_bundle,
+)
+from .dossier_finalization_certificate_bundle_verify_v7_5_6 import (
+    verify_certificate_bundle_zip,
+)
 
 HANDOFF_INDEX_SCHEMA = "socmint.v7_5_7.dossier_finalization_certificate_handoff_index"
-HANDOFF_INDEX_SUMMARY_SCHEMA = "socmint.v7_5_7.dossier_finalization_certificate_handoff_index.summary"
+HANDOFF_INDEX_SUMMARY_SCHEMA = (
+    "socmint.v7_5_7.dossier_finalization_certificate_handoff_index.summary"
+)
 APPROVED_LINE = "v7.5.7"
 ACTION_ARCHIVE = "archive_ready"
 ACTION_REVIEW = "human_review_required"
@@ -21,7 +27,9 @@ def utc_now() -> str:
 
 def recommended_action(verification_report: dict[str, Any]) -> str:
     status = str((verification_report or {}).get("status") or "").strip().lower()
-    cert_status = str((verification_report or {}).get("certificate_status") or "").strip().lower()
+    cert_status = (
+        str((verification_report or {}).get("certificate_status") or "").strip().lower()
+    )
     if status == "verified" and cert_status == "valid":
         return ACTION_ARCHIVE
     if status == "needs_human_review":
@@ -30,7 +38,9 @@ def recommended_action(verification_report: dict[str, Any]) -> str:
 
 
 def _file_index_from_report(report: dict[str, Any]) -> list[dict[str, Any]]:
-    manifest = report.get("manifest") if isinstance(report.get("manifest"), dict) else {}
+    manifest = (
+        report.get("manifest") if isinstance(report.get("manifest"), dict) else {}
+    )
     rows = manifest.get("files") if isinstance(manifest.get("files"), list) else []
     verified_paths = {
         item.get("path")
@@ -44,7 +54,8 @@ def _file_index_from_report(report: dict[str, Any]) -> list[dict[str, Any]]:
                 "content_type": row.get("content_type"),
                 "size_bytes": row.get("size_bytes"),
                 "sha256": row.get("sha256"),
-                "verified": row.get("path") in verified_paths or bool(report.get("verified")),
+                "verified": row.get("path") in verified_paths
+                or bool(report.get("verified")),
             }
             for row in rows
             if isinstance(row, dict)
@@ -84,7 +95,10 @@ def build_handoff_index(
 ) -> dict[str, Any]:
     report = deepcopy(verification_report or {})
     file_index = _file_index_from_report(report)
-    findings = [*list(report.get("failures") or []), *list(report.get("warnings") or [])]
+    findings = [
+        *list(report.get("failures") or []),
+        *list(report.get("warnings") or []),
+    ]
     index: dict[str, Any] = {
         "schema": HANDOFF_INDEX_SCHEMA,
         "approved_line": APPROVED_LINE,
@@ -119,7 +133,12 @@ def build_handoff_index_from_bundle(
 ) -> dict[str, Any]:
     bundle_copy = deepcopy(bundle or {})
     report = verify_certificate_bundle(bundle_copy)
-    return build_handoff_index(report, bundle_name=bundle_copy.get("bundle_name"), operator=operator, notes=notes)
+    return build_handoff_index(
+        report,
+        bundle_name=bundle_copy.get("bundle_name"),
+        operator=operator,
+        notes=notes,
+    )
 
 
 def build_handoff_index_from_zip_bytes(
@@ -130,7 +149,9 @@ def build_handoff_index_from_zip_bytes(
     notes: str | None = None,
 ) -> dict[str, Any]:
     report = verify_certificate_bundle_zip(bytes(zip_bytes or b""))
-    return build_handoff_index(report, bundle_name=bundle_name, operator=operator, notes=notes)
+    return build_handoff_index(
+        report, bundle_name=bundle_name, operator=operator, notes=notes
+    )
 
 
 def _action_label(action: Any) -> str:

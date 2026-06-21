@@ -16,7 +16,9 @@ def _sha256(payload: Any) -> str:
     return hashlib.sha256(_canonical(payload).encode()).hexdigest()
 
 
-def build_dossier_assertion_handoff_seal(handoff_bundle: dict[str, Any]) -> dict[str, Any]:
+def build_dossier_assertion_handoff_seal(
+    handoff_bundle: dict[str, Any],
+) -> dict[str, Any]:
     ready_packets = handoff_bundle.get("ready_packets", []) or []
     blocked_packets = handoff_bundle.get("blocked_packets", []) or []
     sealed_payload = {
@@ -50,7 +52,9 @@ def build_dossier_assertion_handoff_seal(handoff_bundle: dict[str, Any]) -> dict
     }
 
 
-def verify_dossier_assertion_handoff_seal(handoff_bundle: dict[str, Any], seal: dict[str, Any]) -> dict[str, Any]:
+def verify_dossier_assertion_handoff_seal(
+    handoff_bundle: dict[str, Any], seal: dict[str, Any]
+) -> dict[str, Any]:
     expected = build_dossier_assertion_handoff_seal(handoff_bundle)
     matches = expected.get("bundle_hash_sha256") == seal.get("bundle_hash_sha256")
     return {
@@ -63,7 +67,9 @@ def verify_dossier_assertion_handoff_seal(handoff_bundle: dict[str, Any], seal: 
     }
 
 
-def export_dossier_assertion_handoff_seal_report(payload: dict[str, Any], fmt: str = "json") -> tuple[str, str, str]:
+def export_dossier_assertion_handoff_seal_report(
+    payload: dict[str, Any], fmt: str = "json"
+) -> tuple[str, str, str]:
     fmt = (fmt or "json").lower().strip()
     if fmt in {"md", "markdown"}:
         lines = [
@@ -80,4 +86,8 @@ def export_dossier_assertion_handoff_seal_report(payload: dict[str, Any], fmt: s
             payload.get("dossier_rule", ""),
         ]
         return "text/markdown", "dossier-assertion-handoff-seal.md", "\n".join(lines)
-    return "application/json", "dossier-assertion-handoff-seal.json", json.dumps(payload, indent=2, sort_keys=True)
+    return (
+        "application/json",
+        "dossier-assertion-handoff-seal.json",
+        json.dumps(payload, indent=2, sort_keys=True),
+    )

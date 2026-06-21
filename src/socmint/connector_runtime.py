@@ -49,7 +49,8 @@ INSTALL_HINTS: dict[str, dict[str, Any]] = {
     "maigret": {
         "install_command": "python -m pip install --upgrade maigret",
         "check_command": "python -m maigret --version",
-        "runtime_note": "Python module connector. If pycairo/cairo fails, install native deps: " + NATIVE_DEPENDENCY_INSTALL,
+        "runtime_note": "Python module connector. If pycairo/cairo fails, install native deps: "
+        + NATIVE_DEPENDENCY_INSTALL,
         "native_dependency_hint": NATIVE_DEPENDENCY_INSTALL,
     },
     "sherlock": {
@@ -88,7 +89,8 @@ INSTALL_HINTS: dict[str, dict[str, Any]] = {
     "archivebox": {
         "install_command": "python -m pip install --upgrade archivebox && export SOCMINT_ARCHIVEBOX_ENABLED=true",
         "check_command": "archivebox version || archivebox --version",
-        "runtime_note": "Heavy optional connector. Requires SOCMINT_ARCHIVEBOX_ENABLED=true before real captures are attempted. If pycairo/cairo fails, install native deps: " + NATIVE_DEPENDENCY_INSTALL,
+        "runtime_note": "Heavy optional connector. Requires SOCMINT_ARCHIVEBOX_ENABLED=true before real captures are attempted. If pycairo/cairo fails, install native deps: "
+        + NATIVE_DEPENDENCY_INSTALL,
         "native_dependency_hint": NATIVE_DEPENDENCY_INSTALL,
     },
 }
@@ -100,18 +102,31 @@ def native_dependency_status() -> dict[str, Any]:
     for label, executable in NATIVE_DEPENDENCIES.items():
         path = shutil.which(executable)
         ok = bool(path)
-        items.append({"name": label, "executable": executable, "path": path, "available": ok})
+        items.append(
+            {"name": label, "executable": executable, "path": path, "available": ok}
+        )
         if not ok:
             missing.append(label)
-    cairo_probe = subprocess.run(
-        ["pkg-config", "--exists", "cairo"],
-        capture_output=True,
-        text=True,
-        timeout=5,
-        check=False,
-    ) if shutil.which("pkg-config") else None
+    cairo_probe = (
+        subprocess.run(
+            ["pkg-config", "--exists", "cairo"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        if shutil.which("pkg-config")
+        else None
+    )
     cairo_available = bool(cairo_probe and cairo_probe.returncode == 0)
-    items.append({"name": "cairo", "executable": "pkg-config --exists cairo", "path": None, "available": cairo_available})
+    items.append(
+        {
+            "name": "cairo",
+            "executable": "pkg-config --exists cairo",
+            "path": None,
+            "available": cairo_available,
+        }
+    )
     if not cairo_available:
         missing.append("cairo")
     return {
@@ -124,11 +139,14 @@ def native_dependency_status() -> dict[str, Any]:
 
 
 def install_hint(name: str) -> dict[str, Any]:
-    return INSTALL_HINTS.get(name, {
-        "install_command": "No installer hint available.",
-        "check_command": f"{name} --version",
-        "runtime_note": "Unknown connector install profile.",
-    })
+    return INSTALL_HINTS.get(
+        name,
+        {
+            "install_command": "No installer hint available.",
+            "check_command": f"{name} --version",
+            "runtime_note": "Unknown connector install profile.",
+        },
+    )
 
 
 def _which_for_connector(name: str) -> str | None:
@@ -164,19 +182,30 @@ def _version_for_connector(name: str, timeout: int = 12) -> dict[str, Any]:
             "available": result.returncode == 0,
             "version": text[0][:160] if text else None,
             "returncode": result.returncode,
-            "error": None if result.returncode == 0 else (result.stderr or result.stdout or "version probe failed")[:300],
+            "error": None
+            if result.returncode == 0
+            else (result.stderr or result.stdout or "version probe failed")[:300],
             "command": command,
         }
     except Exception as exc:
-        return {"available": False, "version": None, "error": str(exc), "command": command}
+        return {
+            "available": False,
+            "version": None,
+            "error": str(exc),
+            "command": command,
+        }
 
 
-def normalize_connector_output(name: str, payload: dict[str, Any]) -> list[dict[str, Any]]:
+def normalize_connector_output(
+    name: str, payload: dict[str, Any]
+) -> list[dict[str, Any]]:
     text = "\n".join(str(payload.get(key) or "") for key in ("stdout", "stderr"))
     findings = []
     seen: set[tuple[str, str]] = set()
 
-    def add(kind: str, value: str, confidence: float = 0.65, context: Any = None) -> None:
+    def add(
+        kind: str, value: str, confidence: float = 0.65, context: Any = None
+    ) -> None:
         value = str(value or "").strip().rstrip(".,;)")
         if not value:
             return
@@ -205,13 +234,20 @@ def normalize_connector_output(name: str, payload: dict[str, Any]) -> list[dict[
             _extract_json_findings(name, data, add)
 
     if name in {"sherlock", "maigret"}:
-        for value in re.findall(r"(?i)(?:found|exists|claimed|profile)[:\s-]+(https?://[^\s\"'<>]+)", text):
+        for value in re.findall(
+            r"(?i)(?:found|exists|claimed|profile)[:\s-]+(https?://[^\s\"'<>]+)", text
+        ):
             add("profile_url", value, 0.78)
     elif name in {"holehe", "h8mail", "socialscan"}:
-        for value in re.findall(r"(?i)(?:registered|exists|found|used on)[:\s-]+([A-Za-z0-9_. -]{3,80})", text):
+        for value in re.findall(
+            r"(?i)(?:registered|exists|found|used on)[:\s-]+([A-Za-z0-9_. -]{3,80})",
+            text,
+        ):
             add("account_presence", value, 0.62)
     elif name == "phoneinfoga":
-        for label, value in re.findall(r"(?im)^\s*(carrier|country|line type|number type)\s*[:=]\s*(.+)$", text):
+        for label, value in re.findall(
+            r"(?im)^\s*(carrier|country|line type|number type)\s*[:=]\s*(.+)$", text
+        ):
             add("phone_metadata", f"{label}: {value}", 0.66, {"label": label})
 
     return findings
@@ -244,7 +280,11 @@ def connector_health(name: str) -> dict[str, Any]:
             "name": "archivebox",
             "installed": available,
             "enabled": enabled,
-            "status": "ready" if available and enabled else "disabled" if available else "missing",
+            "status": "ready"
+            if available and enabled
+            else "disabled"
+            if available
+            else "missing",
             "version": None,
             "executable": shutil.which("archivebox"),
             "data_dir": archivebox_data_dir(),
@@ -253,14 +293,22 @@ def connector_health(name: str) -> dict[str, Any]:
             "install_hint": hint,
             "install_command": hint["install_command"],
             "check_command": hint["check_command"],
-            "notes": "Set SOCMINT_ARCHIVEBOX_ENABLED=true to perform real captures." if not enabled else "ArchiveBox capture enabled.",
+            "notes": "Set SOCMINT_ARCHIVEBOX_ENABLED=true to perform real captures."
+            if not enabled
+            else "ArchiveBox capture enabled.",
         }
 
     spec = CONNECTORS[name]
-    sample_target, sample_type = SAMPLE_TARGETS.get(name, ("test", spec.target_types[0]))
+    sample_target, sample_type = SAMPLE_TARGETS.get(
+        name, ("test", spec.target_types[0])
+    )
     sample_command = render_command(spec, sample_target, sample_type)
     executable = _which_for_connector(name)
-    version = _version_for_connector(name) if executable else {"available": False, "version": None, "error": "executable missing"}
+    version = (
+        _version_for_connector(name)
+        if executable
+        else {"available": False, "version": None, "error": "executable missing"}
+    )
     installed = bool(executable)
     return {
         "name": name,
@@ -276,7 +324,9 @@ def connector_health(name: str) -> dict[str, Any]:
         "install_hint": hint,
         "install_command": hint["install_command"],
         "check_command": hint["check_command"],
-        "notes": "Connector will dry-run until the executable is installed." if not installed else "Connector executable detected.",
+        "notes": "Connector will dry-run until the executable is installed."
+        if not installed
+        else "Connector executable detected.",
     }
 
 
@@ -291,7 +341,8 @@ def connector_runtime_health() -> dict[str, Any]:
     return {
         "schema": RUNTIME_SCHEMA,
         "generated_at": datetime.now(UTC).isoformat(),
-        "dry_run_forced": os.environ.get("SOCMINT_CONNECTOR_DRY_RUN", "").lower() in {"1", "true", "yes", "on"},
+        "dry_run_forced": os.environ.get("SOCMINT_CONNECTOR_DRY_RUN", "").lower()
+        in {"1", "true", "yes", "on"},
         "summary": counts,
         "connectors": connectors,
         "native_dependencies": native_dependency_status(),

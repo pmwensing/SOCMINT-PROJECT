@@ -3,16 +3,26 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
-from .case_delivery_authorization_record_v15_5 import build_case_delivery_authorization_record
-from .case_delivery_authorization_record_v15_5 import build_case_delivery_authorization_record_from_request
-from .case_delivery_handoff_package_v15_1 import build_case_delivery_handoff_package_from_request
+from .case_delivery_authorization_record_v15_5 import (
+    build_case_delivery_authorization_record,
+)
+from .case_delivery_authorization_record_v15_5 import (
+    build_case_delivery_authorization_record_from_request,
+)
+from .case_delivery_handoff_package_v15_1 import (
+    build_case_delivery_handoff_package_from_request,
+)
 from .case_delivery_handoff_package_v15_1 import canonical_json
 from .case_delivery_handoff_package_v15_1 import sha256_text
 from .case_delivery_readiness_receipt_v15_3 import build_case_delivery_readiness_receipt
 
 
-CASE_DELIVERY_EXECUTION_ENVELOPE_SCHEMA = "socmint.case_delivery_execution_envelope.v15_6"
-CASE_DELIVERY_EXECUTION_ENVELOPE_RESULT_SCHEMA = "socmint.case_delivery_execution_envelope.v15_6.result"
+CASE_DELIVERY_EXECUTION_ENVELOPE_SCHEMA = (
+    "socmint.case_delivery_execution_envelope.v15_6"
+)
+CASE_DELIVERY_EXECUTION_ENVELOPE_RESULT_SCHEMA = (
+    "socmint.case_delivery_execution_envelope.v15_6.result"
+)
 VERSION = "v15.6.0"
 
 
@@ -25,22 +35,52 @@ def _authorization_blockers(
     supplied: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
     blockers = []
-    expected_authorization = expected.get("authorization") if isinstance(expected.get("authorization"), dict) else {}
-    supplied_authorization = supplied if isinstance(supplied, dict) else expected_authorization
+    expected_authorization = (
+        expected.get("authorization")
+        if isinstance(expected.get("authorization"), dict)
+        else {}
+    )
+    supplied_authorization = (
+        supplied if isinstance(supplied, dict) else expected_authorization
+    )
 
     if expected.get("status") != "authorized" or expected.get("authorized") is not True:
-        blockers.append(_blocker("authorization_blocked", "delivery authorization record did not authorize execution"))
+        blockers.append(
+            _blocker(
+                "authorization_blocked",
+                "delivery authorization record did not authorize execution",
+            )
+        )
     if not supplied_authorization:
-        blockers.append(_blocker("missing_authorization", "authorization record is missing"))
+        blockers.append(
+            _blocker("missing_authorization", "authorization record is missing")
+        )
 
-    for field in ("authorization_id", "payload_sha256", "case_id", "package_id", "receipt_id"):
-        if supplied_authorization and supplied_authorization.get(field) != expected_authorization.get(field):
-            blockers.append(_blocker(f"{field}_mismatch", f"authorization {field} does not match expected record"))
+    for field in (
+        "authorization_id",
+        "payload_sha256",
+        "case_id",
+        "package_id",
+        "receipt_id",
+    ):
+        if supplied_authorization and supplied_authorization.get(
+            field
+        ) != expected_authorization.get(field):
+            blockers.append(
+                _blocker(
+                    f"{field}_mismatch",
+                    f"authorization {field} does not match expected record",
+                )
+            )
     return blockers
 
 
 def _authorized_delivery_links(package: dict[str, Any]) -> list[dict[str, Any]]:
-    links = package.get("delivery_links") if isinstance(package.get("delivery_links"), list) else []
+    links = (
+        package.get("delivery_links")
+        if isinstance(package.get("delivery_links"), list)
+        else []
+    )
     authorized = []
     for row in links:
         if not isinstance(row, dict):
@@ -65,7 +105,9 @@ def build_case_delivery_execution_envelope(
     safe_package = deepcopy(package or {})
     safe_receipt = deepcopy(receipt or {})
     if not safe_receipt:
-        receipt_result = build_case_delivery_readiness_receipt(safe_package, issuer=authorizer)
+        receipt_result = build_case_delivery_readiness_receipt(
+            safe_package, issuer=authorizer
+        )
         safe_receipt = deepcopy(receipt_result.get("receipt") or {})
 
     expected_authorization = build_case_delivery_authorization_record(
@@ -74,7 +116,9 @@ def build_case_delivery_execution_envelope(
         authorizer=authorizer,
     )
     supplied_authorization = deepcopy(authorization or {})
-    blockers = _authorization_blockers(expected_authorization, supplied_authorization or None)
+    blockers = _authorization_blockers(
+        expected_authorization, supplied_authorization or None
+    )
     if blockers:
         return {
             "schema": CASE_DELIVERY_EXECUTION_ENVELOPE_RESULT_SCHEMA,
@@ -91,8 +135,14 @@ def build_case_delivery_execution_envelope(
             "blocker_count": len(blockers),
         }
 
-    authorization_record = supplied_authorization or expected_authorization["authorization"]
-    manifest = safe_package.get("manifest") if isinstance(safe_package.get("manifest"), dict) else {}
+    authorization_record = (
+        supplied_authorization or expected_authorization["authorization"]
+    )
+    manifest = (
+        safe_package.get("manifest")
+        if isinstance(safe_package.get("manifest"), dict)
+        else {}
+    )
     payload = {
         "schema": CASE_DELIVERY_EXECUTION_ENVELOPE_SCHEMA,
         "version": VERSION,
@@ -109,7 +159,9 @@ def build_case_delivery_execution_envelope(
     envelope = {
         **payload,
         "payload_sha256": payload_sha256,
-        "execution_id": sha256_text(canonical_json({**payload, "payload_sha256": payload_sha256})),
+        "execution_id": sha256_text(
+            canonical_json({**payload, "payload_sha256": payload_sha256})
+        ),
     }
     return {
         "schema": CASE_DELIVERY_EXECUTION_ENVELOPE_RESULT_SCHEMA,
@@ -127,18 +179,44 @@ def build_case_delivery_execution_envelope(
     }
 
 
-def build_case_delivery_execution_envelope_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def build_case_delivery_execution_envelope_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     safe_payload = deepcopy(payload or {})
-    package = safe_payload.get("package") if isinstance(safe_payload.get("package"), dict) else None
+    package = (
+        safe_payload.get("package")
+        if isinstance(safe_payload.get("package"), dict)
+        else None
+    )
     if package is None:
-        package = build_case_delivery_handoff_package_from_request(case_id, safe_payload)
-    receipt = safe_payload.get("receipt") if isinstance(safe_payload.get("receipt"), dict) else None
-    authorization = safe_payload.get("authorization") if isinstance(safe_payload.get("authorization"), dict) else None
-    authorizer = safe_payload.get("authorizer") if isinstance(safe_payload.get("authorizer"), str) else None
+        package = build_case_delivery_handoff_package_from_request(
+            case_id, safe_payload
+        )
+    receipt = (
+        safe_payload.get("receipt")
+        if isinstance(safe_payload.get("receipt"), dict)
+        else None
+    )
+    authorization = (
+        safe_payload.get("authorization")
+        if isinstance(safe_payload.get("authorization"), dict)
+        else None
+    )
+    authorizer = (
+        safe_payload.get("authorizer")
+        if isinstance(safe_payload.get("authorizer"), str)
+        else None
+    )
     if authorizer is None and isinstance(authorization, dict):
-        authorizer = authorization.get("authorized_by") if isinstance(authorization.get("authorized_by"), str) else None
+        authorizer = (
+            authorization.get("authorized_by")
+            if isinstance(authorization.get("authorized_by"), str)
+            else None
+        )
     if authorization is None:
-        authorization_result = build_case_delivery_authorization_record_from_request(case_id, safe_payload)
+        authorization_result = build_case_delivery_authorization_record_from_request(
+            case_id, safe_payload
+        )
         authorization = (
             authorization_result.get("authorization")
             if isinstance(authorization_result.get("authorization"), dict)

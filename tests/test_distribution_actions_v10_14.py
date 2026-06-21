@@ -31,7 +31,12 @@ def _evidence():
 
 def test_v10_14_records_review_and_approval_for_certified_export(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    persist_export_pack(_subject("subject-dist-action-safe"), _evidence(), analyst_reviewed=True, audit=True)
+    persist_export_pack(
+        _subject("subject-dist-action-safe"),
+        _evidence(),
+        analyst_reviewed=True,
+        audit=True,
+    )
 
     review = record_distribution_action(
         case_id="case-dist-action-1014",
@@ -47,8 +52,12 @@ def test_v10_14_records_review_and_approval_for_certified_export(tmp_path, monke
         actor="analyst",
         note="approved for distribution",
     )
-    summary = distribution_action_summary("case-dist-action-1014", "subject-dist-action-safe")
-    packet = distribution_action_packet("case-dist-action-1014", "subject-dist-action-safe")
+    summary = distribution_action_summary(
+        "case-dist-action-1014", "subject-dist-action-safe"
+    )
+    packet = distribution_action_packet(
+        "case-dist-action-1014", "subject-dist-action-safe"
+    )
 
     assert review["action"] == "mark_reviewed"
     assert approval["action"] == "approve"
@@ -60,9 +69,16 @@ def test_v10_14_records_review_and_approval_for_certified_export(tmp_path, monke
     assert packet["recommended_bundle"].endswith("manifest.json")
 
 
-def test_v10_14_blocks_approval_when_certification_blockers_remain(tmp_path, monkeypatch):
+def test_v10_14_blocks_approval_when_certification_blockers_remain(
+    tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
-    persist_export_pack(_subject("subject-dist-action-held"), _evidence(), analyst_reviewed=True, audit=False)
+    persist_export_pack(
+        _subject("subject-dist-action-held"),
+        _evidence(),
+        analyst_reviewed=True,
+        audit=False,
+    )
 
     with pytest.raises(ValueError, match="Cannot approve distribution"):
         record_distribution_action(
@@ -79,7 +95,9 @@ def test_v10_14_blocks_approval_when_certification_blockers_remain(tmp_path, mon
         actor="analyst",
         note="audit coverage missing",
     )
-    summary = distribution_action_summary("case-dist-action-1014", "subject-dist-action-held")
+    summary = distribution_action_summary(
+        "case-dist-action-1014", "subject-dist-action-held"
+    )
 
     assert hold["action"] == "hold"
     assert "audit_coverage" in hold["blockers"]
@@ -89,7 +107,12 @@ def test_v10_14_blocks_approval_when_certification_blockers_remain(tmp_path, mon
 
 def test_v10_14_reject_action_and_markdown_packet(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    persist_export_pack(_subject("subject-dist-action-reject"), _evidence(), analyst_reviewed=True, audit=True)
+    persist_export_pack(
+        _subject("subject-dist-action-reject"),
+        _evidence(),
+        analyst_reviewed=True,
+        audit=True,
+    )
 
     record_distribution_action(
         case_id="case-dist-action-1014",
@@ -98,7 +121,9 @@ def test_v10_14_reject_action_and_markdown_packet(tmp_path, monkeypatch):
         actor="analyst",
         note="wrong recipient",
     )
-    markdown = distribution_action_markdown("case-dist-action-1014", "subject-dist-action-reject")
+    markdown = distribution_action_markdown(
+        "case-dist-action-1014", "subject-dist-action-reject"
+    )
 
     assert "Distribution Action Packet" in markdown
     assert "Operator approved: False" in markdown
@@ -108,7 +133,12 @@ def test_v10_14_reject_action_and_markdown_packet(tmp_path, monkeypatch):
 
 def test_v10_14_rejects_unknown_action(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    persist_export_pack(_subject("subject-dist-action-invalid"), _evidence(), analyst_reviewed=True, audit=True)
+    persist_export_pack(
+        _subject("subject-dist-action-invalid"),
+        _evidence(),
+        analyst_reviewed=True,
+        audit=True,
+    )
 
     with pytest.raises(ValueError, match="Unsupported distribution action"):
         record_distribution_action(
@@ -122,13 +152,24 @@ def test_v10_14_rejects_unknown_action(tmp_path, monkeypatch):
 def test_v10_14_distribution_routes_are_registered():
     routes = {rule.rule for rule in app.url_map.iter_rules()}
 
-    assert "/api/v1/dossier-builder/v3/distribution-actions/<case_id>/<subject_id>" in routes
-    assert "/api/v1/dossier-builder/v3/distribution-packet/<case_id>/<subject_id>" in routes
-    assert "/api/v1/dossier-builder/v3/distribution-packet/<case_id>/<subject_id>/markdown" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/distribution-actions/<case_id>/<subject_id>"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/distribution-packet/<case_id>/<subject_id>"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/distribution-packet/<case_id>/<subject_id>/markdown"
+        in routes
+    )
 
 
 def test_v10_14_distribution_action_api_requires_login():
     client = app.test_client()
-    response = client.get("/api/v1/dossier-builder/v3/distribution-actions/case/subject")
+    response = client.get(
+        "/api/v1/dossier-builder/v3/distribution-actions/case/subject"
+    )
 
     assert response.status_code == 401

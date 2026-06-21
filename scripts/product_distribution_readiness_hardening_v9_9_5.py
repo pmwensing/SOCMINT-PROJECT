@@ -13,7 +13,9 @@ def now_iso() -> str:
 
 def run(name: str, cmd: list[str], timeout: int = 480) -> dict:
     print(f"[+] {name}: {' '.join(cmd)}")
-    proc = subprocess.run(cmd, text=True, capture_output=True, timeout=timeout, check=False)
+    proc = subprocess.run(
+        cmd, text=True, capture_output=True, timeout=timeout, check=False
+    )
     ok = proc.returncode == 0
     print(("[PASS] " if ok else "[FAIL] ") + name)
     if not ok:
@@ -36,8 +38,13 @@ def main() -> int:
 
     checks = [
         run("compileall-src", [sys.executable, "-m", "compileall", "src/socmint"]),
-        run("final-release-verify-smoke", ["make", "product-final-release-verify-smoke"]),
-        run("distribution-readiness-smoke-v9-9-5", [sys.executable, "scripts/product_distribution_readiness_smoke_v9_9_5.py"]),
+        run(
+            "final-release-verify-smoke", ["make", "product-final-release-verify-smoke"]
+        ),
+        run(
+            "distribution-readiness-smoke-v9-9-5",
+            [sys.executable, "scripts/product_distribution_readiness_smoke_v9_9_5.py"],
+        ),
     ]
 
     failed = [c for c in checks if not c["ok"]]
@@ -50,12 +57,16 @@ def main() -> int:
         "summary": f"{len(checks) - len(failed)}/{len(checks)} checks passed.",
         "checks": checks,
         "failed": [c["name"] for c in failed],
-        "next_action": "Merge and tag v9.9.5 distribution readiness" if status == "pass" else "Fix distribution readiness failures before merge.",
+        "next_action": "Merge and tag v9.9.5 distribution readiness"
+        if status == "pass"
+        else "Fix distribution readiness failures before merge.",
     }
 
     json_path = Path("release/V9_9_5_DISTRIBUTION_READINESS_HARDENING_REPORT.json")
     md_path = Path("release/V9_9_5_DISTRIBUTION_READINESS_HARDENING_REPORT.md")
-    storage_path = Path("storage/product_qa/V9_9_5_DISTRIBUTION_READINESS_HARDENING_REPORT.json")
+    storage_path = Path(
+        "storage/product_qa/V9_9_5_DISTRIBUTION_READINESS_HARDENING_REPORT.json"
+    )
 
     json_path.write_text(json.dumps(report, indent=2))
     storage_path.write_text(json.dumps(report, indent=2))

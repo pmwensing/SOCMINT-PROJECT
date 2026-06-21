@@ -53,7 +53,9 @@ def _payload_from_form() -> dict:
     analyst_reviewed = request.form.get("analyst_reviewed") == "on"
     subject = json.loads(subject_raw) if subject_raw else _sample_subject()
     evidence = json.loads(evidence_raw) if evidence_raw else _sample_evidence()
-    return build_entity_profile_intelligence(subject, evidence=evidence, analyst_reviewed=analyst_reviewed)
+    return build_entity_profile_intelligence(
+        subject, evidence=evidence, analyst_reviewed=analyst_reviewed
+    )
 
 
 def register_entity_profile_intelligence_ui_routes(app):
@@ -61,7 +63,9 @@ def register_entity_profile_intelligence_ui_routes(app):
     def entity_profile_intelligence_view():
         if not _login_required():
             return redirect(url_for("dashboard.login"))
-        sample_payload = build_entity_profile_intelligence(_sample_subject(), evidence=_sample_evidence(), analyst_reviewed=True)
+        sample_payload = build_entity_profile_intelligence(
+            _sample_subject(), evidence=_sample_evidence(), analyst_reviewed=True
+        )
         return render_template(
             "entity_profile_intelligence.html",
             title="Entity Profile Intelligence Dossier",
@@ -83,7 +87,9 @@ def register_entity_profile_intelligence_ui_routes(app):
             payload = _payload_from_form()
             error = None
         except (TypeError, json.JSONDecodeError) as exc:
-            payload = build_entity_profile_intelligence(_sample_subject(), evidence=_sample_evidence(), analyst_reviewed=True)
+            payload = build_entity_profile_intelligence(
+                _sample_subject(), evidence=_sample_evidence(), analyst_reviewed=True
+            )
             error = f"Invalid JSON input: {exc}"
         return render_template(
             "entity_profile_intelligence.html",
@@ -91,8 +97,10 @@ def register_entity_profile_intelligence_ui_routes(app):
             payload=payload,
             summary=entity_profile_intelligence_summary(payload),
             markdown=entity_profile_intelligence_markdown(payload),
-            subject_json=subject_json or json.dumps(_sample_subject(), indent=2, sort_keys=True),
-            evidence_json=evidence_json or json.dumps(_sample_evidence(), indent=2, sort_keys=True),
+            subject_json=subject_json
+            or json.dumps(_sample_subject(), indent=2, sort_keys=True),
+            evidence_json=evidence_json
+            or json.dumps(_sample_evidence(), indent=2, sort_keys=True),
             error=error,
         )
 

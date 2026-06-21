@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import json
@@ -169,9 +168,7 @@ def render_export_summary(manifest: dict[str, Any]) -> str:
         lines.append("_No excluded items._")
     else:
         for item in excluded:
-            lines.append(
-                f"- `{item.get('id')}` — status `{item.get('status')}`"
-            )
+            lines.append(f"- `{item.get('id')}` — status `{item.get('status')}`")
 
     return "\n".join(lines).rstrip() + "\n"
 
@@ -205,8 +202,6 @@ def list_review_gated_exports(limit: int = 100) -> list[GatedExport]:
         )
 
     return exports
-
-
 
 
 def review_gated_export_payload(
@@ -289,6 +284,7 @@ def load_manifest_view(name: str) -> dict[str, Any]:
         "parsed": parsed,
         "text": text,
     }
+
 
 def export_center_payload() -> dict[str, Any]:
     return {

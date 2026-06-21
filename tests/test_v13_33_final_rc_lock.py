@@ -10,7 +10,7 @@ def test_final_rc_routes_registered_in_wsgi():
 def test_final_rc_status_route_payload_and_labels():
     source = Path("src/socmint/final_rc_routes_v13_33.py").read_text()
 
-    assert "RC_VERSION = \"v13.33\"" in source
+    assert 'RC_VERSION = "v13.33"' in source
     assert "release_candidate_locked" in source
     assert "/release/final-rc/v13.33" in source
     assert "/api/v1/release/final-rc/v13.33" in source

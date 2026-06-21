@@ -36,14 +36,13 @@ def test_v21_7_checkpoint_passes_complete_product_slice(tmp_path, monkeypatch):
 
 def test_v21_7_checkpoint_route_and_browser_runner(tmp_path, monkeypatch):
     client = _app(tmp_path, monkeypatch).test_client()
-    assert client.get(
-        "/api/v1/dossier-assembly/product-review-checkpoint"
-    ).status_code == 401
+    assert (
+        client.get("/api/v1/dossier-assembly/product-review-checkpoint").status_code
+        == 401
+    )
     with client.session_transaction() as sess:
         sess["user"] = "supervisor"
-    response = client.get(
-        "/api/v1/dossier-assembly/product-review-checkpoint"
-    )
+    response = client.get("/api/v1/dossier-assembly/product-review-checkpoint")
     assert response.status_code == 200
     assert response.get_json()["ready"] is True
 

@@ -7,7 +7,12 @@ from .analytic_confidence_v30_4 import latest_confidence
 from .analytic_conflict_v30_3 import current_conflicts
 from .claim_source_linkage_v30_2 import claim_linkages
 from .corroboration_claim_v30_1 import find_claim
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 
 SCHEMA = "socmint.human_analytic_review.v30_5"
 VERSION = "v30.5.0"
@@ -52,7 +57,9 @@ def review_history() -> list[dict[str, Any]]:
 
 def reviews_for_claim(claim_id: str | None = None) -> list[dict[str, Any]]:
     rows = review_history()
-    return [row for row in rows if row.get("claim_id") == claim_id] if claim_id else rows
+    return (
+        [row for row in rows if row.get("claim_id") == claim_id] if claim_id else rows
+    )
 
 
 def latest_review(claim_id: str) -> dict[str, Any] | None:
@@ -74,7 +81,9 @@ def current_review_decisions() -> list[dict[str, Any]]:
     return sorted(latest.values(), key=lambda item: str(item.get("claim_id")))
 
 
-def _record(actor: str, claim_id: str, event: dict[str, Any], ip_address: str | None) -> dict[str, Any]:
+def _record(
+    actor: str, claim_id: str, event: dict[str, Any], ip_address: str | None
+) -> dict[str, Any]:
     _ensure_storage()
     session = database.Session()
     try:
@@ -113,7 +122,9 @@ def record_human_review(
     decision = str(decision or "").strip()
     rationale = str(rationale or "").strip()
     reason = str(reason or "").strip()
-    findings = sorted({str(item).strip() for item in (findings or []) if str(item).strip()})
+    findings = sorted(
+        {str(item).strip() for item in (findings or []) if str(item).strip()}
+    )
 
     if claim is None:
         return blocked("corroboration_claim_required")
@@ -135,7 +146,8 @@ def record_human_review(
     if not linkages:
         return blocked("claim_source_linkage_required")
     conflicts = [
-        item for item in current_conflicts()
+        item
+        for item in current_conflicts()
         if claim_id in {item.get("claim_a_id"), item.get("claim_b_id")}
     ]
     unresolved = [item for item in conflicts if item.get("resolution") == "unresolved"]
@@ -192,7 +204,10 @@ def record_human_review(
         "human_review_id": f"human-review-{digest[:24]}",
         "human_review_sha256": digest,
     }
-    if any(item.get("human_review_sha256") == digest for item in reviews_for_claim(claim_id)):
+    if any(
+        item.get("human_review_sha256") == digest
+        for item in reviews_for_claim(claim_id)
+    ):
         return blocked("human_review_record_already_exists")
 
     result = _record(actor, claim_id, event, ip_address)

@@ -42,7 +42,9 @@ def _evidence():
 
 
 def test_build_evidence_appendix_links_claims_to_evidence():
-    payload = build_entity_profile_intelligence(_subject(), evidence=_evidence(), analyst_reviewed=True)
+    payload = build_entity_profile_intelligence(
+        _subject(), evidence=_evidence(), analyst_reviewed=True
+    )
     appendix = build_evidence_appendix(payload, raw_evidence=_evidence())
 
     assert appendix["schema"] == "socmint.v7_5.dossier_evidence_appendix"
@@ -56,7 +58,9 @@ def test_build_evidence_appendix_links_claims_to_evidence():
 
 
 def test_build_evidence_manifest_has_stable_hash_and_rows():
-    payload = build_entity_profile_intelligence(_subject(), evidence=_evidence(), analyst_reviewed=True)
+    payload = build_entity_profile_intelligence(
+        _subject(), evidence=_evidence(), analyst_reviewed=True
+    )
     manifest = build_evidence_manifest(payload, raw_evidence=_evidence())
 
     assert manifest["schema"] == "socmint.v7_5.dossier_evidence_manifest"
@@ -66,7 +70,9 @@ def test_build_evidence_manifest_has_stable_hash_and_rows():
 
 
 def test_evidence_manifest_csv_exports_header_and_rows():
-    payload = build_entity_profile_intelligence(_subject(), evidence=_evidence(), analyst_reviewed=True)
+    payload = build_entity_profile_intelligence(
+        _subject(), evidence=_evidence(), analyst_reviewed=True
+    )
     manifest = build_evidence_manifest(payload, raw_evidence=_evidence())
     csv_text = evidence_manifest_csv(manifest)
 
@@ -76,7 +82,9 @@ def test_evidence_manifest_csv_exports_header_and_rows():
 
 
 def test_attach_evidence_appendix_adds_appendix_and_manifest():
-    payload = build_entity_profile_intelligence(_subject(), evidence=_evidence(), analyst_reviewed=True)
+    payload = build_entity_profile_intelligence(
+        _subject(), evidence=_evidence(), analyst_reviewed=True
+    )
     enriched = attach_evidence_appendix(payload, raw_evidence=_evidence())
 
     assert enriched["evidence_appendix"]["entry_count"] == 2
@@ -86,7 +94,12 @@ def test_attach_evidence_appendix_adds_appendix_and_manifest():
 def test_appendix_reports_missing_refs_for_unsubstantiated_claims():
     payload = {
         "evidence_backed_attributes": [
-            {"name": "location", "value": "Unknown", "source": "manual", "confidence": 0.5}
+            {
+                "name": "location",
+                "value": "Unknown",
+                "source": "manual",
+                "confidence": 0.5,
+            }
         ]
     }
     appendix = build_evidence_appendix(payload, raw_evidence=[])

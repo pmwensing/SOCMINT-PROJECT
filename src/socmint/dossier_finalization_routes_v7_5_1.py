@@ -11,14 +11,31 @@ def _request_payload() -> dict:
     return payload if isinstance(payload, dict) else {}
 
 
-def _unwrap_request(payload: dict) -> tuple[dict, list[dict] | None, list[dict] | None, str]:
+def _unwrap_request(
+    payload: dict,
+) -> tuple[dict, list[dict] | None, list[dict] | None, str]:
     if "dossier" in payload and isinstance(payload.get("dossier"), dict):
         dossier = payload.get("dossier") or {}
-        connectors = payload.get("connectors") if isinstance(payload.get("connectors"), list) else None
-        policy_events = payload.get("policy_events") if isinstance(payload.get("policy_events"), list) else None
-        export_mode = str(payload.get("export_mode") or request.args.get("mode") or "final")
+        connectors = (
+            payload.get("connectors")
+            if isinstance(payload.get("connectors"), list)
+            else None
+        )
+        policy_events = (
+            payload.get("policy_events")
+            if isinstance(payload.get("policy_events"), list)
+            else None
+        )
+        export_mode = str(
+            payload.get("export_mode") or request.args.get("mode") or "final"
+        )
         return dossier, connectors, policy_events, export_mode
-    return payload, None, None, str(payload.get("export_mode") or request.args.get("mode") or "final")
+    return (
+        payload,
+        None,
+        None,
+        str(payload.get("export_mode") or request.args.get("mode") or "final"),
+    )
 
 
 def register_dossier_finalization_routes(app):

@@ -84,15 +84,26 @@ def _iter_report_claims(payload: dict[str, Any]):
                 yield section, index, item
 
 
-def _evidence_catalog(raw_evidence: list[dict[str, Any]] | None) -> dict[str, dict[str, Any]]:
+def _evidence_catalog(
+    raw_evidence: list[dict[str, Any]] | None,
+) -> dict[str, dict[str, Any]]:
     catalog: dict[str, dict[str, Any]] = {}
     for index, item in enumerate(raw_evidence or []):
         if not isinstance(item, dict):
             continue
-        evidence_id = str(item.get("evidence_id") or item.get("id") or item.get("artifact_id") or f"evidence-{index + 1}")
+        evidence_id = str(
+            item.get("evidence_id")
+            or item.get("id")
+            or item.get("artifact_id")
+            or f"evidence-{index + 1}"
+        )
         catalog[evidence_id] = {
             "evidence_id": evidence_id,
-            "label": item.get("label") or item.get("name") or item.get("event") or item.get("attribute") or evidence_id,
+            "label": item.get("label")
+            or item.get("name")
+            or item.get("event")
+            or item.get("attribute")
+            or evidence_id,
             "source": _source_value(item),
             "source_url": item.get("source_url") or item.get("url"),
             "artifact_id": item.get("artifact_id"),
@@ -105,7 +116,9 @@ def _evidence_catalog(raw_evidence: list[dict[str, Any]] | None) -> dict[str, di
     return catalog
 
 
-def build_evidence_appendix(payload: dict[str, Any], raw_evidence: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+def build_evidence_appendix(
+    payload: dict[str, Any], raw_evidence: list[dict[str, Any]] | None = None
+) -> dict[str, Any]:
     catalog = _evidence_catalog(raw_evidence)
     entries: dict[str, dict[str, Any]] = {}
     missing_refs: list[dict[str, Any]] = []
@@ -125,7 +138,9 @@ def build_evidence_appendix(payload: dict[str, Any], raw_evidence: list[dict[str
             )
             continue
         for ref in refs:
-            base = catalog.get(ref, {"evidence_id": ref, "label": ref, "source": _source_value(item)})
+            base = catalog.get(
+                ref, {"evidence_id": ref, "label": ref, "source": _source_value(item)}
+            )
             entry = entries.setdefault(
                 ref,
                 {
@@ -151,8 +166,14 @@ def build_evidence_appendix(payload: dict[str, Any], raw_evidence: list[dict[str
             )
 
     appendix_entries = sorted(entries.values(), key=lambda row: row["evidence_id"])
-    missing_hashes = [row["evidence_id"] for row in appendix_entries if not row.get("sha256")]
-    missing_sources = [row["evidence_id"] for row in appendix_entries if not row.get("source") and not row.get("source_url")]
+    missing_hashes = [
+        row["evidence_id"] for row in appendix_entries if not row.get("sha256")
+    ]
+    missing_sources = [
+        row["evidence_id"]
+        for row in appendix_entries
+        if not row.get("source") and not row.get("source_url")
+    ]
     generated_at = utc_now()
     return {
         "schema": EVIDENCE_APPENDIX_SCHEMA,
@@ -170,7 +191,9 @@ def build_evidence_appendix(payload: dict[str, Any], raw_evidence: list[dict[str
     }
 
 
-def build_evidence_manifest(payload: dict[str, Any], raw_evidence: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+def build_evidence_manifest(
+    payload: dict[str, Any], raw_evidence: list[dict[str, Any]] | None = None
+) -> dict[str, Any]:
     appendix = build_evidence_appendix(payload, raw_evidence=raw_evidence)
     rows = []
     for entry in appendix["entries"]:
@@ -224,7 +247,9 @@ def evidence_manifest_csv(manifest: dict[str, Any]) -> str:
     return output.getvalue()
 
 
-def attach_evidence_appendix(payload: dict[str, Any], raw_evidence: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+def attach_evidence_appendix(
+    payload: dict[str, Any], raw_evidence: list[dict[str, Any]] | None = None
+) -> dict[str, Any]:
     enriched = dict(payload)
     appendix = build_evidence_appendix(payload, raw_evidence=raw_evidence)
     manifest = build_evidence_manifest(payload, raw_evidence=raw_evidence)

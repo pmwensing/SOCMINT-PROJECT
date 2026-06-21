@@ -3,7 +3,12 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
-from .collection_job_contract_v29_1 import FAILURE_STATES, STATES, current_contracts, history
+from .collection_job_contract_v29_1 import (
+    FAILURE_STATES,
+    STATES,
+    current_contracts,
+    history,
+)
 
 SCHEMA = "socmint.collection_job_workspace.v29_1"
 VERSION = "v29.1.0"
@@ -12,20 +17,56 @@ VERSION = "v29.1.0"
 def build_collection_job_workspace() -> dict[str, Any]:
     contracts = current_contracts()
     events = history()
-    state_counts = Counter(str(item.get("current_state") or "unknown") for item in contracts)
-    retryable = [item for item in contracts if item.get("current_state") in FAILURE_STATES and item.get("retry_eligible")]
+    state_counts = Counter(
+        str(item.get("current_state") or "unknown") for item in contracts
+    )
+    retryable = [
+        item
+        for item in contracts
+        if item.get("current_state") in FAILURE_STATES and item.get("retry_eligible")
+    ]
     blocked = [item for item in contracts if item.get("current_state") == "blocked"]
-    unresolved = [item for item in contracts if item.get("current_state") not in {"completed", "cancelled", "superseded"}]
+    unresolved = [
+        item
+        for item in contracts
+        if item.get("current_state") not in {"completed", "cancelled", "superseded"}
+    ]
     findings = []
     for item in contracts:
         if not item.get("authorization_binding"):
-            findings.append({"severity":"high","key":"missing_authorization_binding","collection_job_id":item.get("collection_job_id")})
+            findings.append(
+                {
+                    "severity": "high",
+                    "key": "missing_authorization_binding",
+                    "collection_job_id": item.get("collection_job_id"),
+                }
+            )
         if not item.get("idempotency_key"):
-            findings.append({"severity":"high","key":"missing_idempotency_key","collection_job_id":item.get("collection_job_id")})
+            findings.append(
+                {
+                    "severity": "high",
+                    "key": "missing_idempotency_key",
+                    "collection_job_id": item.get("collection_job_id"),
+                }
+            )
         if not any((item.get("case_id"), item.get("entity_id"), item.get("source_id"))):
-            findings.append({"severity":"medium","key":"missing_collection_scope_binding","collection_job_id":item.get("collection_job_id")})
-        if item.get("current_state") in FAILURE_STATES and not item.get("failure_category"):
-            findings.append({"severity":"high","key":"missing_failure_category","collection_job_id":item.get("collection_job_id")})
+            findings.append(
+                {
+                    "severity": "medium",
+                    "key": "missing_collection_scope_binding",
+                    "collection_job_id": item.get("collection_job_id"),
+                }
+            )
+        if item.get("current_state") in FAILURE_STATES and not item.get(
+            "failure_category"
+        ):
+            findings.append(
+                {
+                    "severity": "high",
+                    "key": "missing_failure_category",
+                    "collection_job_id": item.get("collection_job_id"),
+                }
+            )
     return {
         "schema": SCHEMA,
         "version": VERSION,

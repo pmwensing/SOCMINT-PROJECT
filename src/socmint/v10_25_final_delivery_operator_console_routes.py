@@ -18,6 +18,8 @@ def register_v10_25_final_delivery_operator_console_routes(app):
 
     @app.post("/api/v1/v10/final-delivery/commands")
     def api_v10_final_delivery_commands():
-        return jsonify({"commands": build_operator_commands_from_request(_request_payload())})
+        return jsonify(
+            {"commands": build_operator_commands_from_request(_request_payload())}
+        )
 
     return app

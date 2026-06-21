@@ -22,7 +22,9 @@ def utc_now() -> str:
 
 
 def _operation_name(event: dict[str, Any]) -> str:
-    return str(event.get("operation") or event.get("action") or event.get("event_type") or "")
+    return str(
+        event.get("operation") or event.get("action") or event.get("event_type") or ""
+    )
 
 
 def _decision_value(event: dict[str, Any]) -> str:
@@ -41,7 +43,14 @@ def build_policy_coverage_report(events: list[dict[str, Any]] | None) -> dict[st
 
     for index, event in enumerate(events):
         if not isinstance(event, dict):
-            findings.append({"status": "fail", "check": "event_type", "index": index, "detail": "Policy event must be an object."})
+            findings.append(
+                {
+                    "status": "fail",
+                    "check": "event_type",
+                    "index": index,
+                    "detail": "Policy event must be an object.",
+                }
+            )
             continue
         operation = _operation_name(event)
         decision = _decision_value(event)
@@ -50,17 +59,53 @@ def build_policy_coverage_report(events: list[dict[str, Any]] | None) -> dict[st
         if decision:
             decision_counts[decision] += 1
         if not operation:
-            findings.append({"status": "fail", "check": "operation", "index": index, "detail": "Policy event is missing operation/action."})
+            findings.append(
+                {
+                    "status": "fail",
+                    "check": "operation",
+                    "index": index,
+                    "detail": "Policy event is missing operation/action.",
+                }
+            )
         if decision not in ALLOWED_DECISIONS:
-            findings.append({"status": "fail", "check": "decision", "index": index, "detail": f"Unsupported or missing decision: {decision}."})
+            findings.append(
+                {
+                    "status": "fail",
+                    "check": "decision",
+                    "index": index,
+                    "detail": f"Unsupported or missing decision: {decision}.",
+                }
+            )
         if event.get("case_id") in (None, "") and event.get("subject_id") in (None, ""):
-            findings.append({"status": "warn", "check": "scope", "index": index, "detail": "Policy event has no case_id or subject_id scope."})
+            findings.append(
+                {
+                    "status": "warn",
+                    "check": "scope",
+                    "index": index,
+                    "detail": "Policy event has no case_id or subject_id scope.",
+                }
+            )
 
-    missing_operations = [op for op in REQUIRED_OPERATION_TYPES if operation_counts[op] == 0]
+    missing_operations = [
+        op for op in REQUIRED_OPERATION_TYPES if operation_counts[op] == 0
+    ]
     for operation in missing_operations:
-        findings.append({"status": "fail", "check": "required_operation", "operation": operation, "detail": "Required v7.5 operation has no policy event coverage."})
+        findings.append(
+            {
+                "status": "fail",
+                "check": "required_operation",
+                "operation": operation,
+                "detail": "Required v7.5 operation has no policy event coverage.",
+            }
+        )
 
-    status = "fail" if any(item["status"] == "fail" for item in findings) else "warn" if findings else "pass"
+    status = (
+        "fail"
+        if any(item["status"] == "fail" for item in findings)
+        else "warn"
+        if findings
+        else "pass"
+    )
     return {
         "schema": POLICY_COVERAGE_SCHEMA,
         "generated_at": utc_now(),
@@ -80,5 +125,9 @@ def build_policy_coverage_report(events: list[dict[str, Any]] | None) -> dict[st
 def assert_policy_coverage(events: list[dict[str, Any]] | None) -> None:
     report = build_policy_coverage_report(events)
     if report["status"] == "fail":
-        details = "; ".join(item.get("operation") or item.get("check", "unknown") for item in report["findings"] if item["status"] == "fail")
+        details = "; ".join(
+            item.get("operation") or item.get("check", "unknown")
+            for item in report["findings"]
+            if item["status"] == "fail"
+        )
         raise AssertionError(f"v7.5 policy coverage failed: {details}")

@@ -104,8 +104,7 @@ def build_dossier_citation_mapping(
     claims = {str(row.get("claim_id")): row for row in rows if row.get("claim_id")}
     evidence = _evidence_index(rows)
     label_by_claim = {
-        claim_id: f"C{index + 1}"
-        for index, claim_id in enumerate(sorted(claims))
+        claim_id: f"C{index + 1}" for index, claim_id in enumerate(sorted(claims))
     }
     citation_catalog = [
         _citation_row(label_by_claim[claim_id], claims[claim_id])
@@ -120,13 +119,19 @@ def build_dossier_citation_mapping(
         for finding in section.get("findings") or []:
             provenance = finding.get("provenance") or {}
             claim_ids = [str(value) for value in provenance.get("claim_ids") or []]
-            evidence_ids = [str(value) for value in provenance.get("evidence_ids") or []]
+            evidence_ids = [
+                str(value) for value in provenance.get("evidence_ids") or []
+            ]
             resolved_claims = [claims[value] for value in claim_ids if value in claims]
             missing_claims = [value for value in claim_ids if value not in claims]
             resolved_evidence = {
-                value: evidence.get(value, []) for value in evidence_ids if evidence.get(value)
+                value: evidence.get(value, [])
+                for value in evidence_ids
+                if evidence.get(value)
             }
-            missing_evidence = [value for value in evidence_ids if value not in evidence]
+            missing_evidence = [
+                value for value in evidence_ids if value not in evidence
+            ]
             labels = [label_by_claim[str(row["claim_id"])] for row in resolved_claims]
             section_labels.extend(labels)
             for value in missing_claims:
@@ -169,9 +174,7 @@ def build_dossier_citation_mapping(
                 **section,
                 "findings": mapped_findings,
                 "citation_labels": unique_labels,
-                "citation_ready_narrative": (
-                    f"{narrative} {section_marker}".strip()
-                ),
+                "citation_ready_narrative": (f"{narrative} {section_marker}".strip()),
                 "citations_complete": all(
                     not finding["unresolved_claim_ids"]
                     and not finding["unresolved_evidence_ids"]

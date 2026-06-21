@@ -2,14 +2,30 @@ from __future__ import annotations
 
 from flask import Flask
 
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index
-from socmint.v10_24_final_delivery_workspace import build_final_delivery_workspace_from_bundle
-from socmint.v10_25_final_delivery_operator_console import build_operator_console_from_workspace
-from socmint.v10_26_final_delivery_audit_trail import build_final_delivery_audit_trail_from_console
-from socmint.v10_27_final_delivery_evidence_capsule import build_final_delivery_evidence_capsule_from_audit_trail
-from socmint.v10_28_final_delivery_capsule_export_pack import build_final_delivery_capsule_export_pack
-from socmint.v10_29_final_delivery_dashboard_api_routes import register_v10_29_final_delivery_dashboard_api_routes
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index,
+)
+from socmint.v10_24_final_delivery_workspace import (
+    build_final_delivery_workspace_from_bundle,
+)
+from socmint.v10_25_final_delivery_operator_console import (
+    build_operator_console_from_workspace,
+)
+from socmint.v10_26_final_delivery_audit_trail import (
+    build_final_delivery_audit_trail_from_console,
+)
+from socmint.v10_27_final_delivery_evidence_capsule import (
+    build_final_delivery_evidence_capsule_from_audit_trail,
+)
+from socmint.v10_28_final_delivery_capsule_export_pack import (
+    build_final_delivery_capsule_export_pack,
+)
+from socmint.v10_29_final_delivery_dashboard_api_routes import (
+    register_v10_29_final_delivery_dashboard_api_routes,
+)
 
 EXPECTED_ACTIONS = {
     "console",
@@ -48,11 +64,15 @@ def verification_report():
 
 
 def delivery_index():
-    return build_master_delivery_index(verification_report(), operator="analyst", notes="Ready.")
+    return build_master_delivery_index(
+        verification_report(), operator="analyst", notes="Ready."
+    )
 
 
 def export_pack():
-    bundle = build_master_delivery_export_bundle(delivery_index(), bundle_name="Route Dashboard")
+    bundle = build_master_delivery_export_bundle(
+        delivery_index(), bundle_name="Route Dashboard"
+    )
     workspace = build_final_delivery_workspace_from_bundle(bundle)
     console = build_operator_console_from_workspace(workspace)
     audit_trail = build_final_delivery_audit_trail_from_console(console)
@@ -62,7 +82,9 @@ def export_pack():
 
 def test_dashboard_route_accepts_pack_shape():
     client = app_client()
-    response = client.post("/api/v1/v10/final-delivery/dashboard", json={"pack": export_pack()})
+    response = client.post(
+        "/api/v1/v10/final-delivery/dashboard", json={"pack": export_pack()}
+    )
 
     assert response.status_code == 200
     data = response.get_json()
@@ -89,7 +111,9 @@ def test_dashboard_route_accepts_index_shape():
 
 def test_actions_route_returns_action_list_only():
     client = app_client()
-    response = client.post("/api/v1/v10/final-delivery/dashboard/actions", json={"pack": export_pack()})
+    response = client.post(
+        "/api/v1/v10/final-delivery/dashboard/actions", json={"pack": export_pack()}
+    )
 
     assert response.status_code == 200
     data = response.get_json()
@@ -117,7 +141,9 @@ def test_no_connector_execution_function_is_called(monkeypatch):
 
     monkeypatch.setattr(dashboard_module, "execute_connector", explode, raising=False)
     client = app_client()
-    response = client.post("/api/v1/v10/final-delivery/dashboard", json={"index": delivery_index()})
+    response = client.post(
+        "/api/v1/v10/final-delivery/dashboard", json={"index": delivery_index()}
+    )
 
     assert response.status_code == 200
     assert response.get_json()["readiness"] == "ready"

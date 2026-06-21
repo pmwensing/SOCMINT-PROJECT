@@ -69,20 +69,26 @@ def main() -> None:
             assert len(set(result_names)) == 3
 
             # 4. Human opens Export History.
-            history_page = client.get(f"/spine/subjects/{SUBJECT_ID}/full-report/history")
+            history_page = client.get(
+                f"/spine/subjects/{SUBJECT_ID}/full-report/history"
+            )
             assert history_page.status_code == 200
             history_text = history_page.get_data(as_text=True)
             assert_contains(history_text, "Full Report Export History")
             assert_contains(history_text, "Compare Previous Reports")
 
-            history_api = client.get(f"/api/v1/spine/subjects/{SUBJECT_ID}/full-report/history")
+            history_api = client.get(
+                f"/api/v1/spine/subjects/{SUBJECT_ID}/full-report/history"
+            )
             assert history_api.status_code == 200
             history = history_api.get_json()
             assert history["count"] >= 3
             history_names = [item["name"] for item in history["exports"]]
 
             # 5. Human clicks Compare Previous Reports.
-            compare = client.get(f"/api/v1/spine/subjects/{SUBJECT_ID}/full-report/compare")
+            compare = client.get(
+                f"/api/v1/spine/subjects/{SUBJECT_ID}/full-report/compare"
+            )
             assert compare.status_code == 200
             compare_json = compare.get_json()
             assert compare_json["available"] is True
@@ -90,7 +96,9 @@ def main() -> None:
             assert "artifact_role_delta" in compare_json
 
             # 6. Human opens Retention / Pins.
-            retention_page = client.get(f"/spine/subjects/{SUBJECT_ID}/full-report/retention")
+            retention_page = client.get(
+                f"/spine/subjects/{SUBJECT_ID}/full-report/retention"
+            )
             assert retention_page.status_code == 200
             retention_text = retention_page.get_data(as_text=True)
             assert_contains(retention_text, "Full Report Retention")
@@ -100,7 +108,10 @@ def main() -> None:
             pinned_name = history_names[-1]
             pin = client.post(
                 f"/api/v1/spine/subjects/{SUBJECT_ID}/full-report/pin",
-                json={"name": pinned_name, "note": "human equivalent important baseline"},
+                json={
+                    "name": pinned_name,
+                    "note": "human equivalent important baseline",
+                },
                 headers=csrf_headers,
             )
             assert pin.status_code == 200
@@ -149,7 +160,9 @@ def main() -> None:
                 f"/api/v1/spine/subjects/{SUBJECT_ID}/full-report/history"
             )
             assert final_history_response.status_code == 200
-            final_names = {item["name"] for item in final_history_response.get_json()["exports"]}
+            final_names = {
+                item["name"] for item in final_history_response.get_json()["exports"]
+            }
             assert delete_name not in final_names
             assert pinned_name in final_names
 

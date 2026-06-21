@@ -87,5 +87,7 @@ def test_identity_confidence_marks_low_claims_for_review():
 def test_attach_identity_confidence_adds_report():
     enriched = attach_identity_confidence(sample_payload())
 
-    assert enriched["identity_confidence"]["schema"] == "socmint.v7_5.identity_confidence"
+    assert (
+        enriched["identity_confidence"]["schema"] == "socmint.v7_5.identity_confidence"
+    )
     assert enriched["identity_confidence"]["claim_count"] == 3

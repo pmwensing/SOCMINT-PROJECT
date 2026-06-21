@@ -73,12 +73,18 @@ def test_v19_2_filters_actor_decision_and_dates(tmp_path, monkeypatch):
     _set_persisted_at(first["decision_record_id"], datetime(2026, 6, 2, 12, 0, 0))
     _set_persisted_at(second["decision_record_id"], datetime(2026, 6, 11, 12, 0, 0))
 
-    assert list_persistent_case_review_decisions(
-        "case-alpha", actor="analyst-b"
-    )["entries"][0]["decision"] == "needs_follow_up"
-    assert list_persistent_case_review_decisions(
-        "case-alpha", decision="approve_review"
-    )["entries"][0]["actor"] == "analyst-a"
+    assert (
+        list_persistent_case_review_decisions("case-alpha", actor="analyst-b")[
+            "entries"
+        ][0]["decision"]
+        == "needs_follow_up"
+    )
+    assert (
+        list_persistent_case_review_decisions("case-alpha", decision="approve_review")[
+            "entries"
+        ][0]["actor"]
+        == "analyst-a"
+    )
     by_date = list_persistent_case_review_decisions(
         "case-alpha", date_from="2026-06-10", date_to="2026-06-12"
     )
@@ -145,9 +151,11 @@ def test_v19_2_review_state_is_separate_immutable_annotation(tmp_path, monkeypat
     session = database.Session()
     try:
         source = session.query(database.AuditLog).filter_by(id=record_id).one()
-        annotations = session.query(database.AuditLog).filter_by(
-            action=REVIEW_ACTION, target_value="case-alpha"
-        ).all()
+        annotations = (
+            session.query(database.AuditLog)
+            .filter_by(action=REVIEW_ACTION, target_value="case-alpha")
+            .all()
+        )
         assert source.action == AUDIT_ACTION
         assert source.details == original_details
         assert json.loads(annotations[0].details)["decision_record_id"] == record_id

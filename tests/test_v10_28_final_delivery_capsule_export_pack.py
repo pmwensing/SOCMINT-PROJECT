@@ -4,16 +4,36 @@ import io
 import zipfile
 from copy import deepcopy
 
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index
-from socmint.v10_24_final_delivery_workspace import build_final_delivery_workspace_from_bundle
-from socmint.v10_25_final_delivery_operator_console import build_operator_console_from_workspace
-from socmint.v10_26_final_delivery_audit_trail import build_final_delivery_audit_trail_from_console
-from socmint.v10_27_final_delivery_evidence_capsule import build_final_delivery_evidence_capsule_from_audit_trail
-from socmint.v10_28_final_delivery_capsule_export_pack import build_final_delivery_capsule_export_pack
-from socmint.v10_28_final_delivery_capsule_export_pack import build_final_delivery_capsule_export_pack_files
-from socmint.v10_28_final_delivery_capsule_export_pack import build_final_delivery_capsule_export_pack_from_request
-from socmint.v10_28_final_delivery_capsule_export_pack import build_final_delivery_capsule_export_zip
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index,
+)
+from socmint.v10_24_final_delivery_workspace import (
+    build_final_delivery_workspace_from_bundle,
+)
+from socmint.v10_25_final_delivery_operator_console import (
+    build_operator_console_from_workspace,
+)
+from socmint.v10_26_final_delivery_audit_trail import (
+    build_final_delivery_audit_trail_from_console,
+)
+from socmint.v10_27_final_delivery_evidence_capsule import (
+    build_final_delivery_evidence_capsule_from_audit_trail,
+)
+from socmint.v10_28_final_delivery_capsule_export_pack import (
+    build_final_delivery_capsule_export_pack,
+)
+from socmint.v10_28_final_delivery_capsule_export_pack import (
+    build_final_delivery_capsule_export_pack_files,
+)
+from socmint.v10_28_final_delivery_capsule_export_pack import (
+    build_final_delivery_capsule_export_pack_from_request,
+)
+from socmint.v10_28_final_delivery_capsule_export_pack import (
+    build_final_delivery_capsule_export_zip,
+)
 from socmint.v10_28_final_delivery_capsule_export_pack import sha256_bytes
 
 REQUIRED_FILES = {
@@ -37,7 +57,9 @@ def verification_report(status="verified"):
         "missing_files": [],
         "unexpected_files": [],
         "manifest": {"file_count": 5, "files": []},
-        "closeout_action": "closeout_ready" if status == "verified" else "regenerate_export",
+        "closeout_action": "closeout_ready"
+        if status == "verified"
+        else "regenerate_export",
         "verification_status": status,
         "failures": [
             {
@@ -66,11 +88,15 @@ def verification_report(status="verified"):
 
 
 def delivery_index(status="verified"):
-    return build_master_delivery_index(verification_report(status), operator="analyst", notes="Ready.")
+    return build_master_delivery_index(
+        verification_report(status), operator="analyst", notes="Ready."
+    )
 
 
 def capsule(status="verified"):
-    bundle = build_master_delivery_export_bundle(delivery_index(status), bundle_name="Export Pack")
+    bundle = build_master_delivery_export_bundle(
+        delivery_index(status), bundle_name="Export Pack"
+    )
     workspace = build_final_delivery_workspace_from_bundle(bundle)
     console = build_operator_console_from_workspace(workspace)
     audit_trail = build_final_delivery_audit_trail_from_console(console)
@@ -124,7 +150,9 @@ def test_manifest_hashes_and_sizes_match_payload_files():
 
 def test_manifest_uses_self_reference_for_manifest_json():
     pack = build_final_delivery_capsule_export_pack(capsule())
-    row = next(item for item in pack["manifest"]["files"] if item["path"] == "manifest.json")
+    row = next(
+        item for item in pack["manifest"]["files"] if item["path"] == "manifest.json"
+    )
 
     assert row["self_reference"] is True
     assert row["size_bytes"] == 0
@@ -148,7 +176,9 @@ def test_builds_export_pack_from_request_capsule_shape():
 
 
 def test_builds_export_pack_from_request_index_shape():
-    pack = build_final_delivery_capsule_export_pack_from_request({"index": delivery_index(), "bundle_name": "Index Export"})
+    pack = build_final_delivery_capsule_export_pack_from_request(
+        {"index": delivery_index(), "bundle_name": "Index Export"}
+    )
 
     assert pack["readiness"] == "ready"
     assert pack["bundle_name"] == "index-export"
@@ -171,6 +201,8 @@ def test_no_connector_execution_function_is_called(monkeypatch):
 
     monkeypatch.setattr(pack_module, "execute_connector", explode, raising=False)
 
-    pack = build_final_delivery_capsule_export_pack_from_request({"index": delivery_index()})
+    pack = build_final_delivery_capsule_export_pack_from_request(
+        {"index": delivery_index()}
+    )
 
     assert pack["readiness"] == "ready"

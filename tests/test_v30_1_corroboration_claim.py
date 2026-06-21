@@ -1,5 +1,9 @@
 from src.socmint import database
-from src.socmint.corroboration_claim_v30_1 import change_claim_state, create_corroboration_claim, current_claims
+from src.socmint.corroboration_claim_v30_1 import (
+    change_claim_state,
+    create_corroboration_claim,
+    current_claims,
+)
 
 
 def test_v30_1_creates_append_only_claim_and_withdraws(tmp_path):
@@ -11,7 +15,13 @@ def test_v30_1_creates_append_only_claim_and_withdraws(tmp_path):
         claim_type="username",
         normalized_value="alice",
         purpose="identity assessment",
-        source_refs=[{"source_type":"observation","source_id":"obs-1","source_sha256":"a" * 64}],
+        source_refs=[
+            {
+                "source_type": "observation",
+                "source_id": "obs-1",
+                "source_sha256": "a" * 64,
+            }
+        ],
         reason="propose corroboration claim",
         confirmed=True,
     )
@@ -36,17 +46,32 @@ def test_v30_1_creates_append_only_claim_and_withdraws(tmp_path):
 def test_v30_1_blocks_missing_sources_duplicates_and_invalid_state(tmp_path):
     database.configure_database(f"sqlite:///{tmp_path / 'blocked.db'}")
     base = dict(
-        actor="analyst", case_id="case-2", entity_id="entity-2",
-        claim_type="location", normalized_value="Kingston",
-        purpose="location assessment", reason="propose claim", confirmed=True,
+        actor="analyst",
+        case_id="case-2",
+        entity_id="entity-2",
+        claim_type="location",
+        normalized_value="Kingston",
+        purpose="location assessment",
+        reason="propose claim",
+        confirmed=True,
     )
     blocked = create_corroboration_claim(**base, source_refs=[])
     assert blocked["status"] == "blocked"
 
-    created = create_corroboration_claim(**base, source_refs=[{"source_type":"artifact","source_id":"artifact-2"}])
-    duplicate = create_corroboration_claim(**base, source_refs=[{"source_type":"artifact","source_id":"artifact-2"}])
+    created = create_corroboration_claim(
+        **base, source_refs=[{"source_type": "artifact", "source_id": "artifact-2"}]
+    )
+    duplicate = create_corroboration_claim(
+        **base, source_refs=[{"source_type": "artifact", "source_id": "artifact-2"}]
+    )
     assert created["status"] == "corroboration_claim_created"
     assert duplicate["status"] == "blocked"
 
-    invalid = change_claim_state(actor="analyst", claim_id=created["claim_id"], to_state="approved", reason="not allowed here", confirmed=True)
+    invalid = change_claim_state(
+        actor="analyst",
+        claim_id=created["claim_id"],
+        to_state="approved",
+        reason="not allowed here",
+        confirmed=True,
+    )
     assert invalid["status"] == "blocked"

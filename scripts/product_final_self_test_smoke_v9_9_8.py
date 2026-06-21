@@ -56,30 +56,69 @@ def main() -> int:
 
             response = client.post(
                 "/api/v1/product/final/self-test/maintenance",
-                json={"decision": "safe_to_start_v10", "release_name": "missing-release", "reason": "should be denied"},
+                json={
+                    "decision": "safe_to_start_v10",
+                    "release_name": "missing-release",
+                    "reason": "should be denied",
+                },
                 headers={"X-CSRF-Token": "v998-csrf"},
             )
             payload = response.get_json() if response.is_json else {}
             ok = response.status_code == 200 and payload.get("status") == "blocked"
-            print(("[PASS]" if ok else "[FAIL]"), "deny v10 readiness without handoff", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "deny v10 readiness without handoff",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("deny v10 readiness without handoff", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "deny v10 readiness without handoff",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final-gate/signoff",
                 json={"decision": "approve", "reason": "approve self-test smoke"},
                 headers={"X-CSRF-Token": "v998-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("gate", {}).get("gate_status") == "approved"
-            print(("[PASS]" if ok else "[FAIL]"), "approve final gate", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("gate", {}).get("gate_status") == "approved"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "approve final gate",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("approve final gate", response.status_code, response.get_data(as_text=True)[:2000]))
+                failures.append(
+                    (
+                        "approve final gate",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2000],
+                    )
+                )
 
-            client.post("/api/v1/product/final-gate/write", headers={"X-CSRF-Token": "v998-csrf"})
+            client.post(
+                "/api/v1/product/final-gate/write",
+                headers={"X-CSRF-Token": "v998-csrf"},
+            )
 
             package_root = Path("storage/product_packages/v9_9_8_self_test_package")
             package_root.mkdir(parents=True, exist_ok=True)
-            (package_root / "PACKAGE_MANIFEST.json").write_text(json.dumps({"selected_count": 1, "copied_artifact_count": 1, "metadata_file_count": 2}, indent=2))
+            (package_root / "PACKAGE_MANIFEST.json").write_text(
+                json.dumps(
+                    {
+                        "selected_count": 1,
+                        "copied_artifact_count": 1,
+                        "metadata_file_count": 2,
+                    },
+                    indent=2,
+                )
+            )
             (package_root / "PACKAGE_INDEX.md").write_text("# package index\n")
             package_zip = Path("storage/product_packages/v9_9_8_self_test_package.zip")
             with zipfile.ZipFile(package_zip, "w") as zf:
@@ -93,57 +132,146 @@ def main() -> int:
                 json={"release_name": release_name},
                 headers={"X-CSRF-Token": "v998-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("status") == "published"
-            print(("[PASS]" if ok else "[FAIL]"), "publish final release", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("status") == "published"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "publish final release",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("publish final release", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "publish final release",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
             response = client.post(
                 f"/api/v1/product/final-release/archive/{release_name}/create",
                 headers={"X-CSRF-Token": "v998-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("version") == "9.9.3"
-            print(("[PASS]" if ok else "[FAIL]"), "create archive seal", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("version") == "9.9.3"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "create archive seal",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("create archive seal", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "create archive seal",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
-            response = client.get(f"/api/v1/product/final-release/verify?release_name={release_name}")
-            ok = response.status_code == 200 and response.get_json().get("status") == "pass"
-            print(("[PASS]" if ok else "[FAIL]"), "verify final release", response.status_code)
+            response = client.get(
+                f"/api/v1/product/final-release/verify?release_name={release_name}"
+            )
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("status") == "pass"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "verify final release",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("verify final release", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "verify final release",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final-release/distribution/decision",
-                json={"decision": "ready", "release_name": release_name, "reason": "ready self-test smoke"},
+                json={
+                    "decision": "ready",
+                    "release_name": release_name,
+                    "reason": "ready self-test smoke",
+                },
                 headers={"X-CSRF-Token": "v998-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("state", {}).get("ready") is True
-            print(("[PASS]" if ok else "[FAIL]"), "mark distribution ready", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("state", {}).get("ready") is True
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "mark distribution ready",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("mark distribution ready", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "mark distribution ready",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final/write",
                 json={"release_name": release_name},
                 headers={"X-CSRF-Token": "v998-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("status") == "ready"
-            print(("[PASS]" if ok else "[FAIL]"), "write final dashboard index", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("status") == "ready"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write final dashboard index",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write final dashboard index", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "write final dashboard index",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final/handoff/build",
-                json={"release_name": release_name, "handoff_name": "v9_9_8_self_test_handoff"},
+                json={
+                    "release_name": release_name,
+                    "handoff_name": "v9_9_8_self_test_handoff",
+                },
                 headers={"X-CSRF-Token": "v998-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("status") == "ready"
-            print(("[PASS]" if ok else "[FAIL]"), "build operator handoff", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("status") == "ready"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "build operator handoff",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("build operator handoff", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "build operator handoff",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
-            response = client.get(f"/api/v1/product/final/self-test?release_name={release_name}")
+            response = client.get(
+                f"/api/v1/product/final/self-test?release_name={release_name}"
+            )
             self_test = response.get_json() if response.is_json else {}
             ok = (
                 response.status_code == 200
@@ -153,9 +281,19 @@ def main() -> int:
                 and self_test.get("safe_to_start_v10_allowed") is True
                 and "operator_handoff" not in self_test.get("failures", [])
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET final self-test API", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET final self-test API",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET final self-test API", response.status_code, response.get_data(as_text=True)[:4000]))
+                failures.append(
+                    (
+                        "GET final self-test API",
+                        response.status_code,
+                        response.get_data(as_text=True)[:4000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final/self-test/write",
@@ -169,13 +307,27 @@ def main() -> int:
                 and Path("release/V9_9_8_POST_RELEASE_MAINTENANCE_REPORT.json").exists()
                 and Path("release/V9_9_8_POST_RELEASE_MAINTENANCE_REPORT.md").exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "write maintenance report", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write maintenance report",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write maintenance report", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "write maintenance report",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final/self-test/maintenance",
-                json={"decision": "safe_to_start_v10", "release_name": release_name, "reason": "safe to start v10 smoke"},
+                json={
+                    "decision": "safe_to_start_v10",
+                    "release_name": release_name,
+                    "reason": "safe to start v10 smoke",
+                },
                 headers={"X-CSRF-Token": "v998-csrf"},
             )
             payload = response.get_json() if response.is_json else {}
@@ -185,35 +337,76 @@ def main() -> int:
                 and payload.get("state", {}).get("safe_to_start_v10") is True
                 and payload.get("self_test", {}).get("status") == "pass"
             )
-            print(("[PASS]" if ok else "[FAIL]"), "mark safe to start v10", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "mark safe to start v10",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("mark safe to start v10", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "mark safe to start v10",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.get("/api/v1/product/final/self-test/maintenance-audit")
             audit = response.get_json() if response.is_json else {}
             ok = (
                 response.status_code == 200
                 and audit.get("count", 0) >= 2
-                and any(event.get("action") == "safe_to_start_v10_denied" for event in audit.get("events", []))
-                and any(event.get("action") == "maintenance_safe_to_start_v10" for event in audit.get("events", []))
+                and any(
+                    event.get("action") == "safe_to_start_v10_denied"
+                    for event in audit.get("events", [])
+                )
+                and any(
+                    event.get("action") == "maintenance_safe_to_start_v10"
+                    for event in audit.get("events", [])
+                )
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET maintenance audit", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET maintenance audit",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET maintenance audit", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "GET maintenance audit",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
-            response = client.get(f"/product/final/self-test?release_name={release_name}")
+            response = client.get(
+                f"/product/final/self-test?release_name={release_name}"
+            )
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Final Release Self-Test" in body and "Mark Safe to Start v10" in body and "PASS" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET self-test UI", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Final Release Self-Test" in body
+                and "Mark Safe to Start v10" in body
+                and "PASS" in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"), "GET self-test UI", response.status_code
+            )
             if not ok:
                 failures.append(("GET self-test UI", response.status_code, body[:2500]))
 
             response = client.get(f"/product/final/handoff?release_name={release_name}")
             body = response.get_data(as_text=True)
             ok = response.status_code == 200 and "Open Final Self-Test" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET handoff self-test link", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET handoff self-test link",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET handoff self-test link", response.status_code, body[:2500]))
+                failures.append(
+                    ("GET handoff self-test link", response.status_code, body[:2500])
+                )
 
             if failures:
                 for name, status, body in failures:

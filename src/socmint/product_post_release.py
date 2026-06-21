@@ -45,7 +45,13 @@ ROUTE_FAMILY = [
 
 def _export_dashboard_symbols() -> None:
     for name in dir(_dashboard):
-        if name.startswith("_v995") or name.startswith("_v996") or name.startswith("_v997") or name.startswith("_v998") or name.startswith("_v999"):
+        if (
+            name.startswith("_v995")
+            or name.startswith("_v996")
+            or name.startswith("_v997")
+            or name.startswith("_v998")
+            or name.startswith("_v999")
+        ):
             globals()[name] = getattr(_dashboard, name)
         elif name in {
             "login_required",
@@ -82,7 +88,6 @@ __all__ = [
     "COMPATIBILITY_MODE",
     "ROUTE_FAMILY",
 ]
-
 
 
 # ---- v10.0.7 Blueprint Migration Wave 1 GET ownership ----
@@ -138,14 +143,19 @@ def wave1_product_v10_bootstrap_view():
 @product_post_release_bp.route("/api/v1/product/final/v10-bootstrap", methods=["GET"])
 def wave1_api_v10_bootstrap():
     return _v1007_dispatch_dashboard_get("/api/v1/product/final/v10-bootstrap")
-# ---- end v10.0.7 wave 1 post-release routes ----
 
+
+# ---- end v10.0.7 wave 1 post-release routes ----
 
 
 # ---- v10.0.9 Blueprint Migration Wave 2 read-only API ownership ----
 
 
-@product_post_release_bp.route("/api/v1/product/final/v10-bootstrap/audit", methods=["GET"])
+@product_post_release_bp.route(
+    "/api/v1/product/final/v10-bootstrap/audit", methods=["GET"]
+)
 def wave2_api_product_v10_bootstrap_audit():
     return _v1007_dispatch_dashboard_get("/api/v1/product/final/v10-bootstrap/audit")
+
+
 # ---- end v10.0.9 wave 2 post-release API routes ----

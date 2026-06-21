@@ -74,10 +74,13 @@ def build_dossier_product_review_checkpoint(
     for route in routes or []:
         rule = str(getattr(route, "rule", route))
         methods = getattr(route, "methods", None)
-        method_tuple = tuple(sorted(
-            item for item in (methods or {"UNKNOWN"})
-            if item not in {"HEAD", "OPTIONS"}
-        ))
+        method_tuple = tuple(
+            sorted(
+                item
+                for item in (methods or {"UNKNOWN"})
+                if item not in {"HEAD", "OPTIONS"}
+            )
+        )
         route_rules.add(rule)
         route_keys.append((rule, method_tuple))
     for route in REQUIRED_ROUTES:
@@ -89,7 +92,8 @@ def build_dossier_product_review_checkpoint(
     duplicate_routes = [
         {"route": rule, "methods": list(methods), "count": count}
         for (rule, methods), count in Counter(route_keys).items()
-        if count > 1 and rule.startswith(("/dossier-assembly", "/api/v1/dossier-assembly"))
+        if count > 1
+        and rule.startswith(("/dossier-assembly", "/api/v1/dossier-assembly"))
     ]
     if duplicate_routes:
         blockers.append({"key": "duplicate_v21_route", "detail": str(duplicate_routes)})
@@ -102,7 +106,9 @@ def build_dossier_product_review_checkpoint(
         if path.is_file() and "v21" in path.name.lower()
     )
     if migrations:
-        blockers.append({"key": "unexpected_v21_migration", "detail": ", ".join(migrations)})
+        blockers.append(
+            {"key": "unexpected_v21_migration", "detail": ", ".join(migrations)}
+        )
 
     return {
         "schema": SCHEMA,
@@ -117,5 +123,7 @@ def build_dossier_product_review_checkpoint(
         "migration_artifacts": migrations,
         "blocker_count": len(blockers),
         "blockers": blockers,
-        "next_action": "run_v21_browser_e2e" if not blockers else "resolve_v21_product_blockers",
+        "next_action": "run_v21_browser_e2e"
+        if not blockers
+        else "resolve_v21_product_blockers",
     }

@@ -4,9 +4,15 @@ import base64
 
 from flask import Response, jsonify, request
 
-from .dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle
-from .dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle_files
-from .dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_zip
+from .dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle,
+)
+from .dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle_files,
+)
+from .dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_zip,
+)
 
 
 def _request_payload() -> dict:
@@ -32,18 +38,26 @@ def _json_route_payload(bundle: dict) -> dict:
 
 
 def register_dossier_finalization_master_delivery_export_bundle_routes(app):
-    @app.post("/api/v1/dossier-builder/v3/intelligence/finalization/master-delivery-index/export")
+    @app.post(
+        "/api/v1/dossier-builder/v3/intelligence/finalization/master-delivery-index/export"
+    )
     def api_master_delivery_index_export():
         payload = _request_payload()
         index = _unwrap_index(payload)
-        bundle = build_master_delivery_export_bundle(index, bundle_name=payload.get("bundle_name"))
+        bundle = build_master_delivery_export_bundle(
+            index, bundle_name=payload.get("bundle_name")
+        )
         return jsonify(_json_route_payload(bundle))
 
-    @app.post("/api/v1/dossier-builder/v3/intelligence/finalization/master-delivery-index/export.zip")
+    @app.post(
+        "/api/v1/dossier-builder/v3/intelligence/finalization/master-delivery-index/export.zip"
+    )
     def api_master_delivery_index_export_zip():
         payload = _request_payload()
         index = _unwrap_index(payload)
-        bundle = build_master_delivery_export_bundle(index, bundle_name=payload.get("bundle_name"))
+        bundle = build_master_delivery_export_bundle(
+            index, bundle_name=payload.get("bundle_name")
+        )
         zip_bytes = build_master_delivery_export_zip(bundle)
         return Response(zip_bytes, mimetype="application/zip")
 

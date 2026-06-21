@@ -19,7 +19,9 @@ def safe_slug(value: str | None, fallback: str = "unknown") -> str:
     return slug[:120] or fallback
 
 
-def export_directory(subject_id: str | None, case_id: str | None, root: str | Path = DEFAULT_EXPORT_ROOT) -> Path:
+def export_directory(
+    subject_id: str | None, case_id: str | None, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> Path:
     return Path(root) / safe_slug(case_id, "case") / safe_slug(subject_id, "subject")
 
 
@@ -113,7 +115,9 @@ def persist_export_pack(
     expected_subject_id: str | None = None,
     expected_case_id: str | None = None,
 ) -> dict[str, Any]:
-    pack = build_export_pack(subject, evidence=evidence or [], analyst_reviewed=analyst_reviewed)
+    pack = build_export_pack(
+        subject, evidence=evidence or [], analyst_reviewed=analyst_reviewed
+    )
     subject_id = pack.get("summary", {}).get("subject_id") or subject.get("subject_id")
     case_id = pack.get("summary", {}).get("case_id") or subject.get("case_id")
     try:
@@ -236,7 +240,9 @@ def load_export_manifest(
     return manifest
 
 
-def export_store_summary(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def export_store_summary(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     manifest = load_export_manifest(subject_id, case_id, root=root)
     return {
         "schema": DOSSIER_EXPORT_STORE_SCHEMA,
@@ -244,5 +250,6 @@ def export_store_summary(subject_id: str, case_id: str, root: str | Path = DEFAU
         "subject_id": manifest.get("subject_id"),
         "case_id": manifest.get("case_id"),
         "artifact_count": len(manifest.get("artifacts", [])),
-        "manifest_path": manifest.get("manifest_path") or str(export_directory(subject_id, case_id, root=root) / "manifest.json"),
+        "manifest_path": manifest.get("manifest_path")
+        or str(export_directory(subject_id, case_id, root=root) / "manifest.json"),
     }

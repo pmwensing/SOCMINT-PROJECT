@@ -57,9 +57,19 @@ def main() -> int:
                 and "socmint.product_artifacts" in module_names
                 and registry.get("missing_route_count") == 0
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET module registry API", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET module registry API",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET module registry API", response.status_code, response.get_data(as_text=True)[:5000]))
+                failures.append(
+                    (
+                        "GET module registry API",
+                        response.status_code,
+                        response.get_data(as_text=True)[:5000],
+                    )
+                )
 
             response = client.get("/api/v1/product/v10/route-ownership")
             ownership = response.get_json() if response.is_json else {}
@@ -69,25 +79,58 @@ def main() -> int:
                 and ownership.get("missing_route_count") == 0
                 and ownership.get("present_route_count", 0) >= 20
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET route ownership API", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET route ownership API",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET route ownership API", response.status_code, response.get_data(as_text=True)[:5000]))
+                failures.append(
+                    (
+                        "GET route ownership API",
+                        response.status_code,
+                        response.get_data(as_text=True)[:5000],
+                    )
+                )
 
             response = client.get("/product/v10/modules")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Product Module Registry" in body and "Route Ownership Map" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET module registry UI", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Product Module Registry" in body
+                and "Route Ownership Map" in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET module registry UI",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET module registry UI", response.status_code, body[:2500]))
+                failures.append(
+                    ("GET module registry UI", response.status_code, body[:2500])
+                )
 
             response = client.get("/product/v10")
             body = response.get_data(as_text=True)
             ok = response.status_code == 200 and "Open Product Module Registry" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET v10 dashboard registry link", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET v10 dashboard registry link",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET v10 dashboard registry link", response.status_code, body[:2500]))
+                failures.append(
+                    (
+                        "GET v10 dashboard registry link",
+                        response.status_code,
+                        body[:2500],
+                    )
+                )
 
-            response = client.post("/api/v1/product/v10/modules/write", headers={"X-CSRF-Token": "v1004-csrf"})
+            response = client.post(
+                "/api/v1/product/v10/modules/write",
+                headers={"X-CSRF-Token": "v1004-csrf"},
+            )
             payload = response.get_json() if response.is_json else {}
             ok = (
                 response.status_code == 200
@@ -95,9 +138,19 @@ def main() -> int:
                 and Path("release/V10_0_4_PRODUCT_MODULE_REGISTRY.json").exists()
                 and Path("release/V10_0_4_PRODUCT_MODULE_REGISTRY.md").exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "write product module registry", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write product module registry",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write product module registry", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "write product module registry",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             compatibility_routes = [
                 "/product/release-candidate",
@@ -114,9 +167,19 @@ def main() -> int:
             for route in compatibility_routes:
                 response = client.get(route)
                 ok = response.status_code == 200
-                print(("[PASS]" if ok else "[FAIL]"), f"compat route {route}", response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"compat route {route}",
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append((f"compat route {route}", response.status_code, response.get_data(as_text=True)[:1800]))
+                    failures.append(
+                        (
+                            f"compat route {route}",
+                            response.status_code,
+                            response.get_data(as_text=True)[:1800],
+                        )
+                    )
 
             if failures:
                 for name, status, body in failures:

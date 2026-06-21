@@ -22,8 +22,14 @@ def register_narrative_intelligence_routes(app) -> None:
     def narrative_intelligence_dashboard():
         subject_id = _subject_id()
         payload = story_reconstruction_payload(subject_id=subject_id)
-        polish = narrative_dashboard_polish_payload(subject_id=subject_id, sort=request.args.get("sort", "timestamp"), event_type=request.args.get("event_type") or None)
-        return render_template("narrative_intelligence_dashboard.html", payload=payload, polish=polish)
+        polish = narrative_dashboard_polish_payload(
+            subject_id=subject_id,
+            sort=request.args.get("sort", "timestamp"),
+            event_type=request.args.get("event_type") or None,
+        )
+        return render_template(
+            "narrative_intelligence_dashboard.html", payload=payload, polish=polish
+        )
 
     @login_required
     def api_narrative_intelligence():
@@ -31,14 +37,40 @@ def register_narrative_intelligence_routes(app) -> None:
 
     @login_required
     def api_narrative_polish():
-        return jsonify(narrative_dashboard_polish_payload(subject_id=_subject_id(), sort=request.args.get("sort", "timestamp"), event_type=request.args.get("event_type") or None))
+        return jsonify(
+            narrative_dashboard_polish_payload(
+                subject_id=_subject_id(),
+                sort=request.args.get("sort", "timestamp"),
+                event_type=request.args.get("event_type") or None,
+            )
+        )
 
     @login_required
     def api_narrative_export():
         written = write_story_exports(subject_id=_subject_id())
         return jsonify(written)
 
-    app.add_url_rule("/narrative/storyboard", endpoint="narrative_intelligence_dashboard", view_func=narrative_intelligence_dashboard, methods=["GET"])
-    app.add_url_rule("/api/v1/narrative/story-reconstruction", endpoint="api_narrative_intelligence", view_func=api_narrative_intelligence, methods=["GET"])
-    app.add_url_rule("/api/v1/narrative/story-polish", endpoint="api_narrative_polish", view_func=api_narrative_polish, methods=["GET"])
-    app.add_url_rule("/api/v1/narrative/story-export", endpoint="api_narrative_export", view_func=api_narrative_export, methods=["GET"])
+    app.add_url_rule(
+        "/narrative/storyboard",
+        endpoint="narrative_intelligence_dashboard",
+        view_func=narrative_intelligence_dashboard,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/narrative/story-reconstruction",
+        endpoint="api_narrative_intelligence",
+        view_func=api_narrative_intelligence,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/narrative/story-polish",
+        endpoint="api_narrative_polish",
+        view_func=api_narrative_polish,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/narrative/story-export",
+        endpoint="api_narrative_export",
+        view_func=api_narrative_export,
+        methods=["GET"],
+    )

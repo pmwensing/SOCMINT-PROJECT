@@ -6,7 +6,12 @@ from . import database
 from .cross_case_intelligence_workspace_v25_0 import (
     build_cross_case_intelligence_workspace,
 )
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 
 SCHEMA = "socmint.cross_case_correlation_review.v25_1"
 VERSION = "v25.1.0"
@@ -79,11 +84,13 @@ def _normalize_split_groups(
         if any(value not in valid_hashes or value in seen for value in clean):
             return None
         seen.update(clean)
-        normalized.append({
-            "group_id": str(group.get("group_id") or f"group-{index}"),
-            "label": str(group.get("label") or "").strip(),
-            "occurrence_provenance_sha256": sorted(clean),
-        })
+        normalized.append(
+            {
+                "group_id": str(group.get("group_id") or f"group-{index}"),
+                "label": str(group.get("label") or "").strip(),
+                "occurrence_provenance_sha256": sorted(clean),
+            }
+        )
     if seen != valid_hashes:
         return None
     return normalized
@@ -108,7 +115,9 @@ def review_correlation_candidate(
     reviewer_value = str(reviewer or "").strip()
 
     if confirmed is not True:
-        return _blocked(correlation_id, "explicit_correlation_review_confirmation_required")
+        return _blocked(
+            correlation_id, "explicit_correlation_review_confirmation_required"
+        )
     if decision_value not in DECISIONS:
         return _blocked(correlation_id, "correlation_review_decision_invalid")
     if not reviewer_value:

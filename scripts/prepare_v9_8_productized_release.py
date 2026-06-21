@@ -28,7 +28,9 @@ def main() -> int:
         "status": "ready_to_tag",
     }
 
-    Path("release/V9_8_PRODUCTIZED_RELEASE_MANIFEST.json").write_text(json.dumps(manifest, indent=2))
+    Path("release/V9_8_PRODUCTIZED_RELEASE_MANIFEST.json").write_text(
+        json.dumps(manifest, indent=2)
+    )
     Path("release/V9_8_PRODUCTIZED_RELEASE.md").write_text(
         "# v9.8 Productized Release\n\n"
         "SOCMINT Workbench v9.8 — Productized Entity Intelligence Platform\n\n"

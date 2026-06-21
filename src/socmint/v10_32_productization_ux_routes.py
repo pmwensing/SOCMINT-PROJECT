@@ -10,17 +10,17 @@ def _request_payload() -> dict:
 
 
 def register_v10_32_productization_ux_routes(app: Flask) -> Flask:
-    @app.post('/api/v1/v10/productization/cases/<case_id>/summary')
+    @app.post("/api/v1/v10/productization/cases/<case_id>/summary")
     def productization_summary(case_id: str):
         payload = _request_payload()
-        registry = payload.get('registry', {})
+        registry = payload.get("registry", {})
         ux = ProductizationUX(case_id, registry)
         return jsonify(ux.enhanced_summary())
 
-    @app.post('/api/v1/v10/productization/cases/<case_id>/ui')
+    @app.post("/api/v1/v10/productization/cases/<case_id>/ui")
     def productization_ui(case_id: str):
         payload = _request_payload()
-        registry = payload.get('registry', {})
+        registry = payload.get("registry", {})
         ux = ProductizationUX(case_id, registry)
         return jsonify(ux.ui_polish())
 

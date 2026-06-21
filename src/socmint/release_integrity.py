@@ -45,7 +45,9 @@ def route_registration_report(app) -> dict[str, Any]:
 
 def release_note_report(root: str | Path = ".") -> dict[str, Any]:
     root_path = Path(root)
-    missing = sorted(path for path in REQUIRED_RELEASE_NOTES if not (root_path / path).exists())
+    missing = sorted(
+        path for path in REQUIRED_RELEASE_NOTES if not (root_path / path).exists()
+    )
     return {
         "schema": RELEASE_INTEGRITY_SCHEMA,
         "status": "pass" if not missing else "missing_release_notes",
@@ -58,7 +60,11 @@ def release_note_report(root: str | Path = ".") -> dict[str, Any]:
 def version_integrity_report(root: str | Path = ".") -> dict[str, Any]:
     pyproject = pyproject_version(root)
     package = SOCMINT_VERSION
-    versions = {"pyproject": pyproject, "package": package, "expected": EXPECTED_VERSION}
+    versions = {
+        "pyproject": pyproject,
+        "package": package,
+        "expected": EXPECTED_VERSION,
+    }
     ok = pyproject == package == EXPECTED_VERSION
     return {
         "schema": RELEASE_INTEGRITY_SCHEMA,

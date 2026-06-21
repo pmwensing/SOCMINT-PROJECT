@@ -3,7 +3,12 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
-from .collaboration_note_events_v26_2 import PRIORITIES, TARGET_TYPES, VISIBILITY_SCOPES, history
+from .collaboration_note_events_v26_2 import (
+    PRIORITIES,
+    TARGET_TYPES,
+    VISIBILITY_SCOPES,
+    history,
+)
 
 
 def current_notes(case_id: str) -> list[dict[str, Any]]:
@@ -27,25 +32,70 @@ def current_notes(case_id: str) -> list[dict[str, Any]]:
                 reads[note_id].add(reader)
     for previous, replacement in superseded.items():
         if previous in notes:
-            notes[previous] = {**notes[previous], "note_status": "superseded", "superseded_by_note_id": replacement}
+            notes[previous] = {
+                **notes[previous],
+                "note_status": "superseded",
+                "superseded_by_note_id": replacement,
+            }
     result = []
     for note_id, item in notes.items():
         acks = acknowledgements.get(note_id, [])
-        result.append({**item, "acknowledgements": acks, "acknowledged_by": sorted({str(v.get("acknowledged_by") or v.get("recorded_by") or "") for v in acks if str(v.get("acknowledged_by") or v.get("recorded_by") or "")}), "read_by": sorted(reads.get(note_id, set()))})
-    return sorted(result, key=lambda item: (str(item.get("recorded_at") or ""), str(item.get("collaboration_note_id") or "")))
+        result.append(
+            {
+                **item,
+                "acknowledgements": acks,
+                "acknowledged_by": sorted(
+                    {
+                        str(v.get("acknowledged_by") or v.get("recorded_by") or "")
+                        for v in acks
+                        if str(v.get("acknowledged_by") or v.get("recorded_by") or "")
+                    }
+                ),
+                "read_by": sorted(reads.get(note_id, set())),
+            }
+        )
+    return sorted(
+        result,
+        key=lambda item: (
+            str(item.get("recorded_at") or ""),
+            str(item.get("collaboration_note_id") or ""),
+        ),
+    )
 
 
 def find_note(case_id: str, note_id: str) -> dict[str, Any] | None:
-    return next((item for item in current_notes(case_id) if item.get("collaboration_note_id") == note_id), None)
+    return next(
+        (
+            item
+            for item in current_notes(case_id)
+            if item.get("collaboration_note_id") == note_id
+        ),
+        None,
+    )
 
 
-def build_collaboration_notes_workspace(case_id: str, *, user_identity: str | None = None) -> dict[str, Any]:
+def build_collaboration_notes_workspace(
+    case_id: str, *, user_identity: str | None = None
+) -> dict[str, Any]:
     all_history = history(case_id)
     notes = current_notes(case_id)
     user = str(user_identity or "").strip()
     active = [item for item in notes if item.get("note_status") == "active"]
-    unread = [item for item in active if user and user in set(item.get("mentioned_users") or []) and user not in set(item.get("read_by") or [])]
-    required = [item for item in active if item.get("acknowledgement_required") and user and user != item.get("author") and user not in set(item.get("acknowledged_by") or [])]
+    unread = [
+        item
+        for item in active
+        if user
+        and user in set(item.get("mentioned_users") or [])
+        and user not in set(item.get("read_by") or [])
+    ]
+    required = [
+        item
+        for item in active
+        if item.get("acknowledgement_required")
+        and user
+        and user != item.get("author")
+        and user not in set(item.get("acknowledged_by") or [])
+    ]
     return {
         "schema": "socmint.collaboration_notes_mentions.v26_2",
         "version": "v26.2.0",

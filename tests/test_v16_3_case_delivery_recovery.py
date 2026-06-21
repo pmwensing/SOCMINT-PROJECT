@@ -6,7 +6,9 @@ from pathlib import Path
 
 from src.socmint.case_delivery_recovery_v16_3 import CASE_DELIVERY_RECOVERY_SCHEMA
 from src.socmint.case_delivery_recovery_v16_3 import build_case_delivery_recovery
-from src.socmint.case_delivery_workspace_routes_v15 import register_case_delivery_workspace_routes_v15
+from src.socmint.case_delivery_workspace_routes_v15 import (
+    register_case_delivery_workspace_routes_v15,
+)
 from src.socmint.dashboard import create_app
 from tests.test_v15_case_delivery_workspace import ready_payload
 
@@ -14,7 +16,9 @@ from tests.test_v15_case_delivery_workspace import ready_payload
 def test_case_delivery_recovery_is_clear_without_exceptions():
     result = build_case_delivery_recovery(
         "case-v16-recovery-clear",
-        ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
+        ready_payload(
+            operator="operator", issuer="release-lead", authorizer="delivery-lead"
+        ),
     )
 
     assert result["schema"] == CASE_DELIVERY_RECOVERY_SCHEMA
@@ -46,7 +50,10 @@ def test_case_delivery_recovery_builds_retry_queue_item():
     assert result["retry_count"] == 1
     assert result["operator_recovery_queue"][0]["decision"] == "retry"
     assert result["operator_recovery_queue"][0]["queue_state"] == "ready_for_retry"
-    assert result["operator_recovery_queue"][0]["recommendation"] == "retry_after_operator_confirmation"
+    assert (
+        result["operator_recovery_queue"][0]["recommendation"]
+        == "retry_after_operator_confirmation"
+    )
     assert result["operator_recovery_queue"][0]["recovery_id"]
     assert result["next_action"] == "operator_retry_delivery"
 
@@ -72,7 +79,10 @@ def test_case_delivery_recovery_escalates_rejected_delivery():
     assert result["state"] == "escalation_required"
     assert result["escalate_count"] == 1
     assert result["operator_recovery_queue"][0]["decision"] == "escalate"
-    assert result["operator_recovery_queue"][0]["recommendation"] == "escalate_to_delivery_owner"
+    assert (
+        result["operator_recovery_queue"][0]["recommendation"]
+        == "escalate_to_delivery_owner"
+    )
     assert result["next_action"] == "escalate_delivery_exception"
 
 
@@ -97,7 +107,10 @@ def test_case_delivery_recovery_remediates_retryable_channel_failure():
     assert result["state"] == "remediation_required"
     assert result["remediate_count"] == 1
     assert result["operator_recovery_queue"][0]["decision"] == "remediate"
-    assert result["operator_recovery_queue"][0]["recommendation"] == "remediate_channel_and_retry"
+    assert (
+        result["operator_recovery_queue"][0]["recommendation"]
+        == "remediate_channel_and_retry"
+    )
 
 
 def test_case_delivery_recovery_blocks_when_exception_review_blocks():
@@ -107,16 +120,26 @@ def test_case_delivery_recovery_blocks_when_exception_review_blocks():
             operator="operator",
             issuer="release-lead",
             authorizer="delivery-lead",
-            events=[{"type": "exception", "operator": "delivery-lead", "detail": "Channel outage."}],
+            events=[
+                {
+                    "type": "exception",
+                    "operator": "delivery-lead",
+                    "detail": "Channel outage.",
+                }
+            ],
         ),
     )
 
     assert result["state"] == "blocked"
-    assert any(blocker["key"] == "exception_review_blocked" for blocker in result["blockers"])
+    assert any(
+        blocker["key"] == "exception_review_blocked" for blocker in result["blockers"]
+    )
     assert result["next_action"] == "resolve_recovery_blockers"
 
 
-def test_case_delivery_recovery_route_chain_from_operations_to_recovery(tmp_path, monkeypatch):
+def test_case_delivery_recovery_route_chain_from_operations_to_recovery(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -128,7 +151,9 @@ def test_case_delivery_recovery_route_chain_from_operations_to_recovery(tmp_path
 
     operations_response = client.post(
         "/api/v1/case-delivery/case-1/operations",
-        json=ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
+        json=ready_payload(
+            operator="operator", issuer="release-lead", authorizer="delivery-lead"
+        ),
         headers={"X-CSRF-Token": "test-csrf"},
     )
     assert operations_response.status_code == 200
@@ -153,7 +178,9 @@ def test_case_delivery_recovery_route_chain_from_operations_to_recovery(tmp_path
     )
     assert attempt_ledger_response.status_code == 200
     attempt_ledger_payload = attempt_ledger_response.get_json()
-    assert attempt_ledger_payload["schema"] == "socmint.case_delivery_attempt_ledger.v16_1"
+    assert (
+        attempt_ledger_payload["schema"] == "socmint.case_delivery_attempt_ledger.v16_1"
+    )
     assert attempt_ledger_payload["state"] == "retry_ready"
 
     exception_review_response = client.post(
@@ -163,7 +190,10 @@ def test_case_delivery_recovery_route_chain_from_operations_to_recovery(tmp_path
     )
     assert exception_review_response.status_code == 200
     exception_review_payload = exception_review_response.get_json()
-    assert exception_review_payload["schema"] == "socmint.case_delivery_exception_review.v16_2"
+    assert (
+        exception_review_payload["schema"]
+        == "socmint.case_delivery_exception_review.v16_2"
+    )
     assert exception_review_payload["state"] == "review_required"
 
     recovery_response = client.post(
@@ -182,11 +212,28 @@ def test_case_delivery_recovery_route_chain_from_operations_to_recovery(tmp_path
 @pytest.mark.parametrize(
     "attempt_detail, expected_state, expected_decision, expected_recommendation",
     [
-        ("Channel outage.", "remediation_required", "remediate", "remediate_channel_and_retry"),
-        ("Recipient rejected delivery.", "escalation_required", "escalate", "escalate_to_delivery_owner"),
+        (
+            "Channel outage.",
+            "remediation_required",
+            "remediate",
+            "remediate_channel_and_retry",
+        ),
+        (
+            "Recipient rejected delivery.",
+            "escalation_required",
+            "escalate",
+            "escalate_to_delivery_owner",
+        ),
     ],
 )
-def test_case_delivery_pipeline_route_chain_recovery_paths(tmp_path, monkeypatch, attempt_detail, expected_state, expected_decision, expected_recommendation):
+def test_case_delivery_pipeline_route_chain_recovery_paths(
+    tmp_path,
+    monkeypatch,
+    attempt_detail,
+    expected_state,
+    expected_decision,
+    expected_recommendation,
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -198,7 +245,9 @@ def test_case_delivery_pipeline_route_chain_recovery_paths(tmp_path, monkeypatch
 
     operations_response = client.post(
         "/api/v1/case-delivery/case-1/operations",
-        json=ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
+        json=ready_payload(
+            operator="operator", issuer="release-lead", authorizer="delivery-lead"
+        ),
         headers={"X-CSRF-Token": "test-csrf"},
     )
     assert operations_response.status_code == 200
@@ -239,8 +288,13 @@ def test_case_delivery_pipeline_route_chain_recovery_paths(tmp_path, monkeypatch
     recovery_payload = recovery_response.get_json()
     assert recovery_payload["schema"] == "socmint.case_delivery_recovery.v16_3"
     assert recovery_payload["state"] == expected_state
-    assert recovery_payload["operator_recovery_queue"][0]["decision"] == expected_decision
-    assert recovery_payload["operator_recovery_queue"][0]["recommendation"] == expected_recommendation
+    assert (
+        recovery_payload["operator_recovery_queue"][0]["decision"] == expected_decision
+    )
+    assert (
+        recovery_payload["operator_recovery_queue"][0]["recommendation"]
+        == expected_recommendation
+    )
     assert recovery_payload["review_id"] == exception_review_payload["review_id"]
 
     workspace_response = client.post(
@@ -258,11 +312,19 @@ def test_case_delivery_pipeline_route_chain_recovery_paths(tmp_path, monkeypatch
     pipeline = workspace_payload["delivery_pipeline"]
     assert pipeline["recovery"]["queue_id"] == recovery_payload["queue_id"]
     assert pipeline["recovery"]["state"] == expected_state
-    assert pipeline["recovery"]["operator_recovery_queue"][0]["decision"] == expected_decision
-    assert pipeline["recovery"]["operator_recovery_queue"][0]["recommendation"] == expected_recommendation
+    assert (
+        pipeline["recovery"]["operator_recovery_queue"][0]["decision"]
+        == expected_decision
+    )
+    assert (
+        pipeline["recovery"]["operator_recovery_queue"][0]["recommendation"]
+        == expected_recommendation
+    )
 
 
-def test_case_delivery_pipeline_route_chain_aggregates_full_v16_workflow(tmp_path, monkeypatch):
+def test_case_delivery_pipeline_route_chain_aggregates_full_v16_workflow(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -274,7 +336,9 @@ def test_case_delivery_pipeline_route_chain_aggregates_full_v16_workflow(tmp_pat
 
     operations_response = client.post(
         "/api/v1/case-delivery/case-1/operations",
-        json=ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
+        json=ready_payload(
+            operator="operator", issuer="release-lead", authorizer="delivery-lead"
+        ),
         headers={"X-CSRF-Token": "test-csrf"},
     )
     assert operations_response.status_code == 200
@@ -299,7 +363,9 @@ def test_case_delivery_pipeline_route_chain_aggregates_full_v16_workflow(tmp_pat
     )
     assert attempt_ledger_response.status_code == 200
     attempt_ledger_payload = attempt_ledger_response.get_json()
-    assert attempt_ledger_payload["schema"] == "socmint.case_delivery_attempt_ledger.v16_1"
+    assert (
+        attempt_ledger_payload["schema"] == "socmint.case_delivery_attempt_ledger.v16_1"
+    )
     assert attempt_ledger_payload["state"] == "retry_ready"
     assert attempt_ledger_payload["operation_id"] == operations_payload["operation_id"]
 
@@ -310,9 +376,15 @@ def test_case_delivery_pipeline_route_chain_aggregates_full_v16_workflow(tmp_pat
     )
     assert exception_review_response.status_code == 200
     exception_review_payload = exception_review_response.get_json()
-    assert exception_review_payload["schema"] == "socmint.case_delivery_exception_review.v16_2"
+    assert (
+        exception_review_payload["schema"]
+        == "socmint.case_delivery_exception_review.v16_2"
+    )
     assert exception_review_payload["state"] == "review_required"
-    assert exception_review_payload["attempt_ledger"]["ledger_id"] == attempt_ledger_payload["ledger_id"]
+    assert (
+        exception_review_payload["attempt_ledger"]["ledger_id"]
+        == attempt_ledger_payload["ledger_id"]
+    )
 
     recovery_response = client.post(
         "/api/v1/case-delivery/case-1/recovery",
@@ -339,14 +411,21 @@ def test_case_delivery_pipeline_route_chain_aggregates_full_v16_workflow(tmp_pat
     workspace_payload = workspace_response.get_json()
     pipeline = workspace_payload["delivery_pipeline"]
     assert pipeline["operations"]["operation_id"] == operations_payload["operation_id"]
-    assert pipeline["attempt_ledger"]["ledger_id"] == attempt_ledger_payload["ledger_id"]
-    assert pipeline["exception_review"]["review_id"] == exception_review_payload["review_id"]
+    assert (
+        pipeline["attempt_ledger"]["ledger_id"] == attempt_ledger_payload["ledger_id"]
+    )
+    assert (
+        pipeline["exception_review"]["review_id"]
+        == exception_review_payload["review_id"]
+    )
     assert pipeline["recovery"]["queue_id"] == recovery_payload["queue_id"]
     assert pipeline["recovery"]["state"] == "retry_ready"
     assert workspace_payload["delivery_pipeline"]["operations"]["dispatchable"] is True
 
 
-def test_case_delivery_operations_route_returns_dispatchable_payload(tmp_path, monkeypatch):
+def test_case_delivery_operations_route_returns_dispatchable_payload(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -358,7 +437,9 @@ def test_case_delivery_operations_route_returns_dispatchable_payload(tmp_path, m
 
     response = client.post(
         "/api/v1/case-delivery/case-1/operations",
-        json=ready_payload(operator="operator", issuer="release-lead", authorizer="delivery-lead"),
+        json=ready_payload(
+            operator="operator", issuer="release-lead", authorizer="delivery-lead"
+        ),
         headers={"X-CSRF-Token": "test-csrf"},
     )
 
@@ -369,7 +450,9 @@ def test_case_delivery_operations_route_returns_dispatchable_payload(tmp_path, m
     assert payload["next_action"] == "dispatch_delivery"
 
 
-def test_case_delivery_attempt_ledger_route_returns_retry_ready_payload(tmp_path, monkeypatch):
+def test_case_delivery_attempt_ledger_route_returns_retry_ready_payload(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -405,7 +488,9 @@ def test_case_delivery_attempt_ledger_route_returns_retry_ready_payload(tmp_path
     assert payload["attempt_count"] == 1
 
 
-def test_case_delivery_exception_review_route_returns_review_payload(tmp_path, monkeypatch):
+def test_case_delivery_exception_review_route_returns_review_payload(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -457,7 +542,9 @@ def test_case_delivery_recovery_route_requires_login(tmp_path, monkeypatch):
     assert response.status_code == 401
 
 
-def test_case_delivery_recovery_route_returns_queue_for_logged_in_user(tmp_path, monkeypatch):
+def test_case_delivery_recovery_route_returns_queue_for_logged_in_user(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("SOCMINT_DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     app = create_app()
     register_case_delivery_workspace_routes_v15(app)
@@ -494,9 +581,13 @@ def test_case_delivery_recovery_route_returns_queue_for_logged_in_user(tmp_path,
 
 
 def test_v16_3_release_note_and_changelog_are_present():
-    note = Path("release/V16_3_DELIVERY_RECOVERY_RETRY_RESOLUTION.md").read_text(encoding="utf-8")
+    note = Path("release/V16_3_DELIVERY_RECOVERY_RETRY_RESOLUTION.md").read_text(
+        encoding="utf-8"
+    )
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
-    template = Path("src/socmint/templates/case_delivery_workspace.html").read_text(encoding="utf-8")
+    template = Path("src/socmint/templates/case_delivery_workspace.html").read_text(
+        encoding="utf-8"
+    )
 
     assert "/api/v1/case-delivery/<case_id>/recovery" in note
     assert "v16.3 Delivery Recovery / Retry Resolution Layer" in changelog

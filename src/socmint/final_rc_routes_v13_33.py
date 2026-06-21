@@ -46,28 +46,28 @@ def _rc_html(payload: dict) -> str:
     )
     return f"""
     <!doctype html>
-    <html><head><meta charset='utf-8'><title>{payload['version']} Final RC Status</title>
+    <html><head><meta charset='utf-8'><title>{payload["version"]} Final RC Status</title>
       <link rel='stylesheet' href='/static/runtime_visual.css'>
     </head>
     <body class='runtime-utility-page'>
       <main class='runtime-utility-container'>
         <section class='runtime-utility-card operator-status-banner'>
           <p class='eyebrow'>Final Release Candidate</p>
-          <h1>{payload['version']} — {payload['title']}</h1>
+          <h1>{payload["version"]} — {payload["title"]}</h1>
           <div class='export-summary-list'>
-            <div><span>Status</span><strong>{payload['status']}</strong></div>
-            <div><span>Clean install</span><strong>{payload['clean_install_acceptance']}</strong></div>
-            <div><span>Routes</span><strong>{len(payload['route_acceptance'])}</strong></div>
-            <div><span>Artifacts</span><strong>{len(payload['export_acceptance_artifacts'])}</strong></div>
+            <div><span>Status</span><strong>{payload["status"]}</strong></div>
+            <div><span>Clean install</span><strong>{payload["clean_install_acceptance"]}</strong></div>
+            <div><span>Routes</span><strong>{len(payload["route_acceptance"])}</strong></div>
+            <div><span>Artifacts</span><strong>{len(payload["export_acceptance_artifacts"])}</strong></div>
           </div>
         </section>
         <section class='runtime-utility-card'>
           <h2>Acceptance Scripts</h2>
           <div class='export-artifact-grid'>
-            <article class='export-artifact-card'><span>Clean clone/build/run</span><strong>{payload['clean_install_script']}</strong></article>
-            <article class='export-artifact-card'><span>Runtime acceptance</span><strong>{payload['runtime_acceptance_script']}</strong></article>
-            <article class='export-artifact-card'><span>Screenshot capture</span><strong>{payload['screenshot_capture_helper']}</strong></article>
-            <article class='export-artifact-card'><span>Release note</span><strong>{payload['release_note']}</strong></article>
+            <article class='export-artifact-card'><span>Clean clone/build/run</span><strong>{payload["clean_install_script"]}</strong></article>
+            <article class='export-artifact-card'><span>Runtime acceptance</span><strong>{payload["runtime_acceptance_script"]}</strong></article>
+            <article class='export-artifact-card'><span>Screenshot capture</span><strong>{payload["screenshot_capture_helper"]}</strong></article>
+            <article class='export-artifact-card'><span>Release note</span><strong>{payload["release_note"]}</strong></article>
           </div>
         </section>
         <section class='runtime-utility-card'>
@@ -95,7 +95,9 @@ def register_final_rc_routes_v13_33(app) -> None:
 
     @login_required
     def ui_final_rc_status_v13_33():
-        return Response(_rc_html(final_rc_status_payload()), mimetype="text/html; charset=utf-8")
+        return Response(
+            _rc_html(final_rc_status_payload()), mimetype="text/html; charset=utf-8"
+        )
 
     app.add_url_rule(
         "/api/v1/release/final-rc/v13.33",

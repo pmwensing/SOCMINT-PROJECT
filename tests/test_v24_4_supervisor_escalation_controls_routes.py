@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -19,30 +21,48 @@ def test_v24_4_routes_page_and_api(tmp_path, monkeypatch):
         "schema": "socmint.portfolio_supervisor_escalation.v24_4",
         "version": "v24.4.0",
         "status": "attention_required",
-        "items": [{
-            "case_id": "case-alpha",
-            "severity": "critical",
-            "current_stage": "closure_review",
-            "stage_age_hours": 160.0,
-            "assignment_age_hours": 100.0,
-            "blocking_reason": "delivery_acknowledgement_required",
-            "owner": "owner-a",
-            "assigned_reviewers": ["alice"],
-            "control_history_count": 1,
-            "escalated": True,
-            "acknowledged": False,
-            "resolved": False,
-        }],
+        "items": [
+            {
+                "case_id": "case-alpha",
+                "severity": "critical",
+                "current_stage": "closure_review",
+                "stage_age_hours": 160.0,
+                "assignment_age_hours": 100.0,
+                "blocking_reason": "delivery_acknowledgement_required",
+                "owner": "owner-a",
+                "assigned_reviewers": ["alice"],
+                "control_history_count": 1,
+                "escalated": True,
+                "acknowledged": False,
+                "resolved": False,
+            }
+        ],
         "item_count": 1,
         "source_records_mutated": False,
         "next_action": "review_supervisor_escalations",
     }
     monkeypatch.setattr(page_routes, "build_escalation_control_state", lambda: state)
     monkeypatch.setattr(api_routes, "build_escalation_control_state", lambda: state)
-    monkeypatch.setattr(api_routes, "record_escalation", lambda *a, **k: {"status": "escalate_recorded", "action_record_id": 1})
-    monkeypatch.setattr(api_routes, "acknowledge_escalation", lambda *a, **k: {"status": "acknowledge_recorded", "action_record_id": 2})
-    monkeypatch.setattr(api_routes, "reassign_escalation", lambda *a, **k: {"status": "reassign_recorded", "action_record_id": 3})
-    monkeypatch.setattr(api_routes, "resolve_escalation", lambda *a, **k: {"status": "resolve_recorded", "action_record_id": 4})
+    monkeypatch.setattr(
+        api_routes,
+        "record_escalation",
+        lambda *a, **k: {"status": "escalate_recorded", "action_record_id": 1},
+    )
+    monkeypatch.setattr(
+        api_routes,
+        "acknowledge_escalation",
+        lambda *a, **k: {"status": "acknowledge_recorded", "action_record_id": 2},
+    )
+    monkeypatch.setattr(
+        api_routes,
+        "reassign_escalation",
+        lambda *a, **k: {"status": "reassign_recorded", "action_record_id": 3},
+    )
+    monkeypatch.setattr(
+        api_routes,
+        "resolve_escalation",
+        lambda *a, **k: {"status": "resolve_recorded", "action_record_id": 4},
+    )
 
     client = _app(tmp_path, monkeypatch).test_client()
     with client.session_transaction() as sess:
@@ -83,8 +103,12 @@ def test_v24_4_routes_page_and_api(tmp_path, monkeypatch):
 
 
 def test_v24_4_release_note_client_and_no_migration():
-    note = Path("release/V24_4_SUPERVISOR_ESCALATION_CONTROLS.md").read_text(encoding="utf-8")
-    script = Path("src/socmint/static/portfolio_supervisor_escalations_v24_4.js").read_text(encoding="utf-8")
+    note = Path("release/V24_4_SUPERVISOR_ESCALATION_CONTROLS.md").read_text(
+        encoding="utf-8"
+    )
+    script = Path(
+        "src/socmint/static/portfolio_supervisor_escalations_v24_4.js"
+    ).read_text(encoding="utf-8")
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

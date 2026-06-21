@@ -13,7 +13,9 @@ def _review(ready=True):
         "mapping_id": "map-1",
         "mapping_sha256": "c" * 64,
         "blockers": [] if ready else [{"key": "citations_unresolved"}],
-        "next_action": "request_supervisor_dossier_approval" if ready else "resolve_dossier_quality_blockers",
+        "next_action": "request_supervisor_dossier_approval"
+        if ready
+        else "resolve_dossier_quality_blockers",
     }
 
 
@@ -21,7 +23,9 @@ def _setup(tmp_path, monkeypatch, ready=True):
     url = f"sqlite:///{tmp_path / 'app.db'}"
     monkeypatch.setenv("DATABASE_URL", url)
     database.configure_database(url)
-    monkeypatch.setattr(service, "build_dossier_quality_review", lambda *a, **k: _review(ready))
+    monkeypatch.setattr(
+        service, "build_dossier_quality_review", lambda *a, **k: _review(ready)
+    )
 
 
 def test_v21_5_approve_requires_ready_review(tmp_path, monkeypatch):
@@ -45,8 +49,11 @@ def test_v21_5_approve_requires_ready_review(tmp_path, monkeypatch):
 def test_v21_5_approval_is_immutable_and_export_ready(tmp_path, monkeypatch):
     _setup(tmp_path, monkeypatch, ready=True)
     result = service.record_supervisor_dossier_decision(
-        "case-alpha", "approve", subject_id=42,
-        reviewer="supervisor", note="approved for export"
+        "case-alpha",
+        "approve",
+        subject_id=42,
+        reviewer="supervisor",
+        note="approved for export",
     )
     workspace = service.build_supervisor_approval_workspace("case-alpha", subject_id=42)
     assert result["status"] == "approved"
@@ -56,4 +63,7 @@ def test_v21_5_approval_is_immutable_and_export_ready(tmp_path, monkeypatch):
     assert result["next_action"] == "prepare_final_export_package"
     assert result["draft_mutated"] is False
     assert result["quality_review_snapshot_mutated"] is False
-    assert workspace["latest_decision"]["approval_record_id"] == result["approval_record_id"]
+    assert (
+        workspace["latest_decision"]["approval_record_id"]
+        == result["approval_record_id"]
+    )

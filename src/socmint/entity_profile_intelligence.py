@@ -38,25 +38,46 @@ def _sort_timeline(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
             return (0, value)
         except ValueError:
             return (1, value)
+
     return sorted(events, key=key)
 
 
-def identity_section(subject: dict[str, Any], evidence: list[dict[str, Any]]) -> dict[str, Any]:
-    aliases = list(dict.fromkeys(_list(subject.get("aliases")) + [item.get("alias") for item in evidence if item.get("alias")]))
-    handles = list(dict.fromkeys(_list(subject.get("handles")) + [item.get("handle") for item in evidence if item.get("handle")]))
-    platforms = sorted({item.get("platform") for item in evidence if item.get("platform")})
+def identity_section(
+    subject: dict[str, Any], evidence: list[dict[str, Any]]
+) -> dict[str, Any]:
+    aliases = list(
+        dict.fromkeys(
+            _list(subject.get("aliases"))
+            + [item.get("alias") for item in evidence if item.get("alias")]
+        )
+    )
+    handles = list(
+        dict.fromkeys(
+            _list(subject.get("handles"))
+            + [item.get("handle") for item in evidence if item.get("handle")]
+        )
+    )
+    platforms = sorted(
+        {item.get("platform") for item in evidence if item.get("platform")}
+    )
     return {
-        "primary_name": _first(subject.get("display_name"), subject.get("name"), default="Unknown subject"),
+        "primary_name": _first(
+            subject.get("display_name"), subject.get("name"), default="Unknown subject"
+        ),
         "subject_id": subject.get("subject_id"),
         "case_id": subject.get("case_id"),
         "aliases": aliases,
         "handles": handles,
         "platforms": platforms,
-        "evidence_refs": [item.get("evidence_id") for item in evidence if item.get("evidence_id")],
+        "evidence_refs": [
+            item.get("evidence_id") for item in evidence if item.get("evidence_id")
+        ],
     }
 
 
-def account_section(subject: dict[str, Any], evidence: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def account_section(
+    subject: dict[str, Any], evidence: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     accounts = []
     for account in _list(subject.get("accounts")):
         accounts.append({**account, "evidence_refs": _evidence_refs(account)})
@@ -81,7 +102,9 @@ def account_section(subject: dict[str, Any], evidence: list[dict[str, Any]]) -> 
     return unique
 
 
-def attribute_section(subject: dict[str, Any], evidence: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def attribute_section(
+    subject: dict[str, Any], evidence: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     attributes = []
     for item in _list(subject.get("attributes")):
         attributes.append({**item, "evidence_refs": _evidence_refs(item)})
@@ -99,7 +122,9 @@ def attribute_section(subject: dict[str, Any], evidence: list[dict[str, Any]]) -
     return attributes
 
 
-def timeline_section(subject: dict[str, Any], evidence: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def timeline_section(
+    subject: dict[str, Any], evidence: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     events = []
     for event in _list(subject.get("timeline")):
         events.append({**event, "evidence_refs": _evidence_refs(event)})
@@ -117,7 +142,9 @@ def timeline_section(subject: dict[str, Any], evidence: list[dict[str, Any]]) ->
     return _sort_timeline(events)
 
 
-def relationship_section(subject: dict[str, Any], evidence: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def relationship_section(
+    subject: dict[str, Any], evidence: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     relationships = []
     for rel in _list(subject.get("relationships")):
         relationships.append({**rel, "evidence_refs": _evidence_refs(rel)})
@@ -147,15 +174,26 @@ def contradiction_section(evidence: list[dict[str, Any]]) -> list[dict[str, Any]
         if item.get("evidence_id"):
             refs[str(claim)].append(item["evidence_id"])
     return [
-        {"claim": claim, "values": sorted(values), "evidence_refs": refs[claim], "status": "conflict"}
+        {
+            "claim": claim,
+            "values": sorted(values),
+            "evidence_refs": refs[claim],
+            "status": "conflict",
+        }
         for claim, values in sorted(by_claim.items())
         if len(values) > 1
     ]
 
 
-def risk_section(evidence: list[dict[str, Any]], contradictions: list[dict[str, Any]]) -> dict[str, Any]:
-    low_conf = sum(1 for item in evidence if clamp_confidence(item.get("confidence", 0.5)) < 0.7)
-    source_counts = Counter(item.get("source") for item in evidence if item.get("source"))
+def risk_section(
+    evidence: list[dict[str, Any]], contradictions: list[dict[str, Any]]
+) -> dict[str, Any]:
+    low_conf = sum(
+        1 for item in evidence if clamp_confidence(item.get("confidence", 0.5)) < 0.7
+    )
+    source_counts = Counter(
+        item.get("source") for item in evidence if item.get("source")
+    )
     score = min(1.0, (low_conf * 0.15) + (len(contradictions) * 0.25))
     return {
         "risk_score": round(score, 3),
@@ -173,7 +211,9 @@ def build_entity_profile_intelligence(
     analyst_notes: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     evidence = evidence or []
-    base = build_dossier_payload(subject, evidence=evidence, analyst_reviewed=analyst_reviewed)
+    base = build_dossier_payload(
+        subject, evidence=evidence, analyst_reviewed=analyst_reviewed
+    )
     contradictions = contradiction_section(evidence)
     payload = {
         "schema": ENTITY_PROFILE_INTELLIGENCE_SCHEMA,
@@ -251,19 +291,29 @@ def entity_profile_intelligence_markdown(payload: dict[str, Any]) -> str:
     lines.append(f"Handles: {', '.join(identity.get('handles', [])) or 'none'}")
     lines.extend(["", "## Accounts"])
     for account in payload.get("accounts", []):
-        lines.append(f"- {account.get('platform')}: {account.get('handle') or account.get('url')} [{', '.join(account.get('evidence_refs', []))}]")
+        lines.append(
+            f"- {account.get('platform')}: {account.get('handle') or account.get('url')} [{', '.join(account.get('evidence_refs', []))}]"
+        )
     lines.extend(["", "## Evidence-backed Attributes"])
     for attr in payload.get("evidence_backed_attributes", []):
-        lines.append(f"- {attr.get('name')}: {attr.get('value')} [{', '.join(attr.get('evidence_refs', []))}]")
+        lines.append(
+            f"- {attr.get('name')}: {attr.get('value')} [{', '.join(attr.get('evidence_refs', []))}]"
+        )
     lines.extend(["", "## Timeline"])
     for event in payload.get("timeline", []):
-        lines.append(f"- {event.get('date')}: {event.get('event')} [{', '.join(event.get('evidence_refs', []))}]")
+        lines.append(
+            f"- {event.get('date')}: {event.get('event')} [{', '.join(event.get('evidence_refs', []))}]"
+        )
     lines.extend(["", "## Relationships"])
     for rel in payload.get("relationships", []):
-        lines.append(f"- {rel.get('target')}: {rel.get('relationship')} [{', '.join(rel.get('evidence_refs', []))}]")
+        lines.append(
+            f"- {rel.get('target')}: {rel.get('relationship')} [{', '.join(rel.get('evidence_refs', []))}]"
+        )
     lines.extend(["", "## Contradictions"])
     for conflict in payload.get("contradictions", []):
-        lines.append(f"- {conflict.get('claim')}: {', '.join(conflict.get('values', []))} [{', '.join(conflict.get('evidence_refs', []))}]")
+        lines.append(
+            f"- {conflict.get('claim')}: {', '.join(conflict.get('values', []))} [{', '.join(conflict.get('evidence_refs', []))}]"
+        )
     if not payload.get("contradictions"):
         lines.append("- none")
     quality = payload.get("quality_gate") or {}

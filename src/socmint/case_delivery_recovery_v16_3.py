@@ -3,7 +3,9 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
-from .case_delivery_exception_review_v16_2 import build_case_delivery_exception_review_from_request
+from .case_delivery_exception_review_v16_2 import (
+    build_case_delivery_exception_review_from_request,
+)
 from .case_delivery_handoff_package_v15_1 import canonical_json
 from .case_delivery_handoff_package_v15_1 import sha256_text
 
@@ -74,11 +76,15 @@ def _recovery_rows(exceptions: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
-def _summary_state(review: dict[str, Any], recoveries: list[dict[str, Any]]) -> tuple[str, list[dict[str, Any]]]:
+def _summary_state(
+    review: dict[str, Any], recoveries: list[dict[str, Any]]
+) -> tuple[str, list[dict[str, Any]]]:
     blockers = []
     if review.get("state") == "blocked":
         blockers.extend(deepcopy(review.get("blockers") or []))
-        blockers.append(_blocker("exception_review_blocked", "delivery exception review is blocked"))
+        blockers.append(
+            _blocker("exception_review_blocked", "delivery exception review is blocked")
+        )
         return "blocked", blockers
     if not recoveries:
         return "clear", blockers
@@ -116,7 +122,9 @@ def build_case_delivery_recovery(
         if isinstance(safe_payload.get("exception_review"), dict)
         else build_case_delivery_exception_review_from_request(case_id, safe_payload)
     )
-    exceptions = review.get("exceptions") if isinstance(review.get("exceptions"), list) else []
+    exceptions = (
+        review.get("exceptions") if isinstance(review.get("exceptions"), list) else []
+    )
     recoveries = _recovery_rows([item for item in exceptions if isinstance(item, dict)])
     state, blockers = _summary_state(review, recoveries)
     payload_core = {
@@ -128,8 +136,12 @@ def build_case_delivery_recovery(
         "recovery_count": len(recoveries),
         "retry_count": sum(1 for row in recoveries if row.get("decision") == "retry"),
         "hold_count": sum(1 for row in recoveries if row.get("decision") == "hold"),
-        "escalate_count": sum(1 for row in recoveries if row.get("decision") == "escalate"),
-        "remediate_count": sum(1 for row in recoveries if row.get("decision") == "remediate"),
+        "escalate_count": sum(
+            1 for row in recoveries if row.get("decision") == "escalate"
+        ),
+        "remediate_count": sum(
+            1 for row in recoveries if row.get("decision") == "remediate"
+        ),
         "blocker_count": len(blockers),
     }
     result = {
@@ -145,5 +157,7 @@ def build_case_delivery_recovery(
     }
 
 
-def build_case_delivery_recovery_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def build_case_delivery_recovery_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     return build_case_delivery_recovery(case_id, payload)

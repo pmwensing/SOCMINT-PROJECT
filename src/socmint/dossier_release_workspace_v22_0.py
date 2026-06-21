@@ -12,7 +12,9 @@ VERSION = "v22.0.0"
 DEFAULT_CHANNELS = ("secure_portal", "encrypted_email", "managed_download")
 
 
-def _recipient_catalog(explicit: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+def _recipient_catalog(
+    explicit: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     if explicit is not None:
         values = explicit
     else:
@@ -25,18 +27,23 @@ def _recipient_catalog(explicit: list[dict[str, Any]] | None = None) -> list[dic
         if not isinstance(value, dict) or not value.get("recipient_id"):
             continue
         channels = [
-            channel for channel in value.get("allowed_channels", DEFAULT_CHANNELS)
+            channel
+            for channel in value.get("allowed_channels", DEFAULT_CHANNELS)
             if channel in DEFAULT_CHANNELS
         ]
-        catalog.append({
-            "recipient_id": str(value["recipient_id"]),
-            "display_name": str(value.get("display_name") or value["recipient_id"]),
-            "organization": str(value.get("organization") or ""),
-            "role": str(value.get("role") or "recipient"),
-            "authorized": value.get("authorized", True) is True,
-            "allowed_channels": channels,
-        })
-    return sorted(catalog, key=lambda item: (item["display_name"], item["recipient_id"]))
+        catalog.append(
+            {
+                "recipient_id": str(value["recipient_id"]),
+                "display_name": str(value.get("display_name") or value["recipient_id"]),
+                "organization": str(value.get("organization") or ""),
+                "role": str(value.get("role") or "recipient"),
+                "authorized": value.get("authorized", True) is True,
+                "allowed_channels": channels,
+            }
+        )
+    return sorted(
+        catalog, key=lambda item: (item["display_name"], item["recipient_id"])
+    )
 
 
 def build_dossier_release_workspace(
@@ -71,8 +78,12 @@ def build_dossier_release_workspace(
         }
         missing_hashes = sorted(required_hashes - set(integrity))
         if missing_hashes:
-            blockers.append({"key": "export_integrity_incomplete", "missing": missing_hashes})
-        if not export_package.get("export_package_id") or not export_package.get("export_package_sha256"):
+            blockers.append(
+                {"key": "export_integrity_incomplete", "missing": missing_hashes}
+            )
+        if not export_package.get("export_package_id") or not export_package.get(
+            "export_package_sha256"
+        ):
             blockers.append({"key": "export_package_identity_missing"})
 
     if not catalog:
@@ -89,7 +100,8 @@ def build_dossier_release_workspace(
         blockers.append({"key": "delivery_channel_not_authorized"})
 
     package_ready = export_package is not None and not any(
-        blocker["key"].startswith("export_") or blocker["key"] == "generated_v21_export_required"
+        blocker["key"].startswith("export_")
+        or blocker["key"] == "generated_v21_export_required"
         for blocker in blockers
     )
     selection_ready = bool(selected and selected_channel) and not any(
@@ -103,7 +115,9 @@ def build_dossier_release_workspace(
         "schema": SCHEMA,
         "version": VERSION,
         "case_id": case_id,
-        "status": "ready_for_delivery_workspace" if release_ready else "needs_configuration",
+        "status": "ready_for_delivery_workspace"
+        if release_ready
+        else "needs_configuration",
         "release_ready": release_ready,
         "transmission_performed": False,
         "export_package": deepcopy(export_package),
@@ -111,7 +125,9 @@ def build_dossier_release_workspace(
         "integrity_state": deepcopy((export_package or {}).get("integrity") or {}),
         "recipient_catalog": catalog,
         "selected_recipient": deepcopy(selected),
-        "available_channels": list(selected["allowed_channels"] if selected else DEFAULT_CHANNELS),
+        "available_channels": list(
+            selected["allowed_channels"] if selected else DEFAULT_CHANNELS
+        ),
         "selected_channel": selected_channel,
         "package_ready": package_ready,
         "selection_ready": selection_ready,
@@ -122,7 +138,9 @@ def build_dossier_release_workspace(
             "api_href": f"/api/v1/case-delivery/{case_id}",
             "handoff_context": {
                 "export_package_id": (export_package or {}).get("export_package_id"),
-                "export_package_sha256": (export_package or {}).get("export_package_sha256"),
+                "export_package_sha256": (export_package or {}).get(
+                    "export_package_sha256"
+                ),
                 "recipient_id": selected_recipient_id,
                 "delivery_channel": selected_channel,
             },
@@ -130,6 +148,8 @@ def build_dossier_release_workspace(
         "next_action": (
             "open_case_delivery_workspace"
             if release_ready
-            else blockers[0]["key"] if blockers else "select_release_configuration"
+            else blockers[0]["key"]
+            if blockers
+            else "select_release_configuration"
         ),
     }

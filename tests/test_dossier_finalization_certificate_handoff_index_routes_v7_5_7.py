@@ -3,11 +3,21 @@ from __future__ import annotations
 import base64
 
 from socmint.dashboard import create_app
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle
-from socmint.dossier_finalization_certificate_bundle_v7_5_5 import build_certificate_bundle_zip
-from socmint.dossier_finalization_certificate_handoff_index_routes_v7_5_7 import register_dossier_finalization_certificate_handoff_index_routes
-from socmint.dossier_finalization_certificate_v7_5_4 import build_verification_certificate
-from socmint.dossier_finalization_certificate_bundle_verify_v7_5_6 import verify_certificate_bundle
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle,
+)
+from socmint.dossier_finalization_certificate_bundle_v7_5_5 import (
+    build_certificate_bundle_zip,
+)
+from socmint.dossier_finalization_certificate_handoff_index_routes_v7_5_7 import (
+    register_dossier_finalization_certificate_handoff_index_routes,
+)
+from socmint.dossier_finalization_certificate_v7_5_4 import (
+    build_verification_certificate,
+)
+from socmint.dossier_finalization_certificate_bundle_verify_v7_5_6 import (
+    verify_certificate_bundle,
+)
 
 CSRF_TOKEN = "test-csrf-token"
 CSRF_HEADERS = {"X-CSRF-Token": CSRF_TOKEN}
@@ -31,7 +41,9 @@ def base_v753_report():
 
 
 def valid_bundle():
-    certificate = build_verification_certificate(base_v753_report(), packet_name="packet-a")
+    certificate = build_verification_certificate(
+        base_v753_report(), packet_name="packet-a"
+    )
     return build_certificate_bundle(certificate, bundle_name="bundle-a")
 
 
@@ -57,19 +69,30 @@ def test_json_route_returns_archive_ready_index_from_wrapped_report():
     response = post_json(
         client,
         "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index",
-        {"verification_report": verified_report(), "bundle_name": "bundle-a", "operator": "analyst"},
+        {
+            "verification_report": verified_report(),
+            "bundle_name": "bundle-a",
+            "operator": "analyst",
+        },
     )
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["schema"] == "socmint.v7_5_7.dossier_finalization_certificate_handoff_index"
+    assert (
+        data["schema"]
+        == "socmint.v7_5_7.dossier_finalization_certificate_handoff_index"
+    )
     assert data["recommended_action"] == "archive_ready"
     assert data["operator"] == "analyst"
 
 
 def test_raw_verification_report_request_shape_works():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index", verified_report())
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index",
+        verified_report(),
+    )
 
     assert response.status_code == 200
     assert response.get_json()["recommended_action"] == "archive_ready"
@@ -122,7 +145,11 @@ def test_invalid_base64_returns_regenerate_bundle_index_not_500():
 
 def test_csrf_token_is_used_in_route_tests():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index", {"verification_report": verified_report()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index",
+        {"verification_report": verified_report()},
+    )
 
     assert response.status_code == 200
 
@@ -135,7 +162,11 @@ def test_no_connector_execution_function_is_called(monkeypatch):
 
     monkeypatch.setattr(index_module, "execute_connector", explode, raising=False)
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index", {"verification_report": verified_report()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/handoff-index",
+        {"verification_report": verified_report()},
+    )
 
     assert response.status_code == 200
     assert response.get_json()["recommended_action"] == "archive_ready"

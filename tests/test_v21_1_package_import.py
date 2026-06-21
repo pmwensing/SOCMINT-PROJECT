@@ -1,6 +1,13 @@
 from src.socmint import database
-from src.socmint.case_findings_v20 import build_dossier_promotion_package, decide_finding, propose_finding
-from src.socmint.dossier_package_import_v21_1 import import_dossier_package, inspect_dossier_package_import
+from src.socmint.case_findings_v20 import (
+    build_dossier_promotion_package,
+    decide_finding,
+    propose_finding,
+)
+from src.socmint.dossier_package_import_v21_1 import (
+    import_dossier_package,
+    inspect_dossier_package_import,
+)
 
 
 def _setup(tmp_path, monkeypatch):
@@ -10,14 +17,20 @@ def _setup(tmp_path, monkeypatch):
 
 
 def _promote(suffix="1"):
-    item = propose_finding("case-alpha", {
-        "text": f"Finding {suffix}",
-        "claim_ids": [f"claim-{suffix}"],
-        "evidence_ids": [f"evidence-{suffix}"],
-        "confidence": "high",
-    }, actor="analyst")
+    item = propose_finding(
+        "case-alpha",
+        {
+            "text": f"Finding {suffix}",
+            "claim_ids": [f"claim-{suffix}"],
+            "evidence_ids": [f"evidence-{suffix}"],
+            "confidence": "high",
+        },
+        actor="analyst",
+    )
     decide_finding("case-alpha", item["finding_id"], "approve", actor="supervisor")
-    return build_dossier_promotion_package("case-alpha", actor="supervisor", promote=True)
+    return build_dossier_promotion_package(
+        "case-alpha", actor="supervisor", promote=True
+    )
 
 
 def test_v21_1_import_and_duplicate(tmp_path, monkeypatch):

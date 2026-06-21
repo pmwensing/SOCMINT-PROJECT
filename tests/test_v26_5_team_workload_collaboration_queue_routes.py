@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -21,23 +23,31 @@ def _payload():
         "user_identity": "paul",
         "my_assigned_cases": [{"case_id": "case-a", "assigned_roles": ["reviewer"]}],
         "pending_requests": [{"case_id": "case-a", "collaboration_request_id": "r1"}],
-        "awaiting_acknowledgement": [{"case_id": "case-a", "collaboration_request_id": "r1"}],
+        "awaiting_acknowledgement": [
+            {"case_id": "case-a", "collaboration_request_id": "r1"}
+        ],
         "delegated_by_me": [{"case_id": "case-a", "collaboration_request_id": "r1"}],
         "pending_handoffs": [],
         "overdue_items": [{"case_id": "case-a", "overdue_hours": 2.0}],
         "unassigned_work": [{"case_id": "case-a"}],
-        "supervisor_escalations": [{"case_id": "case-a", "response_type": "escalation"}],
-        "recent_activity": [{"case_id": "case-a", "action": "case_collaboration_note_created"}],
-        "collaboration_load_by_user": [{
-            "user_identity": "paul",
-            "active_case_count": 1,
-            "case_ids": ["case-a"],
-            "roles": ["reviewer"],
-            "open_requests": 0,
-            "open_handoffs": 0,
-            "unread_updates": 1,
-            "total_collaboration_load": 2,
-        }],
+        "supervisor_escalations": [
+            {"case_id": "case-a", "response_type": "escalation"}
+        ],
+        "recent_activity": [
+            {"case_id": "case-a", "action": "case_collaboration_note_created"}
+        ],
+        "collaboration_load_by_user": [
+            {
+                "user_identity": "paul",
+                "active_case_count": 1,
+                "case_ids": ["case-a"],
+                "roles": ["reviewer"],
+                "open_requests": 0,
+                "open_handoffs": 0,
+                "unread_updates": 1,
+                "total_collaboration_load": 2,
+            }
+        ],
         "workload_imbalance": [],
         "counts": {
             "my_assigned_cases": 1,
@@ -108,7 +118,9 @@ def test_v26_5_routes_require_login_scope_and_render(tmp_path, monkeypatch):
 
 
 def test_v26_5_release_note_and_no_migration():
-    note = Path("release/V26_5_TEAM_WORKLOAD_COLLABORATION_QUEUE.md").read_text(encoding="utf-8")
+    note = Path("release/V26_5_TEAM_WORKLOAD_COLLABORATION_QUEUE.md").read_text(
+        encoding="utf-8"
+    )
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

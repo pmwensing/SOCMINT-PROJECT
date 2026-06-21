@@ -57,7 +57,13 @@ def resolve_role_permissions(role_id: str) -> dict[str, Any]:
         "effective_permission_count": len(permissions),
         "inherited_from_role_ids": sorted(set(inherited_from)),
         "inheritance_cycle_detected": cycle_detected,
-        "resolution_sha256": _sha({"role_id": role_id, "permissions": permissions, "parents": sorted(set(inherited_from))}),
+        "resolution_sha256": _sha(
+            {
+                "role_id": role_id,
+                "permissions": permissions,
+                "parents": sorted(set(inherited_from)),
+            }
+        ),
     }
 
 
@@ -121,7 +127,9 @@ def evaluate_effective_access(username: str, case_id: str) -> dict[str, Any]:
         subject_type = definition.get("subject_type")
         subject_id = str(definition.get("subject_id") or "")
         applies = subject_type == "user" and subject_id == username
-        applies = applies or (subject_type == "role" and role_id and subject_id == role_id)
+        applies = applies or (
+            subject_type == "role" and role_id and subject_id == role_id
+        )
         if not applies:
             continue
         applied_rule_ids.append(str(rule.get("access_rule_id")))
@@ -143,12 +151,23 @@ def evaluate_effective_access(username: str, case_id: str) -> dict[str, Any]:
         "effective_permission_count": len(effective),
         "applied_access_rule_ids": sorted(applied_rule_ids),
         "deny_overrides_allow": True,
-        "evaluation_sha256": _sha({"username": username, "case_id": case_id, "base": sorted(base_permissions), "allows": sorted(allows), "denies": sorted(denies), "effective": sorted(effective)}),
+        "evaluation_sha256": _sha(
+            {
+                "username": username,
+                "case_id": case_id,
+                "base": sorted(base_permissions),
+                "allows": sorted(allows),
+                "denies": sorted(denies),
+                "effective": sorted(effective),
+            }
+        ),
         "access_view_grants_access": False,
     }
 
 
-def _least_privilege_findings(roles: list[dict[str, Any]], rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _least_privilege_findings(
+    roles: list[dict[str, Any]], rules: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     findings = []
     for role in roles:
         if role.get("role_status") != "active":
@@ -158,11 +177,35 @@ def _least_privilege_findings(roles: list[dict[str, Any]], rules: list[dict[str,
         resolved = resolve_role_permissions(role_id)
         name = str(definition.get("name") or "")
         if resolved["inheritance_cycle_detected"]:
-            findings.append({"severity": "high", "key": "role_inheritance_cycle", "role_id": role_id, "role_name": name})
+            findings.append(
+                {
+                    "severity": "high",
+                    "key": "role_inheritance_cycle",
+                    "role_id": role_id,
+                    "role_name": name,
+                }
+            )
         if resolved["effective_permission_count"] >= 12 and name.lower() != "admin":
-            findings.append({"severity": "medium", "key": "broad_non_admin_role", "role_id": role_id, "role_name": name, "permission_count": resolved["effective_permission_count"]})
-        if "administration.read" in resolved["effective_permissions"] and name.lower() not in {"admin", "supervisor"}:
-            findings.append({"severity": "medium", "key": "administration_permission_on_non_privileged_role", "role_id": role_id, "role_name": name})
+            findings.append(
+                {
+                    "severity": "medium",
+                    "key": "broad_non_admin_role",
+                    "role_id": role_id,
+                    "role_name": name,
+                    "permission_count": resolved["effective_permission_count"],
+                }
+            )
+        if "administration.read" in resolved[
+            "effective_permissions"
+        ] and name.lower() not in {"admin", "supervisor"}:
+            findings.append(
+                {
+                    "severity": "medium",
+                    "key": "administration_permission_on_non_privileged_role",
+                    "role_id": role_id,
+                    "role_name": name,
+                }
+            )
     duplicates = Counter(
         (
             (rule.get("definition") or {}).get("subject_type"),
@@ -176,7 +219,14 @@ def _least_privilege_findings(roles: list[dict[str, Any]], rules: list[dict[str,
     )
     for key, count in duplicates.items():
         if count > 1:
-            findings.append({"severity": "low", "key": "duplicate_active_access_rule", "rule_signature": list(key[:-1]) + [list(key[-1])], "count": count})
+            findings.append(
+                {
+                    "severity": "low",
+                    "key": "duplicate_active_access_rule",
+                    "rule_signature": list(key[:-1]) + [list(key[-1])],
+                    "count": count,
+                }
+            )
     return findings
 
 
@@ -189,7 +239,8 @@ def build_access_policy_workspace() -> dict[str, Any]:
         {
             **resolve_role_permissions(str(item.get("role_id"))),
             "name": (item.get("definition") or {}).get("name"),
-            "direct_permissions": (item.get("definition") or {}).get("permissions") or [],
+            "direct_permissions": (item.get("definition") or {}).get("permissions")
+            or [],
         }
         for item in active_roles
     ]
@@ -209,7 +260,10 @@ def build_access_policy_workspace() -> dict[str, Any]:
         "active_access_rules": active_rules,
         "access_rule_count": len(rules),
         "active_access_rule_count": len(active_rules),
-        "explicit_deny_rule_count": sum((item.get("definition") or {}).get("effect") == "deny" for item in active_rules),
+        "explicit_deny_rule_count": sum(
+            (item.get("definition") or {}).get("effect") == "deny"
+            for item in active_rules
+        ),
         "least_privilege_findings": findings,
         "least_privilege_finding_count": len(findings),
         "access_policy_history": events[-200:],

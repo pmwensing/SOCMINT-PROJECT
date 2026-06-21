@@ -40,7 +40,15 @@ QUOTA_ACTIONS = {
     "export": "signed_exports_per_month",
     "graph": "graph_builds_per_day",
 }
-RESPONSIBLE_USE_KEYWORDS = ("case", "subject", "connector", "capture", "export", "graph", "account-discovery")
+RESPONSIBLE_USE_KEYWORDS = (
+    "case",
+    "subject",
+    "connector",
+    "capture",
+    "export",
+    "graph",
+    "account-discovery",
+)
 
 
 @dataclass(frozen=True)
@@ -108,7 +116,9 @@ def route_gate_matrix(app) -> dict[str, Any]:
         status = "ok"
         if mutating and not auth_required:
             status = "needs_review"
-            notes.append("Mutating route should require authentication unless explicitly public and justified.")
+            notes.append(
+                "Mutating route should require authentication unless explicitly public and justified."
+            )
         if mutating and responsible and not quota_key:
             status = "needs_review"
             notes.append("Responsible-use scoped mutation has no inferred quota key.")

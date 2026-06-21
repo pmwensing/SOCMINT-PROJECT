@@ -36,9 +36,17 @@ def main() -> int:
             response = client.get("/api/v1/product/v10/blueprint-wave2")
             wave2 = response.get_json() if response.is_json else {}
             ok = response.status_code == 200 and wave2.get("status") == "pass"
-            print(("[PASS]" if ok else "[FAIL]"), "Wave 2 pass gate", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"), "Wave 2 pass gate", response.status_code
+            )
             if not ok:
-                failures.append(("Wave 2 pass gate", response.status_code, response.get_data(as_text=True)[:4000]))
+                failures.append(
+                    (
+                        "Wave 2 pass gate",
+                        response.status_code,
+                        response.get_data(as_text=True)[:4000],
+                    )
+                )
 
             response = client.get("/api/v1/product/v10/action-route-readiness")
             payload = response.get_json() if response.is_json else {}
@@ -53,9 +61,19 @@ def main() -> int:
                 and payload.get("safe_to_migrate_count") == 0
                 and payload.get("blocked_count") == payload.get("action_route_count")
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET action readiness API", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET action readiness API",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET action readiness API", response.status_code, response.get_data(as_text=True)[:7000]))
+                failures.append(
+                    (
+                        "GET action readiness API",
+                        response.status_code,
+                        response.get_data(as_text=True)[:7000],
+                    )
+                )
 
             for row in rows:
                 ok = (
@@ -66,11 +84,20 @@ def main() -> int:
                     and row.get("requires_session") is True
                     and row.get("requires_write_safety_review") is True
                 )
-                print(("[PASS]" if ok else "[FAIL]"), f"action route blocked {row.get('route')}", row.get("status"))
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"action route blocked {row.get('route')}",
+                    row.get("status"),
+                )
                 if not ok:
-                    failures.append((f"action route blocked {row.get('route')}", 0, str(row)[:3000]))
+                    failures.append(
+                        (f"action route blocked {row.get('route')}", 0, str(row)[:3000])
+                    )
 
-            response = client.post("/api/v1/product/v10/action-route-readiness/write", headers={"X-CSRF-Token": "v1010-csrf"})
+            response = client.post(
+                "/api/v1/product/v10/action-route-readiness/write",
+                headers={"X-CSRF-Token": "v1010-csrf"},
+            )
             written = response.get_json() if response.is_json else {}
             ok = (
                 response.status_code == 200
@@ -79,24 +106,61 @@ def main() -> int:
                 and Path("release/V10_1_0_ACTION_ROUTE_READINESS_REPORT.json").exists()
                 and Path("release/V10_1_0_ACTION_ROUTE_READINESS_REPORT.md").exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "write action readiness report", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write action readiness report",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write action readiness report", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "write action readiness report",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.get("/product/v10/action-route-readiness")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Action Route Readiness" in body and "Action Route Inventory" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET action readiness UI", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Action Route Readiness" in body
+                and "Action Route Inventory" in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET action readiness UI",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET action readiness UI", response.status_code, body[:2500]))
+                failures.append(
+                    ("GET action readiness UI", response.status_code, body[:2500])
+                )
 
-            for route in ["/product/v10", "/product/v10/blueprint-wave2", "/product/v10/blueprint-guardrails"]:
+            for route in [
+                "/product/v10",
+                "/product/v10/blueprint-wave2",
+                "/product/v10/blueprint-guardrails",
+            ]:
                 response = client.get(route)
                 body = response.get_data(as_text=True)
-                ok = response.status_code == 200 and "Open Action Route Readiness" in body
-                print(("[PASS]" if ok else "[FAIL]"), f"action readiness link {route}", response.status_code)
+                ok = (
+                    response.status_code == 200
+                    and "Open Action Route Readiness" in body
+                )
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"action readiness link {route}",
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append((f"action readiness link {route}", response.status_code, body[:2500]))
+                    failures.append(
+                        (
+                            f"action readiness link {route}",
+                            response.status_code,
+                            body[:2500],
+                        )
+                    )
 
             if failures:
                 for name, status, body in failures:

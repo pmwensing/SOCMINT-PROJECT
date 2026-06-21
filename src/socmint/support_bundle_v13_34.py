@@ -57,7 +57,11 @@ def redact_value(name: str, value: Any) -> str | None:
 
 
 def redacted_env_summary() -> dict[str, Any]:
-    keys = sorted(key for key in os.environ if key.startswith("SOCMINT_") or key in {"DATABASE_URL"})
+    keys = sorted(
+        key
+        for key in os.environ
+        if key.startswith("SOCMINT_") or key in {"DATABASE_URL"}
+    )
     return {key: redact_value(key, os.environ.get(key)) for key in keys}
 
 
@@ -120,10 +124,31 @@ def recent_error_summary(limit: int = 50) -> dict[str, Any]:
     settings = load_settings(require_secret=False)
     path = Path(settings.log_file) if settings.log_file else None
     if not path or not path.exists() or not path.is_file():
-        return {"available": False, "reason": "SOCMINT_LOG_FILE is not set or file is unavailable", "errors": []}
+        return {
+            "available": False,
+            "reason": "SOCMINT_LOG_FILE is not set or file is unavailable",
+            "errors": [],
+        }
     lines = path.read_text(errors="replace").splitlines()[-1000:]
-    errors = [line for line in lines if any(marker in line for marker in ("ERROR", "Traceback", "status_code\":500", "Internal Server Error"))]
-    return {"available": True, "path": str(path), "error_count": len(errors), "errors": errors[-limit:]}
+    errors = [
+        line
+        for line in lines
+        if any(
+            marker in line
+            for marker in (
+                "ERROR",
+                "Traceback",
+                'status_code":500',
+                "Internal Server Error",
+            )
+        )
+    ]
+    return {
+        "available": True,
+        "path": str(path),
+        "error_count": len(errors),
+        "errors": errors[-limit:],
+    }
 
 
 def filesystem_summary() -> dict[str, Any]:
@@ -132,9 +157,21 @@ def filesystem_summary() -> dict[str, Any]:
     dossiers = dossier_root()
     support = support_bundle_root()
     return {
-        "data_dir": {"path": str(data_dir), "exists": data_dir.exists(), "writable": os.access(data_dir, os.W_OK)},
-        "dossier_root": {"path": str(dossiers), "exists": dossiers.exists(), "writable": os.access(dossiers, os.W_OK)},
-        "support_bundle_root": {"path": str(support), "exists": support.exists(), "writable": os.access(support, os.W_OK)},
+        "data_dir": {
+            "path": str(data_dir),
+            "exists": data_dir.exists(),
+            "writable": os.access(data_dir, os.W_OK),
+        },
+        "dossier_root": {
+            "path": str(dossiers),
+            "exists": dossiers.exists(),
+            "writable": os.access(dossiers, os.W_OK),
+        },
+        "support_bundle_root": {
+            "path": str(support),
+            "exists": support.exists(),
+            "writable": os.access(support, os.W_OK),
+        },
     }
 
 
@@ -178,7 +215,10 @@ def write_support_bundle(app=None, subject_id: int = 4) -> dict[str, Any]:
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.write(json_path, arcname=json_path.name)
         zf.write(txt_path, arcname=txt_path.name)
-        zf.writestr("README.txt", "SOCMINT v13.34 support bundle. Secrets are redacted by design.\n")
+        zf.writestr(
+            "README.txt",
+            "SOCMINT v13.34 support bundle. Secrets are redacted by design.\n",
+        )
 
     return {
         "ok": True,
@@ -201,19 +241,23 @@ def render_support_bundle_text(payload: dict[str, Any]) -> str:
         "Routes:",
     ]
     for item in payload.get("routes", []):
-        lines.append(f"- {item.get('route')}: {'registered' if item.get('registered') else 'missing'}")
+        lines.append(
+            f"- {item.get('route')}: {'registered' if item.get('registered') else 'missing'}"
+        )
     exports = payload.get("exports", {})
-    lines.extend([
-        "",
-        "Exports:",
-        f"- latest_available: {exports.get('latest_available')}",
-        f"- history_count: {exports.get('history_count')}",
-        f"- artifact_count: {exports.get('artifact_count')}",
-        "",
-        "Recent errors:",
-        f"- available: {payload.get('recent_errors', {}).get('available')}",
-        f"- error_count: {payload.get('recent_errors', {}).get('error_count', 0)}",
-    ])
+    lines.extend(
+        [
+            "",
+            "Exports:",
+            f"- latest_available: {exports.get('latest_available')}",
+            f"- history_count: {exports.get('history_count')}",
+            f"- artifact_count: {exports.get('artifact_count')}",
+            "",
+            "Recent errors:",
+            f"- available: {payload.get('recent_errors', {}).get('available')}",
+            f"- error_count: {payload.get('recent_errors', {}).get('error_count', 0)}",
+        ]
+    )
     return "\n".join(lines) + "\n"
 
 
@@ -255,16 +299,16 @@ def render_support_bundle_html(payload: dict[str, Any]) -> str:
         <section class='runtime-utility-card'>
           <h2>Summary</h2>
           <div class='export-summary-list'>
-            <div><span>Generated</span><strong>{html.escape(payload.get('generated_at', ''))}</strong></div>
-            <div><span>Schema</span><code>{html.escape(payload.get('schema', ''))}</code></div>
-            <div><span>Routes</span><strong>{len(payload.get('routes', []))}</strong></div>
-            <div><span>Export artifacts</span><strong>{html.escape(str(payload.get('exports', {}).get('artifact_count', 0)))}</strong></div>
+            <div><span>Generated</span><strong>{html.escape(payload.get("generated_at", ""))}</strong></div>
+            <div><span>Schema</span><code>{html.escape(payload.get("schema", ""))}</code></div>
+            <div><span>Routes</span><strong>{len(payload.get("routes", []))}</strong></div>
+            <div><span>Export artifacts</span><strong>{html.escape(str(payload.get("exports", {}).get("artifact_count", 0)))}</strong></div>
           </div>
         </section>
         <section class='runtime-utility-card'><h2>Route Health</h2><div class='export-artifact-grid'>{route_cards}</div></section>
-        <section class='runtime-utility-card'><h2>Latest Export Artifacts</h2><div class='export-artifact-grid'>{export_cards or '<p>No export artifacts found.</p>'}</div></section>
-        <section class='runtime-utility-card'><h2>Redacted Config Summary</h2><pre>{html.escape(json.dumps(payload.get('config', {}), indent=2, sort_keys=True))}</pre></section>
-        <section class='runtime-utility-card'><h2>Recent Error Summary</h2><pre>{html.escape(json.dumps(payload.get('recent_errors', {}), indent=2, sort_keys=True))}</pre></section>
+        <section class='runtime-utility-card'><h2>Latest Export Artifacts</h2><div class='export-artifact-grid'>{export_cards or "<p>No export artifacts found.</p>"}</div></section>
+        <section class='runtime-utility-card'><h2>Redacted Config Summary</h2><pre>{html.escape(json.dumps(payload.get("config", {}), indent=2, sort_keys=True))}</pre></section>
+        <section class='runtime-utility-card'><h2>Recent Error Summary</h2><pre>{html.escape(json.dumps(payload.get("recent_errors", {}), indent=2, sort_keys=True))}</pre></section>
       </main>
     </body></html>
     """
@@ -282,13 +326,36 @@ def register_support_bundle_routes_v13_34(app) -> None:
 
     @login_required
     def ui_support_bundle_v13_34():
-        return Response(render_support_bundle_html(support_bundle_payload(app=app)), mimetype="text/html; charset=utf-8")
+        return Response(
+            render_support_bundle_html(support_bundle_payload(app=app)),
+            mimetype="text/html; charset=utf-8",
+        )
 
     @login_required
     def download_support_bundle_v13_34():
         result = write_support_bundle(app=app)
-        return send_file(result["zip_path"], as_attachment=True, download_name=result["zip_name"], mimetype="application/zip")
+        return send_file(
+            result["zip_path"],
+            as_attachment=True,
+            download_name=result["zip_name"],
+            mimetype="application/zip",
+        )
 
-    app.add_url_rule("/api/v1/support/bundle/v13.34", endpoint="api_support_bundle_v13_34", view_func=api_support_bundle_v13_34, methods=["GET"])
-    app.add_url_rule("/support/bundle/v13.34", endpoint="ui_support_bundle_v13_34", view_func=ui_support_bundle_v13_34, methods=["GET"])
-    app.add_url_rule("/support/bundle/v13.34/download", endpoint="download_support_bundle_v13_34", view_func=download_support_bundle_v13_34, methods=["GET"])
+    app.add_url_rule(
+        "/api/v1/support/bundle/v13.34",
+        endpoint="api_support_bundle_v13_34",
+        view_func=api_support_bundle_v13_34,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/support/bundle/v13.34",
+        endpoint="ui_support_bundle_v13_34",
+        view_func=ui_support_bundle_v13_34,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/support/bundle/v13.34/download",
+        endpoint="download_support_bundle_v13_34",
+        view_func=download_support_bundle_v13_34,
+        methods=["GET"],
+    )

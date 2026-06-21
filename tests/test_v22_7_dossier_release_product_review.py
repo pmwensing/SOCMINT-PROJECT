@@ -30,10 +30,12 @@ def test_v22_7_product_review_detects_missing_route_and_duplicate():
             self.methods = methods
 
     routes = [Route(route, {"GET"}) for route in REQUIRED_ROUTES[:-1]]
-    routes.extend([
-        Route("/dossier-release/<case_id>", {"GET"}),
-        Route("/dossier-release/<case_id>", {"GET"}),
-    ])
+    routes.extend(
+        [
+            Route("/dossier-release/<case_id>", {"GET"}),
+            Route("/dossier-release/<case_id>", {"GET"}),
+        ]
+    )
     result = build_dossier_release_product_review(Path("."), routes=routes)
     keys = {item["key"] for item in result["blockers"]}
     assert result["ready"] is False

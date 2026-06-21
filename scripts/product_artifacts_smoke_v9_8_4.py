@@ -45,14 +45,25 @@ def main() -> int:
                 body = response.get_data(as_text=True)
                 ok = response.status_code == 200
                 if endpoint == "/product/artifacts":
-                    ok = ok and "Product Runtime History" in body and "Artifacts JSON" in body
+                    ok = (
+                        ok
+                        and "Product Runtime History" in body
+                        and "Artifacts JSON" in body
+                    )
                 if endpoint == "/product/build-control":
-                    ok = ok and "Runtime History" in body and "Product Artifact Browser" in body
+                    ok = (
+                        ok
+                        and "Runtime History" in body
+                        and "Product Artifact Browser" in body
+                    )
                 if endpoint == "/api/v1/product/artifacts":
                     ok = ok and response.is_json
                     if ok:
                         artifact_payload = response.get_json()
-                        ok = artifact_payload.get("version") == "9.8.4" and artifact_payload.get("count", 0) > 0
+                        ok = (
+                            artifact_payload.get("version") == "9.8.4"
+                            and artifact_payload.get("count", 0) > 0
+                        )
                 print(("[PASS]" if ok else "[FAIL]"), endpoint, response.status_code)
                 if not ok:
                     failures.append((endpoint, response.status_code, body[:1000]))
@@ -62,9 +73,17 @@ def main() -> int:
                 for endpoint in [first["view_url"], first["download_url"]]:
                     response = client.get(endpoint)
                     ok = response.status_code == 200
-                    print(("[PASS]" if ok else "[FAIL]"), endpoint, response.status_code)
+                    print(
+                        ("[PASS]" if ok else "[FAIL]"), endpoint, response.status_code
+                    )
                     if not ok:
-                        failures.append((endpoint, response.status_code, response.get_data(as_text=True)[:1000]))
+                        failures.append(
+                            (
+                                endpoint,
+                                response.status_code,
+                                response.get_data(as_text=True)[:1000],
+                            )
+                        )
 
             if failures:
                 for endpoint, status, body in failures:

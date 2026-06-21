@@ -73,13 +73,26 @@ def main() -> int:
                     headers={"X-CSRF-Token": "v988-csrf"},
                 )
                 ok = response.status_code == 200
-                print(("[PASS]" if ok else "[FAIL]"), "seed review", path, response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    "seed review",
+                    path,
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append((f"seed review {path}", response.status_code, response.get_data(as_text=True)[:1000]))
+                    failures.append(
+                        (
+                            f"seed review {path}",
+                            response.status_code,
+                            response.get_data(as_text=True)[:1000],
+                        )
+                    )
 
             response = client.get("/api/v1/product/release-package")
             preview = response.get_json() if response.is_json else {}
-            preview_paths = {item.get("path") for item in preview.get("selected_artifacts", [])}
+            preview_paths = {
+                item.get("path") for item in preview.get("selected_artifacts", [])
+            }
             ok = (
                 response.status_code == 200
                 and preview.get("version") == "9.8.8"
@@ -88,9 +101,19 @@ def main() -> int:
                 and paths["excluded"] not in preview_paths
                 and paths["archived"] not in preview_paths
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET release package preview", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET release package preview",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET release package preview", response.status_code, response.get_data(as_text=True)[:1500]))
+                failures.append(
+                    (
+                        "GET release package preview",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1500],
+                    )
+                )
 
             package_name = "v9_8_8_smoke_package"
             response = client.post(
@@ -107,13 +130,27 @@ def main() -> int:
                 and (package_root / "PACKAGE_MANIFEST.json").exists()
                 and (package_root / "PACKAGE_INDEX.md").exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "POST build release package", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "POST build release package",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("POST build release package", response.status_code, response.get_data(as_text=True)[:1500]))
+                failures.append(
+                    (
+                        "POST build release package",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1500],
+                    )
+                )
 
             if package_root.exists():
-                manifest = json.loads((package_root / "PACKAGE_MANIFEST.json").read_text())
-                copied_sources = {item.get("source") for item in manifest.get("copied_artifacts", [])}
+                manifest = json.loads(
+                    (package_root / "PACKAGE_MANIFEST.json").read_text()
+                )
+                copied_sources = {
+                    item.get("source") for item in manifest.get("copied_artifacts", [])
+                }
                 ok = (
                     paths["reviewed"] in copied_sources
                     and paths["important"] in copied_sources
@@ -123,21 +160,47 @@ def main() -> int:
                 )
                 print(("[PASS]" if ok else "[FAIL]"), "package contents selected only")
                 if not ok:
-                    failures.append(("package contents selected only", 0, json.dumps(manifest, indent=2)[:2000]))
+                    failures.append(
+                        (
+                            "package contents selected only",
+                            0,
+                            json.dumps(manifest, indent=2)[:2000],
+                        )
+                    )
 
             response = client.get("/product/release-package")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Product Release Package Builder" in body and paths["reviewed"] in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET release package UI", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Product Release Package Builder" in body
+                and paths["reviewed"] in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET release package UI",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET release package UI", response.status_code, body[:1500]))
+                failures.append(
+                    ("GET release package UI", response.status_code, body[:1500])
+                )
 
             response = client.get("/product/artifacts")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Release Package Builder" in body and "/product/release-package" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET artifacts package panel", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Release Package Builder" in body
+                and "/product/release-package" in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET artifacts package panel",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET artifacts package panel", response.status_code, body[:1500]))
+                failures.append(
+                    ("GET artifacts package panel", response.status_code, body[:1500])
+                )
 
             if failures:
                 for name, status, body in failures:

@@ -64,7 +64,9 @@ def deterministic_same_target(
     if left_type_n and right_type_n and left_type_n == right_type_n:
         if left_value_n and right_value_n and left_value_n == right_value_n:
             reasons.append("same_type_exact_normalized_value")
-        if compact_target_value(left_value_n) and compact_target_value(left_value_n) == compact_target_value(right_value_n):
+        if compact_target_value(left_value_n) and compact_target_value(
+            left_value_n
+        ) == compact_target_value(right_value_n):
             reasons.append("same_type_exact_compact_value")
 
     return {"same_target": bool(reasons), "reasons": sorted(set(reasons))}
@@ -80,7 +82,9 @@ def promotion_scope_decision(
     parent_value: Any = None,
     analyst_merged_scope: bool = False,
 ) -> dict[str, Any]:
-    same_scope = bool(finding_scope_id and parent_scope_id and finding_scope_id == parent_scope_id)
+    same_scope = bool(
+        finding_scope_id and parent_scope_id and finding_scope_id == parent_scope_id
+    )
     same_target = deterministic_same_target(
         left_type=finding_type,
         left_value=finding_value,

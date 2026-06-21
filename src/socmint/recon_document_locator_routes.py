@@ -3,7 +3,16 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from flask import abort, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import (
+    abort,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
 from .recon_document_locator import DORK_TEMPLATES
 from .recon_document_locator import acquisition_queue_path
@@ -15,7 +24,12 @@ from .recon_document_locator import render_dork_templates
 def _queue_payload() -> dict:
     path = acquisition_queue_path()
     if not path.exists():
-        return {"schema": "socmint.recon.acquisition_queue.v12_3_1", "items": [], "queue_path": str(path), "count": 0}
+        return {
+            "schema": "socmint.recon.acquisition_queue.v12_3_1",
+            "items": [],
+            "queue_path": str(path),
+            "count": 0,
+        }
     try:
         payload = json.loads(path.read_text())
     except Exception:
@@ -25,7 +39,9 @@ def _queue_payload() -> dict:
     return payload
 
 
-def recon_document_locator_dashboard_payload(query: str | None = None, connectors: list[str] | None = None) -> dict:
+def recon_document_locator_dashboard_payload(
+    query: str | None = None, connectors: list[str] | None = None
+) -> dict:
     query = (query or "").strip()
     search_payload = None
     if query:
@@ -33,29 +49,73 @@ def recon_document_locator_dashboard_payload(query: str | None = None, connector
     return {
         "schema": "socmint.recon.document_locator_ui.v12_3_2",
         "query": query,
-        "connectors": connectors or ["brave", "wayback_cdx", "commoncrawl", "github_code"],
+        "connectors": connectors
+        or ["brave", "wayback_cdx", "commoncrawl", "github_code"],
         "connector_options": [
-            {"key": "brave", "label": "Brave Search API", "role": "preferred broad web backend"},
-            {"key": "wayback_cdx", "label": "Wayback CDX", "role": "historic public web archive"},
-            {"key": "commoncrawl", "label": "Common Crawl", "role": "public crawl index"},
-            {"key": "github_code", "label": "GitHub Code Search", "role": "public code/document search"},
+            {
+                "key": "brave",
+                "label": "Brave Search API",
+                "role": "preferred broad web backend",
+            },
+            {
+                "key": "wayback_cdx",
+                "label": "Wayback CDX",
+                "role": "historic public web archive",
+            },
+            {
+                "key": "commoncrawl",
+                "label": "Common Crawl",
+                "role": "public crawl index",
+            },
+            {
+                "key": "github_code",
+                "label": "GitHub Code Search",
+                "role": "public code/document search",
+            },
         ],
         "dork_templates": render_dork_templates(query or "target"),
         "template_library": DORK_TEMPLATES,
         "search": search_payload,
         "queue": _queue_payload(),
         "source_trust_matrix": [
-            {"label": "document-candidate", "meaning": "Likely public document/file lead, still not evidence."},
-            {"label": "archive", "meaning": "Public archive index result; verify source and capture."},
-            {"label": "review", "meaning": "Lead requires analyst review before acquisition."},
-            {"label": "stub", "meaning": "Diagnostic placeholder because live recon is disabled or missing API keys."},
+            {
+                "label": "document-candidate",
+                "meaning": "Likely public document/file lead, still not evidence.",
+            },
+            {
+                "label": "archive",
+                "meaning": "Public archive index result; verify source and capture.",
+            },
+            {
+                "label": "review",
+                "meaning": "Lead requires analyst review before acquisition.",
+            },
+            {
+                "label": "stub",
+                "meaning": "Diagnostic placeholder because live recon is disabled or missing API keys.",
+            },
         ],
         "legal_safety_matrix": [
-            {"label": "public-index-result", "meaning": "Found through public index/search."},
-            {"label": "api-search-result", "meaning": "Returned through public search API."},
-            {"label": "public-archive-index", "meaning": "Returned through public archive index."},
-            {"label": "manual-review-required", "meaning": "Analyst must verify legality, relevance, and source policy."},
-            {"label": "located-url-not-evidence", "meaning": "URL becomes evidence only after v12.5 acquisition, hashing, preservation, and promotion."},
+            {
+                "label": "public-index-result",
+                "meaning": "Found through public index/search.",
+            },
+            {
+                "label": "api-search-result",
+                "meaning": "Returned through public search API.",
+            },
+            {
+                "label": "public-archive-index",
+                "meaning": "Returned through public archive index.",
+            },
+            {
+                "label": "manual-review-required",
+                "meaning": "Analyst must verify legality, relevance, and source policy.",
+            },
+            {
+                "label": "located-url-not-evidence",
+                "meaning": "URL becomes evidence only after v12.5 acquisition, hashing, preservation, and promotion.",
+            },
         ],
         "v12_5_handoff": {
             "state": "manual_acquisition_queue",
@@ -82,8 +142,15 @@ def register_recon_document_locator_routes(app) -> None:
         payload = request.get_json(silent=True) or {}
         query = (payload.get("query") or request.args.get("q") or "").strip()
         if not query:
-            return jsonify({"schema": "socmint.recon.document_locator_ui.v12_3_2", "error": "query is required"}), 400
-        connectors = payload.get("connectors") or request.args.getlist("connectors") or None
+            return jsonify(
+                {
+                    "schema": "socmint.recon.document_locator_ui.v12_3_2",
+                    "error": "query is required",
+                }
+            ), 400
+        connectors = (
+            payload.get("connectors") or request.args.getlist("connectors") or None
+        )
         return jsonify(document_locator_search(query, connectors=connectors))
 
     @run_required
@@ -95,8 +162,13 @@ def register_recon_document_locator_routes(app) -> None:
             flash("Invalid document locator result payload.", "error")
             return redirect(url_for("recon_document_locator_view"))
         queued = queue_for_manual_acquisition(result, actor=session.get("user"))
-        flash(f"Queued lead {queued['queued']['id']} for v12.5 forensic intake review.", "success")
-        return redirect(url_for("recon_document_locator_view", q=request.form.get("query", "")))
+        flash(
+            f"Queued lead {queued['queued']['id']} for v12.5 forensic intake review.",
+            "success",
+        )
+        return redirect(
+            url_for("recon_document_locator_view", q=request.form.get("query", ""))
+        )
 
     @login_required
     def api_recon_document_locator_queue():
@@ -111,8 +183,33 @@ def register_recon_document_locator_routes(app) -> None:
         queued = queue_for_manual_acquisition(result, actor=session.get("user"))
         return jsonify(queued), 202
 
-    app.add_url_rule("/recon/document-locator", endpoint="recon_document_locator_view", view_func=recon_document_locator_view, methods=["GET"])
-    app.add_url_rule("/recon/document-locator/queue", endpoint="recon_document_locator_queue", view_func=recon_document_locator_queue, methods=["POST"])
-    app.add_url_rule("/api/v1/recon/document-locator/search", endpoint="api_recon_document_locator_search", view_func=api_recon_document_locator_search, methods=["GET", "POST"])
-    app.add_url_rule("/api/v1/recon/document-locator/queue", endpoint="api_recon_document_locator_queue", view_func=api_recon_document_locator_queue, methods=["GET"])
-    app.add_url_rule("/api/v1/recon/document-locator/queue", endpoint="api_recon_document_locator_queue_add", view_func=api_recon_document_locator_queue_add, methods=["POST"])
+    app.add_url_rule(
+        "/recon/document-locator",
+        endpoint="recon_document_locator_view",
+        view_func=recon_document_locator_view,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/recon/document-locator/queue",
+        endpoint="recon_document_locator_queue",
+        view_func=recon_document_locator_queue,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/v1/recon/document-locator/search",
+        endpoint="api_recon_document_locator_search",
+        view_func=api_recon_document_locator_search,
+        methods=["GET", "POST"],
+    )
+    app.add_url_rule(
+        "/api/v1/recon/document-locator/queue",
+        endpoint="api_recon_document_locator_queue",
+        view_func=api_recon_document_locator_queue,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/v1/recon/document-locator/queue",
+        endpoint="api_recon_document_locator_queue_add",
+        view_func=api_recon_document_locator_queue_add,
+        methods=["POST"],
+    )

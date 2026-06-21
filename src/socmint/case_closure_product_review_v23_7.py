@@ -69,10 +69,13 @@ def build_case_closure_product_review(
     for route in routes or []:
         rule = str(getattr(route, "rule", route))
         methods = getattr(route, "methods", None)
-        method_tuple = tuple(sorted(
-            method for method in (methods or {"UNKNOWN"})
-            if method not in {"HEAD", "OPTIONS"}
-        ))
+        method_tuple = tuple(
+            sorted(
+                method
+                for method in (methods or {"UNKNOWN"})
+                if method not in {"HEAD", "OPTIONS"}
+            )
+        )
         route_rules.add(rule)
         route_keys.append((rule, method_tuple))
 
@@ -99,7 +102,9 @@ def build_case_closure_product_review(
         if path.is_file() and "v23" in path.name.lower()
     )
     if migrations:
-        blockers.append({"key": "unexpected_v23_migration", "detail": ", ".join(migrations)})
+        blockers.append(
+            {"key": "unexpected_v23_migration", "detail": ", ".join(migrations)}
+        )
 
     return {
         "schema": SCHEMA,
@@ -114,5 +119,7 @@ def build_case_closure_product_review(
         "migration_artifacts": migrations,
         "blocker_count": len(blockers),
         "blockers": blockers,
-        "next_action": "run_v23_browser_e2e" if not blockers else "resolve_v23_product_blockers",
+        "next_action": "run_v23_browser_e2e"
+        if not blockers
+        else "resolve_v23_product_blockers",
     }

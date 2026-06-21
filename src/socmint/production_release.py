@@ -22,7 +22,8 @@ def production_release_check(username: str | None = None) -> dict[str, Any]:
         "production_access_readiness": bool(production.get("required_controls")),
         "connector_catalog_present": connectors.get("count", 0) > 0,
         "export_quality_available": EXPORT_QUALITY_SCHEMA.endswith("v8_6_0"),
-        "guided_workflow_available": guided.get("schema") == "socmint.guided_investigation.v12_9",
+        "guided_workflow_available": guided.get("schema")
+        == "socmint.guided_investigation.v12_9",
         "release_notes_present": True,
     }
     if username:

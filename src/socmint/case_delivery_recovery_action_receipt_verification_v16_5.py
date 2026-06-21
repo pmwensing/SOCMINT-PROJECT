@@ -5,7 +5,9 @@ from typing import Any
 
 from .case_delivery_handoff_package_v15_1 import canonical_json
 from .case_delivery_handoff_package_v15_1 import sha256_text
-from .case_delivery_recovery_action_receipt_v16_4 import build_case_delivery_recovery_action_receipt
+from .case_delivery_recovery_action_receipt_v16_4 import (
+    build_case_delivery_recovery_action_receipt,
+)
 from .case_delivery_recovery_v16_3 import build_case_delivery_recovery_from_request
 
 
@@ -14,7 +16,16 @@ CASE_DELIVERY_RECOVERY_ACTION_RECEIPT_VERIFICATION_SCHEMA = (
 )
 VERSION = "v16.5.0"
 VALID_DECISIONS = {"retry", "remediate", "escalate", "hold"}
-VALID_ACTION_STATUSES = {"completed", "confirmed", "resolved", "acknowledged", "pending", "in_progress", "queued", "deferred"}
+VALID_ACTION_STATUSES = {
+    "completed",
+    "confirmed",
+    "resolved",
+    "acknowledged",
+    "pending",
+    "in_progress",
+    "queued",
+    "deferred",
+}
 COMPLETED_STATUSES = {"completed", "confirmed", "resolved", "acknowledged"}
 
 
@@ -61,7 +72,11 @@ def _action_payload(action: dict[str, Any]) -> dict[str, Any]:
 
 
 def _recovery_index(recovery: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    queue = recovery.get("operator_recovery_queue") if isinstance(recovery.get("operator_recovery_queue"), list) else []
+    queue = (
+        recovery.get("operator_recovery_queue")
+        if isinstance(recovery.get("operator_recovery_queue"), list)
+        else []
+    )
     return {
         row.get("recovery_id"): row
         for row in queue
@@ -69,28 +84,61 @@ def _recovery_index(recovery: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
-def _action_blockers(action: dict[str, Any], recovery_by_id: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+def _action_blockers(
+    action: dict[str, Any], recovery_by_id: dict[str, dict[str, Any]]
+) -> list[dict[str, Any]]:
     blockers = []
     recovery_id = action.get("recovery_id")
     recovery = recovery_by_id.get(recovery_id)
     if not recovery:
-        blockers.append(_blocker("recovery_id_missing", f"action recovery_id {recovery_id} is not present in the recovery queue"))
+        blockers.append(
+            _blocker(
+                "recovery_id_missing",
+                f"action recovery_id {recovery_id} is not present in the recovery queue",
+            )
+        )
         return blockers
 
     expected_action_receipt_id = sha256_text(canonical_json(_action_payload(action)))
     if action.get("action_receipt_id") != expected_action_receipt_id:
-        blockers.append(_blocker("action_receipt_id_mismatch", f"action receipt id for recovery {recovery_id} is invalid"))
+        blockers.append(
+            _blocker(
+                "action_receipt_id_mismatch",
+                f"action receipt id for recovery {recovery_id} is invalid",
+            )
+        )
 
-    for field in ("exception_id", "attempt_id", "category", "decision", "queue_state", "recommendation"):
+    for field in (
+        "exception_id",
+        "attempt_id",
+        "category",
+        "decision",
+        "queue_state",
+        "recommendation",
+    ):
         if action.get(field) != recovery.get(field):
-            blockers.append(_blocker(f"{field}_mismatch", f"action {field} does not match recovery queue item"))
+            blockers.append(
+                _blocker(
+                    f"{field}_mismatch",
+                    f"action {field} does not match recovery queue item",
+                )
+            )
 
     if action.get("decision") not in VALID_DECISIONS:
-        blockers.append(_blocker("invalid_recovery_decision", "action decision is not supported"))
+        blockers.append(
+            _blocker("invalid_recovery_decision", "action decision is not supported")
+        )
     if action.get("action_status") not in VALID_ACTION_STATUSES:
-        blockers.append(_blocker("invalid_action_status", "action status is not supported"))
+        blockers.append(
+            _blocker("invalid_action_status", "action status is not supported")
+        )
     if action.get("completed") != (action.get("action_status") in COMPLETED_STATUSES):
-        blockers.append(_blocker("completed_flag_mismatch", "action completed flag does not match action status"))
+        blockers.append(
+            _blocker(
+                "completed_flag_mismatch",
+                "action completed flag does not match action status",
+            )
+        )
     return blockers
 
 
@@ -103,38 +151,97 @@ def verify_case_delivery_recovery_action_receipt(
     blockers = []
 
     if not safe_receipt:
-        blockers.append(_blocker("missing_receipt", "recovery action receipt is missing"))
+        blockers.append(
+            _blocker("missing_receipt", "recovery action receipt is missing")
+        )
     if safe_recovery.get("state") == "blocked":
         blockers.extend(deepcopy(safe_recovery.get("blockers") or []))
-        blockers.append(_blocker("recovery_blocked", "delivery recovery queue is blocked"))
+        blockers.append(
+            _blocker("recovery_blocked", "delivery recovery queue is blocked")
+        )
 
-    expected_receipt_id = sha256_text(canonical_json(_receipt_payload(safe_receipt))) if safe_receipt else None
+    expected_receipt_id = (
+        sha256_text(canonical_json(_receipt_payload(safe_receipt)))
+        if safe_receipt
+        else None
+    )
     if safe_receipt and safe_receipt.get("receipt_id") != expected_receipt_id:
-        blockers.append(_blocker("receipt_id_mismatch", "receipt id does not match canonical receipt payload"))
+        blockers.append(
+            _blocker(
+                "receipt_id_mismatch",
+                "receipt id does not match canonical receipt payload",
+            )
+        )
 
     if safe_receipt and safe_receipt.get("queue_id") != safe_recovery.get("queue_id"):
-        blockers.append(_blocker("queue_id_mismatch", "receipt queue_id does not match recovery queue"))
+        blockers.append(
+            _blocker(
+                "queue_id_mismatch", "receipt queue_id does not match recovery queue"
+            )
+        )
     if safe_receipt and safe_receipt.get("case_id") != safe_recovery.get("case_id"):
-        blockers.append(_blocker("case_id_mismatch", "receipt case_id does not match recovery queue"))
-    if safe_receipt and safe_receipt.get("recovery_state") != safe_recovery.get("state"):
-        blockers.append(_blocker("recovery_state_mismatch", "receipt recovery_state does not match recovery queue"))
+        blockers.append(
+            _blocker(
+                "case_id_mismatch", "receipt case_id does not match recovery queue"
+            )
+        )
+    if safe_receipt and safe_receipt.get("recovery_state") != safe_recovery.get(
+        "state"
+    ):
+        blockers.append(
+            _blocker(
+                "recovery_state_mismatch",
+                "receipt recovery_state does not match recovery queue",
+            )
+        )
 
-    actions = safe_receipt.get("actions") if isinstance(safe_receipt.get("actions"), list) else []
+    actions = (
+        safe_receipt.get("actions")
+        if isinstance(safe_receipt.get("actions"), list)
+        else []
+    )
     recovery_by_id = _recovery_index(safe_recovery)
     for action in [row for row in actions if isinstance(row, dict)]:
         blockers.extend(_action_blockers(action, recovery_by_id))
 
     if safe_receipt:
-        completed_count = sum(1 for action in actions if isinstance(action, dict) and action.get("completed") is True)
-        pending_count = sum(1 for action in actions if isinstance(action, dict) and action.get("completed") is not True)
+        completed_count = sum(
+            1
+            for action in actions
+            if isinstance(action, dict) and action.get("completed") is True
+        )
+        pending_count = sum(
+            1
+            for action in actions
+            if isinstance(action, dict) and action.get("completed") is not True
+        )
         if safe_receipt.get("action_count") != len(actions):
-            blockers.append(_blocker("action_count_mismatch", "receipt action_count does not match actions"))
+            blockers.append(
+                _blocker(
+                    "action_count_mismatch",
+                    "receipt action_count does not match actions",
+                )
+            )
         if safe_receipt.get("completed_count") != completed_count:
-            blockers.append(_blocker("completed_count_mismatch", "receipt completed_count does not match actions"))
+            blockers.append(
+                _blocker(
+                    "completed_count_mismatch",
+                    "receipt completed_count does not match actions",
+                )
+            )
         if safe_receipt.get("pending_count") != pending_count:
-            blockers.append(_blocker("pending_count_mismatch", "receipt pending_count does not match actions"))
+            blockers.append(
+                _blocker(
+                    "pending_count_mismatch",
+                    "receipt pending_count does not match actions",
+                )
+            )
         if safe_receipt.get("blocker_count") not in (0, len(blockers)):
-            blockers.append(_blocker("blocker_count_mismatch", "receipt blocker_count is inconsistent"))
+            blockers.append(
+                _blocker(
+                    "blocker_count_mismatch", "receipt blocker_count is inconsistent"
+                )
+            )
 
     status = "verified" if not blockers else "blocked"
     return {
@@ -151,13 +258,29 @@ def verify_case_delivery_recovery_action_receipt(
     }
 
 
-def verify_case_delivery_recovery_action_receipt_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def verify_case_delivery_recovery_action_receipt_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     safe_payload = deepcopy(payload or {})
-    recovery = safe_payload.get("recovery") if isinstance(safe_payload.get("recovery"), dict) else None
+    recovery = (
+        safe_payload.get("recovery")
+        if isinstance(safe_payload.get("recovery"), dict)
+        else None
+    )
     if recovery is None:
         recovery = build_case_delivery_recovery_from_request(case_id, safe_payload)
-    receipt = safe_payload.get("receipt") if isinstance(safe_payload.get("receipt"), dict) else None
+    receipt = (
+        safe_payload.get("receipt")
+        if isinstance(safe_payload.get("receipt"), dict)
+        else None
+    )
     if receipt is None:
-        receipt_result = build_case_delivery_recovery_action_receipt(case_id, {**safe_payload, "recovery": recovery})
-        receipt = receipt_result.get("receipt") if isinstance(receipt_result.get("receipt"), dict) else None
+        receipt_result = build_case_delivery_recovery_action_receipt(
+            case_id, {**safe_payload, "recovery": recovery}
+        )
+        receipt = (
+            receipt_result.get("receipt")
+            if isinstance(receipt_result.get("receipt"), dict)
+            else None
+        )
     return verify_case_delivery_recovery_action_receipt(receipt, recovery)

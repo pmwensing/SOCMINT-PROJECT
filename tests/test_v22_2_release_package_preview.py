@@ -3,28 +3,38 @@ from src.socmint import dossier_release_preview_v22_2 as service
 
 
 def _export(restricted=False):
-    text = "Contains private key material." if restricted else "Approved account attribution."
+    text = (
+        "Contains private key material."
+        if restricted
+        else "Approved account attribution."
+    )
     return {
         "export_package_id": "dossier-export-1",
         "export_package_sha256": "a" * 64,
         "dossier_content": {
-            "sections": [{
-                "section_id": "key_findings",
-                "title": "Key Findings",
-                "position": 1,
-                "citation_ready_narrative": text,
-                "findings": [{"citation_ready_text": "Finding [C1]"}],
-            }]
+            "sections": [
+                {
+                    "section_id": "key_findings",
+                    "title": "Key Findings",
+                    "position": 1,
+                    "citation_ready_narrative": text,
+                    "findings": [{"citation_ready_text": "Finding [C1]"}],
+                }
+            ]
         },
-        "citation_catalog": [{
-            "claim_id": "claim-1",
-            "artifact_links": [{
-                "artifact_id": "artifact-1",
-                "path": "evidence/report.pdf",
-                "sha256": "b" * 64,
-                "media_type": "application/pdf",
-            }],
-        }],
+        "citation_catalog": [
+            {
+                "claim_id": "claim-1",
+                "artifact_links": [
+                    {
+                        "artifact_id": "artifact-1",
+                        "path": "evidence/report.pdf",
+                        "sha256": "b" * 64,
+                        "media_type": "application/pdf",
+                    }
+                ],
+            }
+        ],
     }
 
 
@@ -44,7 +54,9 @@ def _setup(tmp_path, monkeypatch, restricted=False):
     monkeypatch.setenv("DATABASE_URL", url)
     database.configure_database(url)
     monkeypatch.setattr(service, "_latest_export", lambda case_id: _export(restricted))
-    monkeypatch.setattr(service, "latest_release_authorization", lambda case_id: _authorization())
+    monkeypatch.setattr(
+        service, "latest_release_authorization", lambda case_id: _authorization()
+    )
 
 
 def test_v22_2_shows_exact_material_and_classification(tmp_path, monkeypatch):
@@ -55,13 +67,17 @@ def test_v22_2_shows_exact_material_and_classification(tmp_path, monkeypatch):
     assert result["section_count"] == 1
     assert result["attachment_count"] == 1
     assert result["included_sections"][0]["classification"] == "internal"
-    assert result["included_sections"][0]["narrative"] == "Approved account attribution."
+    assert (
+        result["included_sections"][0]["narrative"] == "Approved account attribution."
+    )
     assert result["included_attachments"][0]["attachment_id"] == "artifact-1"
     assert result["operator_acknowledgement_required"] is True
     assert result["transmission_performed"] is False
 
 
-def test_v22_2_exposes_redaction_blockers_and_records_acknowledgement(tmp_path, monkeypatch):
+def test_v22_2_exposes_redaction_blockers_and_records_acknowledgement(
+    tmp_path, monkeypatch
+):
     _setup(tmp_path, monkeypatch, restricted=True)
     preview = service.build_release_package_preview("case-alpha")
     assert preview["status"] == "review_required"

@@ -138,7 +138,8 @@ def ensure_membership_schema() -> None:
     db.ensure_configured()
     session = db.Session()
     try:
-        session.execute(text("""
+        session.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS membership_plans (
                 id INTEGER PRIMARY KEY,
                 plan_key VARCHAR(64) NOT NULL UNIQUE,
@@ -148,8 +149,10 @@ def ensure_membership_schema() -> None:
                 is_active BOOLEAN NOT NULL DEFAULT 1,
                 created_at DATETIME NOT NULL
             )
-        """))
-        session.execute(text("""
+        """)
+        )
+        session.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS user_memberships (
                 id INTEGER PRIMARY KEY,
                 user_id INTEGER NOT NULL,
@@ -165,8 +168,10 @@ def ensure_membership_schema() -> None:
                 updated_at DATETIME NOT NULL,
                 UNIQUE(user_id)
             )
-        """))
-        session.execute(text("""
+        """)
+        )
+        session.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS usage_events (
                 id INTEGER PRIMARY KEY,
                 user_id INTEGER NOT NULL,
@@ -176,8 +181,10 @@ def ensure_membership_schema() -> None:
                 metadata_json TEXT NOT NULL,
                 created_at DATETIME NOT NULL
             )
-        """))
-        session.execute(text("""
+        """)
+        )
+        session.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS usage_counters (
                 id INTEGER PRIMARY KEY,
                 user_id INTEGER NOT NULL,
@@ -188,8 +195,10 @@ def ensure_membership_schema() -> None:
                 updated_at DATETIME NOT NULL,
                 UNIQUE(user_id, quota_key, period_key)
             )
-        """))
-        session.execute(text("""
+        """)
+        )
+        session.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS quota_overrides (
                 id INTEGER PRIMARY KEY,
                 user_id INTEGER NOT NULL,
@@ -200,7 +209,8 @@ def ensure_membership_schema() -> None:
                 expires_at DATETIME,
                 created_at DATETIME NOT NULL
             )
-        """))
+        """)
+        )
         session.commit()
     finally:
         session.close()
@@ -255,15 +265,21 @@ def _user_id(username: str) -> int:
     return int(user.id)
 
 
-def ensure_default_membership(username: str, actor: str | None = None) -> dict[str, Any]:
+def ensure_default_membership(
+    username: str, actor: str | None = None
+) -> dict[str, Any]:
     ensure_membership_schema()
     user_id = _user_id(username)
     session = db.Session()
     try:
-        existing = session.execute(
-            text("SELECT * FROM user_memberships WHERE user_id = :user_id"),
-            {"user_id": user_id},
-        ).mappings().first()
+        existing = (
+            session.execute(
+                text("SELECT * FROM user_memberships WHERE user_id = :user_id"),
+                {"user_id": user_id},
+            )
+            .mappings()
+            .first()
+        )
         if not existing:
             now = _now()
             session.execute(
@@ -281,7 +297,12 @@ def ensure_default_membership(username: str, actor: str | None = None) -> dict[s
         session.close()
 
 
-def assign_membership(username: str, plan_key: str, actor: str | None = None, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+def assign_membership(
+    username: str,
+    plan_key: str,
+    actor: str | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     ensure_membership_schema()
     if plan_key not in PLAN_DEFINITIONS:
         raise ValueError(f"Unknown plan: {plan_key}")
@@ -326,10 +347,14 @@ def assign_membership(username: str, plan_key: str, actor: str | None = None, me
 def _membership_row(user_id: int) -> dict[str, Any]:
     session = db.Session()
     try:
-        row = session.execute(
-            text("SELECT * FROM user_memberships WHERE user_id = :user_id"),
-            {"user_id": user_id},
-        ).mappings().first()
+        row = (
+            session.execute(
+                text("SELECT * FROM user_memberships WHERE user_id = :user_id"),
+                {"user_id": user_id},
+            )
+            .mappings()
+            .first()
+        )
         if not row:
             return {}
         return dict(row)
@@ -345,15 +370,19 @@ def _override_limit(user_id: int, quota_key: str) -> int | None:
     now = _now()
     session = db.Session()
     try:
-        row = session.execute(
-            text("""
+        row = (
+            session.execute(
+                text("""
                 SELECT limit_value FROM quota_overrides
                 WHERE user_id = :user_id AND quota_key = :quota_key
                   AND (expires_at IS NULL OR expires_at > :now)
                 ORDER BY created_at DESC, id DESC LIMIT 1
             """),
-            {"user_id": user_id, "quota_key": quota_key, "now": now},
-        ).mappings().first()
+                {"user_id": user_id, "quota_key": quota_key, "now": now},
+            )
+            .mappings()
+            .first()
+        )
         return None if not row else row["limit_value"]
     finally:
         session.close()
@@ -365,9 +394,15 @@ def usage_for_quota(user_id: int, quota_key: str) -> dict[str, Any]:
         session = db.Session()
         try:
             try:
-                used = session.execute(
-                    text("SELECT COUNT(*) AS c FROM case_records WHERE status != 'closed'"),
-                ).mappings().first()["c"]
+                used = (
+                    session.execute(
+                        text(
+                            "SELECT COUNT(*) AS c FROM case_records WHERE status != 'closed'"
+                        ),
+                    )
+                    .mappings()
+                    .first()["c"]
+                )
             except Exception:
                 used = 0
             return {"used": int(used), "period_key": "lifetime", "resets_at": None}
@@ -376,21 +411,39 @@ def usage_for_quota(user_id: int, quota_key: str) -> dict[str, Any]:
     period = _period_for_quota(quota_key)
     session = db.Session()
     try:
-        row = session.execute(
-            text("""
+        row = (
+            session.execute(
+                text("""
                 SELECT used, reset_at FROM usage_counters
                 WHERE user_id = :user_id AND quota_key = :quota_key AND period_key = :period_key
             """),
-            {"user_id": user_id, "quota_key": quota_key, "period_key": period.key},
-        ).mappings().first()
+                {"user_id": user_id, "quota_key": quota_key, "period_key": period.key},
+            )
+            .mappings()
+            .first()
+        )
         if not row:
-            return {"used": 0, "period_key": period.key, "resets_at": period.resets_at.isoformat()}
-        return {"used": int(row["used"]), "period_key": period.key, "resets_at": str(row["reset_at"])}
+            return {
+                "used": 0,
+                "period_key": period.key,
+                "resets_at": period.resets_at.isoformat(),
+            }
+        return {
+            "used": int(row["used"]),
+            "period_key": period.key,
+            "resets_at": str(row["reset_at"]),
+        }
     finally:
         session.close()
 
 
-def record_usage(username: str, action: str, quota_key: str, amount: int = 1, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+def record_usage(
+    username: str,
+    action: str,
+    quota_key: str,
+    amount: int = 1,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     ensure_membership_schema()
     user_id = _user_id(username)
     period = _period_for_quota(quota_key)
@@ -438,7 +491,14 @@ def record_usage(username: str, action: str, quota_key: str, amount: int = 1, me
     return usage_for_quota(user_id, quota_key)
 
 
-def set_quota_override(username: str, quota_key: str, limit_value: int, actor: str | None = None, reason: str | None = None, expires_at: dt.datetime | None = None) -> dict[str, Any]:
+def set_quota_override(
+    username: str,
+    quota_key: str,
+    limit_value: int,
+    actor: str | None = None,
+    reason: str | None = None,
+    expires_at: dt.datetime | None = None,
+) -> dict[str, Any]:
     ensure_membership_schema()
     user_id = _user_id(username)
     session = db.Session()
@@ -465,7 +525,12 @@ def set_quota_override(username: str, quota_key: str, limit_value: int, actor: s
     db.record_audit_event(
         action="quota_override",
         actor=actor,
-        details={"username": username, "quota_key": quota_key, "limit_value": limit_value, "reason": reason},
+        details={
+            "username": username,
+            "quota_key": quota_key,
+            "limit_value": limit_value,
+            "reason": reason,
+        },
     )
     return membership_summary(username)
 
@@ -479,7 +544,12 @@ def membership_summary(username: str) -> dict[str, Any]:
     usage = {}
     for quota_key, limit in limits.items():
         if isinstance(limit, bool):
-            usage[quota_key] = {"limit": limit, "used": None, "remaining": None, "resets_at": None}
+            usage[quota_key] = {
+                "limit": limit,
+                "used": None,
+                "remaining": None,
+                "resets_at": None,
+            }
             continue
         actual_limit = _override_limit(user_id, quota_key)
         if actual_limit is None:
@@ -489,7 +559,9 @@ def membership_summary(username: str) -> dict[str, Any]:
         usage[quota_key] = {
             "limit": actual_limit,
             "used": used,
-            "remaining": None if actual_limit is None else max(int(actual_limit) - int(used), 0),
+            "remaining": None
+            if actual_limit is None
+            else max(int(actual_limit) - int(used), 0),
             "resets_at": used_payload.get("resets_at"),
             "period_key": used_payload.get("period_key"),
         }
@@ -549,7 +621,11 @@ def evaluate_gate(
     quota = summary["usage"].get(quota_key) or {}
     limit = quota.get("limit")
     used = quota.get("used") or 0
-    allowed = limit is None or isinstance(limit, bool) or int(used) + int(amount) <= int(limit)
+    allowed = (
+        limit is None
+        or isinstance(limit, bool)
+        or int(used) + int(amount) <= int(limit)
+    )
     result = {
         "allowed": bool(allowed),
         "user_id": summary["user_id"],
@@ -576,8 +652,9 @@ def list_memberships() -> dict[str, Any]:
     ensure_membership_schema()
     session = db.Session()
     try:
-        rows = session.execute(
-            text("""
+        rows = (
+            session.execute(
+                text("""
                 SELECT u.username, u.role, u.is_admin, u.is_active,
                        COALESCE(m.plan_key, 'free') AS plan_key,
                        COALESCE(m.status, 'active') AS status,
@@ -586,7 +663,14 @@ def list_memberships() -> dict[str, Any]:
                 LEFT JOIN user_memberships m ON m.user_id = u.id
                 ORDER BY u.created_at DESC
             """),
-        ).mappings().all()
-        return {"schema": MEMBERSHIP_SCHEMA, "memberships": [dict(row) for row in rows], "plans": PLAN_DEFINITIONS}
+            )
+            .mappings()
+            .all()
+        )
+        return {
+            "schema": MEMBERSHIP_SCHEMA,
+            "memberships": [dict(row) for row in rows],
+            "plans": PLAN_DEFINITIONS,
+        }
     finally:
         session.close()

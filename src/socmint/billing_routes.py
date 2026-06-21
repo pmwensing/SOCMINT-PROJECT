@@ -48,7 +48,9 @@ def register_billing_routes(app):
         payload_text = request.get_data(as_text=True)
         webhook_secret = app.config.get("SOCMINT_BILLING_WEBHOOK_SECRET") or ""
         signature = request.headers.get("X-SOCMINT-Signature", "")
-        if webhook_secret and not verify_webhook_signature(payload_text, signature, webhook_secret):
+        if webhook_secret and not verify_webhook_signature(
+            payload_text, signature, webhook_secret
+        ):
             return jsonify({"error": "invalid signature"}), 400
         payload = request.get_json(silent=True) or {}
         try:
@@ -61,7 +63,9 @@ def register_billing_routes(app):
         if not _admin_required():
             return jsonify({"error": "admin required"}), 403
         try:
-            return jsonify(process_subscription_event(request.get_json(silent=True) or {})), 202
+            return jsonify(
+                process_subscription_event(request.get_json(silent=True) or {})
+            ), 202
         except ValueError as exc:
             return jsonify({"error": str(exc)}), 400
 

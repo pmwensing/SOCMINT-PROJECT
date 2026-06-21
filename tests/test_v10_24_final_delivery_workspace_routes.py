@@ -5,9 +5,15 @@ import zipfile
 
 from flask import Flask
 
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index
-from socmint.v10_24_final_delivery_workspace_routes import register_v10_24_final_delivery_workspace_routes
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index,
+)
+from socmint.v10_24_final_delivery_workspace_routes import (
+    register_v10_24_final_delivery_workspace_routes,
+)
 
 REQUIRED_FILES = {
     "README.md",
@@ -45,16 +51,22 @@ def verification_report():
 
 
 def delivery_index():
-    return build_master_delivery_index(verification_report(), operator="analyst", notes="Ready.")
+    return build_master_delivery_index(
+        verification_report(), operator="analyst", notes="Ready."
+    )
 
 
 def delivery_bundle():
-    return build_master_delivery_export_bundle(delivery_index(), bundle_name="Route Bundle")
+    return build_master_delivery_export_bundle(
+        delivery_index(), bundle_name="Route Bundle"
+    )
 
 
 def test_workspace_route_accepts_bundle_shape():
     client = app_client()
-    response = client.post("/api/v1/v10/final-delivery/workspace", json={"bundle": delivery_bundle()})
+    response = client.post(
+        "/api/v1/v10/final-delivery/workspace", json={"bundle": delivery_bundle()}
+    )
 
     assert response.status_code == 200
     data = response.get_json()
@@ -80,7 +92,9 @@ def test_workspace_route_accepts_index_shape():
 
 def test_export_zip_route_returns_application_zip_for_bundle_shape():
     client = app_client()
-    response = client.post("/api/v1/v10/final-delivery/export.zip", json={"bundle": delivery_bundle()})
+    response = client.post(
+        "/api/v1/v10/final-delivery/export.zip", json={"bundle": delivery_bundle()}
+    )
 
     assert response.status_code == 200
     assert response.mimetype == "application/zip"
@@ -107,7 +121,9 @@ def test_no_connector_execution_function_is_called(monkeypatch):
 
     monkeypatch.setattr(workspace_module, "execute_connector", explode, raising=False)
     client = app_client()
-    response = client.post("/api/v1/v10/final-delivery/workspace", json={"index": delivery_index()})
+    response = client.post(
+        "/api/v1/v10/final-delivery/workspace", json={"index": delivery_index()}
+    )
 
     assert response.status_code == 200
     assert response.get_json()["delivery_action"] == "deliver_ready"

@@ -9,7 +9,9 @@ from .handoff_status_v13 import build_handoff_status
 SCHEMA = "socmint.export_manifest_draft.v13_19"
 
 
-def manifest_entry(name: str, kind: str, status: str, ref: str, detail: str) -> dict[str, str]:
+def manifest_entry(
+    name: str, kind: str, status: str, ref: str, detail: str
+) -> dict[str, str]:
     return {
         "name": name,
         "kind": kind,

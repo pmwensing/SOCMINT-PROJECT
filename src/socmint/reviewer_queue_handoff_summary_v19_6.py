@@ -7,9 +7,7 @@ from .persistent_decision_supervisor_queue_v19_3 import (
     build_persistent_decision_supervisor_queue,
 )
 
-REVIEWER_QUEUE_HANDOFF_SUMMARY_SCHEMA = (
-    "socmint.reviewer_queue_handoff_summary.v19_6"
-)
+REVIEWER_QUEUE_HANDOFF_SUMMARY_SCHEMA = "socmint.reviewer_queue_handoff_summary.v19_6"
 VERSION = "v19.6.0"
 COMPLETED_STATES = {"reviewed", "accepted"}
 OUTSTANDING_STATES = {"unreviewed"}
@@ -87,9 +85,7 @@ def build_reviewer_queue_handoff_summary(
             reviewer_row["oldest_open_age_hours"] = max(
                 float(reviewer_oldest or 0), float(age)
             )
-            case_row["oldest_open_age_hours"] = max(
-                float(case_oldest or 0), float(age)
-            )
+            case_row["oldest_open_age_hours"] = max(float(case_oldest or 0), float(age))
 
     reviewer_summaries = []
     for row in reviewer_rollup.values():
@@ -99,9 +95,7 @@ def build_reviewer_queue_handoff_summary(
             round((completed / assigned) * 100, 2) if assigned else 0.0
         )
         row["handoff_ready"] = (
-            row["outstanding"] == 0
-            and row["follow_up"] == 0
-            and completed > 0
+            row["outstanding"] == 0 and row["follow_up"] == 0 and completed > 0
         )
         reviewer_summaries.append(row)
     reviewer_summaries.sort(key=lambda row: row["reviewer"])
@@ -115,9 +109,7 @@ def build_reviewer_queue_handoff_summary(
             and row["completed"] == row["total"]
             and row["total"] > 0
         )
-        row["case_workspace_href"] = (
-            f"/case-intelligence-review/{row['case_id']}"
-        )
+        row["case_workspace_href"] = f"/case-intelligence-review/{row['case_id']}"
         case_summaries.append(row)
     case_summaries.sort(key=lambda row: row["case_id"])
 
@@ -143,8 +135,6 @@ def build_reviewer_queue_handoff_summary(
         "case_summaries": case_summaries,
         "filters": {"reviewer": reviewer, "case_id": case_id},
         "next_action": (
-            "prepare_supervisor_handoff"
-            if handoff_ready
-            else "complete_reviewer_queue"
+            "prepare_supervisor_handoff" if handoff_ready else "complete_reviewer_queue"
         ),
     }

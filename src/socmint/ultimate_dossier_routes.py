@@ -38,7 +38,11 @@ def register_ultimate_dossier_routes(app) -> None:
             payload = ultimate_dossier_payload(subject_id)
         except ValueError:
             abort(404)
-        redacted = request.args.get("redacted", "").strip().lower() in {"1", "true", "yes"}
+        redacted = request.args.get("redacted", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+        }
         return jsonify(dossier_export_manifest(payload, redacted=redacted))
 
     @login_required
@@ -50,7 +54,9 @@ def register_ultimate_dossier_routes(app) -> None:
         return Response(
             assertions_csv(payload),
             mimetype="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=subject-{subject_id}-assertions.csv"},
+            headers={
+                "Content-Disposition": f"attachment; filename=subject-{subject_id}-assertions.csv"
+            },
         )
 
     app.add_url_rule(

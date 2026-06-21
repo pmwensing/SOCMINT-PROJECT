@@ -12,8 +12,18 @@ from .portfolio_operations_dashboard_v24_0 import build_portfolio_operations_das
 SCHEMA = "socmint.global_investigation_search.v27_0"
 VERSION = "v27.0.0"
 RESULT_TYPES = (
-    "case", "entity", "identifier", "infrastructure", "evidence", "finding",
-    "timeline", "review", "collaboration", "closure", "archive", "cross_case",
+    "case",
+    "entity",
+    "identifier",
+    "infrastructure",
+    "evidence",
+    "finding",
+    "timeline",
+    "review",
+    "collaboration",
+    "closure",
+    "archive",
+    "cross_case",
 )
 
 
@@ -27,7 +37,12 @@ def _record_type(action: str, details: dict[str, Any]) -> str:
         return "archive"
     if "closure" in text or "retention" in text or "reopen" in text:
         return "closure"
-    if "collaboration" in text or "team_role" in text or "handoff" in text or "mention" in text:
+    if (
+        "collaboration" in text
+        or "team_role" in text
+        or "handoff" in text
+        or "mention" in text
+    ):
         return "collaboration"
     if "cross_case" in text or "confirmed_link" in text or "correlation" in text:
         return "cross_case"
@@ -37,9 +52,13 @@ def _record_type(action: str, details: dict[str, Any]) -> str:
         return "evidence"
     if "entity" in text or any(key in details for key in ("entity_id", "entity_type")):
         return "entity"
-    if "identifier" in text or any(key in details for key in ("email", "phone", "username", "domain", "ip_address")):
+    if "identifier" in text or any(
+        key in details for key in ("email", "phone", "username", "domain", "ip_address")
+    ):
         return "identifier"
-    if "infrastructure" in text or any(key in details for key in ("host", "url", "domain", "ip")):
+    if "infrastructure" in text or any(
+        key in details for key in ("host", "url", "domain", "ip")
+    ):
         return "infrastructure"
     if "timeline" in text or "event" in text:
         return "timeline"
@@ -49,7 +68,16 @@ def _record_type(action: str, details: dict[str, Any]) -> str:
 
 
 def _display(action: str, case_id: str, details: dict[str, Any]) -> tuple[str, str]:
-    for key in ("title", "name", "label", "display_value", "match_value", "finding", "summary", "subject"):
+    for key in (
+        "title",
+        "name",
+        "label",
+        "display_value",
+        "match_value",
+        "finding",
+        "summary",
+        "subject",
+    ):
         value = details.get(key)
         if value not in (None, ""):
             title = str(value)
@@ -57,7 +85,16 @@ def _display(action: str, case_id: str, details: dict[str, Any]) -> tuple[str, s
     else:
         title = action.replace("_", " ").title()
     summary_fields = []
-    for key in ("status", "decision", "reason", "note", "description", "category", "role", "stage"):
+    for key in (
+        "status",
+        "decision",
+        "reason",
+        "note",
+        "description",
+        "category",
+        "role",
+        "stage",
+    ):
         value = details.get(key)
         if value not in (None, ""):
             summary_fields.append(f"{key.replace('_', ' ')}: {value}")
@@ -80,10 +117,14 @@ def _links(case_id: str, result_type: str) -> dict[str, str]:
 
 
 def _searchable_text(record: dict[str, Any]) -> str:
-    return " ".join((
-        str(record.get("case_id") or ""), str(record.get("action") or ""),
-        str(record.get("actor") or ""), json.dumps(record.get("details") or {}, sort_keys=True, default=str),
-    )).lower()
+    return " ".join(
+        (
+            str(record.get("case_id") or ""),
+            str(record.get("action") or ""),
+            str(record.get("actor") or ""),
+            json.dumps(record.get("details") or {}, sort_keys=True, default=str),
+        )
+    ).lower()
 
 
 def _score(query: str, record: dict[str, Any]) -> tuple[float, list[str]]:
@@ -107,31 +148,41 @@ def _audit_records() -> list[dict[str, Any]]:
     _ensure_storage()
     session = database.Session()
     try:
-        rows = session.query(database.AuditLog).order_by(
-            database.AuditLog.created_at.desc(), database.AuditLog.id.desc()
-        ).all()
-        return [{
-            "record_id": row.id,
-            "case_id": str(row.target_value or "").strip(),
-            "action": str(row.action or ""),
-            "actor": row.actor,
-            "occurred_at": row.created_at.isoformat() if row.created_at else None,
-            "details": _json_details(row),
-        } for row in rows if str(row.target_value or "").strip()]
+        rows = (
+            session.query(database.AuditLog)
+            .order_by(database.AuditLog.created_at.desc(), database.AuditLog.id.desc())
+            .all()
+        )
+        return [
+            {
+                "record_id": row.id,
+                "case_id": str(row.target_value or "").strip(),
+                "action": str(row.action or ""),
+                "actor": row.actor,
+                "occurred_at": row.created_at.isoformat() if row.created_at else None,
+                "details": _json_details(row),
+            }
+            for row in rows
+            if str(row.target_value or "").strip()
+        ]
     finally:
         session.close()
 
 
 def _case_records() -> list[dict[str, Any]]:
     cases = build_portfolio_operations_dashboard().get("cases") or []
-    return [{
-        "record_id": f"case:{item.get('case_id')}",
-        "case_id": str(item.get("case_id") or ""),
-        "action": "portfolio_case",
-        "actor": item.get("latest_actor"),
-        "occurred_at": item.get("latest_activity_at"),
-        "details": item,
-    } for item in cases if item.get("case_id")]
+    return [
+        {
+            "record_id": f"case:{item.get('case_id')}",
+            "case_id": str(item.get("case_id") or ""),
+            "action": "portfolio_case",
+            "actor": item.get("latest_actor"),
+            "occurred_at": item.get("latest_activity_at"),
+            "details": item,
+        }
+        for item in cases
+        if item.get("case_id")
+    ]
 
 
 def build_global_investigation_search(
@@ -143,9 +194,15 @@ def build_global_investigation_search(
     records: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     query = str(query or "").strip()
-    requested_types = {str(item) for item in (result_types or []) if str(item) in RESULT_TYPES}
-    visible = None if allowed_case_ids is None else {str(item) for item in allowed_case_ids}
-    source = list(records) if records is not None else _case_records() + _audit_records()
+    requested_types = {
+        str(item) for item in (result_types or []) if str(item) in RESULT_TYPES
+    }
+    visible = (
+        None if allowed_case_ids is None else {str(item) for item in allowed_case_ids}
+    )
+    source = (
+        list(records) if records is not None else _case_records() + _audit_records()
+    )
     normalized = []
     for record in source:
         case_id = str(record.get("case_id") or "").strip()
@@ -164,24 +221,33 @@ def build_global_investigation_search(
             "source_action": record.get("action"),
             "case_id": case_id,
         }
-        normalized.append({
-            "result_id": f"search-result-{record.get('record_id')}",
-            "result_type": result_type,
-            "case_id": case_id,
-            "title": title,
-            "summary": summary,
-            "score": score,
-            "matched_terms": matched_terms,
-            "actor": record.get("actor"),
-            "occurred_at": record.get("occurred_at"),
-            "source_action": record.get("action"),
-            "source_record_id": record.get("record_id"),
-            "source_binding": binding,
-            "source_binding_sha256": _sha(binding),
-            "links": _links(case_id, result_type),
-            "access_scope": {"case_id": case_id, "visible": True},
-        })
-    normalized.sort(key=lambda item: (item["score"], item.get("occurred_at") or "", item["result_id"]), reverse=True)
+        normalized.append(
+            {
+                "result_id": f"search-result-{record.get('record_id')}",
+                "result_type": result_type,
+                "case_id": case_id,
+                "title": title,
+                "summary": summary,
+                "score": score,
+                "matched_terms": matched_terms,
+                "actor": record.get("actor"),
+                "occurred_at": record.get("occurred_at"),
+                "source_action": record.get("action"),
+                "source_record_id": record.get("record_id"),
+                "source_binding": binding,
+                "source_binding_sha256": _sha(binding),
+                "links": _links(case_id, result_type),
+                "access_scope": {"case_id": case_id, "visible": True},
+            }
+        )
+    normalized.sort(
+        key=lambda item: (
+            item["score"],
+            item.get("occurred_at") or "",
+            item["result_id"],
+        ),
+        reverse=True,
+    )
     normalized = normalized[: max(1, min(int(limit or 100), 500))]
     counts = Counter(item["result_type"] for item in normalized)
     query_contract = {
@@ -203,7 +269,9 @@ def build_global_investigation_search(
         "result_type_counts": dict(sorted(counts.items())),
         "visible_case_ids": sorted({item["case_id"] for item in normalized}),
         "access_scope": {
-            "mode": "restricted" if allowed_case_ids is not None else "all_visible_cases",
+            "mode": "restricted"
+            if allowed_case_ids is not None
+            else "all_visible_cases",
             "allowed_case_ids": sorted(visible) if visible is not None else None,
         },
         "search_sha256": _sha(core),
@@ -211,5 +279,7 @@ def build_global_investigation_search(
         "source_records_mutated": False,
         "search_record_created": False,
         "case_access_scope_changed": False,
-        "next_action": "refine_global_investigation_search" if query else "enter_global_search_query",
+        "next_action": "refine_global_investigation_search"
+        if query
+        else "enter_global_search_query",
     }

@@ -2,7 +2,13 @@ from socmint.command_center_next_action_v13 import command_center_next_action_pa
 
 
 def test_next_action_blocks_without_subject():
-    payload = {"schema": "test", "summary": {}, "subjects": [], "targets": [], "jobs": []}
+    payload = {
+        "schema": "test",
+        "summary": {},
+        "subjects": [],
+        "targets": [],
+        "jobs": [],
+    }
 
     result = command_center_next_action_payload(payload)
 

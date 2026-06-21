@@ -1,14 +1,25 @@
 from flask import Flask
 
-from src.socmint.human_analytic_review_routes_v30_5 import register_human_analytic_review_routes_v30_5
+from src.socmint.human_analytic_review_routes_v30_5 import (
+    register_human_analytic_review_routes_v30_5,
+)
 
 
 def test_v30_5_routes_require_admin_and_record(monkeypatch):
     app = Flask(__name__)
     app.secret_key = "test-secret"
-    monkeypatch.setattr("src.socmint.human_analytic_review_routes_v30_5.actor_is_administrator", lambda actor: actor == "admin")
-    monkeypatch.setattr("src.socmint.human_analytic_review_routes_v30_5.current_review_decisions", lambda: [])
-    monkeypatch.setattr("src.socmint.human_analytic_review_routes_v30_5.reviews_for_claim", lambda claim_id: [])
+    monkeypatch.setattr(
+        "src.socmint.human_analytic_review_routes_v30_5.actor_is_administrator",
+        lambda actor: actor == "admin",
+    )
+    monkeypatch.setattr(
+        "src.socmint.human_analytic_review_routes_v30_5.current_review_decisions",
+        lambda: [],
+    )
+    monkeypatch.setattr(
+        "src.socmint.human_analytic_review_routes_v30_5.reviews_for_claim",
+        lambda claim_id: [],
+    )
     monkeypatch.setattr(
         "src.socmint.human_analytic_review_routes_v30_5.record_human_review",
         lambda **kwargs: {

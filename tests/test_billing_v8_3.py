@@ -14,7 +14,9 @@ def test_checkout_session_requires_paid_plan_and_records_session(tmp_path):
     db.configure_database(f"sqlite:///{tmp_path / 'socmint.db'}")
     db.create_user("buyer", "StrongPass123!", role="viewer")
 
-    checkout = create_checkout_session("buyer", "pro", success_url="https://example/success")
+    checkout = create_checkout_session(
+        "buyer", "pro", success_url="https://example/success"
+    )
     status = billing_status("buyer")
 
     assert checkout["schema"] == "socmint.billing.v8_3_0"

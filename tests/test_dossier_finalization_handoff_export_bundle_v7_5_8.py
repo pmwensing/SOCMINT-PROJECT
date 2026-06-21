@@ -5,13 +5,27 @@ import json
 import zipfile
 from copy import deepcopy
 
-from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import build_handoff_index
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import build_handoff_export_bundle
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import build_handoff_export_bundle_files
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import build_handoff_export_bundle_from_verification_report
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import build_handoff_export_zip
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import handoff_export_manifest
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import safe_handoff_bundle_name
+from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    build_handoff_index,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    build_handoff_export_bundle,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    build_handoff_export_bundle_files,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    build_handoff_export_bundle_from_verification_report,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    build_handoff_export_zip,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    handoff_export_manifest,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    safe_handoff_bundle_name,
+)
 
 REQUIRED_FILES = {
     "README.md",
@@ -45,7 +59,9 @@ def verified_report():
                 }
             ]
         },
-        "file_results": [{"path": "handoff_index.json", "hash_match": True, "size_match": True}],
+        "file_results": [
+            {"path": "handoff_index.json", "hash_match": True, "size_match": True}
+        ],
         "failures": [],
         "warnings": [],
         "summary": {"status": "verified", "verified": True},
@@ -54,7 +70,15 @@ def verified_report():
 
 def failed_report():
     report = verified_report()
-    report.update({"status": "failed", "verified": False, "failure_count": 1, "certificate_status": "failed", "certificate_valid": False})
+    report.update(
+        {
+            "status": "failed",
+            "verified": False,
+            "failure_count": 1,
+            "certificate_status": "failed",
+            "certificate_valid": False,
+        }
+    )
     report["failures"] = [
         {
             "severity": "fail",
@@ -68,7 +92,9 @@ def failed_report():
 
 
 def archive_index():
-    return build_handoff_index(verified_report(), bundle_name="bundle-a", operator="analyst")
+    return build_handoff_index(
+        verified_report(), bundle_name="bundle-a", operator="analyst"
+    )
 
 
 def regenerate_index():
@@ -78,7 +104,9 @@ def regenerate_index():
 def test_builds_bundle_from_archive_ready_v757_index():
     bundle = build_handoff_export_bundle(archive_index(), bundle_name="Handoff Bundle")
 
-    assert bundle["schema"] == "socmint.v7_5_8.dossier_finalization_handoff_export_bundle"
+    assert (
+        bundle["schema"] == "socmint.v7_5_8.dossier_finalization_handoff_export_bundle"
+    )
     assert bundle["approved_line"] == "v7.5.8"
     assert bundle["bundle_name"] == "handoff-bundle"
     assert bundle["recommended_action"] == "archive_ready"
@@ -95,7 +123,9 @@ def test_builds_bundle_from_regenerate_bundle_v757_index():
 
 
 def test_builds_bundle_from_v756_verification_report():
-    bundle = build_handoff_export_bundle_from_verification_report(verified_report(), bundle_name="Report Bundle", operator="operator-a")
+    bundle = build_handoff_export_bundle_from_verification_report(
+        verified_report(), bundle_name="Report Bundle", operator="operator-a"
+    )
 
     assert bundle["bundle_name"] == "report-bundle"
     assert bundle["index"]["operator"] == "operator-a"
@@ -103,18 +133,27 @@ def test_builds_bundle_from_v756_verification_report():
 
 
 def test_produces_exactly_required_files():
-    files = build_handoff_export_bundle_files(build_handoff_export_bundle(archive_index()))
+    files = build_handoff_export_bundle_files(
+        build_handoff_export_bundle(archive_index())
+    )
 
     assert set(files) == REQUIRED_FILES
     assert b"SOCMINT v7.5.8 Handoff Index Export Bundle" in files["README.md"]
-    assert b"SOCMINT v7.5.7 Certificate Bundle Handoff Index" in files["handoff_index.md"]
+    assert (
+        b"SOCMINT v7.5.7 Certificate Bundle Handoff Index" in files["handoff_index.md"]
+    )
 
 
 def test_manifest_contains_sha256_and_size_for_every_file():
-    files = build_handoff_export_bundle_files(build_handoff_export_bundle(archive_index()))
+    files = build_handoff_export_bundle_files(
+        build_handoff_export_bundle(archive_index())
+    )
     manifest = handoff_export_manifest(files)
 
-    assert manifest["schema"] == "socmint.v7_5_8.dossier_finalization_handoff_export_manifest"
+    assert (
+        manifest["schema"]
+        == "socmint.v7_5_8.dossier_finalization_handoff_export_manifest"
+    )
     assert manifest["file_count"] == len(files)
     for row in manifest["files"]:
         assert row["path"] in files
@@ -133,7 +172,9 @@ def test_zip_contains_all_required_files():
 
 
 def test_safe_bundle_name_strips_unsafe_path_characters():
-    assert safe_handoff_bundle_name("../Bad Handoff/Name!!.zip") == "bad-handoff-name-.zip"
+    assert (
+        safe_handoff_bundle_name("../Bad Handoff/Name!!.zip") == "bad-handoff-name-.zip"
+    )
     assert safe_handoff_bundle_name("../../") == "socmint-v7.5.8-handoff-index-export"
 
 

@@ -2,8 +2,16 @@ from __future__ import annotations
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 
-from .collaboration_note_events_v26_2 import acknowledge_note, correct_note, create_note, mark_note_read
-from .collaboration_notes_workspace_v26_2 import build_collaboration_notes_workspace, find_note
+from .collaboration_note_events_v26_2 import (
+    acknowledge_note,
+    correct_note,
+    create_note,
+    mark_note_read,
+)
+from .collaboration_notes_workspace_v26_2 import (
+    build_collaboration_notes_workspace,
+    find_note,
+)
 
 
 def _allowed_case_ids() -> set[str] | None:
@@ -30,7 +38,9 @@ def register_collaboration_notes_routes_v26_2(app):
         return render_template(
             "collaboration_notes_mentions_v26_2.html",
             title="Collaboration Notes and Mentions",
-            payload=build_collaboration_notes_workspace(case_id, user_identity=str(session.get("user"))),
+            payload=build_collaboration_notes_workspace(
+                case_id, user_identity=str(session.get("user"))
+            ),
         )
 
     @app.get("/api/v1/cases/<case_id>/collaboration-notes")
@@ -39,7 +49,11 @@ def register_collaboration_notes_routes_v26_2(app):
             return jsonify({"error": "login required"}), 401
         if not _can_access(case_id):
             return jsonify({"error": "case access required"}), 403
-        return jsonify(build_collaboration_notes_workspace(case_id, user_identity=str(session.get("user"))))
+        return jsonify(
+            build_collaboration_notes_workspace(
+                case_id, user_identity=str(session.get("user"))
+            )
+        )
 
     @app.post("/api/v1/cases/<case_id>/collaboration-notes")
     def api_collaboration_note_post_v26_2(case_id: str):
@@ -54,7 +68,9 @@ def register_collaboration_notes_routes_v26_2(app):
             body=str(payload.get("body") or ""),
             target_type=str(payload.get("target_type") or ""),
             target_id=payload.get("target_id"),
-            mentioned_users=payload.get("mentioned_users") if isinstance(payload.get("mentioned_users"), list) else [],
+            mentioned_users=payload.get("mentioned_users")
+            if isinstance(payload.get("mentioned_users"), list)
+            else [],
             visibility=str(payload.get("visibility") or "case_team"),
             priority=str(payload.get("priority") or "normal"),
             acknowledgement_required=payload.get("acknowledgement_required") is True,
@@ -62,7 +78,9 @@ def register_collaboration_notes_routes_v26_2(app):
             allowed_case_ids=_allowed_case_ids(),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "collaboration_note_recorded" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "collaboration_note_recorded" else 422
 
     @app.post("/api/v1/cases/<case_id>/collaboration-notes/<note_id>/correct")
     def api_collaboration_note_correct_post_v26_2(case_id: str, note_id: str):
@@ -81,12 +99,16 @@ def register_collaboration_notes_routes_v26_2(app):
             body=str(payload.get("body") or ""),
             reason=str(payload.get("reason") or ""),
             previous_note=previous,
-            mentioned_users=payload.get("mentioned_users") if isinstance(payload.get("mentioned_users"), list) else None,
+            mentioned_users=payload.get("mentioned_users")
+            if isinstance(payload.get("mentioned_users"), list)
+            else None,
             confirmed=payload.get("confirmed") is True,
             allowed_case_ids=_allowed_case_ids(),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "collaboration_note_correction_recorded" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "collaboration_note_correction_recorded" else 422
 
     @app.post("/api/v1/cases/<case_id>/collaboration-notes/<note_id>/acknowledge")
     def api_collaboration_note_ack_post_v26_2(case_id: str, note_id: str):
@@ -108,7 +130,9 @@ def register_collaboration_notes_routes_v26_2(app):
             allowed_case_ids=_allowed_case_ids(),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "collaboration_note_acknowledged" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "collaboration_note_acknowledged" else 422
 
     @app.post("/api/v1/cases/<case_id>/collaboration-notes/<note_id>/read")
     def api_collaboration_note_read_post_v26_2(case_id: str, note_id: str):
@@ -127,6 +151,8 @@ def register_collaboration_notes_routes_v26_2(app):
             allowed_case_ids=_allowed_case_ids(),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "collaboration_note_marked_read" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "collaboration_note_marked_read" else 422
 
     return app

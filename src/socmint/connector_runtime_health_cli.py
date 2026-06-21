@@ -30,7 +30,9 @@ def _print_human(payload: dict) -> None:
         print(f"\n{status.upper()} ({len(items)})")
         for item in items:
             print(f"- {item['name']}")
-            print(f"  version/path: {item.get('version') or item.get('executable') or 'not detected'}")
+            print(
+                f"  version/path: {item.get('version') or item.get('executable') or 'not detected'}"
+            )
             print(f"  target types: {', '.join(item.get('target_types', []))}")
             print(f"  sample: {' '.join(item.get('sample_command', []))}")
             if status != "ready":
@@ -50,10 +52,14 @@ def _print_human(payload: dict) -> None:
         if heavy:
             print("\nNative dependency hint for Maigret/ArchiveBox/pycairo failures:")
             print("  sudo apt update")
-            print("  sudo apt install -y pkg-config cmake build-essential python3-dev libcairo2-dev libgirepository-2.0-dev gir1.2-gtk-3.0")
+            print(
+                "  sudo apt install -y pkg-config cmake build-essential python3-dev libcairo2-dev libgirepository-2.0-dev gir1.2-gtk-3.0"
+            )
         if any(item["name"] == "phoneinfoga" for item in missing):
             print("\nPhoneInfoga hint:")
-            print("  Install the official PhoneInfoga Linux binary and place it at .connector-tools/bin/phoneinfoga")
+            print(
+                "  Install the official PhoneInfoga Linux binary and place it at .connector-tools/bin/phoneinfoga"
+            )
             print("  chmod +x .connector-tools/bin/phoneinfoga")
 
 

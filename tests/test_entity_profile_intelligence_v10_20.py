@@ -11,8 +11,21 @@ def _subject():
         "case_id": "case-intel-1020",
         "aliases": ["EIS"],
         "handles": ["@entityintel"],
-        "accounts": [{"platform": "github", "handle": "entityintel", "url": "https://example.invalid/entityintel", "evidence_refs": ["ev-account-1"]}],
-        "relationships": [{"target": "related-org", "relationship": "member", "evidence_refs": ["ev-rel-1"]}],
+        "accounts": [
+            {
+                "platform": "github",
+                "handle": "entityintel",
+                "url": "https://example.invalid/entityintel",
+                "evidence_refs": ["ev-account-1"],
+            }
+        ],
+        "relationships": [
+            {
+                "target": "related-org",
+                "relationship": "member",
+                "evidence_refs": ["ev-rel-1"],
+            }
+        ],
         "analyst_notes": [{"note": "review identity cluster", "author": "analyst"}],
     }
 
@@ -60,7 +73,9 @@ def _evidence():
 
 
 def test_v10_20_builds_full_entity_profile_intelligence_sections():
-    payload = build_entity_profile_intelligence(_subject(), _evidence(), analyst_reviewed=True)
+    payload = build_entity_profile_intelligence(
+        _subject(), _evidence(), analyst_reviewed=True
+    )
 
     assert payload["schema"] == "socmint.entity_profile_intelligence.v10_20_0"
     assert "identity_summary" in payload["sections"]
@@ -77,7 +92,9 @@ def test_v10_20_builds_full_entity_profile_intelligence_sections():
 
 
 def test_v10_20_detects_contradictions_and_risk():
-    payload = build_entity_profile_intelligence(_subject(), _evidence(), analyst_reviewed=True)
+    payload = build_entity_profile_intelligence(
+        _subject(), _evidence(), analyst_reviewed=True
+    )
 
     assert len(payload["contradictions"]) == 1
     contradiction = payload["contradictions"][0]
@@ -97,7 +114,9 @@ def test_v10_20_timeline_is_sorted_and_evidence_backed():
             "confidence": 0.9,
         }
     ]
-    payload = build_entity_profile_intelligence(_subject(), evidence, analyst_reviewed=True)
+    payload = build_entity_profile_intelligence(
+        _subject(), evidence, analyst_reviewed=True
+    )
 
     assert payload["timeline"][0]["date"] == "2025-12-01"
     assert payload["timeline"][1]["date"] == "2026-01-01"
@@ -105,7 +124,9 @@ def test_v10_20_timeline_is_sorted_and_evidence_backed():
 
 
 def test_v10_20_summary_counts_core_dossier_sections():
-    payload = build_entity_profile_intelligence(_subject(), _evidence(), analyst_reviewed=True)
+    payload = build_entity_profile_intelligence(
+        _subject(), _evidence(), analyst_reviewed=True
+    )
     summary = entity_profile_intelligence_summary(payload)
 
     assert summary["schema"] == "socmint.entity_profile_intelligence.v10_20_0"
@@ -119,7 +140,9 @@ def test_v10_20_summary_counts_core_dossier_sections():
 
 
 def test_v10_20_markdown_exports_entity_profile_sections():
-    payload = build_entity_profile_intelligence(_subject(), _evidence(), analyst_reviewed=True)
+    payload = build_entity_profile_intelligence(
+        _subject(), _evidence(), analyst_reviewed=True
+    )
     markdown = entity_profile_intelligence_markdown(payload)
 
     assert "# Entity Profile Dossier" in markdown
@@ -150,7 +173,9 @@ def test_v10_20_route_methods_are_post_only():
 
 
 def test_v10_20_direct_summary_builds_authenticated_payload_equivalent():
-    payload = build_entity_profile_intelligence(_subject(), _evidence(), analyst_reviewed=True)
+    payload = build_entity_profile_intelligence(
+        _subject(), _evidence(), analyst_reviewed=True
+    )
     summary = entity_profile_intelligence_summary(payload)
 
     assert summary["subject_id"] == "subject-intel-1020"

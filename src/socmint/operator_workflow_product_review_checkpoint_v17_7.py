@@ -5,7 +5,9 @@ from pathlib import Path
 from typing import Any
 
 
-OPERATOR_WORKFLOW_PRODUCT_REVIEW_CHECKPOINT_SCHEMA = "socmint.operator_workflow_product_review_checkpoint.v17_7"
+OPERATOR_WORKFLOW_PRODUCT_REVIEW_CHECKPOINT_SCHEMA = (
+    "socmint.operator_workflow_product_review_checkpoint.v17_7"
+)
 VERSION = "v17.7.0"
 NEXT_ACTION = "run_browser_e2e_validation"
 
@@ -55,7 +57,13 @@ def _route_keys(routes: list[Any] | None) -> list[tuple[str, tuple[str, ...]]]:
     for route in routes or []:
         rule = str(getattr(route, "rule", route))
         methods = getattr(route, "methods", None)
-        method_tuple = ("UNKNOWN",) if methods is None else tuple(sorted(item for item in methods if item not in {"HEAD", "OPTIONS"}))
+        method_tuple = (
+            ("UNKNOWN",)
+            if methods is None
+            else tuple(
+                sorted(item for item in methods if item not in {"HEAD", "OPTIONS"})
+            )
+        )
         keys.append((rule, method_tuple))
     return keys
 
@@ -69,7 +77,9 @@ def build_operator_workflow_product_review_checkpoint(
     route_rules = {str(getattr(route, "rule", route)) for route in routes or []}
     route_counts = Counter(_route_keys(routes))
     changelog_path = root_path / "CHANGELOG.md"
-    changelog = changelog_path.read_text(encoding="utf-8") if changelog_path.exists() else ""
+    changelog = (
+        changelog_path.read_text(encoding="utf-8") if changelog_path.exists() else ""
+    )
     blockers: list[dict[str, str]] = []
 
     module_checks = []
@@ -106,7 +116,9 @@ def build_operator_workflow_product_review_checkpoint(
         if count > 1 and rule.startswith("/api/v1/operator/workflow-dashboard")
     ]
     if duplicate_routes:
-        blockers.append(_blocker("duplicate_operator_workflow_route", str(duplicate_routes)))
+        blockers.append(
+            _blocker("duplicate_operator_workflow_route", str(duplicate_routes))
+        )
 
     changelog_versions = {}
     for index in range(7):
@@ -121,10 +133,13 @@ def build_operator_workflow_product_review_checkpoint(
         for directory in (root_path / "migrations", root_path / "alembic")
         if directory.exists()
         for path in directory.rglob("*")
-        if path.is_file() and ("v17" in path.name.lower() or "operator_workflow" in path.name.lower())
+        if path.is_file()
+        and ("v17" in path.name.lower() or "operator_workflow" in path.name.lower())
     )
     if migration_artifacts:
-        blockers.append(_blocker("unexpected_v17_migration", ", ".join(migration_artifacts)))
+        blockers.append(
+            _blocker("unexpected_v17_migration", ", ".join(migration_artifacts))
+        )
 
     status = "ready_for_browser_validation" if not blockers else "blocked"
     return {
@@ -141,5 +156,7 @@ def build_operator_workflow_product_review_checkpoint(
         "migration_artifacts": migration_artifacts,
         "blocker_count": len(blockers),
         "blockers": blockers,
-        "next_action": NEXT_ACTION if not blockers else "resolve_product_review_blockers",
+        "next_action": NEXT_ACTION
+        if not blockers
+        else "resolve_product_review_blockers",
     }

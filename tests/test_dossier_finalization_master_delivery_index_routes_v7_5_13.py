@@ -4,10 +4,16 @@ import base64
 
 from flask import Flask
 
-from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import build_closeout_export_bundle
-from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import build_closeout_export_zip
+from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import (
+    build_closeout_export_bundle,
+)
+from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import (
+    build_closeout_export_zip,
+)
 from socmint.dossier_finalization_closeout_report_v7_5_10 import build_closeout_report
-from socmint.dossier_finalization_master_delivery_index_routes_v7_5_13 import register_dossier_finalization_master_delivery_index_routes
+from socmint.dossier_finalization_master_delivery_index_routes_v7_5_13 import (
+    register_dossier_finalization_master_delivery_index_routes,
+)
 
 
 def app_client():
@@ -63,12 +69,18 @@ def test_json_route_returns_deliver_ready_index_from_wrapped_verification_report
     client = app_client()
     response = client.post(
         "/api/v1/dossier-builder/v3/intelligence/finalization/master-delivery-index",
-        json={"verification_report": verified_v7512_report(), "operator": "analyst", "notes": "Ready."},
+        json={
+            "verification_report": verified_v7512_report(),
+            "operator": "analyst",
+            "notes": "Ready.",
+        },
     )
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["schema"] == "socmint.v7_5_13.dossier_finalization_master_delivery_index"
+    assert (
+        data["schema"] == "socmint.v7_5_13.dossier_finalization_master_delivery_index"
+    )
     assert data["delivery_action"] == "deliver_ready"
     assert data["operator"] == "analyst"
 
@@ -113,7 +125,9 @@ def test_from_bundle_route_returns_deliver_ready_index():
 
 def test_from_zip_route_returns_deliver_ready_index_for_valid_base64_zip():
     client = app_client()
-    encoded = base64.b64encode(build_closeout_export_zip(closeout_bundle())).decode("ascii")
+    encoded = base64.b64encode(build_closeout_export_zip(closeout_bundle())).decode(
+        "ascii"
+    )
     response = client.post(
         "/api/v1/dossier-builder/v3/intelligence/finalization/master-delivery-index/from-zip",
         json={"zip_base64": encoded, "operator": "analyst"},

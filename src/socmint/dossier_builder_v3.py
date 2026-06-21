@@ -45,11 +45,17 @@ def clamp_confidence(value: float) -> float:
     return max(0.0, min(1.0, float(value)))
 
 
-def confidence_score(evidence: list[dict[str, Any]] | None = None, analyst_reviewed: bool = False) -> dict[str, Any]:
+def confidence_score(
+    evidence: list[dict[str, Any]] | None = None, analyst_reviewed: bool = False
+) -> dict[str, Any]:
     evidence = evidence or []
     direct = 1.0 if any(item.get("artifact_id") for item in evidence) else 0.0
-    source_quality = sum(clamp_confidence(item.get("confidence", 0.5)) for item in evidence) / max(len(evidence), 1)
-    corroboration = min(1.0, len({item.get("source") for item in evidence if item.get("source")}) / 3)
+    source_quality = sum(
+        clamp_confidence(item.get("confidence", 0.5)) for item in evidence
+    ) / max(len(evidence), 1)
+    corroboration = min(
+        1.0, len({item.get("source") for item in evidence if item.get("source")}) / 3
+    )
     recency = 0.75 if evidence else 0.0
     review = 1.0 if analyst_reviewed else 0.0
     components = {
@@ -59,7 +65,9 @@ def confidence_score(evidence: list[dict[str, Any]] | None = None, analyst_revie
         "recency": recency,
         "analyst_review": review,
     }
-    weighted = sum(components[key] * weight for key, weight in CONFIDENCE_WEIGHTS.items())
+    weighted = sum(
+        components[key] * weight for key, weight in CONFIDENCE_WEIGHTS.items()
+    )
     return {
         "schema": DOSSIER_BUILDER_SCHEMA,
         "score": round(clamp_confidence(weighted), 3),
@@ -79,7 +87,9 @@ def build_dossier_payload(
         {
             "evidence_id": item.get("evidence_id"),
             "label": item.get("label"),
-            "reason": "low_confidence" if clamp_confidence(item.get("confidence", 0.5)) < 0.7 else "confirm_assertion",
+            "reason": "low_confidence"
+            if clamp_confidence(item.get("confidence", 0.5)) < 0.7
+            else "confirm_assertion",
         }
         for item in evidence
         if clamp_confidence(item.get("confidence", 0.5)) < 0.85
@@ -88,19 +98,27 @@ def build_dossier_payload(
         "ready": analyst_reviewed and bool(evidence) and score["score"] >= 0.65,
         "requires_review": not analyst_reviewed,
         "evidence_count": len(evidence),
-        "low_confidence_count": sum(1 for item in evidence if clamp_confidence(item.get("confidence", 0.5)) < 0.7),
+        "low_confidence_count": sum(
+            1
+            for item in evidence
+            if clamp_confidence(item.get("confidence", 0.5)) < 0.7
+        ),
     }
     return {
         "schema": DOSSIER_BUILDER_SCHEMA,
         "subject": {
             "subject_id": subject.get("subject_id"),
-            "display_name": subject.get("display_name") or subject.get("name") or "Unknown subject",
+            "display_name": subject.get("display_name")
+            or subject.get("name")
+            or "Unknown subject",
             "aliases": subject.get("aliases", []),
             "case_id": subject.get("case_id"),
         },
         "sections": REQUIRED_DOSSIER_SECTIONS,
         "identity_summary": {
-            "primary_name": subject.get("display_name") or subject.get("name") or "Unknown subject",
+            "primary_name": subject.get("display_name")
+            or subject.get("name")
+            or "Unknown subject",
             "alias_count": len(subject.get("aliases", [])),
             "case_scoped": bool(subject.get("case_id")),
         },
@@ -137,5 +155,11 @@ def dossier_builder_capabilities() -> dict[str, Any]:
         "schema": DOSSIER_BUILDER_SCHEMA,
         "sections": REQUIRED_DOSSIER_SECTIONS,
         "outputs": ["json", "html-ready", "pdf-ready"],
-        "controls": ["case-scoped subject", "source traceability", "confidence scoring", "analyst review queue", "export preflight"],
+        "controls": [
+            "case-scoped subject",
+            "source traceability",
+            "confidence scoring",
+            "analyst review queue",
+            "export preflight",
+        ],
     }

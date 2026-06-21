@@ -16,7 +16,9 @@ SMOKE_ARTIFACT_DIRS = (
 
 
 def is_smoke_label(value: str | None) -> bool:
-    return bool(value) and any(str(value).startswith(prefix) for prefix in SMOKE_PREFIXES)
+    return bool(value) and any(
+        str(value).startswith(prefix) for prefix in SMOKE_PREFIXES
+    )
 
 
 def _json(raw: str | None, fallback: Any) -> Any:
@@ -36,13 +38,21 @@ def _dossier_file_hits() -> list[dict[str, Any]]:
     for path in root.glob("subject-*-full-entity-dossier-v2-*"):
         matched = False
         try:
-            if path.suffix in {".json", ".md", ".html"} or path.name.endswith("-EXPORT.json"):
+            if path.suffix in {".json", ".md", ".html"} or path.name.endswith(
+                "-EXPORT.json"
+            ):
                 text = path.read_text(errors="ignore")
                 matched = any(prefix in text for prefix in SMOKE_PREFIXES)
         except Exception:
             matched = False
         if matched:
-            hits.append({"path": str(path), "name": path.name, "size_bytes": path.stat().st_size})
+            hits.append(
+                {
+                    "path": str(path),
+                    "name": path.name,
+                    "size_bytes": path.stat().st_size,
+                }
+            )
     return hits
 
 
@@ -50,27 +60,61 @@ def collect_test_data_summary() -> dict[str, Any]:
     db.ensure_configured()
     session = db.Session()
     try:
-        smoke_subjects = [s for s in session.query(db.SpineSubject).all() if is_smoke_label(s.label)]
+        smoke_subjects = [
+            s for s in session.query(db.SpineSubject).all() if is_smoke_label(s.label)
+        ]
         subject_ids = [s.id for s in smoke_subjects]
         run_ids: list[int] = []
         assertion_ids: list[int] = []
         if subject_ids:
-            run_ids = [r.id for r in session.query(db.SpineConnectorRun).filter(db.SpineConnectorRun.subject_id.in_(subject_ids)).all()]
-            assertion_ids = [a.id for a in session.query(db.SpineDossierAssertion).filter(db.SpineDossierAssertion.subject_id.in_(subject_ids)).all()]
-            seed_count = session.query(db.SpineSeed).filter(db.SpineSeed.subject_id.in_(subject_ids)).count()
-            observation_count = session.query(db.SpineObservation).filter(db.SpineObservation.subject_id.in_(subject_ids)).count()
+            run_ids = [
+                r.id
+                for r in session.query(db.SpineConnectorRun)
+                .filter(db.SpineConnectorRun.subject_id.in_(subject_ids))
+                .all()
+            ]
+            assertion_ids = [
+                a.id
+                for a in session.query(db.SpineDossierAssertion)
+                .filter(db.SpineDossierAssertion.subject_id.in_(subject_ids))
+                .all()
+            ]
+            seed_count = (
+                session.query(db.SpineSeed)
+                .filter(db.SpineSeed.subject_id.in_(subject_ids))
+                .count()
+            )
+            observation_count = (
+                session.query(db.SpineObservation)
+                .filter(db.SpineObservation.subject_id.in_(subject_ids))
+                .count()
+            )
             assertion_count = len(assertion_ids)
-            discovery_count = session.query(db.AccountDiscovery).filter(db.AccountDiscovery.subject_id.in_(subject_ids)).count()
+            discovery_count = (
+                session.query(db.AccountDiscovery)
+                .filter(db.AccountDiscovery.subject_id.in_(subject_ids))
+                .count()
+            )
             run_count = len(run_ids)
         else:
-            seed_count = observation_count = assertion_count = discovery_count = run_count = 0
+            seed_count = observation_count = assertion_count = discovery_count = (
+                run_count
+            ) = 0
 
         artifact_count = 0
         if run_ids:
-            artifact_count = session.query(db.SpineRawArtifact).filter(db.SpineRawArtifact.run_id.in_(run_ids)).count()
+            artifact_count = (
+                session.query(db.SpineRawArtifact)
+                .filter(db.SpineRawArtifact.run_id.in_(run_ids))
+                .count()
+            )
         validation_event_count = 0
         if assertion_ids:
-            validation_event_count = session.query(db.SpineValidationEvent).filter(db.SpineValidationEvent.assertion_id.in_(assertion_ids)).count()
+            validation_event_count = (
+                session.query(db.SpineValidationEvent)
+                .filter(db.SpineValidationEvent.assertion_id.in_(assertion_ids))
+                .count()
+            )
 
         dossier_files = _dossier_file_hits()
         artifact_dirs = [str(path) for path in SMOKE_ARTIFACT_DIRS if path.exists()]
@@ -127,22 +171,66 @@ def clean_test_data(actor: str | None = None) -> dict[str, Any]:
         "subject_ids": [],
     }
     try:
-        smoke_subjects = [s for s in session.query(db.SpineSubject).all() if is_smoke_label(s.label)]
+        smoke_subjects = [
+            s for s in session.query(db.SpineSubject).all() if is_smoke_label(s.label)
+        ]
         subject_ids = [s.id for s in smoke_subjects]
         summary["subject_ids"] = subject_ids
         if subject_ids:
-            assertion_ids = [a.id for a in session.query(db.SpineDossierAssertion).filter(db.SpineDossierAssertion.subject_id.in_(subject_ids)).all()]
-            run_ids = [r.id for r in session.query(db.SpineConnectorRun).filter(db.SpineConnectorRun.subject_id.in_(subject_ids)).all()]
+            assertion_ids = [
+                a.id
+                for a in session.query(db.SpineDossierAssertion)
+                .filter(db.SpineDossierAssertion.subject_id.in_(subject_ids))
+                .all()
+            ]
+            run_ids = [
+                r.id
+                for r in session.query(db.SpineConnectorRun)
+                .filter(db.SpineConnectorRun.subject_id.in_(subject_ids))
+                .all()
+            ]
             if assertion_ids:
-                summary["validation_events_deleted"] = session.query(db.SpineValidationEvent).filter(db.SpineValidationEvent.assertion_id.in_(assertion_ids)).delete(synchronize_session=False)
-            summary["account_discoveries_deleted"] = session.query(db.AccountDiscovery).filter(db.AccountDiscovery.subject_id.in_(subject_ids)).delete(synchronize_session=False)
-            summary["assertions_deleted"] = session.query(db.SpineDossierAssertion).filter(db.SpineDossierAssertion.subject_id.in_(subject_ids)).delete(synchronize_session=False)
-            summary["observations_deleted"] = session.query(db.SpineObservation).filter(db.SpineObservation.subject_id.in_(subject_ids)).delete(synchronize_session=False)
+                summary["validation_events_deleted"] = (
+                    session.query(db.SpineValidationEvent)
+                    .filter(db.SpineValidationEvent.assertion_id.in_(assertion_ids))
+                    .delete(synchronize_session=False)
+                )
+            summary["account_discoveries_deleted"] = (
+                session.query(db.AccountDiscovery)
+                .filter(db.AccountDiscovery.subject_id.in_(subject_ids))
+                .delete(synchronize_session=False)
+            )
+            summary["assertions_deleted"] = (
+                session.query(db.SpineDossierAssertion)
+                .filter(db.SpineDossierAssertion.subject_id.in_(subject_ids))
+                .delete(synchronize_session=False)
+            )
+            summary["observations_deleted"] = (
+                session.query(db.SpineObservation)
+                .filter(db.SpineObservation.subject_id.in_(subject_ids))
+                .delete(synchronize_session=False)
+            )
             if run_ids:
-                summary["raw_artifacts_deleted"] = session.query(db.SpineRawArtifact).filter(db.SpineRawArtifact.run_id.in_(run_ids)).delete(synchronize_session=False)
-            summary["connector_runs_deleted"] = session.query(db.SpineConnectorRun).filter(db.SpineConnectorRun.subject_id.in_(subject_ids)).delete(synchronize_session=False)
-            summary["seeds_deleted"] = session.query(db.SpineSeed).filter(db.SpineSeed.subject_id.in_(subject_ids)).delete(synchronize_session=False)
-            summary["subjects_deleted"] = session.query(db.SpineSubject).filter(db.SpineSubject.id.in_(subject_ids)).delete(synchronize_session=False)
+                summary["raw_artifacts_deleted"] = (
+                    session.query(db.SpineRawArtifact)
+                    .filter(db.SpineRawArtifact.run_id.in_(run_ids))
+                    .delete(synchronize_session=False)
+                )
+            summary["connector_runs_deleted"] = (
+                session.query(db.SpineConnectorRun)
+                .filter(db.SpineConnectorRun.subject_id.in_(subject_ids))
+                .delete(synchronize_session=False)
+            )
+            summary["seeds_deleted"] = (
+                session.query(db.SpineSeed)
+                .filter(db.SpineSeed.subject_id.in_(subject_ids))
+                .delete(synchronize_session=False)
+            )
+            summary["subjects_deleted"] = (
+                session.query(db.SpineSubject)
+                .filter(db.SpineSubject.id.in_(subject_ids))
+                .delete(synchronize_session=False)
+            )
         session.commit()
     finally:
         session.close()

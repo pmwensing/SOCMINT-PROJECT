@@ -4,11 +4,19 @@ from copy import deepcopy
 from datetime import UTC, datetime
 from typing import Any
 
-from .dossier_finalization_closeout_export_verify_v7_5_12 import verify_closeout_export_bundle
-from .dossier_finalization_closeout_export_verify_v7_5_12 import verify_closeout_export_zip
+from .dossier_finalization_closeout_export_verify_v7_5_12 import (
+    verify_closeout_export_bundle,
+)
+from .dossier_finalization_closeout_export_verify_v7_5_12 import (
+    verify_closeout_export_zip,
+)
 
-MASTER_DELIVERY_INDEX_SCHEMA = "socmint.v7_5_13.dossier_finalization_master_delivery_index"
-MASTER_DELIVERY_INDEX_SUMMARY_SCHEMA = "socmint.v7_5_13.dossier_finalization_master_delivery_index.summary"
+MASTER_DELIVERY_INDEX_SCHEMA = (
+    "socmint.v7_5_13.dossier_finalization_master_delivery_index"
+)
+MASTER_DELIVERY_INDEX_SUMMARY_SCHEMA = (
+    "socmint.v7_5_13.dossier_finalization_master_delivery_index.summary"
+)
 APPROVED_LINE = "v7.5.13"
 ACTION_DELIVER_READY = "deliver_ready"
 ACTION_REVIEW = "human_review_required"
@@ -72,9 +80,16 @@ def build_master_delivery_index(
     notes: str | None = None,
 ) -> dict[str, Any]:
     report = deepcopy(verification_report or {})
-    manifest = report.get("manifest") if isinstance(report.get("manifest"), dict) else {}
-    manifest_files = manifest.get("files") if isinstance(manifest.get("files"), list) else []
-    file_count = int(manifest.get("file_count") or len(report.get("present_files") or manifest_files or []))
+    manifest = (
+        report.get("manifest") if isinstance(report.get("manifest"), dict) else {}
+    )
+    manifest_files = (
+        manifest.get("files") if isinstance(manifest.get("files"), list) else []
+    )
+    file_count = int(
+        manifest.get("file_count")
+        or len(report.get("present_files") or manifest_files or [])
+    )
     index: dict[str, Any] = {
         "schema": MASTER_DELIVERY_INDEX_SCHEMA,
         "approved_line": APPROVED_LINE,

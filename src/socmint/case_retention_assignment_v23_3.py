@@ -6,7 +6,12 @@ from typing import Any
 from . import database
 from .case_closure_decision_v23_2 import latest_supervisor_closure_decision
 from .case_closure_workspace_v23_0 import _retention_policies
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 
 SCHEMA = "socmint.case_retention_assignment.v23_3"
 VERSION = "v23.3.0"
@@ -94,7 +99,9 @@ def assign_retention_policy(
             "version": VERSION,
             "case_id": case_id,
             "status": "blocked",
-            "blockers": [{"key": "explicit_retention_assignment_confirmation_required"}],
+            "blockers": [
+                {"key": "explicit_retention_assignment_confirmation_required"}
+            ],
             "source_records_mutated": False,
         }
 
@@ -120,7 +127,11 @@ def assign_retention_policy(
 
     policies = _retention_policies()
     selected = next(
-        (policy for policy in policies if policy.get("policy_id") == str(policy_id or "")),
+        (
+            policy
+            for policy in policies
+            if policy.get("policy_id") == str(policy_id or "")
+        ),
         None,
     )
     if selected is None:

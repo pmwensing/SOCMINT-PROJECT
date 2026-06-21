@@ -13,7 +13,9 @@ def _login_required() -> bool:
 
 
 def register_distribution_release_ledger_routes(app):
-    @app.post("/api/v1/dossier-builder/v3/distribution-release/<case_id>/<subject_id>/seal")
+    @app.post(
+        "/api/v1/dossier-builder/v3/distribution-release/<case_id>/<subject_id>/seal"
+    )
     def api_create_distribution_release_seal(case_id: str, subject_id: str):
         if not _login_required():
             return jsonify({"error": "login required"}), 401
@@ -35,11 +37,16 @@ def register_distribution_release_ledger_routes(app):
             return jsonify({"error": "login required"}), 401
         return jsonify(release_state(case_id=case_id, subject_id=subject_id))
 
-    @app.get("/api/v1/dossier-builder/v3/distribution-release/<case_id>/<subject_id>/markdown")
+    @app.get(
+        "/api/v1/dossier-builder/v3/distribution-release/<case_id>/<subject_id>/markdown"
+    )
     def api_distribution_release_markdown(case_id: str, subject_id: str):
         if not _login_required():
             return Response("login required\n", status=401, mimetype="text/plain")
-        return Response(release_seal_markdown(case_id=case_id, subject_id=subject_id), mimetype="text/markdown")
+        return Response(
+            release_seal_markdown(case_id=case_id, subject_id=subject_id),
+            mimetype="text/markdown",
+        )
 
     @app.get("/api/v1/dossier-builder/v3/distribution-release-ledger/<case_id>")
     def api_distribution_release_ledger(case_id: str):

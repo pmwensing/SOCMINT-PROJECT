@@ -123,20 +123,23 @@ def test_v19_6_filters_reviewer_and_case(tmp_path, monkeypatch):
 
 def test_v19_6_routes_require_login_and_render(tmp_path, monkeypatch):
     client = _app(tmp_path, monkeypatch).test_client()
-    assert client.get(
-        "/api/v1/case-intelligence-review/reviewer-handoff-summary"
-    ).status_code == 401
-    assert client.get(
-        "/case-intelligence-review/reviewer-handoff-summary"
-    ).status_code == 302
+    assert (
+        client.get(
+            "/api/v1/case-intelligence-review/reviewer-handoff-summary"
+        ).status_code
+        == 401
+    )
+    assert (
+        client.get("/case-intelligence-review/reviewer-handoff-summary").status_code
+        == 302
+    )
 
     _assigned("case-alpha", "reviewer-a")
     with client.session_transaction() as sess:
         sess["user"] = "supervisor"
 
     api = client.get(
-        "/api/v1/case-intelligence-review/reviewer-handoff-summary"
-        "?reviewer=reviewer-a"
+        "/api/v1/case-intelligence-review/reviewer-handoff-summary?reviewer=reviewer-a"
     )
     ui = client.get("/case-intelligence-review/reviewer-handoff-summary")
 
@@ -150,9 +153,9 @@ def test_v19_6_routes_require_login_and_render(tmp_path, monkeypatch):
 
 
 def test_v19_6_release_note_and_no_migration():
-    note = Path(
-        "release/V19_6_REVIEWER_QUEUE_COMPLETION_HANDOFF_SUMMARY.md"
-    ).read_text(encoding="utf-8")
+    note = Path("release/V19_6_REVIEWER_QUEUE_COMPLETION_HANDOFF_SUMMARY.md").read_text(
+        encoding="utf-8"
+    )
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

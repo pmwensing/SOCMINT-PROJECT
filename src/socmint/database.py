@@ -202,8 +202,14 @@ def _ensure_runtime_schema_updates(current_engine):
     with current_engine.begin() as connection:
         columns = {column["name"] for column in inspector.get_columns("spine_subjects")}
         if "case_key" not in columns:
-            connection.execute(text("ALTER TABLE spine_subjects ADD COLUMN case_key VARCHAR(128)"))
-        connection.execute(text("CREATE INDEX IF NOT EXISTS ix_spine_subjects_case_key ON spine_subjects (case_key)"))
+            connection.execute(
+                text("ALTER TABLE spine_subjects ADD COLUMN case_key VARCHAR(128)")
+            )
+        connection.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_spine_subjects_case_key ON spine_subjects (case_key)"
+            )
+        )
 
         for table_name in [
             "spine_seeds",
@@ -213,13 +219,27 @@ def _ensure_runtime_schema_updates(current_engine):
         ]:
             if table_name not in inspector.get_table_names():
                 continue
-            table_columns = {column["name"] for column in inspector.get_columns(table_name)}
+            table_columns = {
+                column["name"] for column in inspector.get_columns(table_name)
+            }
             if "correlation_scope_id" not in table_columns:
-                connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN correlation_scope_id VARCHAR(80)"))
+                connection.execute(
+                    text(
+                        f"ALTER TABLE {table_name} ADD COLUMN correlation_scope_id VARCHAR(80)"
+                    )
+                )
             if "correlation_scope_state" not in table_columns:
-                connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN correlation_scope_state VARCHAR(40)"))
+                connection.execute(
+                    text(
+                        f"ALTER TABLE {table_name} ADD COLUMN correlation_scope_state VARCHAR(40)"
+                    )
+                )
             if "correlation_scope_reason" not in table_columns:
-                connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN correlation_scope_reason TEXT"))
+                connection.execute(
+                    text(
+                        f"ALTER TABLE {table_name} ADD COLUMN correlation_scope_reason TEXT"
+                    )
+                )
 
 
 def configure_database(database_url=None, create_schema=True):
@@ -405,10 +425,7 @@ def get_audit_events(limit=100, offset=0, actor=None, action=None):
         if action:
             query = query.filter(AuditLog.action == action)
         return (
-            query.order_by(AuditLog.created_at.desc())
-            .offset(offset)
-            .limit(limit)
-            .all()
+            query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit).all()
         )
     finally:
         session.close()
@@ -773,6 +790,7 @@ def list_findings(limit=200, target_id=None, finding_type=None):
     finally:
         session.close()
 
+
 class SpineSubject(Base):
     __tablename__ = "spine_subjects"
     id = Column(Integer, primary_key=True)
@@ -873,7 +891,9 @@ class AccountDiscovery(Base):
     __tablename__ = "account_discoveries"
     id = Column(Integer, primary_key=True)
     subject_id = Column(Integer, ForeignKey("spine_subjects.id"), nullable=False)
-    observation_id = Column(Integer, ForeignKey("spine_observations.id"), nullable=False)
+    observation_id = Column(
+        Integer, ForeignKey("spine_observations.id"), nullable=False
+    )
     assertion_id = Column(
         Integer,
         ForeignKey("spine_dossier_assertions.id"),
@@ -946,16 +966,22 @@ def list_spine_subjects(limit=100, case_key=None):
         session.close()
 
 
-def add_spine_seed(subject_id, seed_type, raw_value, normalized_value, pii_hash, case_key=None):
+def add_spine_seed(
+    subject_id, seed_type, raw_value, normalized_value, pii_hash, case_key=None
+):
     ensure_configured()
     session = Session()
     try:
         _require_subject_case(session, subject_id, case_key=case_key)
-        existing = session.query(SpineSeed).filter_by(
-            subject_id=subject_id,
-            seed_type=seed_type,
-            pii_hash=pii_hash,
-        ).first()
+        existing = (
+            session.query(SpineSeed)
+            .filter_by(
+                subject_id=subject_id,
+                seed_type=seed_type,
+                pii_hash=pii_hash,
+            )
+            .first()
+        )
         if existing:
             return existing.id
         seed = SpineSeed(
@@ -977,9 +1003,12 @@ def list_spine_seeds(subject_id):
     ensure_configured()
     session = Session()
     try:
-        items = session.query(SpineSeed).filter_by(
-            subject_id=subject_id
-        ).order_by(SpineSeed.id.asc()).all()
+        items = (
+            session.query(SpineSeed)
+            .filter_by(subject_id=subject_id)
+            .order_by(SpineSeed.id.asc())
+            .all()
+        )
         return _detach_all(session, items)
     finally:
         session.close()
@@ -1025,9 +1054,7 @@ def list_spine_connector_runs(subject_id=None, limit=100):
         query = session.query(SpineConnectorRun)
         if subject_id is not None:
             query = query.filter_by(subject_id=subject_id)
-        items = query.order_by(
-            SpineConnectorRun.created_at.desc()
-        ).limit(limit).all()
+        items = query.order_by(SpineConnectorRun.created_at.desc()).limit(limit).all()
         return _detach_all(session, items)
     finally:
         session.close()
@@ -1097,9 +1124,13 @@ def list_spine_observations(subject_id, limit=1000):
     ensure_configured()
     session = Session()
     try:
-        items = session.query(SpineObservation).filter_by(
-            subject_id=subject_id
-        ).order_by(SpineObservation.created_at.desc()).limit(limit).all()
+        items = (
+            session.query(SpineObservation)
+            .filter_by(subject_id=subject_id)
+            .order_by(SpineObservation.created_at.desc())
+            .limit(limit)
+            .all()
+        )
         return _detach_all(session, items)
     finally:
         session.close()
@@ -1128,11 +1159,15 @@ def upsert_spine_assertion(
     ensure_configured()
     session = Session()
     try:
-        item = session.query(SpineDossierAssertion).filter_by(
-            subject_id=subject_id,
-            assertion_type=assertion_type,
-            normalized_value=normalized_value,
-        ).first()
+        item = (
+            session.query(SpineDossierAssertion)
+            .filter_by(
+                subject_id=subject_id,
+                assertion_type=assertion_type,
+                normalized_value=normalized_value,
+            )
+            .first()
+        )
         if not item:
             item = SpineDossierAssertion(
                 subject_id=subject_id,
@@ -1158,9 +1193,13 @@ def list_spine_assertions(subject_id, limit=1000):
     ensure_configured()
     session = Session()
     try:
-        items = session.query(SpineDossierAssertion).filter_by(
-            subject_id=subject_id
-        ).order_by(SpineDossierAssertion.confidence.desc()).limit(limit).all()
+        items = (
+            session.query(SpineDossierAssertion)
+            .filter_by(subject_id=subject_id)
+            .order_by(SpineDossierAssertion.confidence.desc())
+            .limit(limit)
+            .all()
+        )
         return _detach_all(session, items)
     finally:
         session.close()
@@ -1170,9 +1209,7 @@ def validate_spine_assertion(assertion_id, actor, action, note=None):
     ensure_configured()
     session = Session()
     try:
-        item = session.query(SpineDossierAssertion).filter_by(
-            id=assertion_id
-        ).first()
+        item = session.query(SpineDossierAssertion).filter_by(id=assertion_id).first()
         if not item:
             return None
         if action not in {"confirmed", "rejected", "suppressed", "unreviewed"}:
@@ -1197,11 +1234,7 @@ def get_spine_assertion(assertion_id):
     ensure_configured()
     session = Session()
     try:
-        item = (
-            session.query(SpineDossierAssertion)
-            .filter_by(id=assertion_id)
-            .first()
-        )
+        item = session.query(SpineDossierAssertion).filter_by(id=assertion_id).first()
         if item:
             session.expunge(item)
         return item
@@ -1245,10 +1278,14 @@ def upsert_account_discovery(
     ensure_configured()
     session = Session()
     try:
-        item = session.query(AccountDiscovery).filter_by(
-            subject_id=subject_id,
-            observation_id=observation_id,
-        ).first()
+        item = (
+            session.query(AccountDiscovery)
+            .filter_by(
+                subject_id=subject_id,
+                observation_id=observation_id,
+            )
+            .first()
+        )
         if not item:
             item = AccountDiscovery(
                 subject_id=subject_id,
@@ -1273,9 +1310,7 @@ def upsert_account_discovery(
             item.assertion_id = assertion_id
             if capture_ids:
                 existing = json.loads(item.capture_ids_json or "[]")
-                item.capture_ids_json = json.dumps(
-                    sorted({*existing, *capture_ids})
-                )
+                item.capture_ids_json = json.dumps(sorted({*existing, *capture_ids}))
             item.payload_json = json.dumps(payload or {})
             item.actor = actor or item.actor
             item.updated_at = utc_now()
@@ -1296,10 +1331,14 @@ def list_account_discoveries(subject_id=None, review_state=None, limit=500):
             query = query.filter_by(subject_id=subject_id)
         if review_state:
             query = query.filter_by(review_state=review_state)
-        items = query.order_by(
-            AccountDiscovery.updated_at.desc(),
-            AccountDiscovery.id.desc(),
-        ).limit(limit).all()
+        items = (
+            query.order_by(
+                AccountDiscovery.updated_at.desc(),
+                AccountDiscovery.id.desc(),
+            )
+            .limit(limit)
+            .all()
+        )
         return _detach_all(session, items)
     finally:
         session.close()
@@ -1393,11 +1432,7 @@ def list_spine_raw_artifacts(run_id=None, limit=1000):
         query = session.query(SpineRawArtifact)
         if run_id is not None:
             query = query.filter_by(run_id=run_id)
-        items = (
-            query.order_by(SpineRawArtifact.created_at.desc())
-            .limit(limit)
-            .all()
-        )
+        items = query.order_by(SpineRawArtifact.created_at.desc()).limit(limit).all()
         return _detach_all(session, items)
     finally:
         session.close()
@@ -1690,11 +1725,7 @@ def update_identity_merge_candidate(candidate_id, state, actor=None, note=None):
     ensure_configured()
     session = Session()
     try:
-        item = (
-            session.query(IdentityMergeCandidate)
-            .filter_by(id=candidate_id)
-            .first()
-        )
+        item = session.query(IdentityMergeCandidate).filter_by(id=candidate_id).first()
         if not item:
             return None
         item.state = state
@@ -1769,11 +1800,7 @@ def get_media_profile_enrichment(enrichment_id):
     ensure_configured()
     session = Session()
     try:
-        item = (
-            session.query(MediaProfileEnrichment)
-            .filter_by(id=enrichment_id)
-            .first()
-        )
+        item = session.query(MediaProfileEnrichment).filter_by(id=enrichment_id).first()
         if item:
             session.expunge(item)
         return item
@@ -1785,11 +1812,7 @@ def update_media_profile_enrichment_payload(enrichment_id, payload):
     ensure_configured()
     session = Session()
     try:
-        item = (
-            session.query(MediaProfileEnrichment)
-            .filter_by(id=enrichment_id)
-            .first()
-        )
+        item = session.query(MediaProfileEnrichment).filter_by(id=enrichment_id).first()
         if not item:
             return None
         item.payload_json = json.dumps(payload)
@@ -1819,9 +1842,7 @@ def clear_spine_contradictions(subject_id):
     ensure_configured()
     session = Session()
     try:
-        session.query(SpineContradiction).filter_by(
-            subject_id=subject_id
-        ).delete()
+        session.query(SpineContradiction).filter_by(subject_id=subject_id).delete()
         session.commit()
     finally:
         session.close()
@@ -1876,11 +1897,7 @@ def get_spine_contradiction(contradiction_id):
     ensure_configured()
     session = Session()
     try:
-        item = (
-            session.query(SpineContradiction)
-            .filter_by(id=contradiction_id)
-            .first()
-        )
+        item = session.query(SpineContradiction).filter_by(id=contradiction_id).first()
         if item:
             session.expunge(item)
         return item
@@ -1897,11 +1914,7 @@ def update_spine_contradiction(
     ensure_configured()
     session = Session()
     try:
-        item = (
-            session.query(SpineContradiction)
-            .filter_by(id=contradiction_id)
-            .first()
-        )
+        item = session.query(SpineContradiction).filter_by(id=contradiction_id).first()
         if not item:
             return None
         item.status = status
@@ -2168,6 +2181,7 @@ def list_retention_runs(limit=100):
     finally:
         session.close()
 
+
 class ReviewDecision(Base):
     __tablename__ = "review_decisions"
 
@@ -2181,6 +2195,7 @@ class ReviewDecision(Base):
     reviewer = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=utc_now, nullable=False)
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
 
 class ReviewDecisionAudit(Base):
     __tablename__ = "review_decision_audit"
@@ -2205,7 +2220,9 @@ class CaseRecord(Base):
     title = Column(String(512), nullable=False)
     status = Column(String(64), nullable=False, default="open", index=True)
     priority = Column(String(64), nullable=False, default="normal", index=True)
-    review_state = Column(String(64), nullable=False, default="needs_review", index=True)
+    review_state = Column(
+        String(64), nullable=False, default="needs_review", index=True
+    )
     due_at = Column(String(64), nullable=True)
     tags_json = Column(Text, nullable=False, default="[]")
     payload_json = Column(Text, nullable=False, default="{}")
@@ -2301,7 +2318,9 @@ def get_case_record(case_key):
     ensure_configured()
     session = Session()
     try:
-        return _detach(session, session.query(CaseRecord).filter_by(case_key=case_key).first())
+        return _detach(
+            session, session.query(CaseRecord).filter_by(case_key=case_key).first()
+        )
     finally:
         session.close()
 
@@ -2466,6 +2485,7 @@ def get_responsible_use_scope():
         )
     finally:
         session.close()
+
 
 # v12.10.3 compatibility helper for Spine Intelligence review path.
 def review_spine_assertion(assertion_id, validation_state, actor=None, note=None):

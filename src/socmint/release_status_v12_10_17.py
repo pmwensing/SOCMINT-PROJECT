@@ -5,7 +5,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from .version import RELEASE_CHANNEL, RELEASE_NAME, RELEASE_TAG, VERSION, version_payload
+from .version import (
+    RELEASE_CHANNEL,
+    RELEASE_NAME,
+    RELEASE_TAG,
+    VERSION,
+    version_payload,
+)
 
 SCHEMA = "socmint.release_status.v12_10_17"
 LATEST_GATE_SCHEMA = "socmint.release_gates.latest.v12_10_17"
@@ -19,7 +25,11 @@ def utc_now() -> str:
 def _load_current_status(root: str | Path = ".") -> dict[str, Any]:
     path = Path(root) / "release" / "CURRENT_STATUS.json"
     if not path.exists():
-        return {"exists": False, "path": str(path), "error": "missing release/CURRENT_STATUS.json"}
+        return {
+            "exists": False,
+            "path": str(path),
+            "error": "missing release/CURRENT_STATUS.json",
+        }
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
         payload["exists"] = True
@@ -58,7 +68,9 @@ def _file_summary(path: Path) -> dict[str, Any]:
         return {"path": str(path), "name": path.name, "exists": False}
 
 
-def latest_gate_reports(report_root: str | Path = DEFAULT_REPORT_ROOT) -> dict[str, Any]:
+def latest_gate_reports(
+    report_root: str | Path = DEFAULT_REPORT_ROOT,
+) -> dict[str, Any]:
     root = Path(report_root)
     if not root.exists():
         return {
@@ -92,7 +104,9 @@ def latest_gate_reports(report_root: str | Path = DEFAULT_REPORT_ROOT) -> dict[s
     }
 
 
-def release_status(root: str | Path = ".", report_root: str | Path = DEFAULT_REPORT_ROOT) -> dict[str, Any]:
+def release_status(
+    root: str | Path = ".", report_root: str | Path = DEFAULT_REPORT_ROOT
+) -> dict[str, Any]:
     current = _load_current_status(root)
     gates = latest_gate_reports(report_root)
     version = version_payload()

@@ -5,15 +5,21 @@ from typing import Any
 
 from .case_delivery_handoff_package_v15_1 import canonical_json
 from .case_delivery_handoff_package_v15_1 import sha256_text
-from .case_delivery_recovery_action_receipt_v16_4 import build_case_delivery_recovery_action_receipt
+from .case_delivery_recovery_action_receipt_v16_4 import (
+    build_case_delivery_recovery_action_receipt,
+)
 from .case_delivery_recovery_action_receipt_verification_v16_5 import (
     verify_case_delivery_recovery_action_receipt,
 )
 from .case_delivery_recovery_v16_3 import build_case_delivery_recovery_from_request
 
 
-CASE_DELIVERY_RECOVERY_CLOSURE_RECORD_SCHEMA = "socmint.case_delivery_recovery_closure_record.v16_6"
-CASE_DELIVERY_RECOVERY_CLOSURE_RESULT_SCHEMA = "socmint.case_delivery_recovery_closure_record.v16_6.result"
+CASE_DELIVERY_RECOVERY_CLOSURE_RECORD_SCHEMA = (
+    "socmint.case_delivery_recovery_closure_record.v16_6"
+)
+CASE_DELIVERY_RECOVERY_CLOSURE_RESULT_SCHEMA = (
+    "socmint.case_delivery_recovery_closure_record.v16_6.result"
+)
 VERSION = "v16.6.0"
 
 CLOSABLE_RECEIPT_STATUSES = {"completed", "no_action_required"}
@@ -42,17 +48,27 @@ def _closure_payload(
         "completed_count": receipt.get("completed_count", 0),
         "pending_count": receipt.get("pending_count", 0),
         "closed_by": closer or "system",
-        "closed": verification.get("verified") is True and receipt.get("status") in CLOSABLE_RECEIPT_STATUSES,
+        "closed": verification.get("verified") is True
+        and receipt.get("status") in CLOSABLE_RECEIPT_STATUSES,
     }
 
 
-def _closure_blockers(receipt: dict[str, Any], verification: dict[str, Any]) -> list[dict[str, Any]]:
+def _closure_blockers(
+    receipt: dict[str, Any], verification: dict[str, Any]
+) -> list[dict[str, Any]]:
     blockers = []
     if not verification.get("verified"):
         blockers.extend(deepcopy(verification.get("blockers") or []))
-        blockers.append(_blocker("receipt_verification_blocked", "recovery action receipt verification did not pass"))
+        blockers.append(
+            _blocker(
+                "receipt_verification_blocked",
+                "recovery action receipt verification did not pass",
+            )
+        )
     if receipt and receipt.get("status") not in CLOSABLE_RECEIPT_STATUSES:
-        blockers.append(_blocker("receipt_not_complete", "recovery action receipt is not complete"))
+        blockers.append(
+            _blocker("receipt_not_complete", "recovery action receipt is not complete")
+        )
     return blockers
 
 
@@ -71,7 +87,9 @@ def build_case_delivery_recovery_closure_record(
         )
         safe_receipt = deepcopy(receipt_result.get("receipt") or {})
 
-    verification = verify_case_delivery_recovery_action_receipt(safe_receipt, safe_recovery)
+    verification = verify_case_delivery_recovery_action_receipt(
+        safe_receipt, safe_recovery
+    )
     blockers = _closure_blockers(safe_receipt, verification)
     if blockers:
         return {
@@ -93,7 +111,9 @@ def build_case_delivery_recovery_closure_record(
     closure = {
         **payload,
         "payload_sha256": payload_hash,
-        "closure_id": sha256_text(canonical_json({**payload, "payload_sha256": payload_hash})),
+        "closure_id": sha256_text(
+            canonical_json({**payload, "payload_sha256": payload_hash})
+        ),
     }
     return {
         "schema": CASE_DELIVERY_RECOVERY_CLOSURE_RESULT_SCHEMA,
@@ -110,11 +130,25 @@ def build_case_delivery_recovery_closure_record(
     }
 
 
-def build_case_delivery_recovery_closure_record_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def build_case_delivery_recovery_closure_record_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     safe_payload = deepcopy(payload or {})
-    recovery = safe_payload.get("recovery") if isinstance(safe_payload.get("recovery"), dict) else None
+    recovery = (
+        safe_payload.get("recovery")
+        if isinstance(safe_payload.get("recovery"), dict)
+        else None
+    )
     if recovery is None:
         recovery = build_case_delivery_recovery_from_request(case_id, safe_payload)
-    receipt = safe_payload.get("receipt") if isinstance(safe_payload.get("receipt"), dict) else None
-    closer = safe_payload.get("closer") if isinstance(safe_payload.get("closer"), str) else None
+    receipt = (
+        safe_payload.get("receipt")
+        if isinstance(safe_payload.get("receipt"), dict)
+        else None
+    )
+    closer = (
+        safe_payload.get("closer")
+        if isinstance(safe_payload.get("closer"), str)
+        else None
+    )
     return build_case_delivery_recovery_closure_record(recovery, receipt, closer=closer)

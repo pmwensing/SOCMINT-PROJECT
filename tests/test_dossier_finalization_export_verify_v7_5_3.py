@@ -10,17 +10,39 @@ from socmint.dossier_finalization_export_v7_5_2 import build_finalization_export
 from socmint.dossier_finalization_export_v7_5_2 import build_finalization_export_zip
 from socmint.dossier_finalization_export_v7_5_2 import canonical_json
 from socmint.dossier_finalization_export_verify_v7_5_3 import summarize_verification
-from socmint.dossier_finalization_export_verify_v7_5_3 import verify_finalization_export_files
-from socmint.dossier_finalization_export_verify_v7_5_3 import verify_finalization_export_packet
-from socmint.dossier_finalization_export_verify_v7_5_3 import verify_finalization_export_zip
+from socmint.dossier_finalization_export_verify_v7_5_3 import (
+    verify_finalization_export_files,
+)
+from socmint.dossier_finalization_export_verify_v7_5_3 import (
+    verify_finalization_export_packet,
+)
+from socmint.dossier_finalization_export_verify_v7_5_3 import (
+    verify_finalization_export_zip,
+)
 
 
 def base_payload():
     return {
         "quality_gate": {"status": "pass", "finding_count": 0},
-        "export_enforcement": {"status": "allowed", "allowed": True, "final_export_blocked": False},
-        "evidence_manifest": {"status": "pass", "appendix_summary": {"missing_ref_count": 0, "missing_hash_count": 0, "missing_source_count": 0}},
-        "identity_confidence": {"status": "pass", "contradiction_count": 0, "low_confidence_count": 0, "needs_review_count": 0},
+        "export_enforcement": {
+            "status": "allowed",
+            "allowed": True,
+            "final_export_blocked": False,
+        },
+        "evidence_manifest": {
+            "status": "pass",
+            "appendix_summary": {
+                "missing_ref_count": 0,
+                "missing_hash_count": 0,
+                "missing_source_count": 0,
+            },
+        },
+        "identity_confidence": {
+            "status": "pass",
+            "contradiction_count": 0,
+            "low_confidence_count": 0,
+            "needs_review_count": 0,
+        },
         "connector_compliance": {"status": "pass", "finding_count": 0},
         "policy_coverage": {"status": "pass", "finding_count": 0},
     }
@@ -45,7 +67,9 @@ def test_verifies_ready_v752_export_packet_as_verified():
 
 
 def test_verifies_v752_zip_bytes_as_verified():
-    report = verify_finalization_export_zip(build_finalization_export_zip(ready_packet()))
+    report = verify_finalization_export_zip(
+        build_finalization_export_zip(ready_packet())
+    )
 
     assert report["status"] == "verified"
     assert report["verified"] is True
@@ -58,7 +82,10 @@ def test_fails_when_manifest_json_is_missing():
     report = verify_finalization_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "missing_required_file" and item["path"] == "manifest.json" for item in report["failures"])
+    assert any(
+        item["code"] == "missing_required_file" and item["path"] == "manifest.json"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_required_file_is_missing():
@@ -68,7 +95,10 @@ def test_fails_when_required_file_is_missing():
     report = verify_finalization_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "missing_required_file" and item["path"] == "README.md" for item in report["failures"])
+    assert any(
+        item["code"] == "missing_required_file" and item["path"] == "README.md"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_sha256_does_not_match():
@@ -78,7 +108,10 @@ def test_fails_when_sha256_does_not_match():
     report = verify_finalization_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "sha256_mismatch" and item["path"] == "README.md" for item in report["failures"])
+    assert any(
+        item["code"] == "sha256_mismatch" and item["path"] == "README.md"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_size_does_not_match():
@@ -92,7 +125,10 @@ def test_fails_when_size_does_not_match():
     report = verify_finalization_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "size_mismatch" and item["path"] == "README.md" for item in report["failures"])
+    assert any(
+        item["code"] == "size_mismatch" and item["path"] == "README.md"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_finalization_and_summary_decisions_differ():
@@ -103,7 +139,11 @@ def test_fails_when_finalization_and_summary_decisions_differ():
     manifest = json.loads(files["manifest.json"])
     for row in manifest["files"]:
         if row["path"] == "finalization_summary.json":
-            row["sha256"] = __import__("hashlib").sha256(files["finalization_summary.json"]).hexdigest()
+            row["sha256"] = (
+                __import__("hashlib")
+                .sha256(files["finalization_summary.json"])
+                .hexdigest()
+            )
             row["size_bytes"] = len(files["finalization_summary.json"])
     files["manifest.json"] = canonical_json(manifest).encode("utf-8")
 
@@ -137,7 +177,11 @@ def test_needs_human_review_when_unexpected_extra_file_exists():
 def test_needs_human_review_when_finalization_decision_is_blocked_but_hashes_match():
     payload = base_payload()
     payload["quality_gate"] = {"status": "fail", "finding_count": 1}
-    payload["export_enforcement"] = {"status": "blocked", "allowed": False, "final_export_blocked": True}
+    payload["export_enforcement"] = {
+        "status": "blocked",
+        "allowed": False,
+        "final_export_blocked": True,
+    }
     packet = build_finalization_export_packet(payload)
 
     report = verify_finalization_export_packet(packet)
@@ -164,7 +208,10 @@ def test_summarize_verification_returns_compact_summary():
     report = verify_finalization_export_packet(ready_packet())
     summary = summarize_verification(report)
 
-    assert summary["schema"] == "socmint.v7_5_3.dossier_finalization_export_verification.summary"
+    assert (
+        summary["schema"]
+        == "socmint.v7_5_3.dossier_finalization_export_verification.summary"
+    )
     assert summary["status"] == "verified"
     assert summary["verified"] is True
     assert "manifest" not in summary

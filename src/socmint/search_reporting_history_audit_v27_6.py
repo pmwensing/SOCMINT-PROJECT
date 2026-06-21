@@ -7,7 +7,10 @@ from .dossier_assembly_workspace_v21_0 import _sha
 from .report_builder_events_v27_5 import current_reports, history as report_history
 from .report_export_packages_v27_5 import latest_packages
 from .saved_search_view_events_v27_3 import current_views, history as saved_view_history
-from .watchlist_monitoring_events_v27_4 import current_watchlists, history as watchlist_history
+from .watchlist_monitoring_events_v27_4 import (
+    current_watchlists,
+    history as watchlist_history,
+)
 
 SCHEMA = "socmint.search_reporting_history_audit.v27_6"
 VERSION = "v27.6.0"
@@ -29,8 +32,12 @@ def _event_family(action: str, event_type: str) -> str:
 def _source_bindings(event: dict[str, Any]) -> dict[str, Any]:
     bindings = {}
     for key in (
-        "saved_view_binding", "previous_view_binding", "watchlist_binding",
-        "report_binding", "previous_report_binding", "executed_access_scope",
+        "saved_view_binding",
+        "previous_view_binding",
+        "watchlist_binding",
+        "report_binding",
+        "previous_report_binding",
+        "executed_access_scope",
     ):
         value = event.get(key)
         if value not in (None, {}, []):
@@ -46,17 +53,27 @@ def _normalize(event: dict[str, Any]) -> dict[str, Any]:
     identifiers = {
         key: event.get(key)
         for key in (
-            "saved_view_id", "watchlist_id", "monitoring_run_id", "report_id",
-            "report_event_id", "package_id", "package_event_id",
+            "saved_view_id",
+            "watchlist_id",
+            "monitoring_run_id",
+            "report_id",
+            "report_event_id",
+            "package_id",
+            "package_event_id",
         )
         if event.get(key)
     }
     hashes = {
         key: event.get(key)
         for key in (
-            "saved_view_event_sha256", "definition_sha256", "watchlist_event_sha256",
-            "result_set_sha256", "previous_result_set_sha256", "report_event_sha256",
-            "file_manifest_sha256", "package_sha256",
+            "saved_view_event_sha256",
+            "definition_sha256",
+            "watchlist_event_sha256",
+            "result_set_sha256",
+            "previous_result_set_sha256",
+            "report_event_sha256",
+            "file_manifest_sha256",
+            "package_sha256",
         )
         if event.get(key)
     }
@@ -69,7 +86,10 @@ def _normalize(event: dict[str, Any]) -> dict[str, Any]:
         "actor": event.get("recorded_by"),
         "occurred_at": event.get("recorded_at"),
         "owner": event.get("owner"),
-        "status": event.get("status") or event.get("view_status") or event.get("watchlist_status") or event.get("report_status"),
+        "status": event.get("status")
+        or event.get("view_status")
+        or event.get("watchlist_status")
+        or event.get("report_status"),
         "identifiers": identifiers,
         "hashes": hashes,
         "source_bindings": bindings,
@@ -108,8 +128,15 @@ def build_search_reporting_history_audit(
     if requested_families:
         events = [item for item in events if item["family"] in requested_families]
     if requested_actors:
-        events = [item for item in events if str(item.get("actor") or "") in requested_actors]
-    events.sort(key=lambda item: (item.get("occurred_at") or "", item.get("action_record_id") or 0))
+        events = [
+            item for item in events if str(item.get("actor") or "") in requested_actors
+        ]
+    events.sort(
+        key=lambda item: (
+            item.get("occurred_at") or "",
+            item.get("action_record_id") or 0,
+        )
+    )
     safe_limit = max(1, min(int(limit or 500), 2000))
     events = events[-safe_limit:]
     family_counts = Counter(item["family"] for item in events)
@@ -123,14 +150,23 @@ def build_search_reporting_history_audit(
     }
     state_counts = {
         "saved_view_count": len(state["saved_views"]),
-        "active_saved_view_count": sum(item.get("view_status") == "active" for item in state["saved_views"]),
+        "active_saved_view_count": sum(
+            item.get("view_status") == "active" for item in state["saved_views"]
+        ),
         "watchlist_count": len(state["watchlists"]),
-        "active_watchlist_count": sum(item.get("watchlist_status") == "active" for item in state["watchlists"]),
+        "active_watchlist_count": sum(
+            item.get("watchlist_status") == "active" for item in state["watchlists"]
+        ),
         "report_count": len(state["reports"]),
-        "active_report_count": sum(item.get("report_status") == "active" for item in state["reports"]),
+        "active_report_count": sum(
+            item.get("report_status") == "active" for item in state["reports"]
+        ),
         "report_package_count": len(state["report_packages"]),
     }
-    core = {"events": [item["history_event_id"] for item in events], "state_counts": state_counts}
+    core = {
+        "events": [item["history_event_id"] for item in events],
+        "state_counts": state_counts,
+    }
     return {
         "schema": SCHEMA,
         "version": VERSION,
@@ -143,7 +179,11 @@ def build_search_reporting_history_audit(
         "current_state": state,
         "current_state_counts": state_counts,
         "history_sha256": _sha(core),
-        "filters": {"families": sorted(requested_families), "actors": sorted(requested_actors), "limit": safe_limit},
+        "filters": {
+            "families": sorted(requested_families),
+            "actors": sorted(requested_actors),
+            "limit": safe_limit,
+        },
         "read_only": True,
         "source_records_mutated": False,
         "history_events_mutated": False,

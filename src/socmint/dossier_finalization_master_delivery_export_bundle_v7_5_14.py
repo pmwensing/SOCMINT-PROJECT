@@ -9,11 +9,19 @@ from copy import deepcopy
 from datetime import UTC, datetime
 from typing import Any
 
-from .dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index
-from .dossier_finalization_master_delivery_index_v7_5_13 import render_master_delivery_index_markdown
+from .dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index,
+)
+from .dossier_finalization_master_delivery_index_v7_5_13 import (
+    render_master_delivery_index_markdown,
+)
 
-MASTER_DELIVERY_EXPORT_BUNDLE_SCHEMA = "socmint.v7_5_14.dossier_finalization_master_delivery_export_bundle"
-MASTER_DELIVERY_EXPORT_MANIFEST_SCHEMA = "socmint.v7_5_14.dossier_finalization_master_delivery_export_manifest"
+MASTER_DELIVERY_EXPORT_BUNDLE_SCHEMA = (
+    "socmint.v7_5_14.dossier_finalization_master_delivery_export_bundle"
+)
+MASTER_DELIVERY_EXPORT_MANIFEST_SCHEMA = (
+    "socmint.v7_5_14.dossier_finalization_master_delivery_export_manifest"
+)
 APPROVED_LINE = "v7.5.14"
 
 REQUIRED_FILES = (
@@ -43,7 +51,10 @@ def safe_bundle_name(name: str | None) -> str:
 
 
 def canonical_json(data: dict[str, Any]) -> str:
-    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
+    return (
+        json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        + "\n"
+    )
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -74,12 +85,16 @@ def _base_payload_files(bundle: dict[str, Any]) -> dict[str, bytes]:
     return {
         "README.md": _readme(bundle).encode("utf-8"),
         "master_delivery_index.json": canonical_json(index).encode("utf-8"),
-        "master_delivery_index.md": render_master_delivery_index_markdown(index).encode("utf-8"),
+        "master_delivery_index.md": render_master_delivery_index_markdown(index).encode(
+            "utf-8"
+        ),
         "master_delivery_index_summary.json": canonical_json(summary).encode("utf-8"),
     }
 
 
-def _manifest(files: dict[str, bytes], *, generated_at: str | None = None) -> dict[str, Any]:
+def _manifest(
+    files: dict[str, bytes], *, generated_at: str | None = None
+) -> dict[str, Any]:
     rows = []
     for path in REQUIRED_FILES:
         if path == "manifest.json":
@@ -111,7 +126,9 @@ def _manifest(files: dict[str, bytes], *, generated_at: str | None = None) -> di
     }
 
 
-def build_master_delivery_export_bundle(index: dict[str, Any], *, bundle_name: str | None = None) -> dict[str, Any]:
+def build_master_delivery_export_bundle(
+    index: dict[str, Any], *, bundle_name: str | None = None
+) -> dict[str, Any]:
     safe_index = deepcopy(index or {})
     bundle = {
         "schema": MASTER_DELIVERY_EXPORT_BUNDLE_SCHEMA,
@@ -133,7 +150,9 @@ def build_master_delivery_export_bundle(index: dict[str, Any], *, bundle_name: s
     return bundle
 
 
-def build_master_delivery_export_bundle_files(bundle: dict[str, Any]) -> dict[str, bytes]:
+def build_master_delivery_export_bundle_files(
+    bundle: dict[str, Any],
+) -> dict[str, bytes]:
     safe_bundle = deepcopy(bundle or {})
     files = _base_payload_files(safe_bundle)
     manifest = deepcopy(safe_bundle.get("manifest") or {})
@@ -160,5 +179,7 @@ def build_master_delivery_export_bundle_from_verification_report(
     notes: str | None = None,
     bundle_name: str | None = None,
 ) -> dict[str, Any]:
-    index = build_master_delivery_index(deepcopy(verification_report or {}), operator=operator, notes=notes)
+    index = build_master_delivery_index(
+        deepcopy(verification_report or {}), operator=operator, notes=notes
+    )
     return build_master_delivery_export_bundle(index, bundle_name=bundle_name)

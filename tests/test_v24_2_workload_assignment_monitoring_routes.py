@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -18,7 +20,16 @@ def test_v24_2_workload_api_and_dashboard(tmp_path, monkeypatch):
         "schema": "socmint.portfolio_operations_dashboard.v24_0",
         "version": "v24.0.0",
         "status": "ready",
-        "counts": {"total": 0, "active": 0, "blocked": 0, "delivered": 0, "closed": 0, "archived": 0, "reopened": 0, "unstarted": 0},
+        "counts": {
+            "total": 0,
+            "active": 0,
+            "blocked": 0,
+            "delivered": 0,
+            "closed": 0,
+            "archived": 0,
+            "reopened": 0,
+            "unstarted": 0,
+        },
         "stage_counts": {},
         "cases": [],
         "blocked_cases": [],
@@ -44,32 +55,42 @@ def test_v24_2_workload_api_and_dashboard(tmp_path, monkeypatch):
         "version": "v24.2.0",
         "status": "attention_required",
         "generated_at": "2026-06-15T14:00:00+00:00",
-        "counts": {"total_decisions": 3, "active_workload": 2, "assigned_active": 1, "unassigned_active": 1, "reviewer_count": 1},
+        "counts": {
+            "total_decisions": 3,
+            "active_workload": 2,
+            "assigned_active": 1,
+            "unassigned_active": 1,
+            "reviewer_count": 1,
+        },
         "review_state_counts": {"unreviewed": 2},
-        "reviewers": [{
-            "reviewer": "alice",
-            "total_assigned": 2,
-            "active_workload": 1,
-            "unreviewed": 1,
-            "needs_follow_up": 0,
-            "reviewed": 1,
-            "accepted": 0,
-            "oldest_assignment_age_hours": 4.0,
-            "average_assignment_age_hours": 3.0,
-            "reviewer_queue_href": "/case-intelligence-review/my-assignments",
-            "supervisor_queue_href": "/case-intelligence-review/supervisor-queue?assigned_reviewer=alice",
-            "workload_delta_from_average": 0.0,
-            "workload_imbalanced": False,
-            "overloaded": False,
-        }],
+        "reviewers": [
+            {
+                "reviewer": "alice",
+                "total_assigned": 2,
+                "active_workload": 1,
+                "unreviewed": 1,
+                "needs_follow_up": 0,
+                "reviewed": 1,
+                "accepted": 0,
+                "oldest_assignment_age_hours": 4.0,
+                "average_assignment_age_hours": 3.0,
+                "reviewer_queue_href": "/case-intelligence-review/my-assignments",
+                "supervisor_queue_href": "/case-intelligence-review/supervisor-queue?assigned_reviewer=alice",
+                "workload_delta_from_average": 0.0,
+                "workload_imbalanced": False,
+                "overloaded": False,
+            }
+        ],
         "entries": [],
-        "unassigned_work": [{
-            "case_id": "case-alpha",
-            "decision": "accept",
-            "review_state": "unreviewed",
-            "age_hours": 8.0,
-            "case_workspace_href": "/case-intelligence-review/case-alpha",
-        }],
+        "unassigned_work": [
+            {
+                "case_id": "case-alpha",
+                "decision": "accept",
+                "review_state": "unreviewed",
+                "age_hours": 8.0,
+                "case_workspace_href": "/case-intelligence-review/case-alpha",
+            }
+        ],
         "workload_balance": {
             "minimum_active_workload": 1,
             "maximum_active_workload": 1,
@@ -87,12 +108,19 @@ def test_v24_2_workload_api_and_dashboard(tmp_path, monkeypatch):
         "next_action": "assign_unassigned_work",
     }
 
-    monkeypatch.setattr(routes, "build_portfolio_operations_dashboard", lambda: portfolio)
+    monkeypatch.setattr(
+        routes, "build_portfolio_operations_dashboard", lambda: portfolio
+    )
     monkeypatch.setattr(routes, "build_case_status_stage_overview", lambda: stage)
-    monkeypatch.setattr(routes, "build_workload_assignment_monitoring", lambda: workload)
+    monkeypatch.setattr(
+        routes, "build_workload_assignment_monitoring", lambda: workload
+    )
 
     client = _app(tmp_path, monkeypatch).test_client()
-    assert client.get("/api/v1/portfolio-operations/workload-monitoring").status_code == 401
+    assert (
+        client.get("/api/v1/portfolio-operations/workload-monitoring").status_code
+        == 401
+    )
 
     with client.session_transaction() as sess:
         sess["user"] = "manager"
@@ -113,7 +141,9 @@ def test_v24_2_workload_api_and_dashboard(tmp_path, monkeypatch):
 
 
 def test_v24_2_release_note_and_no_migration():
-    note = Path("release/V24_2_WORKLOAD_ASSIGNMENT_MONITORING.md").read_text(encoding="utf-8")
+    note = Path("release/V24_2_WORKLOAD_ASSIGNMENT_MONITORING.md").read_text(
+        encoding="utf-8"
+    )
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

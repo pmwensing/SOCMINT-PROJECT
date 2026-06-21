@@ -1,5 +1,7 @@
 from socmint.dashboard import create_app
-from socmint.dossier_finalization_routes_v7_5_1 import register_dossier_finalization_routes
+from socmint.dossier_finalization_routes_v7_5_1 import (
+    register_dossier_finalization_routes,
+)
 
 CSRF_TOKEN = "test-csrf-token"
 CSRF_HEADERS = {"X-CSRF-Token": CSRF_TOKEN}
@@ -8,9 +10,25 @@ CSRF_HEADERS = {"X-CSRF-Token": CSRF_TOKEN}
 def base_payload():
     return {
         "quality_gate": {"status": "pass", "finding_count": 0},
-        "export_enforcement": {"status": "allowed", "allowed": True, "final_export_blocked": False},
-        "evidence_manifest": {"status": "pass", "appendix_summary": {"missing_ref_count": 0, "missing_hash_count": 0, "missing_source_count": 0}},
-        "identity_confidence": {"status": "pass", "contradiction_count": 0, "low_confidence_count": 0, "needs_review_count": 0},
+        "export_enforcement": {
+            "status": "allowed",
+            "allowed": True,
+            "final_export_blocked": False,
+        },
+        "evidence_manifest": {
+            "status": "pass",
+            "appendix_summary": {
+                "missing_ref_count": 0,
+                "missing_hash_count": 0,
+                "missing_source_count": 0,
+            },
+        },
+        "identity_confidence": {
+            "status": "pass",
+            "contradiction_count": 0,
+            "low_confidence_count": 0,
+            "needs_review_count": 0,
+        },
         "connector_compliance": {"status": "pass", "finding_count": 0},
         "policy_coverage": {"status": "pass", "finding_count": 0},
     }
@@ -31,7 +49,11 @@ def post_json(client, path, payload):
 
 def test_json_route_returns_packet():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization", {"dossier": base_payload(), "export_mode": "final"})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization",
+        {"dossier": base_payload(), "export_mode": "final"},
+    )
 
     assert response.status_code == 200
     data = response.get_json()
@@ -41,7 +63,11 @@ def test_json_route_returns_packet():
 
 def test_markdown_route_returns_packet_text():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/markdown", {"dossier": base_payload(), "export_mode": "final"})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/markdown",
+        {"dossier": base_payload(), "export_mode": "final"},
+    )
 
     assert response.status_code == 200
     text = response.get_data(as_text=True)
@@ -69,7 +95,10 @@ def test_wrapped_request_shape_uses_connectors_and_policy_events():
                     "risk_level": "low",
                     "source_method": "analyst_supplied",
                     "rate_limit_policy": {"requests_per_minute": 0},
-                    "policy_metadata": {"human_review_required": False, "public_source_only": True},
+                    "policy_metadata": {
+                        "human_review_required": False,
+                        "public_source_only": True,
+                    },
                     "dry_run_supported": True,
                 }
             ],
@@ -97,7 +126,9 @@ def test_wrapped_request_shape_uses_connectors_and_policy_events():
 
 def test_raw_dossier_request_shape_works():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization", base_payload())
+    response = post_json(
+        client, "/api/v1/dossier-builder/v3/intelligence/finalization", base_payload()
+    )
 
     assert response.status_code == 200
     assert response.get_json()["schema"] == "socmint.v7_5_1.dossier_finalization"
@@ -111,6 +142,10 @@ def test_route_treats_connectors_as_metadata_only(monkeypatch):
 
     monkeypatch.setattr(finalization, "execute_connector", explode, raising=False)
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization", {"dossier": base_payload(), "connectors": []})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization",
+        {"dossier": base_payload(), "connectors": []},
+    )
 
     assert response.status_code == 200

@@ -59,18 +59,47 @@ def main() -> int:
                 json={"decision": "approve", "reason": "approve final dashboard smoke"},
                 headers={"X-CSRF-Token": "v996-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("gate", {}).get("gate_status") == "approved"
-            print(("[PASS]" if ok else "[FAIL]"), "approve final gate", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("gate", {}).get("gate_status") == "approved"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "approve final gate",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("approve final gate", response.status_code, response.get_data(as_text=True)[:2000]))
+                failures.append(
+                    (
+                        "approve final gate",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2000],
+                    )
+                )
 
-            client.post("/api/v1/product/final-gate/write", headers={"X-CSRF-Token": "v996-csrf"})
+            client.post(
+                "/api/v1/product/final-gate/write",
+                headers={"X-CSRF-Token": "v996-csrf"},
+            )
 
-            package_root = Path("storage/product_packages/v9_9_6_final_dashboard_package")
+            package_root = Path(
+                "storage/product_packages/v9_9_6_final_dashboard_package"
+            )
             package_root.mkdir(parents=True, exist_ok=True)
-            (package_root / "PACKAGE_MANIFEST.json").write_text(json.dumps({"selected_count": 1, "copied_artifact_count": 1, "metadata_file_count": 2}, indent=2))
+            (package_root / "PACKAGE_MANIFEST.json").write_text(
+                json.dumps(
+                    {
+                        "selected_count": 1,
+                        "copied_artifact_count": 1,
+                        "metadata_file_count": 2,
+                    },
+                    indent=2,
+                )
+            )
             (package_root / "PACKAGE_INDEX.md").write_text("# package index\n")
-            package_zip = Path("storage/product_packages/v9_9_6_final_dashboard_package.zip")
+            package_zip = Path(
+                "storage/product_packages/v9_9_6_final_dashboard_package.zip"
+            )
             with zipfile.ZipFile(package_zip, "w") as zf:
                 zf.writestr("PACKAGE_MANIFEST.json", "{}")
                 zf.writestr("PACKAGE_INDEX.md", "# index\n")
@@ -81,36 +110,94 @@ def main() -> int:
                 json={"release_name": release_name},
                 headers={"X-CSRF-Token": "v996-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("status") == "published"
-            print(("[PASS]" if ok else "[FAIL]"), "publish final release", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("status") == "published"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "publish final release",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("publish final release", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "publish final release",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
             response = client.post(
                 f"/api/v1/product/final-release/archive/{release_name}/create",
                 headers={"X-CSRF-Token": "v996-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("version") == "9.9.3"
-            print(("[PASS]" if ok else "[FAIL]"), "create archive seal", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("version") == "9.9.3"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "create archive seal",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("create archive seal", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "create archive seal",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
-            response = client.get(f"/api/v1/product/final-release/verify?release_name={release_name}")
-            ok = response.status_code == 200 and response.get_json().get("status") == "pass"
-            print(("[PASS]" if ok else "[FAIL]"), "verify final release", response.status_code)
+            response = client.get(
+                f"/api/v1/product/final-release/verify?release_name={release_name}"
+            )
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("status") == "pass"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "verify final release",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("verify final release", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "verify final release",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final-release/distribution/decision",
-                json={"decision": "ready", "release_name": release_name, "reason": "ready final dashboard smoke"},
+                json={
+                    "decision": "ready",
+                    "release_name": release_name,
+                    "reason": "ready final dashboard smoke",
+                },
                 headers={"X-CSRF-Token": "v996-csrf"},
             )
             payload = response.get_json() if response.is_json else {}
-            ok = response.status_code == 200 and payload.get("state", {}).get("ready") is True
-            print(("[PASS]" if ok else "[FAIL]"), "mark distribution ready", response.status_code)
+            ok = (
+                response.status_code == 200
+                and payload.get("state", {}).get("ready") is True
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "mark distribution ready",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("mark distribution ready", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "mark distribution ready",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.get(f"/api/v1/product/final?release_name={release_name}")
             final_payload = response.get_json() if response.is_json else {}
@@ -119,12 +206,24 @@ def main() -> int:
                 and final_payload.get("version") == "9.9.6"
                 and final_payload.get("status") == "ready"
                 and final_payload.get("distribution_ready") is True
-                and final_payload.get("version_freeze", {}).get("final_version") == "v9.9.6"
-                and final_payload.get("chain", {}).get("distribution", {}).get("ready") is True
+                and final_payload.get("version_freeze", {}).get("final_version")
+                == "v9.9.6"
+                and final_payload.get("chain", {}).get("distribution", {}).get("ready")
+                is True
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET final dashboard API", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET final dashboard API",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET final dashboard API", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "GET final dashboard API",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/final/write",
@@ -139,9 +238,19 @@ def main() -> int:
                 and Path("release/V9_9_6_FINAL_PRODUCT_RELEASE_INDEX.md").exists()
                 and Path("release/V9_9_6_FINAL_PRODUCT_VERSION_FREEZE.json").exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "write final product release index", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write final product release index",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write final product release index", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "write final product release index",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.get(f"/product/final?release_name={release_name}")
             body = response.get_data(as_text=True)
@@ -152,16 +261,36 @@ def main() -> int:
                 and "Distribution" in body
                 and "READY" in body
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET final product dashboard UI", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET final product dashboard UI",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET final product dashboard UI", response.status_code, body[:2500]))
+                failures.append(
+                    (
+                        "GET final product dashboard UI",
+                        response.status_code,
+                        body[:2500],
+                    )
+                )
 
             response = client.get("/product/final-release/distribution")
             body = response.get_data(as_text=True)
             ok = response.status_code == 200 and "Open Final Product Dashboard" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET distribution final dashboard link", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET distribution final dashboard link",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET distribution final dashboard link", response.status_code, body[:2000]))
+                failures.append(
+                    (
+                        "GET distribution final dashboard link",
+                        response.status_code,
+                        body[:2000],
+                    )
+                )
 
             if failures:
                 for name, status, body in failures:

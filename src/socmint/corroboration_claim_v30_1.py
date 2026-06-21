@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from . import database
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 
 SCHEMA = "socmint.corroboration_claim.v30_1"
 VERSION = "v30.1.0"
@@ -61,17 +66,23 @@ def current_claims() -> list[dict[str, Any]]:
         elif claim_id in current:
             current[claim_id]["claim_state"] = event.get("to_state")
             current[claim_id]["latest_state_reason"] = event.get("reason")
-            current[claim_id]["latest_state_sha256"] = event.get("claim_state_event_sha256")
+            current[claim_id]["latest_state_sha256"] = event.get(
+                "claim_state_event_sha256"
+            )
     for claim_id, item in current.items():
         item["state_history"] = histories.get(claim_id, [])
     return sorted(current.values(), key=lambda item: str(item.get("claim_id")))
 
 
 def find_claim(claim_id: str) -> dict[str, Any] | None:
-    return next((item for item in current_claims() if item.get("claim_id") == claim_id), None)
+    return next(
+        (item for item in current_claims() if item.get("claim_id") == claim_id), None
+    )
 
 
-def _record(action: str, actor: str, target: str, event: dict[str, Any], ip_address: str | None) -> dict[str, Any]:
+def _record(
+    action: str, actor: str, target: str, event: dict[str, Any], ip_address: str | None
+) -> dict[str, Any]:
     _ensure_storage()
     session = database.Session()
     try:
@@ -132,7 +143,12 @@ def create_corroboration_claim(
         return blocked("administrative_reason_required")
     if not refs:
         return blocked("source_reference_required")
-    if any(not isinstance(ref, dict) or not str(ref.get("source_type") or "").strip() or not str(ref.get("source_id") or "").strip() for ref in refs):
+    if any(
+        not isinstance(ref, dict)
+        or not str(ref.get("source_type") or "").strip()
+        or not str(ref.get("source_id") or "").strip()
+        for ref in refs
+    ):
         return blocked("source_reference_invalid")
 
     canonical_refs = sorted(
@@ -183,7 +199,11 @@ def create_corroboration_claim(
     }
     event["claim_event_sha256"] = _sha(event)
     result = _record(CREATE_ACTION, actor, claim_id, event, ip_address)
-    return {**result, "status": "corroboration_claim_created", "next_action": "bind_claim_evidence_and_observations"}
+    return {
+        **result,
+        "status": "corroboration_claim_created",
+        "next_action": "bind_claim_evidence_and_observations",
+    }
 
 
 def change_claim_state(
@@ -231,4 +251,8 @@ def change_claim_state(
     }
     event["claim_state_event_sha256"] = _sha(event)
     result = _record(STATE_ACTION, actor, claim_id, event, ip_address)
-    return {**result, "status": "corroboration_claim_state_changed", "next_action": "retain_claim_history"}
+    return {
+        **result,
+        "status": "corroboration_claim_state_changed",
+        "next_action": "retain_claim_history",
+    }

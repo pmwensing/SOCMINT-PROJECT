@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -17,10 +19,30 @@ def _workspace():
         "version": "v26.4.0",
         "status": "attention_required",
         "case_id": "case-a",
-        "response_types": ["acknowledgement", "acceptance", "decline", "response_note", "completion", "escalation", "resolution"],
+        "response_types": [
+            "acknowledgement",
+            "acceptance",
+            "decline",
+            "response_note",
+            "completion",
+            "escalation",
+            "resolution",
+        ],
         "target_types": ["note", "request", "handoff"],
-        "latest_responses": [{"target_type": "request", "target_id": "request-1", "response_type": "acceptance"}],
-        "unresolved_responses": [{"target_type": "request", "target_id": "request-1", "response_type": "acceptance"}],
+        "latest_responses": [
+            {
+                "target_type": "request",
+                "target_id": "request-1",
+                "response_type": "acceptance",
+            }
+        ],
+        "unresolved_responses": [
+            {
+                "target_type": "request",
+                "target_id": "request-1",
+                "response_type": "acceptance",
+            }
+        ],
         "counts": {"history": 1, "targets": 1, "unresolved": 1, "resolved": 0},
         "history": [],
         "source_records_mutated": False,
@@ -33,15 +55,21 @@ def _workspace():
 def test_v26_4_routes_require_login_enforce_scope_and_render(tmp_path, monkeypatch):
     from src.socmint import collaboration_responses_resolution_routes_v26_4 as routes
 
-    monkeypatch.setattr(routes, "build_collaboration_response_workspace", lambda case_id: _workspace())
-    monkeypatch.setattr(routes, "record_collaboration_response", lambda case_id, **kwargs: {
-        "status": "collaboration_response_recorded",
-        "case_id": case_id,
-        "target_type": kwargs["target_type"],
-        "target_id": kwargs["target_id"],
-        "response_type": kwargs["response_type"],
-        "recorded_by": kwargs["responding_user"],
-    })
+    monkeypatch.setattr(
+        routes, "build_collaboration_response_workspace", lambda case_id: _workspace()
+    )
+    monkeypatch.setattr(
+        routes,
+        "record_collaboration_response",
+        lambda case_id, **kwargs: {
+            "status": "collaboration_response_recorded",
+            "case_id": case_id,
+            "target_type": kwargs["target_type"],
+            "target_id": kwargs["target_id"],
+            "response_type": kwargs["response_type"],
+            "recorded_by": kwargs["responding_user"],
+        },
+    )
 
     client = _app(tmp_path, monkeypatch).test_client()
     assert client.get("/api/v1/cases/case-a/collaboration-responses").status_code == 401
@@ -53,11 +81,14 @@ def test_v26_4_routes_require_login_enforce_scope_and_render(tmp_path, monkeypat
         sess["_csrf_token"] = "csrf-v26-4"
 
     assert client.get("/api/v1/cases/hidden/collaboration-responses").status_code == 403
-    assert client.post(
-        "/api/v1/cases/hidden/collaboration-responses",
-        json={"confirmed": True},
-        headers={"X-CSRF-Token": "csrf-v26-4"},
-    ).status_code == 403
+    assert (
+        client.post(
+            "/api/v1/cases/hidden/collaboration-responses",
+            json={"confirmed": True},
+            headers={"X-CSRF-Token": "csrf-v26-4"},
+        ).status_code
+        == 403
+    )
 
     ui = client.get("/cases/case-a/collaboration-responses")
     api = client.get("/api/v1/cases/case-a/collaboration-responses")
@@ -87,8 +118,12 @@ def test_v26_4_routes_require_login_enforce_scope_and_render(tmp_path, monkeypat
 
 
 def test_v26_4_release_note_client_and_no_migration():
-    note = Path("release/V26_4_ACKNOWLEDGEMENTS_RESPONSES_RESOLUTION.md").read_text(encoding="utf-8")
-    script = Path("src/socmint/static/collaboration_responses_resolution_v26_4.js").read_text(encoding="utf-8")
+    note = Path("release/V26_4_ACKNOWLEDGEMENTS_RESPONSES_RESOLUTION.md").read_text(
+        encoding="utf-8"
+    )
+    script = Path(
+        "src/socmint/static/collaboration_responses_resolution_v26_4.js"
+    ).read_text(encoding="utf-8")
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

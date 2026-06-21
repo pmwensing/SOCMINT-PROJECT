@@ -21,6 +21,8 @@ def register_distribution_handoff_packet_routes(app):
     def api_distribution_handoff_markdown(case_id: str):
         if not _login_required():
             return Response("login required\n", status=401, mimetype="text/plain")
-        return Response(distribution_handoff_markdown(case_id=case_id), mimetype="text/markdown")
+        return Response(
+            distribution_handoff_markdown(case_id=case_id), mimetype="text/markdown"
+        )
 
     return app

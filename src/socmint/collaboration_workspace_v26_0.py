@@ -39,7 +39,9 @@ OPEN_STATES = {"requested", "pending", "acknowledged", "accepted", "overdue"}
 
 def _collaboration_events() -> list[dict[str, Any]]:
     _ensure_storage()
-    actions = tuple(sorted(TEAM_ACTIONS | REQUEST_ACTIONS | HANDOFF_ACTIONS | UPDATE_ACTIONS))
+    actions = tuple(
+        sorted(TEAM_ACTIONS | REQUEST_ACTIONS | HANDOFF_ACTIONS | UPDATE_ACTIONS)
+    )
     session = database.Session()
     try:
         rows = (
@@ -116,25 +118,26 @@ def build_collaboration_workspace(
     user = str(user_identity or "").strip()
     portfolio_payload = portfolio or build_portfolio_operations_dashboard()
     workload_payload = workload or build_workload_assignment_monitoring()
-    events = collaboration_events if collaboration_events is not None else _collaboration_events()
+    events = (
+        collaboration_events
+        if collaboration_events is not None
+        else _collaboration_events()
+    )
     events = [
         event
         for event in events
-        if event.get("case_id")
-        and _visible(str(event["case_id"]), allowed_case_ids)
+        if event.get("case_id") and _visible(str(event["case_id"]), allowed_case_ids)
     ]
 
     portfolio_cases = {
         str(item.get("case_id")): item
         for item in portfolio_payload.get("cases") or []
-        if item.get("case_id")
-        and _visible(str(item.get("case_id")), allowed_case_ids)
+        if item.get("case_id") and _visible(str(item.get("case_id")), allowed_case_ids)
     }
     workload_entries = [
         item
         for item in workload_payload.get("entries") or []
-        if item.get("case_id")
-        and _visible(str(item.get("case_id")), allowed_case_ids)
+        if item.get("case_id") and _visible(str(item.get("case_id")), allowed_case_ids)
     ]
 
     roles_by_case: dict[str, set[str]] = defaultdict(set)
@@ -202,7 +205,10 @@ def build_collaboration_workspace(
         } | mentioned:
             if collaborator:
                 collaborators_by_case[case_id].add(collaborator)
-        if user in {actor, requested_by, requested_from, assigned_to} or user in mentioned:
+        if (
+            user in {actor, requested_by, requested_from, assigned_to}
+            or user in mentioned
+        ):
             roles_by_case[case_id].add("participant")
             participation_reasons[case_id].add("collaboration_event")
 
@@ -351,9 +357,7 @@ def build_collaboration_workspace(
                 "status": item.get("status"),
                 "blocked": bool(item.get("blocked")),
                 "blockers": blockers,
-                "active_collaborators": sorted(
-                    collaborators_by_case[case_id] - {user}
-                ),
+                "active_collaborators": sorted(collaborators_by_case[case_id] - {user}),
                 "latest_activity_at": item.get("latest_activity_at"),
                 "links": _case_links(case_id),
             }
@@ -475,7 +479,9 @@ def build_collaboration_workspace(
         "status": "attention_required" if unresolved_actions else "ready",
         "user_identity": user,
         "access_scope": {
-            "mode": "restricted" if allowed_case_ids is not None else "all_visible_cases",
+            "mode": "restricted"
+            if allowed_case_ids is not None
+            else "all_visible_cases",
             "allowed_case_ids": sorted(allowed_case_ids)
             if allowed_case_ids is not None
             else None,

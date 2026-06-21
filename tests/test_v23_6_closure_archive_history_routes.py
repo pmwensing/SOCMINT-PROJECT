@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -31,8 +33,20 @@ def test_v23_6_routes_and_ui(tmp_path, monkeypatch):
         },
         "event_count": 2,
         "timeline": [
-            {"timeline_id": 1, "event_type": "closure_decision", "actor": "supervisor", "occurred_at": "2026-06-14T20:10:00", "details": {"decision": "close"}},
-            {"timeline_id": 2, "event_type": "archive_generation", "actor": "records", "occurred_at": "2026-06-14T20:30:00", "details": {"archive_package_id": "archive-1"}},
+            {
+                "timeline_id": 1,
+                "event_type": "closure_decision",
+                "actor": "supervisor",
+                "occurred_at": "2026-06-14T20:10:00",
+                "details": {"decision": "close"},
+            },
+            {
+                "timeline_id": 2,
+                "event_type": "archive_generation",
+                "actor": "records",
+                "occurred_at": "2026-06-14T20:30:00",
+                "details": {"archive_package_id": "archive-1"},
+            },
         ],
         "latest_events": {},
         "source_records_mutated": False,
@@ -55,7 +69,10 @@ def test_v23_6_routes_and_ui(tmp_path, monkeypatch):
     assert b"Current Lifecycle State" in ui.data
     assert b"Retention Disposition" in ui.data
     assert b"Ordered Case Timeline" in ui.data
-    assert b"read-only and does not create or alter readiness, closure, retention, archive, or reopen records" in ui.data
+    assert (
+        b"read-only and does not create or alter readiness, closure, retention, archive, or reopen records"
+        in ui.data
+    )
     assert api.status_code == 200
     assert api.get_json()["current_archive_state"] == "generated"
     assert api.get_json()["event_count"] == 2

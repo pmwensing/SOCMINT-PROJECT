@@ -66,7 +66,9 @@ def product_artifacts_manifest() -> dict[str, Any]:
     exported_helper_count = sum(
         1
         for name in globals()
-        if name.startswith(("_v984", "_v985", "_v986", "_v987", "_v988", "_v989", "_v98"))
+        if name.startswith(
+            ("_v984", "_v985", "_v986", "_v987", "_v988", "_v989", "_v98")
+        )
     )
     return {
         "status": "ok",
@@ -92,7 +94,6 @@ __all__ = [
     "COMPATIBILITY_MODE",
     "ROUTE_FAMILY",
 ]
-
 
 
 # ---- v10.0.7 Blueprint Migration Wave 1 GET ownership ----
@@ -128,8 +129,9 @@ def wave1_product_release_package_view():
 @product_artifacts_bp.route("/api/v1/product/release-package", methods=["GET"])
 def wave1_api_product_release_package():
     return _v1007_dispatch_dashboard_get("/api/v1/product/release-package")
-# ---- end v10.0.7 wave 1 artifact routes ----
 
+
+# ---- end v10.0.7 wave 1 artifact routes ----
 
 
 # ---- v10.0.9 Blueprint Migration Wave 2 read-only API ownership ----
@@ -151,4 +153,6 @@ def wave2_api_product_artifact_export_manifest():
 @product_artifacts_bp.route("/api/v1/product/release-packages", methods=["GET"])
 def wave2_api_product_release_packages():
     return _v1007_dispatch_dashboard_get("/api/v1/product/release-packages")
+
+
 # ---- end v10.0.9 wave 2 artifact API routes ----

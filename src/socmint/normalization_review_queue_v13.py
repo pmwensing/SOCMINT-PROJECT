@@ -110,7 +110,9 @@ def build_normalization_review_queue(
             kind=kind,
             min_confidence=min_confidence,
         )
-        items = sorted(items, key=lambda item: item.get("created_at") or "", reverse=True)
+        items = sorted(
+            items, key=lambda item: item.get("created_at") or "", reverse=True
+        )
         items = items[:limit]
         counts: dict[str, int] = {}
         for item in items:

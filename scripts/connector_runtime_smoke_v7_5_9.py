@@ -53,7 +53,9 @@ def main() -> None:
         assert dry["connector"] == "holehe"
         assert "findings" in dry
 
-        skipped = run_connector("phoneinfoga", "test@example.com", "email", allow_dry_run=True)
+        skipped = run_connector(
+            "phoneinfoga", "test@example.com", "email", allow_dry_run=True
+        )
         assert skipped["status"] == "skipped"
         assert skipped["findings"] == []
 

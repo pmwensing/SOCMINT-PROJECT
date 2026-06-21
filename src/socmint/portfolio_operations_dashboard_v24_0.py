@@ -49,13 +49,17 @@ def _case_events() -> dict[str, list[dict[str, Any]]]:
             case_id = str(row.target_value or "").strip()
             if not case_id:
                 continue
-            grouped[case_id].append({
-                "record_id": row.id,
-                "action": action,
-                "actor": row.actor,
-                "occurred_at": row.created_at.isoformat() if row.created_at else None,
-                "details": _json_details(row),
-            })
+            grouped[case_id].append(
+                {
+                    "record_id": row.id,
+                    "action": action,
+                    "actor": row.actor,
+                    "occurred_at": row.created_at.isoformat()
+                    if row.created_at
+                    else None,
+                    "details": _json_details(row),
+                }
+            )
         return dict(grouped)
     finally:
         session.close()
@@ -141,9 +145,17 @@ def build_portfolio_operations_dashboard() -> dict[str, Any]:
 
     counts = {
         "total": len(cases),
-        "active": sum(1 for item in cases if item["stage"] in {
-            "active", "closure_review", "dossier_exported", "retention_pending_archive"
-        }),
+        "active": sum(
+            1
+            for item in cases
+            if item["stage"]
+            in {
+                "active",
+                "closure_review",
+                "dossier_exported",
+                "retention_pending_archive",
+            }
+        ),
         "blocked": sum(1 for item in cases if item["blocked"]),
         "delivered": stage_counts.get("delivered", 0),
         "closed": stage_counts.get("closed", 0),

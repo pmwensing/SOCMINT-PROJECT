@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint import database
-from src.socmint.case_intelligence_review_routes_v18 import register_case_intelligence_review_routes_v18
+from src.socmint.case_intelligence_review_routes_v18 import (
+    register_case_intelligence_review_routes_v18,
+)
 from src.socmint.dashboard import create_app
 
 
@@ -16,7 +18,10 @@ def _app(tmp_path, monkeypatch):
 
 def test_v19_3_routes_require_login(tmp_path, monkeypatch):
     client = _app(tmp_path, monkeypatch).test_client()
-    assert client.get("/api/v1/case-intelligence-review/supervisor-queue").status_code == 401
+    assert (
+        client.get("/api/v1/case-intelligence-review/supervisor-queue").status_code
+        == 401
+    )
     assert client.get("/case-intelligence-review/supervisor-queue").status_code == 302
 
 

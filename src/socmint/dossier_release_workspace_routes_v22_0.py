@@ -132,7 +132,8 @@ def register_dossier_release_workspace_routes_v22_0(app):
             ip_address=request.remote_addr,
         )
         return jsonify(result), 200 if result.get("status") in {
-            "acknowledged_ready", "acknowledged_with_blockers"
+            "acknowledged_ready",
+            "acknowledged_with_blockers",
         } else 422
 
     @app.get("/api/v1/dossier-release/<case_id>/distribution-readiness")
@@ -154,7 +155,9 @@ def register_dossier_release_workspace_routes_v22_0(app):
             note=str(payload.get("note") or ""),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "dispatch_recorded" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "dispatch_recorded" else 422
 
     @app.get("/api/v1/dossier-release/<case_id>/delivery-state")
     def api_dossier_delivery_state_get_v22_4(case_id: str):
@@ -180,7 +183,9 @@ def register_dossier_release_workspace_routes_v22_0(app):
             note=str(payload.get("note") or ""),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "delivery_recorded" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "delivery_recorded" else 422
 
     @app.post("/api/v1/dossier-release/<case_id>/recipient-acknowledgement")
     def api_dossier_recipient_ack_post_v22_4(case_id: str):
@@ -197,7 +202,9 @@ def register_dossier_release_workspace_routes_v22_0(app):
             note=str(payload.get("note") or ""),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "acknowledgement_recorded" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "acknowledgement_recorded" else 422
 
     @app.get("/api/v1/dossier-release/<case_id>/delivery-recovery")
     def api_dossier_delivery_recovery_get_v22_5(case_id: str):
@@ -219,7 +226,9 @@ def register_dossier_release_workspace_routes_v22_0(app):
             note=str(payload.get("note") or ""),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "failed_delivery_review_recorded" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "failed_delivery_review_recorded" else 422
 
     @app.post("/api/v1/dossier-release/<case_id>/recall")
     def api_dossier_recall_post_v22_5(case_id: str):
@@ -235,7 +244,9 @@ def register_dossier_release_workspace_routes_v22_0(app):
             note=str(payload.get("note") or ""),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "recall_requested" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "recall_requested" else 422
 
     @app.post("/api/v1/dossier-release/<case_id>/reissue-authorization")
     def api_dossier_reissue_authorization_post_v22_5(case_id: str):
@@ -252,6 +263,8 @@ def register_dossier_release_workspace_routes_v22_0(app):
             note=str(payload.get("note") or ""),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 200 if result.get("status") == "reissue_authorized" else 422
+        return jsonify(result), 200 if result.get(
+            "status"
+        ) == "reissue_authorized" else 422
 
     return app

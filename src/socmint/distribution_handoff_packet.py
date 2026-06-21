@@ -16,7 +16,9 @@ def distribution_handoff_packet(case_id: str) -> dict:
         subject_id = row.get("subject_id")
         if not subject_id:
             continue
-        verification = verify_distribution_export(case_id=case_id, subject_id=subject_id)
+        verification = verify_distribution_export(
+            case_id=case_id, subject_id=subject_id
+        )
         subjects.append(
             {
                 "case_id": case_id,
@@ -78,6 +80,10 @@ def distribution_handoff_markdown(case_id: str) -> str:
     lines.extend(["", "## Released seal statements", ""])
     for subject in packet["subjects"]:
         if subject.get("release_state") == "released":
-            lines.append(release_seal_markdown(case_id=case_id, subject_id=subject["subject_id"]).strip())
+            lines.append(
+                release_seal_markdown(
+                    case_id=case_id, subject_id=subject["subject_id"]
+                ).strip()
+            )
             lines.append("")
     return "\n".join(lines) + "\n"

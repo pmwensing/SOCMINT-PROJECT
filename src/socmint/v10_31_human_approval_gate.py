@@ -28,7 +28,12 @@ DECISION_ACTIONS = {
         "blocked": ["record_delivery", "archive_case_delivery"],
     },
     "pending_review": {
-        "allowed": ["review_delivery", "approve_delivery", "reject_delivery", "request_correction"],
+        "allowed": [
+            "review_delivery",
+            "approve_delivery",
+            "reject_delivery",
+            "request_correction",
+        ],
         "blocked": ["record_delivery", "archive_case_delivery"],
     },
 }
@@ -39,7 +44,10 @@ def utc_now() -> str:
 
 
 def canonical_json(data: dict[str, Any]) -> str:
-    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
+    return (
+        json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        + "\n"
+    )
 
 
 def sha256_text(value: str) -> str:
@@ -52,7 +60,12 @@ def normalize_decision(decision: str | None) -> str:
 
 
 def approval_id_for_decision(
-    *, case_id: str, delivery_id: str | None, decision: str, operator: str | None = None, notes: str | None = None
+    *,
+    case_id: str,
+    delivery_id: str | None,
+    decision: str,
+    operator: str | None = None,
+    notes: str | None = None,
 ) -> str:
     core = {
         "case_id": case_id,
@@ -137,7 +150,9 @@ def _registry_from_payload(case_id: str, payload: dict[str, Any]) -> dict[str, A
     return build_case_delivery_registry_from_request(case_id, safe_payload)
 
 
-def build_human_approval_gate_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def build_human_approval_gate_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     safe_payload = deepcopy(payload or {})
     registry = _registry_from_payload(case_id, safe_payload)
     return build_human_approval_gate(
@@ -150,5 +165,9 @@ def build_human_approval_gate_from_request(case_id: str, payload: dict[str, Any]
     )
 
 
-def build_human_approval_summary_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-    return deepcopy(build_human_approval_gate_from_request(case_id, payload).get("summary") or {})
+def build_human_approval_summary_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
+    return deepcopy(
+        build_human_approval_gate_from_request(case_id, payload).get("summary") or {}
+    )

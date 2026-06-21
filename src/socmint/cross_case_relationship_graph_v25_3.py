@@ -49,8 +49,10 @@ def build_cross_case_relationship_graph(
     allowed_case_ids: set[str] | None = None,
     links: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    confirmed_links = links if links is not None else confirmed_link_registry(
-        allowed_case_ids=allowed_case_ids
+    confirmed_links = (
+        links
+        if links is not None
+        else confirmed_link_registry(allowed_case_ids=allowed_case_ids)
     )
 
     nodes: dict[str, dict[str, Any]] = {}
@@ -71,7 +73,9 @@ def build_cross_case_relationship_graph(
             "confirmed_link_id": link.get("confirmed_link_id"),
             "confirmed_link_sha256": link.get("confirmed_link_sha256"),
             "accepted_review_decision_id": link.get("accepted_review_decision_id"),
-            "accepted_review_decision_sha256": link.get("accepted_review_decision_sha256"),
+            "accepted_review_decision_sha256": link.get(
+                "accepted_review_decision_sha256"
+            ),
             "registry_record_id": link.get("registry_record_id"),
             "registered_at": link.get("registered_at"),
             "registered_by": link.get("registered_by"),
@@ -110,9 +114,7 @@ def build_cross_case_relationship_graph(
             existing["source_occurrences"] = _merge_unique(
                 existing["source_occurrences"], occurrences
             )
-            existing["provenance"] = _merge_unique(
-                existing["provenance"], [provenance]
-            )
+            existing["provenance"] = _merge_unique(existing["provenance"], [provenance])
             recalculated = {
                 key: item for key, item in existing.items() if key != "node_sha256"
             }
@@ -143,7 +145,9 @@ def build_cross_case_relationship_graph(
             "confirmed_link_id": link.get("confirmed_link_id"),
             "confirmed_link_sha256": link.get("confirmed_link_sha256"),
             "accepted_review_decision_id": link.get("accepted_review_decision_id"),
-            "accepted_review_decision_sha256": link.get("accepted_review_decision_sha256"),
+            "accepted_review_decision_sha256": link.get(
+                "accepted_review_decision_sha256"
+            ),
             "source_occurrences": occurrences,
             "source_occurrences_sha256": _sha(occurrences),
             "access_scope": link.get("accepted_review", {}).get(
@@ -153,9 +157,7 @@ def build_cross_case_relationship_graph(
                 "registry_record_id": link.get("registry_record_id"),
                 "registered_at": link.get("registered_at"),
                 "registered_by": link.get("registered_by"),
-                "source_occurrences_sha256": link.get(
-                    "source_occurrences_sha256"
-                ),
+                "source_occurrences_sha256": link.get("source_occurrences_sha256"),
             },
         }
         content["edge_sha256"] = _sha(content)
@@ -184,9 +186,7 @@ def build_cross_case_relationship_graph(
         value = str(
             link.get("match_value") or link.get("confirmed_link_id") or "unknown"
         )
-        label = " / ".join(
-            str(item) for item in link.get("display_values") or [value]
-        )
+        label = " / ".join(str(item) for item in link.get("display_values") or [value])
         occurrences = list(link.get("source_occurrences") or [])
 
         value_node = add_node(

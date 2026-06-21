@@ -4,10 +4,14 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from .case_delivery_recovery_chain_closure_audit_v16_18 import audit_case_delivery_recovery_chain_closure
+from .case_delivery_recovery_chain_closure_audit_v16_18 import (
+    audit_case_delivery_recovery_chain_closure,
+)
 
 
-PRODUCT_READINESS_OPERATOR_WORKFLOW_SCHEMA = "socmint.product_readiness_operator_workflow.v17_0"
+PRODUCT_READINESS_OPERATOR_WORKFLOW_SCHEMA = (
+    "socmint.product_readiness_operator_workflow.v17_0"
+)
 VERSION = "v17.0.0"
 NEXT_ACTION = "resume_product_level_delivery_work"
 
@@ -50,7 +54,15 @@ def _route_keys(routes: list[Any] | None) -> list[tuple[str, tuple[str, ...]]]:
     for route in routes or []:
         rule = str(getattr(route, "rule", route))
         methods = getattr(route, "methods", None)
-        methods_tuple = ("UNKNOWN",) if methods is None else tuple(sorted(method for method in methods if method not in {"HEAD", "OPTIONS"}))
+        methods_tuple = (
+            ("UNKNOWN",)
+            if methods is None
+            else tuple(
+                sorted(
+                    method for method in methods if method not in {"HEAD", "OPTIONS"}
+                )
+            )
+        )
         keys.append((rule, methods_tuple))
     return keys
 
@@ -64,12 +76,16 @@ def _read(root: Path, relative_path: str) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
-def build_product_readiness_operator_workflow_snapshot(root: str | Path = ".", routes: list[Any] | None = None) -> dict[str, Any]:
+def build_product_readiness_operator_workflow_snapshot(
+    root: str | Path = ".", routes: list[Any] | None = None
+) -> dict[str, Any]:
     root_path = Path(root)
     route_rules = _route_rules(routes)
     route_counts = Counter(_route_keys(routes))
     changelog = _read(root_path, "CHANGELOG.md")
-    recovery_chain = audit_case_delivery_recovery_chain_closure(root=root_path, routes=routes)
+    recovery_chain = audit_case_delivery_recovery_chain_closure(
+        root=root_path, routes=routes
+    )
     blockers: list[dict[str, str]] = []
 
     module_checks = []
@@ -95,23 +111,56 @@ def build_product_readiness_operator_workflow_snapshot(root: str | Path = ".", r
 
     changelog_present = PRODUCT_CHANGELOG_LABEL in changelog
     if not changelog_present:
-        blockers.append(_blocker("missing_product_changelog_entry", PRODUCT_CHANGELOG_LABEL))
+        blockers.append(
+            _blocker("missing_product_changelog_entry", PRODUCT_CHANGELOG_LABEL)
+        )
 
     duplicate_routes = [
         {"route": rule, "methods": list(methods), "count": count}
         for (rule, methods), count in sorted(route_counts.items())
-        if count > 1 and (rule.startswith("/api/v1/case-delivery/") or rule.startswith("/api/v1/operator/"))
+        if count > 1
+        and (
+            rule.startswith("/api/v1/case-delivery/")
+            or rule.startswith("/api/v1/operator/")
+        )
     ]
     if duplicate_routes:
-        blockers.append(_blocker("duplicate_product_route_drift", f"{len(duplicate_routes)} duplicate product routes"))
+        blockers.append(
+            _blocker(
+                "duplicate_product_route_drift",
+                f"{len(duplicate_routes)} duplicate product routes",
+            )
+        )
 
     if recovery_chain.get("status") != "closed":
-        blockers.append(_blocker("recovery_chain_not_closed", "v16.18 recovery chain closure audit is not closed"))
+        blockers.append(
+            _blocker(
+                "recovery_chain_not_closed",
+                "v16.18 recovery chain closure audit is not closed",
+            )
+        )
 
-    operations_route_ready = "/api/v1/case-delivery/<case_id>/operations" in route_rules if routes is not None else None
-    release_console_ready = "/api/v1/operator/release-console" in route_rules if routes is not None else None
-    case_delivery_ux_ready = "/case-delivery" in route_rules and "/api/v1/case-delivery/<case_id>" in route_rules if routes is not None else None
-    end_to_end_ready = not blockers and recovery_chain.get("closed") is True and operations_route_ready is True
+    operations_route_ready = (
+        "/api/v1/case-delivery/<case_id>/operations" in route_rules
+        if routes is not None
+        else None
+    )
+    release_console_ready = (
+        "/api/v1/operator/release-console" in route_rules
+        if routes is not None
+        else None
+    )
+    case_delivery_ux_ready = (
+        "/case-delivery" in route_rules
+        and "/api/v1/case-delivery/<case_id>" in route_rules
+        if routes is not None
+        else None
+    )
+    end_to_end_ready = (
+        not blockers
+        and recovery_chain.get("closed") is True
+        and operations_route_ready is True
+    )
 
     status = "ready" if end_to_end_ready else "blocked"
     return {
@@ -119,7 +168,8 @@ def build_product_readiness_operator_workflow_snapshot(root: str | Path = ".", r
         "version": VERSION,
         "status": status,
         "ready": status == "ready",
-        "operator_workflow_ready": case_delivery_ux_ready is True and release_console_ready is True,
+        "operator_workflow_ready": case_delivery_ux_ready is True
+        and release_console_ready is True,
         "case_delivery_ux_ready": case_delivery_ux_ready,
         "release_console_aligned": release_console_ready,
         "operations_route_ready": operations_route_ready,
@@ -133,11 +183,15 @@ def build_product_readiness_operator_workflow_snapshot(root: str | Path = ".", r
         "recovery_chain": recovery_chain,
         "blocker_count": len(blockers),
         "blockers": blockers,
-        "next_action": NEXT_ACTION if status == "ready" else "resolve_product_readiness_blockers",
+        "next_action": NEXT_ACTION
+        if status == "ready"
+        else "resolve_product_readiness_blockers",
     }
 
 
-def build_product_readiness_operator_workflow_snapshot_from_request(payload: dict[str, Any] | None = None) -> dict[str, Any]:
+def build_product_readiness_operator_workflow_snapshot_from_request(
+    payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     safe_payload = payload or {}
     root = safe_payload.get("root", ".") if isinstance(safe_payload, dict) else "."
     return build_product_readiness_operator_workflow_snapshot(root=root)

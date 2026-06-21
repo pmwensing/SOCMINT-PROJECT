@@ -13,7 +13,9 @@ from .scoring import confidence_band
 from .spine_intelligence import spine_intelligence_payload
 
 ULTIMATE_DOSSIER_SCHEMA = "socmint.ultimate_entity_human_dossier.v7_8_0"
-ULTIMATE_DOSSIER_MANIFEST_SCHEMA = "socmint.ultimate_entity_human_dossier_manifest.v7_8_1"
+ULTIMATE_DOSSIER_MANIFEST_SCHEMA = (
+    "socmint.ultimate_entity_human_dossier_manifest.v7_8_1"
+)
 SENSITIVE_ASSERTION_TYPES = {
     "email",
     "exposure_email_reference",
@@ -88,7 +90,9 @@ def _artifacts_by_run(run_ids: set[int]) -> dict[int, list[dict[str, Any]]]:
                     "sha256": row.sha256,
                     "mime_type": row.mime_type,
                     "size_bytes": row.size_bytes,
-                    "created_at": row.created_at.isoformat() if row.created_at else None,
+                    "created_at": row.created_at.isoformat()
+                    if row.created_at
+                    else None,
                 }
             )
         return dict(grouped)
@@ -98,7 +102,10 @@ def _artifacts_by_run(run_ids: set[int]) -> dict[int, list[dict[str, Any]]]:
 
 def source_traceability(subject_id: int) -> list[dict[str, Any]]:
     assertions = db.list_spine_assertions(subject_id, limit=10000)
-    runs = {run.id: run for run in db.list_spine_connector_runs(subject_id=subject_id, limit=10000)}
+    runs = {
+        run.id: run
+        for run in db.list_spine_connector_runs(subject_id=subject_id, limit=10000)
+    }
     artifacts = _artifacts_by_run(set(runs))
     trace = []
     for assertion in assertions:
@@ -122,7 +129,9 @@ def source_traceability(subject_id: int) -> list[dict[str, Any]]:
                         "id": run_id,
                         "connector": runs[run_id].connector_key,
                         "status": runs[run_id].status,
-                        "created_at": runs[run_id].created_at.isoformat() if runs[run_id].created_at else None,
+                        "created_at": runs[run_id].created_at.isoformat()
+                        if runs[run_id].created_at
+                        else None,
                         "artifacts": artifacts.get(run_id, []),
                     }
                     for run_id in run_ids
@@ -132,12 +141,18 @@ def source_traceability(subject_id: int) -> list[dict[str, Any]]:
     return trace
 
 
-def entity_human_resolution(assertions: list[dict[str, Any]], seeds: list[dict[str, Any]]) -> dict[str, Any]:
+def entity_human_resolution(
+    assertions: list[dict[str, Any]], seeds: list[dict[str, Any]]
+) -> dict[str, Any]:
     identifier_types = Counter(item["type"] for item in assertions)
     confirmed = [item for item in assertions if item["validation_state"] == "confirmed"]
     high_conf = [item for item in assertions if item["confidence"] >= 0.75]
-    human_signals = [item for item in assertions if item["type"] in HUMAN_IDENTIFIER_TYPES]
-    entity_signals = [item for item in assertions if item["type"] in ENTITY_IDENTIFIER_TYPES]
+    human_signals = [
+        item for item in assertions if item["type"] in HUMAN_IDENTIFIER_TYPES
+    ]
+    entity_signals = [
+        item for item in assertions if item["type"] in ENTITY_IDENTIFIER_TYPES
+    ]
     seed_types = {seed["type"] for seed in seeds}
 
     if human_signals and entity_signals:
@@ -164,8 +179,13 @@ def entity_human_resolution(assertions: list[dict[str, Any]], seeds: list[dict[s
     contradictions = []
     for item_type, count in identifier_types.items():
         values = {item["value"] for item in assertions if item["type"] == item_type}
-        if item_type in {"phone_country", "phone_carrier", "phone_line_type"} and len(values) > 1:
-            contradictions.append({"type": item_type, "values": sorted(values), "count": len(values)})
+        if (
+            item_type in {"phone_country", "phone_carrier", "phone_line_type"}
+            and len(values) > 1
+        ):
+            contradictions.append(
+                {"type": item_type, "values": sorted(values), "count": len(values)}
+            )
 
     return {
         "dossier_kind": dossier_kind,
@@ -177,30 +197,81 @@ def entity_human_resolution(assertions: list[dict[str, Any]], seeds: list[dict[s
         "high_confidence_count": len(high_conf),
         "identifier_types": dict(identifier_types),
         "contradictions": contradictions,
-        "primary_identifiers": sorted({item["value"] for item in assertions if item["type"] in {"email", "phone", "profile_url", "account_presence", "platform_presence"}})[:25],
+        "primary_identifiers": sorted(
+            {
+                item["value"]
+                for item in assertions
+                if item["type"]
+                in {
+                    "email",
+                    "phone",
+                    "profile_url",
+                    "account_presence",
+                    "platform_presence",
+                }
+            }
+        )[:25],
     }
 
 
-def timeline(assertions: list[dict[str, Any]], runs: list[dict[str, Any]], observations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def timeline(
+    assertions: list[dict[str, Any]],
+    runs: list[dict[str, Any]],
+    observations: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     events = []
     for run in runs:
-        events.append({"timestamp": run.get("created_at"), "kind": "connector_run", "label": run.get("connector"), "status": run.get("status"), "ref": f"run:{run.get('id')}"})
+        events.append(
+            {
+                "timestamp": run.get("created_at"),
+                "kind": "connector_run",
+                "label": run.get("connector"),
+                "status": run.get("status"),
+                "ref": f"run:{run.get('id')}",
+            }
+        )
     for obs in observations:
-        events.append({"timestamp": obs.get("created_at"), "kind": "observation", "label": obs.get("type"), "value": obs.get("value"), "ref": f"observation:{obs.get('id')}"})
+        events.append(
+            {
+                "timestamp": obs.get("created_at"),
+                "kind": "observation",
+                "label": obs.get("type"),
+                "value": obs.get("value"),
+                "ref": f"observation:{obs.get('id')}",
+            }
+        )
     for assertion in assertions:
-        events.append({"timestamp": assertion.get("updated_at") or assertion.get("created_at"), "kind": "assertion", "label": assertion.get("type"), "value": assertion.get("value"), "status": assertion.get("validation_state"), "ref": f"assertion:{assertion.get('id')}"})
-    return sorted([event for event in events if event.get("timestamp")], key=lambda item: item["timestamp"])
+        events.append(
+            {
+                "timestamp": assertion.get("updated_at") or assertion.get("created_at"),
+                "kind": "assertion",
+                "label": assertion.get("type"),
+                "value": assertion.get("value"),
+                "status": assertion.get("validation_state"),
+                "ref": f"assertion:{assertion.get('id')}",
+            }
+        )
+    return sorted(
+        [event for event in events if event.get("timestamp")],
+        key=lambda item: item["timestamp"],
+    )
 
 
-def narrative(payload: dict[str, Any], resolution: dict[str, Any], trace: list[dict[str, Any]]) -> dict[str, Any]:
+def narrative(
+    payload: dict[str, Any], resolution: dict[str, Any], trace: list[dict[str, Any]]
+) -> dict[str, Any]:
     summary = payload["summary"]
     subject = payload["subject"]
-    strongest = sorted(payload["assertions"], key=lambda item: item["confidence"], reverse=True)[:5]
+    strongest = sorted(
+        payload["assertions"], key=lambda item: item["confidence"], reverse=True
+    )[:5]
     gaps = []
     if not payload["assertions"]:
         gaps.append("No dossier-grade assertions have been generated yet.")
     if summary.get("diagnostic_count", 0) > summary.get("observation_count", 0):
-        gaps.append("Most connector runs produced diagnostics/no-result records rather than enrichment observations.")
+        gaps.append(
+            "Most connector runs produced diagnostics/no-result records rather than enrichment observations."
+        )
     if resolution["contradictions"]:
         gaps.append("Contradictory identity metadata exists and needs analyst review.")
     if not gaps:
@@ -228,13 +299,23 @@ def narrative(payload: dict[str, Any], resolution: dict[str, Any], trace: list[d
     }
 
 
-def readiness_review(payload: dict[str, Any], resolution: dict[str, Any], trace: list[dict[str, Any]]) -> dict[str, Any]:
+def readiness_review(
+    payload: dict[str, Any], resolution: dict[str, Any], trace: list[dict[str, Any]]
+) -> dict[str, Any]:
     summary = payload["summary"]
     assertions = payload["assertions"]
-    unreviewed = [item for item in assertions if item["validation_state"] == "unreviewed"]
+    unreviewed = [
+        item for item in assertions if item["validation_state"] == "unreviewed"
+    ]
     rejected = [item for item in assertions if item["validation_state"] == "rejected"]
-    traceable_ids = {item["assertion_id"] for item in trace if item.get("source_refs") and item.get("evidence_refs")}
-    missing_trace = [item["id"] for item in assertions if item["id"] not in traceable_ids]
+    traceable_ids = {
+        item["assertion_id"]
+        for item in trace
+        if item.get("source_refs") and item.get("evidence_refs")
+    }
+    missing_trace = [
+        item["id"] for item in assertions if item["id"] not in traceable_ids
+    ]
     blockers = []
     warnings = []
 
@@ -245,9 +326,13 @@ def readiness_review(payload: dict[str, Any], resolution: dict[str, Any], trace:
     if rejected and len(rejected) == len(assertions):
         blockers.append("All assertions are rejected.")
     if missing_trace:
-        warnings.append(f"{len(missing_trace)} assertions lack complete source/evidence traceability.")
+        warnings.append(
+            f"{len(missing_trace)} assertions lack complete source/evidence traceability."
+        )
     if summary.get("diagnostic_count", 0) and not summary.get("observation_count", 0):
-        warnings.append("Connector output is diagnostic-only; run additional enrichment before external use.")
+        warnings.append(
+            "Connector output is diagnostic-only; run additional enrichment before external use."
+        )
     if resolution.get("contradictions"):
         warnings.append("Identity contradictions require analyst review.")
 
@@ -265,8 +350,12 @@ def readiness_review(payload: dict[str, Any], resolution: dict[str, Any], trace:
 def ultimate_dossier_payload(subject_id: int) -> dict[str, Any]:
     intelligence = spine_intelligence_payload(subject_id)
     trace = source_traceability(subject_id)
-    resolution = entity_human_resolution(intelligence["assertions"], intelligence["seeds"])
-    events = timeline(intelligence["assertions"], intelligence["runs"], intelligence["observations"])
+    resolution = entity_human_resolution(
+        intelligence["assertions"], intelligence["seeds"]
+    )
+    events = timeline(
+        intelligence["assertions"], intelligence["runs"], intelligence["observations"]
+    )
     story = narrative(intelligence, resolution, trace)
     readiness = readiness_review(intelligence, resolution, trace)
     return {
@@ -310,9 +399,15 @@ def _redacted_item(item: dict[str, Any]) -> dict[str, Any]:
 
 def redacted_dossier_payload(payload: dict[str, Any]) -> dict[str, Any]:
     redacted = json.loads(json.dumps(payload))
-    redacted["assertions"] = [_redacted_item(item) for item in redacted.get("assertions", [])]
-    redacted["observations"] = [_redacted_item(item) for item in redacted.get("observations", [])]
-    redacted["diagnostics"] = [_redacted_item(item) for item in redacted.get("diagnostics", [])]
+    redacted["assertions"] = [
+        _redacted_item(item) for item in redacted.get("assertions", [])
+    ]
+    redacted["observations"] = [
+        _redacted_item(item) for item in redacted.get("observations", [])
+    ]
+    redacted["diagnostics"] = [
+        _redacted_item(item) for item in redacted.get("diagnostics", [])
+    ]
     redacted["redaction"] = {
         "schema": "socmint.ultimate_dossier_redaction.v7_8_1",
         "mode": "sensitive_identifiers",
@@ -321,11 +416,15 @@ def redacted_dossier_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return redacted
 
 
-def dossier_export_manifest(payload: dict[str, Any], redacted: bool = False) -> dict[str, Any]:
+def dossier_export_manifest(
+    payload: dict[str, Any], redacted: bool = False
+) -> dict[str, Any]:
     export_payload = redacted_dossier_payload(payload) if redacted else payload
     stable_payload = dict(export_payload)
     stable_payload.pop("generated_at", None)
-    json_bytes = json.dumps(stable_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    json_bytes = json.dumps(
+        stable_payload, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
     csv_text = assertions_csv(export_payload)
     assertion_count = len(export_payload.get("assertions") or [])
     csv_rows = max(0, len(csv_text.splitlines()) - 1)
@@ -352,7 +451,15 @@ def assertions_csv(payload: dict[str, Any]) -> str:
     output = io.StringIO()
     writer = csv.DictWriter(
         output,
-        fieldnames=["id", "type", "value", "confidence", "band", "validation_state", "source_count"],
+        fieldnames=[
+            "id",
+            "type",
+            "value",
+            "confidence",
+            "band",
+            "validation_state",
+            "source_count",
+        ],
     )
     writer.writeheader()
     for item in payload["assertions"]:

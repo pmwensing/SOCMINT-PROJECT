@@ -70,7 +70,11 @@ def test_v10_4_export_summary_shape():
 
 def test_v10_4_html_renderer_escapes_subject_content():
     dossier = build_dossier_payload(
-        {"subject_id": "sub-x", "display_name": "<script>x</script>", "case_id": "case-x"},
+        {
+            "subject_id": "sub-x",
+            "display_name": "<script>x</script>",
+            "case_id": "case-x",
+        },
         _evidence(),
         analyst_reviewed=True,
     )

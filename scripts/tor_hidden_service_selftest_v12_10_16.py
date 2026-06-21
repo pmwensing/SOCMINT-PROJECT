@@ -19,10 +19,24 @@ def now() -> str:
 
 def cmd(args: list[str], timeout: int = 30) -> dict[str, Any]:
     try:
-        p = subprocess.run(args, text=True, capture_output=True, timeout=timeout, check=False)
-        return {"args": args, "ok": p.returncode == 0, "returncode": p.returncode, "stdout": p.stdout, "stderr": p.stderr}
+        p = subprocess.run(
+            args, text=True, capture_output=True, timeout=timeout, check=False
+        )
+        return {
+            "args": args,
+            "ok": p.returncode == 0,
+            "returncode": p.returncode,
+            "stdout": p.stdout,
+            "stderr": p.stderr,
+        }
     except Exception as exc:
-        return {"args": args, "ok": False, "returncode": None, "stdout": "", "stderr": str(exc)}
+        return {
+            "args": args,
+            "ok": False,
+            "returncode": None,
+            "stdout": "",
+            "stderr": str(exc),
+        }
 
 
 def check(rows: list[dict[str, Any]], name: str, ok: bool, detail: str = "") -> None:
@@ -56,33 +70,84 @@ def main() -> dict[str, Any]:
     compose = cmd(["docker", "compose", "config"])
     text = compose["stdout"]
     check(checks, "compose_config", compose["ok"], "docker compose config")
-    check(checks, "app_network_mode_service_tor", "network_mode: service:tor" in text, "app shares tor network namespace")
-    check(checks, "app_binds_local_5000", "127.0.0.1:5000" in text, "app health/gunicorn target is local 5000")
-    check(checks, "torrc_bind_mount", "deploy/tor/torrc" in text and "/etc/tor/torrc" in text, "source torrc is mounted into tor container")
+    check(
+        checks,
+        "app_network_mode_service_tor",
+        "network_mode: service:tor" in text,
+        "app shares tor network namespace",
+    )
+    check(
+        checks,
+        "app_binds_local_5000",
+        "127.0.0.1:5000" in text,
+        "app health/gunicorn target is local 5000",
+    )
+    check(
+        checks,
+        "torrc_bind_mount",
+        "deploy/tor/torrc" in text and "/etc/tor/torrc" in text,
+        "source torrc is mounted into tor container",
+    )
 
     torrc_path = Path("deploy/tor/torrc")
     torrc = torrc_path.read_text() if torrc_path.exists() else ""
     check(checks, "source_torrc_present", torrc_path.exists(), str(torrc_path))
-    check(checks, "hidden_service_port_mapping", "HiddenServicePort 80 127.0.0.1:5000" in torrc, "expected local target mapping")
+    check(
+        checks,
+        "hidden_service_port_mapping",
+        "HiddenServicePort 80 127.0.0.1:5000" in torrc,
+        "expected local target mapping",
+    )
 
-    ready = cmd([
-        "docker", "compose", "exec", "-T", "app", "python3", "-c",
-        "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:5000/readyz', timeout=5).read().decode())",
-    ])
-    check(checks, "app_readyz", ready["ok"] and "ready" in ready["stdout"], "app readyz works inside shared namespace")
+    ready = cmd(
+        [
+            "docker",
+            "compose",
+            "exec",
+            "-T",
+            "app",
+            "python3",
+            "-c",
+            "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:5000/readyz', timeout=5).read().decode())",
+        ]
+    )
+    check(
+        checks,
+        "app_readyz",
+        ready["ok"] and "ready" in ready["stdout"],
+        "app readyz works inside shared namespace",
+    )
 
-    api = cmd([
-        "docker", "compose", "exec", "-T", "app", "python3", "-c",
-        "from src.socmint.tor_production import tor_hidden_service_diagnostics; import json; print(json.dumps(tor_hidden_service_diagnostics(), sort_keys=True))",
-    ])
+    api = cmd(
+        [
+            "docker",
+            "compose",
+            "exec",
+            "-T",
+            "app",
+            "python3",
+            "-c",
+            "from src.socmint.tor_production import tor_hidden_service_diagnostics; import json; print(json.dumps(tor_hidden_service_diagnostics(), sort_keys=True))",
+        ]
+    )
     payload = {}
     if api["ok"]:
         try:
             payload = json.loads(api["stdout"].strip().splitlines()[-1])
         except Exception:
             payload = {}
-    check(checks, "api_payload_schema", payload.get("schema") == "socmint.tor_hidden_service_diagnostics.v12_10_16", str(payload.get("schema")))
-    check(checks, "api_payload_status", payload.get("status") == "pass", str(payload.get("status")))
+    check(
+        checks,
+        "api_payload_schema",
+        payload.get("schema") == "socmint.tor_hidden_service_diagnostics.v12_10_16",
+        str(payload.get("schema")),
+    )
+    check(
+        checks,
+        "api_payload_status",
+        payload.get("status") == "pass",
+        str(payload.get("status")),
+    )
 
     failed = [r for r in checks if r["status"] != "pass"]
     report = {

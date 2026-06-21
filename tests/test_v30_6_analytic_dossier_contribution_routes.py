@@ -1,14 +1,25 @@
 from flask import Flask
 
-from src.socmint.analytic_dossier_contribution_routes_v30_6 import register_analytic_dossier_contribution_routes_v30_6
+from src.socmint.analytic_dossier_contribution_routes_v30_6 import (
+    register_analytic_dossier_contribution_routes_v30_6,
+)
 
 
 def test_v30_6_routes_require_admin_and_record(monkeypatch):
     app = Flask(__name__)
     app.secret_key = "test-secret"
-    monkeypatch.setattr("src.socmint.analytic_dossier_contribution_routes_v30_6.actor_is_administrator", lambda actor: actor == "admin")
-    monkeypatch.setattr("src.socmint.analytic_dossier_contribution_routes_v30_6.current_contribution_decisions", lambda: [])
-    monkeypatch.setattr("src.socmint.analytic_dossier_contribution_routes_v30_6.contributions_for_claim", lambda claim_id: [])
+    monkeypatch.setattr(
+        "src.socmint.analytic_dossier_contribution_routes_v30_6.actor_is_administrator",
+        lambda actor: actor == "admin",
+    )
+    monkeypatch.setattr(
+        "src.socmint.analytic_dossier_contribution_routes_v30_6.current_contribution_decisions",
+        lambda: [],
+    )
+    monkeypatch.setattr(
+        "src.socmint.analytic_dossier_contribution_routes_v30_6.contributions_for_claim",
+        lambda claim_id: [],
+    )
     monkeypatch.setattr(
         "src.socmint.analytic_dossier_contribution_routes_v30_6.review_dossier_contribution",
         lambda **kwargs: {

@@ -67,7 +67,9 @@ def _setup(tmp_path, monkeypatch, review=None):
     )
 
 
-def test_v25_2_materializes_only_accepted_review_and_preserves_occurrences(tmp_path, monkeypatch):
+def test_v25_2_materializes_only_accepted_review_and_preserves_occurrences(
+    tmp_path, monkeypatch
+):
     review = _accepted_review()
     _setup(tmp_path, monkeypatch, review)
 
@@ -86,7 +88,8 @@ def test_v25_2_materializes_only_accepted_review_and_preserves_occurrences(tmp_p
     assert result["accepted_review"]["action_record_id"] == 11
     assert result["source_occurrence_count"] == 2
     assert [item["case_id"] for item in result["source_occurrences"]] == [
-        "case-alpha", "case-bravo"
+        "case-alpha",
+        "case-bravo",
     ]
     assert len(result["source_occurrences_sha256"]) == 64
     assert len(result["confirmed_link_sha256"]) == 64
@@ -113,7 +116,9 @@ def test_v25_2_materializes_only_accepted_review_and_preserves_occurrences(tmp_p
     assert duplicate["registry_record_id"] == result["registry_record_id"]
 
 
-def test_v25_2_blocks_unreviewed_nonaccepted_and_inaccessible_candidates(tmp_path, monkeypatch):
+def test_v25_2_blocks_unreviewed_nonaccepted_and_inaccessible_candidates(
+    tmp_path, monkeypatch
+):
     _setup(tmp_path, monkeypatch, None)
     unreviewed = service.register_confirmed_cross_case_link(
         "candidate", registered_by="manager", confirmed=True
@@ -129,7 +134,9 @@ def test_v25_2_blocks_unreviewed_nonaccepted_and_inaccessible_candidates(tmp_pat
         blocked = service.register_confirmed_cross_case_link(
             "candidate", registered_by="manager", confirmed=True
         )
-        assert blocked["blockers"][0]["key"] == "latest_correlation_review_must_be_accept"
+        assert (
+            blocked["blockers"][0]["key"] == "latest_correlation_review_must_be_accept"
+        )
 
     monkeypatch.setattr(
         service,
@@ -147,10 +154,15 @@ def test_v25_2_blocks_unreviewed_nonaccepted_and_inaccessible_candidates(tmp_pat
     no_confirmation = service.register_confirmed_cross_case_link(
         "candidate", registered_by="manager", confirmed=False
     )
-    assert no_confirmation["blockers"][0]["key"] == "explicit_confirmed_link_registration_required"
+    assert (
+        no_confirmation["blockers"][0]["key"]
+        == "explicit_confirmed_link_registration_required"
+    )
 
 
-def test_v25_2_workspace_retains_all_review_dispositions_and_pending_accepts(tmp_path, monkeypatch):
+def test_v25_2_workspace_retains_all_review_dispositions_and_pending_accepts(
+    tmp_path, monkeypatch
+):
     _setup(tmp_path, monkeypatch, _accepted_review())
     histories = {
         "accepted": [_accepted_review("accept")],
@@ -159,7 +171,11 @@ def test_v25_2_workspace_retains_all_review_dispositions_and_pending_accepts(tmp
         "split": [_accepted_review("split")],
     }
     for key, history in histories.items():
-        history[0] = {**history[0], "correlation_id": key, "review_decision_id": f"review-{key}"}
+        history[0] = {
+            **history[0],
+            "correlation_id": key,
+            "review_decision_id": f"review-{key}",
+        }
         history[0]["candidate_snapshot"] = {
             **history[0]["candidate_snapshot"],
             "correlation_id": key,

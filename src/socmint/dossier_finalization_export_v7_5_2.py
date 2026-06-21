@@ -114,13 +114,19 @@ def finalization_export_manifest(files: dict[str, bytes]) -> dict[str, Any]:
 
 def build_finalization_export_files(packet: dict[str, Any]) -> dict[str, bytes]:
     finalization = deepcopy(packet.get("finalization") or {})
-    summary = deepcopy(packet.get("summary") or summarize_finalization_decision(finalization))
+    summary = deepcopy(
+        packet.get("summary") or summarize_finalization_decision(finalization)
+    )
     files: dict[str, bytes] = {
         "finalization_packet.json": canonical_json(finalization).encode("utf-8"),
-        "finalization_packet.md": render_finalization_markdown(finalization).encode("utf-8"),
+        "finalization_packet.md": render_finalization_markdown(finalization).encode(
+            "utf-8"
+        ),
         "finalization_summary.json": canonical_json(summary).encode("utf-8"),
     }
-    preview_packet = {key: value for key, value in packet.items() if key not in {"manifest", "files"}}
+    preview_packet = {
+        key: value for key, value in packet.items() if key not in {"manifest", "files"}
+    }
     files["README.md"] = _readme(preview_packet).encode("utf-8")
     files["manifest.json"] = b"{}\n"
     manifest = finalization_export_manifest(files)

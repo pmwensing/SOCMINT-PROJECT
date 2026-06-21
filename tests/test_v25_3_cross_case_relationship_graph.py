@@ -66,14 +66,25 @@ def test_v25_3_projects_confirmed_links_into_provenance_graph():
     assert result["counts"]["edges_by_type"]["linked_value_observed_at"] == 4
     assert len(result["graph_sha256"]) == 64
 
-    case_node = next(node for node in result["graph"]["nodes"] if node["node_type"] == "case" and node["label"] == "case-alpha")
-    assert set(case_node["confirmed_link_ids"]) == {"confirmed-entity-1", "confirmed-identifier-1"}
+    case_node = next(
+        node
+        for node in result["graph"]["nodes"]
+        if node["node_type"] == "case" and node["label"] == "case-alpha"
+    )
+    assert set(case_node["confirmed_link_ids"]) == {
+        "confirmed-entity-1",
+        "confirmed-identifier-1",
+    }
     assert len(case_node["review_bindings"]) == 2
     assert len(case_node["source_occurrences"]) == 2
     assert all("confirmed_link_id" in item for item in case_node["provenance"])
     assert len(case_node["node_sha256"]) == 64
 
-    edge = next(edge for edge in result["graph"]["edges"] if edge["edge_type"] == "case_confirmed_link")
+    edge = next(
+        edge
+        for edge in result["graph"]["edges"]
+        if edge["edge_type"] == "case_confirmed_link"
+    )
     assert edge["confirmed_link_id"]
     assert edge["accepted_review_decision_id"]
     assert edge["access_scope"]["mode"] == "restricted"
@@ -98,7 +109,14 @@ def test_v25_3_supports_all_confirmed_link_node_categories():
     ]
     result = build_cross_case_relationship_graph(links=links)
     node_types = {node["node_type"] for node in result["graph"]["nodes"]}
-    assert {"case", "entity", "identifier", "infrastructure", "evidence", "temporal"}.issubset(node_types)
+    assert {
+        "case",
+        "entity",
+        "identifier",
+        "infrastructure",
+        "evidence",
+        "temporal",
+    }.issubset(node_types)
     assert result["counts"]["confirmed_links"] == 5
 
 
@@ -119,4 +137,7 @@ def test_v25_3_filters_inaccessible_links_before_projection():
     assert result["counts"]["confirmed_links"] == 1
     assert result["graph"]["confirmed_link_ids"] == ["confirmed-entity-1"]
     assert all(node.get("value") != "case-hidden" for node in result["graph"]["nodes"])
-    assert all(edge["confirmed_link_id"] != "confirmed-hidden" for edge in result["graph"]["edges"])
+    assert all(
+        edge["confirmed_link_id"] != "confirmed-hidden"
+        for edge in result["graph"]["edges"]
+    )

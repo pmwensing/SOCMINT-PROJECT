@@ -73,7 +73,9 @@ def _columns_for(table: str) -> set[str]:
         return set()
 
 
-def _rows_for_subject(table: str, subject_id: int, limit: int = 200) -> list[dict[str, Any]]:
+def _rows_for_subject(
+    table: str, subject_id: int, limit: int = 200
+) -> list[dict[str, Any]]:
     if table not in _table_names():
         return []
     columns = _columns_for(table)
@@ -97,7 +99,11 @@ def _first_subject_row(subject_id: int) -> dict[str, Any]:
             row = rows[0]
             row["_source_table"] = table
             return row
-    return {"id": subject_id, "name": f"Subject {subject_id}", "_source_table": "fallback"}
+    return {
+        "id": subject_id,
+        "name": f"Subject {subject_id}",
+        "_source_table": "fallback",
+    }
 
 
 def _safe_payload(loader_name: str, fallback: dict[str, Any]) -> dict[str, Any]:
@@ -134,7 +140,12 @@ def _integrity_payload(subject_id: int) -> dict[str, Any]:
 
         return integrity_dashboard_payload(subject_id=subject_id)
     except Exception as exc:
-        return {"evidence_count": 0, "custody_event_count": 0, "link_count": 0, "error": str(exc)}
+        return {
+            "evidence_count": 0,
+            "custody_event_count": 0,
+            "link_count": 0,
+            "error": str(exc),
+        }
 
 
 def _section(title: str, rows: list[dict[str, Any]], summary: str) -> dict[str, Any]:
@@ -154,7 +165,9 @@ def _json_from_row_value(value: Any) -> dict[str, Any]:
 
 
 def _observation_type(row: dict[str, Any]) -> str:
-    return str(row.get("observation_type") or row.get("type") or row.get("kind") or "").strip()
+    return str(
+        row.get("observation_type") or row.get("type") or row.get("kind") or ""
+    ).strip()
 
 
 def _is_diagnostic_observation(row: dict[str, Any]) -> bool:
@@ -170,13 +183,22 @@ def _is_diagnostic_observation(row: dict[str, Any]) -> bool:
         if payload.get("status") == "dry_run":
             return True
         if payload.get("connector") == "archivebox" and not any(
-            payload.get(key) for key in ("snapshot_id", "snapshot_path", "index_path", "archive_path", "timestamp")
+            payload.get(key)
+            for key in (
+                "snapshot_id",
+                "snapshot_path",
+                "index_path",
+                "archive_path",
+                "timestamp",
+            )
         ):
             return True
     return False
 
 
-def _split_real_observations(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _split_real_observations(
+    rows: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     diagnostics = []
     real = []
     for row in rows:
@@ -186,11 +208,17 @@ def _split_real_observations(rows: list[dict[str, Any]]) -> tuple[list[dict[str,
 
 def build_full_entity_dossier_v2(subject_id: int) -> dict[str, Any]:
     subject = _first_subject_row(subject_id)
-    raw_observations = _rows_for_subject("spine_observations", subject_id) or _rows_for_subject("observations", subject_id)
+    raw_observations = _rows_for_subject(
+        "spine_observations", subject_id
+    ) or _rows_for_subject("observations", subject_id)
     observations, diagnostics = _split_real_observations(raw_observations)
-    assertions = _rows_for_subject("spine_dossier_assertions", subject_id) + _rows_for_subject("dossier_assertions", subject_id)
+    assertions = _rows_for_subject(
+        "spine_dossier_assertions", subject_id
+    ) + _rows_for_subject("dossier_assertions", subject_id)
     findings = _rows_for_subject("findings", subject_id)
-    identities = _rows_for_subject("identity_graphs", subject_id) + _rows_for_subject("identity_edges", subject_id)
+    identities = _rows_for_subject("identity_graphs", subject_id) + _rows_for_subject(
+        "identity_edges", subject_id
+    )
     enrichments = (
         _rows_for_subject("media_profiles", subject_id)
         + _rows_for_subject("enrichment_profiles", subject_id)
@@ -206,16 +234,27 @@ def build_full_entity_dossier_v2(subject_id: int) -> dict[str, Any]:
     integrity = _integrity_payload(subject_id)
 
     evidence_items = evidence.get("items", [])
-    evidence_ids = {item.get("evidence_id") for item in evidence_items if item.get("evidence_id")}
+    evidence_ids = {
+        item.get("evidence_id") for item in evidence_items if item.get("evidence_id")
+    }
     linked_evidence = [
         item
         for item in links.get("links", [])
-        if item.get("evidence_id") in evidence_ids or item.get("evidence", {}).get("subject_id") == subject_id
+        if item.get("evidence_id") in evidence_ids
+        or item.get("evidence", {}).get("subject_id") == subject_id
     ]
 
     sections = {
-        "identity_summary": _section("Identity Summary", [subject], "Primary subject/entity record and source table."),
-        "identity_graph": _section("Identity Graph", identities, "Identity graph records, aliases, handles, and edges."),
+        "identity_summary": _section(
+            "Identity Summary",
+            [subject],
+            "Primary subject/entity record and source table.",
+        ),
+        "identity_graph": _section(
+            "Identity Graph",
+            identities,
+            "Identity graph records, aliases, handles, and edges.",
+        ),
         "dossier_assertions": _section(
             "Dossier Assertions",
             assertions,
@@ -231,10 +270,26 @@ def build_full_entity_dossier_v2(subject_id: int) -> dict[str, Any]:
             diagnostics,
             "Troubleshooting records from connector runs. These are visible for audit/debugging but are not counted as real observations.",
         ),
-        "findings": _section("Findings", findings, "Analyst or system findings associated with this subject."),
-        "enrichment": _section("Enrichment Summary", enrichments, "Open-source enrichment outputs and profile records."),
-        "contradictions": _section("Contradictions", contradictions, "Assertion conflicts detected for this subject."),
-        "review_decisions": {"title": "Analyst Review Decisions", "summary": "Review and quality gate payload.", "payload": review},
+        "findings": _section(
+            "Findings",
+            findings,
+            "Analyst or system findings associated with this subject.",
+        ),
+        "enrichment": _section(
+            "Enrichment Summary",
+            enrichments,
+            "Open-source enrichment outputs and profile records.",
+        ),
+        "contradictions": _section(
+            "Contradictions",
+            contradictions,
+            "Assertion conflicts detected for this subject.",
+        ),
+        "review_decisions": {
+            "title": "Analyst Review Decisions",
+            "summary": "Review and quality gate payload.",
+            "payload": review,
+        },
         "linked_evidence": {
             "title": "Linked Evidence",
             "summary": "Evidence files and review-item links.",
@@ -249,7 +304,11 @@ def build_full_entity_dossier_v2(subject_id: int) -> dict[str, Any]:
             "integrity": integrity,
             "custody_event_count": custody.get("event_count", 0),
         },
-        "prior_exports": _section("Prior Dossier Exports", dossier_exports, "Existing dossier/export history for this subject."),
+        "prior_exports": _section(
+            "Prior Dossier Exports",
+            dossier_exports,
+            "Existing dossier/export history for this subject.",
+        ),
     }
     score = {
         "real_observation_count": len(observations),
@@ -272,7 +331,12 @@ def build_full_entity_dossier_v2(subject_id: int) -> dict[str, Any]:
 
 def render_dossier_markdown(payload: dict[str, Any]) -> str:
     subject = payload.get("subject") or {}
-    name = subject.get("name") or subject.get("label") or subject.get("username") or f"Subject {payload.get('subject_id')}"
+    name = (
+        subject.get("name")
+        or subject.get("label")
+        or subject.get("username")
+        or f"Subject {payload.get('subject_id')}"
+    )
     lines = [
         "# Full Entity Profile Dossier v2",
         "",
@@ -293,7 +357,14 @@ def render_dossier_markdown(payload: dict[str, Any]) -> str:
         if "count" in section:
             lines.extend([f"- Count: `{section.get('count')}`", ""])
         for idx, item in enumerate(section.get("items", [])[:25], start=1):
-            label = item.get("name") or item.get("label") or item.get("title") or item.get("value") or item.get("id") or f"item-{idx}"
+            label = (
+                item.get("name")
+                or item.get("label")
+                or item.get("title")
+                or item.get("value")
+                or item.get("id")
+                or f"item-{idx}"
+            )
             lines.extend([f"### {idx}. {label}", ""])
             for item_key, item_value in sorted(item.items()):
                 if not str(item_key).startswith("_"):
@@ -305,8 +376,12 @@ def render_dossier_markdown(payload: dict[str, Any]) -> str:
             lines.append("")
         if key == "custody_hash_status":
             integrity = section.get("integrity") or {}
-            lines.append(f"- Integrity evidence count: `{integrity.get('evidence_count')}`")
-            lines.append(f"- Integrity custody events: `{integrity.get('custody_event_count')}`")
+            lines.append(
+                f"- Integrity evidence count: `{integrity.get('evidence_count')}`"
+            )
+            lines.append(
+                f"- Integrity custody events: `{integrity.get('custody_event_count')}`"
+            )
             lines.append(f"- Integrity links: `{integrity.get('link_count')}`")
             lines.append("")
     return "\n".join(lines).rstrip() + "\n"

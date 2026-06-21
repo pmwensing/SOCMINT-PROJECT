@@ -95,7 +95,9 @@ REQUIRED_ROUTES = (
 )
 
 
-def build_administration_product_review(root: str | Path = ".", *, routes: list[Any] | None = None) -> dict[str, Any]:
+def build_administration_product_review(
+    root: str | Path = ".", *, routes: list[Any] | None = None
+) -> dict[str, Any]:
     root_path = Path(root)
     blockers: list[dict[str, str]] = []
 
@@ -117,7 +119,13 @@ def build_administration_product_review(root: str | Path = ".", *, routes: list[
     for route in routes or []:
         rule = str(getattr(route, "rule", route))
         methods = getattr(route, "methods", None)
-        method_tuple = tuple(sorted(method for method in (methods or {"UNKNOWN"}) if method not in {"HEAD", "OPTIONS"}))
+        method_tuple = tuple(
+            sorted(
+                method
+                for method in (methods or {"UNKNOWN"})
+                if method not in {"HEAD", "OPTIONS"}
+            )
+        )
         route_rules.add(rule)
         route_keys.append((rule, method_tuple))
 
@@ -144,7 +152,9 @@ def build_administration_product_review(root: str | Path = ".", *, routes: list[
         if path.is_file() and "v28" in path.name.lower()
     )
     if migrations:
-        blockers.append({"key": "unexpected_v28_migration", "detail": ", ".join(migrations)})
+        blockers.append(
+            {"key": "unexpected_v28_migration", "detail": ", ".join(migrations)}
+        )
 
     journey = [
         {"step": "administration_workspace", "route": "/administration"},
@@ -185,5 +195,7 @@ def build_administration_product_review(root: str | Path = ".", *, routes: list[
         "source_records_mutated": False,
         "checkpoint_record_created": False,
         "v28_closed_when_browser_e2e_passes": True,
-        "next_action": "run_v28_browser_e2e" if not blockers else "resolve_v28_product_blockers",
+        "next_action": "run_v28_browser_e2e"
+        if not blockers
+        else "resolve_v28_product_blockers",
     }

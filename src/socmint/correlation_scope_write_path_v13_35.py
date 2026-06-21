@@ -48,7 +48,9 @@ def assign_seed_scope(
         version=VERSION,
         correlation_scope_id=scope_id,
         correlation_scope_state="root_seed",
-        correlation_scope_reason="assigned_at_seed_creation" if not existing_scope_id else "existing_scope_preserved",
+        correlation_scope_reason="assigned_at_seed_creation"
+        if not existing_scope_id
+        else "existing_scope_preserved",
     )
 
 
@@ -88,7 +90,9 @@ def inherit_scope(
     )
 
 
-def record_scope_fields(record: dict[str, Any], result: ScopeWriteResult) -> dict[str, Any]:
+def record_scope_fields(
+    record: dict[str, Any], result: ScopeWriteResult
+) -> dict[str, Any]:
     updated = dict(record)
     updated[SCOPE_ID] = result.correlation_scope_id
     updated[SCOPE_STATE] = result.correlation_scope_state
@@ -105,16 +109,30 @@ def backfill_record_scope(record: dict[str, Any]) -> dict[str, Any]:
                 version=VERSION,
                 correlation_scope_id=str(record[SCOPE_ID]),
                 correlation_scope_state=str(record.get(SCOPE_STATE) or "scoped"),
-                correlation_scope_reason=str(record.get(SCOPE_REASON) or "existing_scope_preserved"),
+                correlation_scope_reason=str(
+                    record.get(SCOPE_REASON) or "existing_scope_preserved"
+                ),
             ),
         )
 
     scope_id = derive_correlation_scope_id(
-        subject_id=record.get("subject_id") or record.get("spine_subject_id") or record.get("case_subject_id"),
-        seed_id=record.get("seed_id") or record.get("root_seed_id") or record.get("initial_search_id"),
-        connector_run_id=record.get("connector_run_id") or record.get("run_id") or record.get("root_run_id"),
-        target_type=record.get("target_type") or record.get("seed_type") or record.get("finding_type") or record.get("observation_type"),
-        target_value=record.get("target_value") or record.get("seed_value") or record.get("value") or record.get("display_value"),
+        subject_id=record.get("subject_id")
+        or record.get("spine_subject_id")
+        or record.get("case_subject_id"),
+        seed_id=record.get("seed_id")
+        or record.get("root_seed_id")
+        or record.get("initial_search_id"),
+        connector_run_id=record.get("connector_run_id")
+        or record.get("run_id")
+        or record.get("root_run_id"),
+        target_type=record.get("target_type")
+        or record.get("seed_type")
+        or record.get("finding_type")
+        or record.get("observation_type"),
+        target_value=record.get("target_value")
+        or record.get("seed_value")
+        or record.get("value")
+        or record.get("display_value"),
         legacy=True,
     )
 
@@ -143,10 +161,18 @@ def scoped_promotion_decision(
     return promotion_scope_decision(
         finding_scope_id=finding_record.get(SCOPE_ID),
         parent_scope_id=parent_record.get(SCOPE_ID),
-        finding_type=finding_record.get("finding_type") or finding_record.get("target_type") or finding_record.get("type"),
-        finding_value=finding_record.get("value") or finding_record.get("target_value") or finding_record.get("display_value"),
-        parent_type=parent_record.get("finding_type") or parent_record.get("target_type") or parent_record.get("type"),
-        parent_value=parent_record.get("value") or parent_record.get("target_value") or parent_record.get("display_value"),
+        finding_type=finding_record.get("finding_type")
+        or finding_record.get("target_type")
+        or finding_record.get("type"),
+        finding_value=finding_record.get("value")
+        or finding_record.get("target_value")
+        or finding_record.get("display_value"),
+        parent_type=parent_record.get("finding_type")
+        or parent_record.get("target_type")
+        or parent_record.get("type"),
+        parent_value=parent_record.get("value")
+        or parent_record.get("target_value")
+        or parent_record.get("display_value"),
         analyst_merged_scope=analyst_merged_scope,
     )
 

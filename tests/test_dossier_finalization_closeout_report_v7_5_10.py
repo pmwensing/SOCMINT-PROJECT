@@ -2,18 +2,34 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import build_handoff_index
+from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    build_handoff_index,
+)
 from socmint.dossier_finalization_closeout_report_v7_5_10 import ACTION_CLOSEOUT
 from socmint.dossier_finalization_closeout_report_v7_5_10 import ACTION_REGENERATE
 from socmint.dossier_finalization_closeout_report_v7_5_10 import ACTION_REVIEW
 from socmint.dossier_finalization_closeout_report_v7_5_10 import build_closeout_report
-from socmint.dossier_finalization_closeout_report_v7_5_10 import build_closeout_report_from_bundle
-from socmint.dossier_finalization_closeout_report_v7_5_10 import build_closeout_report_from_zip_bytes
-from socmint.dossier_finalization_closeout_report_v7_5_10 import recommended_closeout_action
-from socmint.dossier_finalization_closeout_report_v7_5_10 import render_closeout_report_markdown
-from socmint.dossier_finalization_closeout_report_v7_5_10 import summarize_closeout_report
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import build_handoff_export_bundle
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import build_handoff_export_zip
+from socmint.dossier_finalization_closeout_report_v7_5_10 import (
+    build_closeout_report_from_bundle,
+)
+from socmint.dossier_finalization_closeout_report_v7_5_10 import (
+    build_closeout_report_from_zip_bytes,
+)
+from socmint.dossier_finalization_closeout_report_v7_5_10 import (
+    recommended_closeout_action,
+)
+from socmint.dossier_finalization_closeout_report_v7_5_10 import (
+    render_closeout_report_markdown,
+)
+from socmint.dossier_finalization_closeout_report_v7_5_10 import (
+    summarize_closeout_report,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    build_handoff_export_bundle,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    build_handoff_export_zip,
+)
 
 
 def verified_report():
@@ -37,7 +53,14 @@ def verified_report():
 
 def review_report():
     report = verified_report()
-    report.update({"status": "needs_human_review", "verified": False, "warning_count": 1, "recommended_action": "human_review_required"})
+    report.update(
+        {
+            "status": "needs_human_review",
+            "verified": False,
+            "warning_count": 1,
+            "recommended_action": "human_review_required",
+        }
+    )
     report["warnings"] = [
         {
             "severity": "warn",
@@ -52,7 +75,14 @@ def review_report():
 
 def failed_report():
     report = verified_report()
-    report.update({"status": "failed", "verified": False, "failure_count": 1, "recommended_action": "regenerate_bundle"})
+    report.update(
+        {
+            "status": "failed",
+            "verified": False,
+            "failure_count": 1,
+            "recommended_action": "regenerate_bundle",
+        }
+    )
     report["failures"] = [
         {
             "severity": "fail",
@@ -78,8 +108,19 @@ def v756_report():
         "present_files": ["handoff_index.json", "manifest.json"],
         "missing_files": [],
         "unexpected_files": [],
-        "manifest": {"files": [{"path": "handoff_index.json", "content_type": "application/json", "size_bytes": 123, "sha256": "a" * 64}]},
-        "file_results": [{"path": "handoff_index.json", "hash_match": True, "size_match": True}],
+        "manifest": {
+            "files": [
+                {
+                    "path": "handoff_index.json",
+                    "content_type": "application/json",
+                    "size_bytes": 123,
+                    "sha256": "a" * 64,
+                }
+            ]
+        },
+        "file_results": [
+            {"path": "handoff_index.json", "hash_match": True, "size_match": True}
+        ],
         "failures": [],
         "warnings": [],
         "summary": {"status": "verified", "verified": True},
@@ -87,7 +128,9 @@ def v756_report():
 
 
 def handoff_export_bundle():
-    index = build_handoff_index(v756_report(), bundle_name="bundle-a", operator="analyst")
+    index = build_handoff_index(
+        v756_report(), bundle_name="bundle-a", operator="analyst"
+    )
     return build_handoff_export_bundle(index, bundle_name="closeout-source")
 
 
@@ -117,7 +160,9 @@ def test_builds_regenerate_export_report_from_failed_report():
 
 
 def test_builds_report_from_v758_handoff_export_bundle():
-    report = build_closeout_report_from_bundle(handoff_export_bundle(), operator="operator-a")
+    report = build_closeout_report_from_bundle(
+        handoff_export_bundle(), operator="operator-a"
+    )
 
     assert report["closeout_action"] == ACTION_CLOSEOUT
     assert report["operator"] == "operator-a"
@@ -137,14 +182,20 @@ def test_findings_combine_failures_and_warnings():
     source["warnings"] = review_report()["warnings"]
     report = build_closeout_report(source)
 
-    assert [item["code"] for item in report["findings"]] == ["sha256_mismatch", "non_archive_ready_handoff"]
+    assert [item["code"] for item in report["findings"]] == [
+        "sha256_mismatch",
+        "non_archive_ready_handoff",
+    ]
 
 
 def test_summary_is_compact_and_excludes_full_findings():
     report = build_closeout_report(verified_report())
     summary = summarize_closeout_report(report)
 
-    assert summary["schema"] == "socmint.v7_5_10.dossier_finalization_closeout_report.summary"
+    assert (
+        summary["schema"]
+        == "socmint.v7_5_10.dossier_finalization_closeout_report.summary"
+    )
     assert summary["closeout_action"] == ACTION_CLOSEOUT
     assert "findings" not in summary
 
@@ -167,7 +218,12 @@ def test_markdown_prints_none_for_empty_findings():
 
 
 def test_closeout_action_handles_unknown_status_as_regenerate_export():
-    assert recommended_closeout_action({"status": "mystery", "recommended_action": "archive_ready"}) == ACTION_REGENERATE
+    assert (
+        recommended_closeout_action(
+            {"status": "mystery", "recommended_action": "archive_ready"}
+        )
+        == ACTION_REGENERATE
+    )
 
 
 def test_input_verification_report_is_not_mutated():

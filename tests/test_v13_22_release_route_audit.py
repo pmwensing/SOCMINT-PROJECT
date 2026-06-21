@@ -1,15 +1,29 @@
-from socmint.claim_evidence_ledger_routes_v13 import register_claim_evidence_ledger_routes
-from socmint.claim_evidence_ledger_ui_routes_v13 import register_claim_evidence_ledger_ui_routes
+from socmint.claim_evidence_ledger_routes_v13 import (
+    register_claim_evidence_ledger_routes,
+)
+from socmint.claim_evidence_ledger_ui_routes_v13 import (
+    register_claim_evidence_ledger_ui_routes,
+)
 from socmint.command_center_routes import register_command_center_routes
 from socmint.dashboard import create_app
 from socmint.dossier_readiness_routes_v13 import register_dossier_readiness_routes
 from socmint.dossier_readiness_ui_routes_v13 import register_dossier_readiness_ui_routes
-from socmint.export_manifest_draft_routes_v13 import register_export_manifest_draft_routes
+from socmint.export_manifest_draft_routes_v13 import (
+    register_export_manifest_draft_routes,
+)
 from socmint.handoff_status_routes_v13 import register_handoff_status_routes
-from socmint.normalization_promote_confirmed_routes_v13 import register_normalization_promote_confirmed_routes
-from socmint.normalization_review_queue_routes_v13 import register_normalization_review_queue_routes
-from socmint.normalization_review_ui_routes_v13 import register_normalization_review_ui_routes
-from socmint.normalization_review_update_routes_v13 import register_normalization_review_update_routes
+from socmint.normalization_promote_confirmed_routes_v13 import (
+    register_normalization_promote_confirmed_routes,
+)
+from socmint.normalization_review_queue_routes_v13 import (
+    register_normalization_review_queue_routes,
+)
+from socmint.normalization_review_ui_routes_v13 import (
+    register_normalization_review_ui_routes,
+)
+from socmint.normalization_review_update_routes_v13 import (
+    register_normalization_review_update_routes,
+)
 
 
 V13_ROUTE_REGISTRARS = [

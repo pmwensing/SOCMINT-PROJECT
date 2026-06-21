@@ -48,7 +48,13 @@ def main() -> int:
                 ok = response.status_code == 200
                 print(("[PASS]" if ok else "[FAIL]"), endpoint, response.status_code)
                 if not ok:
-                    failures.append((endpoint, response.status_code, response.get_data(as_text=True)[:500]))
+                    failures.append(
+                        (
+                            endpoint,
+                            response.status_code,
+                            response.get_data(as_text=True)[:500],
+                        )
+                    )
 
             if failures:
                 for endpoint, code, body in failures:

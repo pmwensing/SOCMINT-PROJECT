@@ -59,18 +59,45 @@ def main() -> int:
                 json={"decision": "approve", "reason": "approve verify smoke"},
                 headers={"X-CSRF-Token": "v994-csrf"},
             )
-            ok = response.status_code == 200 and response.get_json().get("gate", {}).get("gate_status") == "approved"
-            print(("[PASS]" if ok else "[FAIL]"), "approve final gate", response.status_code)
+            ok = (
+                response.status_code == 200
+                and response.get_json().get("gate", {}).get("gate_status") == "approved"
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "approve final gate",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("approve final gate", response.status_code, response.get_data(as_text=True)[:2000]))
+                failures.append(
+                    (
+                        "approve final gate",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2000],
+                    )
+                )
 
-            client.post("/api/v1/product/final-gate/write", headers={"X-CSRF-Token": "v994-csrf"})
+            client.post(
+                "/api/v1/product/final-gate/write",
+                headers={"X-CSRF-Token": "v994-csrf"},
+            )
 
             package_root = Path("storage/product_packages/v9_9_4_verify_smoke_package")
             package_root.mkdir(parents=True, exist_ok=True)
-            (package_root / "PACKAGE_MANIFEST.json").write_text(json.dumps({"selected_count": 1, "copied_artifact_count": 1, "metadata_file_count": 2}, indent=2))
+            (package_root / "PACKAGE_MANIFEST.json").write_text(
+                json.dumps(
+                    {
+                        "selected_count": 1,
+                        "copied_artifact_count": 1,
+                        "metadata_file_count": 2,
+                    },
+                    indent=2,
+                )
+            )
             (package_root / "PACKAGE_INDEX.md").write_text("# package index\n")
-            package_zip = Path("storage/product_packages/v9_9_4_verify_smoke_package.zip")
+            package_zip = Path(
+                "storage/product_packages/v9_9_4_verify_smoke_package.zip"
+            )
             with zipfile.ZipFile(package_zip, "w") as zf:
                 zf.writestr("PACKAGE_MANIFEST.json", "{}")
                 zf.writestr("PACKAGE_INDEX.md", "# index\n")
@@ -83,9 +110,19 @@ def main() -> int:
             )
             published = response.get_json() if response.is_json else {}
             ok = response.status_code == 200 and published.get("status") == "published"
-            print(("[PASS]" if ok else "[FAIL]"), "publish final release", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "publish final release",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("publish final release", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "publish final release",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
             response = client.post(
                 f"/api/v1/product/final-release/archive/{release_name}/create",
@@ -93,43 +130,97 @@ def main() -> int:
             )
             seal = response.get_json() if response.is_json else {}
             ok = response.status_code == 200 and seal.get("version") == "9.9.3"
-            print(("[PASS]" if ok else "[FAIL]"), "create archive seal", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "create archive seal",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("create archive seal", response.status_code, response.get_data(as_text=True)[:2500]))
+                failures.append(
+                    (
+                        "create archive seal",
+                        response.status_code,
+                        response.get_data(as_text=True)[:2500],
+                    )
+                )
 
-            response = client.get(f"/api/v1/product/final-release/verify?release_name={release_name}")
+            response = client.get(
+                f"/api/v1/product/final-release/verify?release_name={release_name}"
+            )
             verification = response.get_json() if response.is_json else {}
             ok = (
                 response.status_code == 200
                 and verification.get("version") == "9.9.4"
                 and verification.get("status") == "pass"
-                and verification.get("checks_passed") == verification.get("checks_total")
+                and verification.get("checks_passed")
+                == verification.get("checks_total")
                 and "archive_zip_checksum" not in verification.get("failures", [])
                 and "archive_tar_checksum" not in verification.get("failures", [])
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET final release verification API", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET final release verification API",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET final release verification API", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "GET final release verification API",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             report_json = Path("release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.json")
             report_md = Path("release/V9_9_4_FINAL_RELEASE_VERIFICATION_REPORT.md")
             ok = report_json.exists() and report_md.exists()
             print(("[PASS]" if ok else "[FAIL]"), "verification report artifacts")
             if not ok:
-                failures.append(("verification report artifacts", 0, "missing v9.9.4 verification reports"))
+                failures.append(
+                    (
+                        "verification report artifacts",
+                        0,
+                        "missing v9.9.4 verification reports",
+                    )
+                )
 
-            response = client.get(f"/product/final-release/verify?release_name={release_name}")
+            response = client.get(
+                f"/product/final-release/verify?release_name={release_name}"
+            )
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Final Release Verification Console" in body and release_name in body and "PASS" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET verification UI", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Final Release Verification Console" in body
+                and release_name in body
+                and "PASS" in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET verification UI",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET verification UI", response.status_code, body[:2000]))
+                failures.append(
+                    ("GET verification UI", response.status_code, body[:2000])
+                )
 
-            response = client.get(f"/product/final-release/archive/download/{release_name}.zip")
+            response = client.get(
+                f"/product/final-release/archive/download/{release_name}.zip"
+            )
             ok = response.status_code == 200 and response.data[:2] == b"PK"
-            print(("[PASS]" if ok else "[FAIL]"), "download verified ZIP", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "download verified ZIP",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("download verified ZIP", response.status_code, response.get_data(as_text=True)[:1000]))
+                failures.append(
+                    (
+                        "download verified ZIP",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1000],
+                    )
+                )
 
             if failures:
                 for name, status, body in failures:

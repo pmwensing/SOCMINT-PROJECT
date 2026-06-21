@@ -81,16 +81,26 @@ def _events(case_id: str) -> list[dict[str, Any]]:
         session.close()
 
 
-def _normalize_payload(payload: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, str]]]:
+def _normalize_payload(
+    payload: dict[str, Any],
+) -> tuple[dict[str, Any], list[dict[str, str]]]:
     safe = deepcopy(payload or {})
     normalized = {
         "text": str(safe.get("text") or "").strip(),
         "confidence": str(safe.get("confidence") or "medium").lower(),
         "provenance": {
-            "claim_ids": sorted({str(x) for x in safe.get("claim_ids") or [] if str(x)}),
-            "evidence_ids": sorted({str(x) for x in safe.get("evidence_ids") or [] if str(x)}),
-            "entity_ids": sorted({str(x) for x in safe.get("entity_ids") or [] if str(x)}),
-            "timeline_refs": sorted({str(x) for x in safe.get("timeline_refs") or [] if str(x)}),
+            "claim_ids": sorted(
+                {str(x) for x in safe.get("claim_ids") or [] if str(x)}
+            ),
+            "evidence_ids": sorted(
+                {str(x) for x in safe.get("evidence_ids") or [] if str(x)}
+            ),
+            "entity_ids": sorted(
+                {str(x) for x in safe.get("entity_ids") or [] if str(x)}
+            ),
+            "timeline_refs": sorted(
+                {str(x) for x in safe.get("timeline_refs") or [] if str(x)}
+            ),
         },
         "note": str(safe.get("note") or "").strip(),
     }
@@ -106,7 +116,9 @@ def _normalize_payload(payload: dict[str, Any]) -> tuple[dict[str, Any], list[di
     return normalized, blockers
 
 
-def propose_finding(case_id: str, payload: dict[str, Any], *, actor: str, ip_address=None):
+def propose_finding(
+    case_id: str, payload: dict[str, Any], *, actor: str, ip_address=None
+):
     normalized, blockers = _normalize_payload(payload)
     if blockers:
         return {"status": "blocked", "blockers": blockers}
@@ -134,7 +146,14 @@ def propose_finding(case_id: str, payload: dict[str, Any], *, actor: str, ip_add
     return {**event, "status": "proposed", "event_record_id": row.id}
 
 
-def revise_finding(case_id: str, finding_id: str, payload: dict[str, Any], *, actor: str, ip_address=None):
+def revise_finding(
+    case_id: str,
+    finding_id: str,
+    payload: dict[str, Any],
+    *,
+    actor: str,
+    ip_address=None,
+):
     current = get_finding(case_id, finding_id)
     if not current:
         return {"status": "blocked", "blockers": [{"key": "finding_not_found"}]}
@@ -147,7 +166,9 @@ def revise_finding(case_id: str, finding_id: str, payload: dict[str, Any], *, ac
         "claim_ids": payload.get("claim_ids", provenance.get("claim_ids", [])),
         "evidence_ids": payload.get("evidence_ids", provenance.get("evidence_ids", [])),
         "entity_ids": payload.get("entity_ids", provenance.get("entity_ids", [])),
-        "timeline_refs": payload.get("timeline_refs", provenance.get("timeline_refs", [])),
+        "timeline_refs": payload.get(
+            "timeline_refs", provenance.get("timeline_refs", [])
+        ),
         "note": payload.get("note", ""),
     }
     normalized, blockers = _normalize_payload(merged)
@@ -169,7 +190,9 @@ def revise_finding(case_id: str, finding_id: str, payload: dict[str, Any], *, ac
     return {**event, "status": "proposed", "event_record_id": row.id}
 
 
-def decide_finding(case_id: str, finding_id: str, action: str, *, actor: str, note="", ip_address=None):
+def decide_finding(
+    case_id: str, finding_id: str, action: str, *, actor: str, note="", ip_address=None
+):
     current = get_finding(case_id, finding_id)
     if not current:
         return {"status": "blocked", "blockers": [{"key": "finding_not_found"}]}
@@ -177,7 +200,10 @@ def decide_finding(case_id: str, finding_id: str, action: str, *, actor: str, no
     if action not in APPROVAL_ACTIONS:
         return {"status": "blocked", "blockers": [{"key": "invalid_supervisor_action"}]}
     if current["status"] not in {"proposed", "revision_required"}:
-        return {"status": "blocked", "blockers": [{"key": "finding_not_pending_approval"}]}
+        return {
+            "status": "blocked",
+            "blockers": [{"key": "finding_not_pending_approval"}],
+        }
     status = {
         "approve": "approved",
         "reject": "rejected",
@@ -236,7 +262,8 @@ def list_findings(case_id: str) -> dict[str, Any]:
         latest[finding_id] = current
     states = ["proposed", "approved", "revision_required", "rejected", "promoted"]
     findings = sorted(
-        latest.values(), key=lambda item: (item.get("status", ""), item.get("finding_id", ""))
+        latest.values(),
+        key=lambda item: (item.get("status", ""), item.get("finding_id", "")),
     )
     return {
         "schema": FINDING_WORKSPACE_SCHEMA,
@@ -264,7 +291,9 @@ def get_finding(case_id: str, finding_id: str):
     )
 
 
-def build_dossier_promotion_package(case_id: str, *, actor: str, promote=False, ip_address=None):
+def build_dossier_promotion_package(
+    case_id: str, *, actor: str, promote=False, ip_address=None
+):
     approved = [
         item
         for item in list_findings(case_id)["findings"]
@@ -280,7 +309,9 @@ def build_dossier_promotion_package(case_id: str, *, actor: str, promote=False, 
         }
         for item in approved
     ]
-    package_id = f"dossier-findings-{_sha({'case_id': case_id, 'findings': manifest})[:24]}"
+    package_id = (
+        f"dossier-findings-{_sha({'case_id': case_id, 'findings': manifest})[:24]}"
+    )
     package = {
         "schema": DOSSIER_PACKAGE_SCHEMA,
         "version": VERSION,
@@ -344,7 +375,10 @@ def build_v20_product_checkpoint(routes=None) -> dict[str, Any]:
         blockers.append({"key": "missing_routes", "items": missing_routes})
     if migrations:
         blockers.append(
-            {"key": "unexpected_migrations", "items": [str(path) for path in migrations]}
+            {
+                "key": "unexpected_migrations",
+                "items": [str(path) for path in migrations],
+            }
         )
     return {
         "schema": "socmint.case_findings_product_checkpoint.v20_7",

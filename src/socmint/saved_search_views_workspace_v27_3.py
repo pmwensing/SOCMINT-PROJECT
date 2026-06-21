@@ -3,10 +3,24 @@ from __future__ import annotations
 from typing import Any
 
 from .advanced_search_filters_v27_2 import build_advanced_search_filters
-from .saved_search_view_events_v27_3 import SCHEMA, VERSION, VISIBILITIES, blocked, find_view, history, visible_views
+from .saved_search_view_events_v27_3 import (
+    SCHEMA,
+    VERSION,
+    VISIBILITIES,
+    blocked,
+    find_view,
+    history,
+    visible_views,
+)
 
 
-def run_saved_view(view_id: str, *, user_identity: str, allowed_case_ids: set[str] | None = None, limit: int = 100) -> dict[str, Any]:
+def run_saved_view(
+    view_id: str,
+    *,
+    user_identity: str,
+    allowed_case_ids: set[str] | None = None,
+    limit: int = 100,
+) -> dict[str, Any]:
     view = find_view(view_id, user_identity)
     if view is None or view.get("view_status") != "active":
         return blocked("active_visible_saved_view_required")
@@ -14,7 +28,9 @@ def run_saved_view(view_id: str, *, user_identity: str, allowed_case_ids: set[st
     filters = dict(definition.get("filters") or {})
     filters["allowed_case_ids"] = allowed_case_ids
     filters["limit"] = limit
-    execution = build_advanced_search_filters(str(definition.get("query") or ""), **filters)
+    execution = build_advanced_search_filters(
+        str(definition.get("query") or ""), **filters
+    )
     return {
         "schema": SCHEMA,
         "version": VERSION,
@@ -34,7 +50,11 @@ def build_saved_views_workspace(user_identity: str) -> dict[str, Any]:
     visible = visible_views(user_identity)
     active = [item for item in visible if item.get("view_status") == "active"]
     owned = [item for item in active if item.get("owner") == user_identity]
-    shared = [item for item in active if item.get("owner") != user_identity and item.get("visibility") == "shared"]
+    shared = [
+        item
+        for item in active
+        if item.get("owner") != user_identity and item.get("visibility") == "shared"
+    ]
     return {
         "schema": SCHEMA,
         "version": VERSION,

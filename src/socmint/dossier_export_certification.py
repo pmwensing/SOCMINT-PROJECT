@@ -13,7 +13,9 @@ from .dossier_export_verification import export_verification_summary
 DOSSIER_EXPORT_CERTIFICATION_SCHEMA = "socmint.dossier_export_certification.v10_11_0"
 
 
-def artifact_digest_summary(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def artifact_digest_summary(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     manifest = load_export_manifest(subject_id=subject_id, case_id=case_id, root=root)
     artifacts = [
         {
@@ -33,12 +35,18 @@ def artifact_digest_summary(subject_id: str, case_id: str, root: str | Path = DE
     }
 
 
-def export_certification_bundle(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def export_certification_bundle(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     gate = export_gate_summary(subject_id=subject_id, case_id=case_id, root=root)
     decision = export_gate_decision(subject_id=subject_id, case_id=case_id, root=root)
-    verification = export_verification_summary(subject_id=subject_id, case_id=case_id, root=root)
+    verification = export_verification_summary(
+        subject_id=subject_id, case_id=case_id, root=root
+    )
     audit = audit_summary(case_id=case_id, subject_id=subject_id, root=root)
-    artifacts = artifact_digest_summary(subject_id=subject_id, case_id=case_id, root=root)
+    artifacts = artifact_digest_summary(
+        subject_id=subject_id, case_id=case_id, root=root
+    )
     certified = decision.get("decision") == "allow" and gate.get("ready") is True
     return {
         "schema": DOSSIER_EXPORT_CERTIFICATION_SCHEMA,
@@ -54,8 +62,12 @@ def export_certification_bundle(subject_id: str, case_id: str, root: str | Path 
     }
 
 
-def export_certification_summary(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
-    bundle = export_certification_bundle(subject_id=subject_id, case_id=case_id, root=root)
+def export_certification_summary(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
+    bundle = export_certification_bundle(
+        subject_id=subject_id, case_id=case_id, root=root
+    )
     return {
         "schema": DOSSIER_EXPORT_CERTIFICATION_SCHEMA,
         "status": bundle["status"],
@@ -70,8 +82,12 @@ def export_certification_summary(subject_id: str, case_id: str, root: str | Path
     }
 
 
-def export_certification_statement(subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
-    summary = export_certification_summary(subject_id=subject_id, case_id=case_id, root=root)
+def export_certification_statement(
+    subject_id: str, case_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
+    summary = export_certification_summary(
+        subject_id=subject_id, case_id=case_id, root=root
+    )
     if summary["certified"]:
         statement = "Export bundle is certified: gate allowed, verification passed, and audit coverage is present."
     else:

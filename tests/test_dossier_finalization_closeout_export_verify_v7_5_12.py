@@ -5,15 +5,29 @@ import json
 import zipfile
 from copy import deepcopy
 
-from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import build_closeout_export_bundle
-from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import build_closeout_export_bundle_files
-from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import build_closeout_export_zip
+from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import (
+    build_closeout_export_bundle,
+)
+from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import (
+    build_closeout_export_bundle_files,
+)
+from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import (
+    build_closeout_export_zip,
+)
 from socmint.dossier_finalization_closeout_export_bundle_v7_5_11 import canonical_json
 from socmint.dossier_finalization_closeout_report_v7_5_10 import build_closeout_report
-from socmint.dossier_finalization_closeout_export_verify_v7_5_12 import summarize_closeout_export_verification
-from socmint.dossier_finalization_closeout_export_verify_v7_5_12 import verify_closeout_export_bundle
-from socmint.dossier_finalization_closeout_export_verify_v7_5_12 import verify_closeout_export_files
-from socmint.dossier_finalization_closeout_export_verify_v7_5_12 import verify_closeout_export_zip
+from socmint.dossier_finalization_closeout_export_verify_v7_5_12 import (
+    summarize_closeout_export_verification,
+)
+from socmint.dossier_finalization_closeout_export_verify_v7_5_12 import (
+    verify_closeout_export_bundle,
+)
+from socmint.dossier_finalization_closeout_export_verify_v7_5_12 import (
+    verify_closeout_export_files,
+)
+from socmint.dossier_finalization_closeout_export_verify_v7_5_12 import (
+    verify_closeout_export_zip,
+)
 
 
 def verified_report():
@@ -37,7 +51,14 @@ def verified_report():
 
 def failed_report():
     report = verified_report()
-    report.update({"status": "failed", "verified": False, "failure_count": 1, "recommended_action": "regenerate_bundle"})
+    report.update(
+        {
+            "status": "failed",
+            "verified": False,
+            "failure_count": 1,
+            "recommended_action": "regenerate_bundle",
+        }
+    )
     report["failures"] = [
         {
             "severity": "fail",
@@ -57,7 +78,9 @@ def closeout_bundle():
 
 def regenerate_bundle():
     closeout_report = build_closeout_report(failed_report())
-    return build_closeout_export_bundle(closeout_report, bundle_name="regenerate-export")
+    return build_closeout_export_bundle(
+        closeout_report, bundle_name="regenerate-export"
+    )
 
 
 def closeout_files():
@@ -67,7 +90,10 @@ def closeout_files():
 def test_verifies_closeout_ready_v7511_bundle_as_verified():
     report = verify_closeout_export_bundle(closeout_bundle())
 
-    assert report["schema"] == "socmint.v7_5_12.dossier_finalization_closeout_export_verification"
+    assert (
+        report["schema"]
+        == "socmint.v7_5_12.dossier_finalization_closeout_export_verification"
+    )
     assert report["status"] == "verified"
     assert report["verified"] is True
     assert report["failure_count"] == 0
@@ -88,7 +114,10 @@ def test_fails_when_manifest_json_is_missing():
     report = verify_closeout_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "missing_required_file" and item["path"] == "manifest.json" for item in report["failures"])
+    assert any(
+        item["code"] == "missing_required_file" and item["path"] == "manifest.json"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_required_file_is_missing():
@@ -98,7 +127,10 @@ def test_fails_when_required_file_is_missing():
     report = verify_closeout_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "missing_required_file" and item["path"] == "README.md" for item in report["failures"])
+    assert any(
+        item["code"] == "missing_required_file" and item["path"] == "README.md"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_sha256_does_not_match():
@@ -108,7 +140,10 @@ def test_fails_when_sha256_does_not_match():
     report = verify_closeout_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "sha256_mismatch" and item["path"] == "closeout_report.json" for item in report["failures"])
+    assert any(
+        item["code"] == "sha256_mismatch" and item["path"] == "closeout_report.json"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_size_does_not_match():
@@ -122,7 +157,10 @@ def test_fails_when_size_does_not_match():
     report = verify_closeout_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "size_mismatch" and item["path"] == "closeout_report.json" for item in report["failures"])
+    assert any(
+        item["code"] == "size_mismatch" and item["path"] == "closeout_report.json"
+        for item in report["failures"]
+    )
 
 
 def test_fails_when_closeout_summary_action_differs():
@@ -135,14 +173,18 @@ def test_fails_when_closeout_summary_action_differs():
         if row["path"] == "closeout_report_summary.json":
             import hashlib
 
-            row["sha256"] = hashlib.sha256(files["closeout_report_summary.json"]).hexdigest()
+            row["sha256"] = hashlib.sha256(
+                files["closeout_report_summary.json"]
+            ).hexdigest()
             row["size_bytes"] = len(files["closeout_report_summary.json"])
     files["manifest.json"] = canonical_json(manifest).encode("utf-8")
 
     report = verify_closeout_export_files(files)
 
     assert report["status"] == "failed"
-    assert any(item["code"] == "closeout_action_mismatch" for item in report["failures"])
+    assert any(
+        item["code"] == "closeout_action_mismatch" for item in report["failures"]
+    )
 
 
 def test_needs_human_review_when_unexpected_extra_file_exists():
@@ -193,7 +235,10 @@ def test_summary_is_compact():
     report = verify_closeout_export_bundle(closeout_bundle())
     summary = summarize_closeout_export_verification(report)
 
-    assert summary["schema"] == "socmint.v7_5_12.dossier_finalization_closeout_export_verification.summary"
+    assert (
+        summary["schema"]
+        == "socmint.v7_5_12.dossier_finalization_closeout_export_verification.summary"
+    )
     assert summary["status"] == "verified"
     assert summary["verified"] is True
     assert "manifest" not in summary

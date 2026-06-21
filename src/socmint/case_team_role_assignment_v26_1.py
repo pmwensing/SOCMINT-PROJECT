@@ -4,7 +4,12 @@ import datetime as dt
 from typing import Any
 
 from . import database
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .portfolio_operations_dashboard_v24_0 import build_portfolio_operations_dashboard
 
 SCHEMA = "socmint.case_team_role_assignment.v26_1"

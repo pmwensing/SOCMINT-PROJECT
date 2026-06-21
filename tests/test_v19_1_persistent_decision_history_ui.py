@@ -99,7 +99,10 @@ def test_v19_1_decision_response_returns_both_histories(tmp_path, monkeypatch):
     payload = response.get_json()
     assert payload["review_history"]["entry_count"] == 1
     assert payload["persistent_decision_history"]["entry_count"] == 1
-    assert payload["persistent_decision_history"]["entries"][0]["decision"] == "needs_follow_up"
+    assert (
+        payload["persistent_decision_history"]["entries"][0]["decision"]
+        == "needs_follow_up"
+    )
 
 
 def test_v19_1_persistent_ui_survives_session_history_clear(tmp_path, monkeypatch):
@@ -124,7 +127,10 @@ def test_v19_1_persistent_ui_survives_session_history_clear(tmp_path, monkeypatc
 
     assert payload["review_history"]["entry_count"] == 0
     assert payload["persistent_decision_history"]["entry_count"] == 1
-    assert payload["persistent_decision_history"]["entries"][0]["decision"] == "hold_delivery"
+    assert (
+        payload["persistent_decision_history"]["entries"][0]["decision"]
+        == "hold_delivery"
+    )
 
 
 def test_v19_1_client_script_refreshes_persistent_history():

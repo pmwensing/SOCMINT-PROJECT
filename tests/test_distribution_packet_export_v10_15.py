@@ -33,7 +33,9 @@ def _evidence():
 
 def _approved_export(tmp_path, monkeypatch, subject_id="subject-packet-export-safe"):
     monkeypatch.chdir(tmp_path)
-    persist_export_pack(_subject(subject_id), _evidence(), analyst_reviewed=True, audit=True)
+    persist_export_pack(
+        _subject(subject_id), _evidence(), analyst_reviewed=True, audit=True
+    )
     record_distribution_action(
         case_id="case-packet-export-1015",
         subject_id=subject_id,
@@ -51,7 +53,9 @@ def _approved_export(tmp_path, monkeypatch, subject_id="subject-packet-export-sa
     return subject_id
 
 
-def test_v10_15_builds_distribution_export_zip_for_approved_packet(tmp_path, monkeypatch):
+def test_v10_15_builds_distribution_export_zip_for_approved_packet(
+    tmp_path, monkeypatch
+):
     subject_id = _approved_export(tmp_path, monkeypatch)
 
     manifest = build_distribution_packet_export("case-packet-export-1015", subject_id)
@@ -78,7 +82,9 @@ def test_v10_15_builds_distribution_export_zip_for_approved_packet(tmp_path, mon
 
 
 def test_v10_15_export_summary_reads_existing_manifest(tmp_path, monkeypatch):
-    subject_id = _approved_export(tmp_path, monkeypatch, "subject-packet-export-summary")
+    subject_id = _approved_export(
+        tmp_path, monkeypatch, "subject-packet-export-summary"
+    )
     built = build_distribution_packet_export("case-packet-export-1015", subject_id)
 
     summary = distribution_packet_export_summary("case-packet-export-1015", subject_id)
@@ -91,7 +97,9 @@ def test_v10_15_export_summary_reads_existing_manifest(tmp_path, monkeypatch):
 def test_v10_15_summary_reports_missing_before_build(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
 
-    summary = distribution_packet_export_summary("case-packet-export-1015", "missing-subject")
+    summary = distribution_packet_export_summary(
+        "case-packet-export-1015", "missing-subject"
+    )
 
     assert summary["status"] == "missing"
     assert summary["case_id"] == "case-packet-export-1015"
@@ -100,15 +108,27 @@ def test_v10_15_summary_reports_missing_before_build(tmp_path, monkeypatch):
 
 def test_v10_15_blocks_export_when_not_approved(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    persist_export_pack(_subject("subject-packet-export-no-approval"), _evidence(), analyst_reviewed=True, audit=True)
+    persist_export_pack(
+        _subject("subject-packet-export-no-approval"),
+        _evidence(),
+        analyst_reviewed=True,
+        audit=True,
+    )
 
     with pytest.raises(ValueError, match="certified and approved"):
-        build_distribution_packet_export("case-packet-export-1015", "subject-packet-export-no-approval")
+        build_distribution_packet_export(
+            "case-packet-export-1015", "subject-packet-export-no-approval"
+        )
 
 
 def test_v10_15_blocks_export_when_certification_blockers_remain(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    persist_export_pack(_subject("subject-packet-export-held"), _evidence(), analyst_reviewed=True, audit=False)
+    persist_export_pack(
+        _subject("subject-packet-export-held"),
+        _evidence(),
+        analyst_reviewed=True,
+        audit=False,
+    )
     record_distribution_action(
         case_id="case-packet-export-1015",
         subject_id="subject-packet-export-held",
@@ -118,15 +138,26 @@ def test_v10_15_blocks_export_when_certification_blockers_remain(tmp_path, monke
     )
 
     with pytest.raises(ValueError, match="certified and approved"):
-        build_distribution_packet_export("case-packet-export-1015", "subject-packet-export-held")
+        build_distribution_packet_export(
+            "case-packet-export-1015", "subject-packet-export-held"
+        )
 
 
 def test_v10_15_distribution_export_routes_are_registered():
     routes = {rule.rule for rule in app.url_map.iter_rules()}
 
-    assert "/api/v1/dossier-builder/v3/distribution-export/<case_id>/<subject_id>/build" in routes
-    assert "/api/v1/dossier-builder/v3/distribution-export/<case_id>/<subject_id>" in routes
-    assert "/api/v1/dossier-builder/v3/distribution-export/<case_id>/<subject_id>/download" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/distribution-export/<case_id>/<subject_id>/build"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/distribution-export/<case_id>/<subject_id>"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/distribution-export/<case_id>/<subject_id>/download"
+        in routes
+    )
 
 
 def test_v10_15_distribution_export_api_requires_login():

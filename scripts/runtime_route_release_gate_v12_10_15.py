@@ -42,7 +42,9 @@ def utc_now() -> str:
     return datetime.now(UTC).isoformat()
 
 
-def write_report(report: dict[str, Any], root: str = "var/socmint/rc_reports") -> dict[str, str]:
+def write_report(
+    report: dict[str, Any], root: str = "var/socmint/rc_reports"
+) -> dict[str, str]:
     out = Path(root)
     out.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
@@ -84,7 +86,9 @@ def run_gate() -> dict[str, Any]:
             "decision": "FAIL",
             "package_version": None,
             "error": f"WSGI app import failed: {exc}",
-            "routes": [{"route": route, "status": "not_checked"} for route in REQUIRED_ROUTES],
+            "routes": [
+                {"route": route, "status": "not_checked"} for route in REQUIRED_ROUTES
+            ],
             "missing_routes": REQUIRED_ROUTES,
             "available_count": 0,
         }
@@ -92,7 +96,10 @@ def run_gate() -> dict[str, Any]:
         return report
 
     available = {rule.rule for rule in app.url_map.iter_rules()}
-    rows = [{"route": route, "status": "pass" if route in available else "missing"} for route in REQUIRED_ROUTES]
+    rows = [
+        {"route": route, "status": "pass" if route in available else "missing"}
+        for route in REQUIRED_ROUTES
+    ]
     missing = [row["route"] for row in rows if row["status"] != "pass"]
     version_match = package_version == VERSION
     status = "pass" if not missing and version_match else "fail"

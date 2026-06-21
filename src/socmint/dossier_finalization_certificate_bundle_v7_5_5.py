@@ -14,7 +14,9 @@ from .dossier_finalization_certificate_v7_5_4 import render_certificate_markdown
 from .dossier_finalization_certificate_v7_5_4 import summarize_certificate
 
 CERTIFICATE_BUNDLE_SCHEMA = "socmint.v7_5_5.dossier_finalization_certificate_bundle"
-CERTIFICATE_BUNDLE_MANIFEST_SCHEMA = "socmint.v7_5_5.dossier_finalization_certificate_bundle_manifest"
+CERTIFICATE_BUNDLE_MANIFEST_SCHEMA = (
+    "socmint.v7_5_5.dossier_finalization_certificate_bundle_manifest"
+)
 APPROVED_LINE = "v7.5.5"
 DEFAULT_BUNDLE_NAME = "socmint-v7.5.5-certificate-bundle"
 REQUIRED_FILES = (
@@ -121,7 +123,9 @@ def build_certificate_bundle_files(bundle: dict[str, Any]) -> dict[str, bytes]:
         "certificate.md": render_certificate_markdown(certificate).encode("utf-8"),
         "certificate_summary.json": canonical_json(summary).encode("utf-8"),
     }
-    preview_bundle = {key: value for key, value in bundle.items() if key not in {"manifest", "files"}}
+    preview_bundle = {
+        key: value for key, value in bundle.items() if key not in {"manifest", "files"}
+    }
     files["README.md"] = _readme(preview_bundle).encode("utf-8")
     files["manifest.json"] = b"{}\n"
     manifest = certificate_bundle_manifest(files)

@@ -72,9 +72,20 @@ def main() -> int:
                     headers={"X-CSRF-Token": "v987-csrf"},
                 )
                 ok = response.status_code == 200 and response.is_json
-                print(("[PASS]" if ok else "[FAIL]"), "seed review", path, response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    "seed review",
+                    path,
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append((f"seed review {path}", response.status_code, response.get_data(as_text=True)[:1000]))
+                    failures.append(
+                        (
+                            f"seed review {path}",
+                            response.status_code,
+                            response.get_data(as_text=True)[:1000],
+                        )
+                    )
 
             response = client.get("/api/v1/product/artifact-export-manifest")
             payload = response.get_json() if response.is_json else {}
@@ -88,17 +99,44 @@ def main() -> int:
                 and paths["excluded"] not in manifest_paths
                 and paths["archived"] not in manifest_paths
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET manifest selected active artifacts", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET manifest selected active artifacts",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET manifest selected active artifacts", response.status_code, response.get_data(as_text=True)[:1500]))
+                failures.append(
+                    (
+                        "GET manifest selected active artifacts",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1500],
+                    )
+                )
 
-            response = client.get("/api/v1/product/artifact-export-manifest?include_archived=true")
+            response = client.get(
+                "/api/v1/product/artifact-export-manifest?include_archived=true"
+            )
             payload_with_archived = response.get_json() if response.is_json else {}
-            manifest_paths_archived = {item.get("path") for item in payload_with_archived.get("artifacts", [])}
-            ok = response.status_code == 200 and paths["archived"] in manifest_paths_archived
-            print(("[PASS]" if ok else "[FAIL]"), "GET manifest include archived", response.status_code)
+            manifest_paths_archived = {
+                item.get("path") for item in payload_with_archived.get("artifacts", [])
+            }
+            ok = (
+                response.status_code == 200
+                and paths["archived"] in manifest_paths_archived
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET manifest include archived",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET manifest include archived", response.status_code, response.get_data(as_text=True)[:1500]))
+                failures.append(
+                    (
+                        "GET manifest include archived",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1500],
+                    )
+                )
 
             response = client.post(
                 "/api/v1/product/artifact-export-manifest/write",
@@ -108,27 +146,63 @@ def main() -> int:
             payload = response.get_json() if response.is_json else {}
             ok = (
                 response.status_code == 200
-                and Path("release/V9_8_7_PRODUCT_ARTIFACT_EXPORT_MANIFEST.json").exists()
+                and Path(
+                    "release/V9_8_7_PRODUCT_ARTIFACT_EXPORT_MANIFEST.json"
+                ).exists()
                 and Path("release/V9_8_7_PRODUCT_ARTIFACT_EXPORT_MANIFEST.md").exists()
                 and payload.get("artifacts_written", {}).get("json")
             )
-            print(("[PASS]" if ok else "[FAIL]"), "POST write manifest", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "POST write manifest",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("POST write manifest", response.status_code, response.get_data(as_text=True)[:1500]))
+                failures.append(
+                    (
+                        "POST write manifest",
+                        response.status_code,
+                        response.get_data(as_text=True)[:1500],
+                    )
+                )
 
             response = client.get("/product/artifacts/export-manifest")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Product Artifact Export Manifest" in body and paths["reviewed"] in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET export manifest UI", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Product Artifact Export Manifest" in body
+                and paths["reviewed"] in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET export manifest UI",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET export manifest UI", response.status_code, body[:1500]))
+                failures.append(
+                    ("GET export manifest UI", response.status_code, body[:1500])
+                )
 
             response = client.get("/product/artifacts")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Export Manifest" in body and "artifact-export-manifest" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET artifact browser export panel", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Export Manifest" in body
+                and "artifact-export-manifest" in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET artifact browser export panel",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET artifact browser export panel", response.status_code, body[:1500]))
+                failures.append(
+                    (
+                        "GET artifact browser export panel",
+                        response.status_code,
+                        body[:1500],
+                    )
+                )
 
             if failures:
                 for name, status, body in failures:

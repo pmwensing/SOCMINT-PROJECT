@@ -15,7 +15,11 @@ def _login(client):
 
 
 def test_export_blocker_screenshot_artifact_manifest_lists_expected_outputs():
-    manifest = json.loads(Path("release/V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json").read_text())
+    manifest = json.loads(
+        Path(
+            "release/V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json"
+        ).read_text()
+    )
 
     assert manifest["schema"] in {
         "socmint.release_artifact_manifest.v13_42",
@@ -27,14 +31,20 @@ def test_export_blocker_screenshot_artifact_manifest_lists_expected_outputs():
     assert "runtime_screenshots_v13_40/export-blockers-denied-top.png" in paths
 
 
-def test_export_blocker_screenshot_targets_return_200_before_capture(tmp_path, monkeypatch):
+def test_export_blocker_screenshot_targets_return_200_before_capture(
+    tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     create_export_blocker_demo()
     client = app.test_client()
     _login(client)
 
-    allowed = client.get(f"/dossier/export-blockers?case_id={ALLOWED_CASE_ID}&subject_id={ALLOWED_SUBJECT_ID}")
-    denied = client.get(f"/dossier/export-blockers?case_id={DENIED_CASE_ID}&subject_id={DENIED_SUBJECT_ID}")
+    allowed = client.get(
+        f"/dossier/export-blockers?case_id={ALLOWED_CASE_ID}&subject_id={ALLOWED_SUBJECT_ID}"
+    )
+    denied = client.get(
+        f"/dossier/export-blockers?case_id={DENIED_CASE_ID}&subject_id={DENIED_SUBJECT_ID}"
+    )
 
     assert allowed.status_code == 200
     assert denied.status_code == 200

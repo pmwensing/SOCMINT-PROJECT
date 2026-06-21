@@ -4,11 +4,15 @@ from copy import deepcopy
 from datetime import UTC, datetime
 from typing import Any
 
-from .dossier_finalization_handoff_export_verify_v7_5_9 import verify_handoff_export_bundle
+from .dossier_finalization_handoff_export_verify_v7_5_9 import (
+    verify_handoff_export_bundle,
+)
 from .dossier_finalization_handoff_export_verify_v7_5_9 import verify_handoff_export_zip
 
 CLOSEOUT_REPORT_SCHEMA = "socmint.v7_5_10.dossier_finalization_closeout_report"
-CLOSEOUT_REPORT_SUMMARY_SCHEMA = "socmint.v7_5_10.dossier_finalization_closeout_report.summary"
+CLOSEOUT_REPORT_SUMMARY_SCHEMA = (
+    "socmint.v7_5_10.dossier_finalization_closeout_report.summary"
+)
 APPROVED_LINE = "v7.5.10"
 ACTION_CLOSEOUT = "closeout_ready"
 ACTION_REVIEW = "human_review_required"
@@ -23,7 +27,9 @@ def utc_now() -> str:
 
 def recommended_closeout_action(verification_report: dict[str, Any]) -> str:
     status = str((verification_report or {}).get("status") or "").strip().lower()
-    handoff_action = str((verification_report or {}).get("recommended_action") or "").strip().lower()
+    handoff_action = (
+        str((verification_report or {}).get("recommended_action") or "").strip().lower()
+    )
     if status == "verified" and handoff_action in ARCHIVE_READY_ACTIONS:
         return ACTION_CLOSEOUT
     if status == "needs_human_review":
@@ -53,7 +59,10 @@ def build_closeout_report(
     notes: str | None = None,
 ) -> dict[str, Any]:
     verification = deepcopy(verification_report or {})
-    findings = [*list(verification.get("failures") or []), *list(verification.get("warnings") or [])]
+    findings = [
+        *list(verification.get("failures") or []),
+        *list(verification.get("warnings") or []),
+    ]
     present_files = list(verification.get("present_files") or [])
     file_count = len(present_files)
     if not file_count:

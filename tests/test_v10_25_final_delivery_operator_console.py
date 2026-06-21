@@ -2,12 +2,24 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index
-from socmint.v10_24_final_delivery_workspace import build_final_delivery_workspace_from_bundle
-from socmint.v10_25_final_delivery_operator_console import build_operator_commands_from_request
-from socmint.v10_25_final_delivery_operator_console import build_operator_console_from_request
-from socmint.v10_25_final_delivery_operator_console import build_operator_console_from_workspace
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index,
+)
+from socmint.v10_24_final_delivery_workspace import (
+    build_final_delivery_workspace_from_bundle,
+)
+from socmint.v10_25_final_delivery_operator_console import (
+    build_operator_commands_from_request,
+)
+from socmint.v10_25_final_delivery_operator_console import (
+    build_operator_console_from_request,
+)
+from socmint.v10_25_final_delivery_operator_console import (
+    build_operator_console_from_workspace,
+)
 from socmint.v10_25_final_delivery_operator_console import readiness_for_workspace
 
 REQUIRED_CARD_TYPES = {
@@ -31,7 +43,9 @@ def verification_report(status="verified"):
         "missing_files": [],
         "unexpected_files": [],
         "manifest": {"file_count": 5, "files": []},
-        "closeout_action": "closeout_ready" if status == "verified" else "regenerate_export",
+        "closeout_action": "closeout_ready"
+        if status == "verified"
+        else "regenerate_export",
         "verification_status": status,
         "failures": [
             {
@@ -60,11 +74,15 @@ def verification_report(status="verified"):
 
 
 def delivery_index(status="verified"):
-    return build_master_delivery_index(verification_report(status), operator="analyst", notes="Ready.")
+    return build_master_delivery_index(
+        verification_report(status), operator="analyst", notes="Ready."
+    )
 
 
 def workspace(status="verified"):
-    bundle = build_master_delivery_export_bundle(delivery_index(status), bundle_name="Console Package")
+    bundle = build_master_delivery_export_bundle(
+        delivery_index(status), bundle_name="Console Package"
+    )
     return build_final_delivery_workspace_from_bundle(bundle)
 
 
@@ -106,12 +124,31 @@ def test_cards_include_all_required_card_types():
 
 def test_export_command_enabled_only_when_ready():
     ready_commands = build_operator_console_from_workspace(workspace())["commands"]
-    review_commands = build_operator_console_from_workspace(workspace("needs_human_review"))["commands"]
-    blocked_commands = build_operator_console_from_workspace(workspace("failed"))["commands"]
+    review_commands = build_operator_console_from_workspace(
+        workspace("needs_human_review")
+    )["commands"]
+    blocked_commands = build_operator_console_from_workspace(workspace("failed"))[
+        "commands"
+    ]
 
-    assert next(command for command in ready_commands if command["id"] == "export_zip")["enabled"] is True
-    assert next(command for command in review_commands if command["id"] == "export_zip")["enabled"] is False
-    assert next(command for command in blocked_commands if command["id"] == "export_zip")["enabled"] is False
+    assert (
+        next(command for command in ready_commands if command["id"] == "export_zip")[
+            "enabled"
+        ]
+        is True
+    )
+    assert (
+        next(command for command in review_commands if command["id"] == "export_zip")[
+            "enabled"
+        ]
+        is False
+    )
+    assert (
+        next(command for command in blocked_commands if command["id"] == "export_zip")[
+            "enabled"
+        ]
+        is False
+    )
 
 
 def test_readiness_mapping_respects_package_ready_false():
@@ -130,7 +167,9 @@ def test_builds_console_from_request_workspace_shape():
 
 
 def test_builds_console_from_request_index_shape():
-    console = build_operator_console_from_request({"index": delivery_index(), "bundle_name": "Index Shape"})
+    console = build_operator_console_from_request(
+        {"index": delivery_index(), "bundle_name": "Index Shape"}
+    )
 
     assert console["readiness"] == "ready"
     assert console["workspace"]["bundle_name"] == "index-shape"
@@ -140,7 +179,11 @@ def test_commands_from_request_returns_command_list():
     commands = build_operator_commands_from_request({"workspace": workspace()})
 
     assert isinstance(commands, list)
-    assert {command["id"] for command in commands} >= {"review_final_package", "export_zip", "record_delivery"}
+    assert {command["id"] for command in commands} >= {
+        "review_final_package",
+        "export_zip",
+        "record_delivery",
+    }
 
 
 def test_input_payload_is_not_mutated():

@@ -42,7 +42,9 @@ def register_collection_operations_routes_v29_0(app):
         return render_template(
             "collection_operations_v29_0.html",
             title="Collection Operations Workspace",
-            payload=build_collection_operations_workspace(stale_after_hours=stale_after_hours),
+            payload=build_collection_operations_workspace(
+                stale_after_hours=stale_after_hours
+            ),
         )
 
     @app.get("/api/v1/collection-operations")
@@ -54,7 +56,9 @@ def register_collection_operations_routes_v29_0(app):
             stale_after_hours = int(request.args.get("stale_after_hours", "24"))
         except ValueError:
             stale_after_hours = 24
-        return jsonify(build_collection_operations_workspace(stale_after_hours=stale_after_hours))
+        return jsonify(
+            build_collection_operations_workspace(stale_after_hours=stale_after_hours)
+        )
 
     register_collection_job_routes_v29_1(app)
     return app

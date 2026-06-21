@@ -114,9 +114,7 @@ def get_assertion_evidence(assertion_id):
                 "source_ref": obs.source_ref,
                 "evidence_ref": obs.evidence_ref,
                 "payload": _json_loads(obs.payload_json),
-                "created_at": obs.created_at.isoformat()
-                if obs.created_at
-                else None,
+                "created_at": obs.created_at.isoformat() if obs.created_at else None,
             }
             for obs in observations
         ],
@@ -127,9 +125,7 @@ def get_assertion_evidence(assertion_id):
                 "connector": run.connector_key,
                 "seed_id": run.seed_id,
                 "status": run.status,
-                "created_at": run.created_at.isoformat()
-                if run.created_at
-                else None,
+                "created_at": run.created_at.isoformat() if run.created_at else None,
             }
             for run in runs
         ],
@@ -236,9 +232,7 @@ def connector_quality_metrics():
             else 0.0
         )
         item["success_rate"] = (
-            round(item["successes"] / item["runs"], 3)
-            if item["runs"]
-            else 0.0
+            round(item["successes"] / item["runs"], 3) if item["runs"] else 0.0
         )
         item["reliability_score"] = round(
             max(
@@ -308,4 +302,6 @@ def assertion_review_queue(limit=100):
                 "source_count": len(payload.get("source_refs") or []),
             }
         )
-    return sorted(queue, key=lambda item: (-item["priority"], -item["confidence"], item["id"]))[:limit]
+    return sorted(
+        queue, key=lambda item: (-item["priority"], -item["confidence"], item["id"])
+    )[:limit]

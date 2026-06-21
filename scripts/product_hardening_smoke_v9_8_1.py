@@ -13,7 +13,9 @@ def now_iso() -> str:
 
 def run(name: str, cmd: list[str], required: bool = True, timeout: int = 240) -> dict:
     print(f"[+] {name}: {' '.join(cmd)}")
-    proc = subprocess.run(cmd, text=True, capture_output=True, timeout=timeout, check=False)
+    proc = subprocess.run(
+        cmd, text=True, capture_output=True, timeout=timeout, check=False
+    )
     ok = proc.returncode == 0
     print(("[PASS] " if ok else "[FAIL] ") + name)
     if not ok:
@@ -38,7 +40,10 @@ def main() -> int:
     checks = [
         run("compileall-src", [sys.executable, "-m", "compileall", "src/socmint"]),
         run("product-smoke-v9-7-4", ["make", "product-smoke"]),
-        run("product-route-smoke-v9-8-1", [sys.executable, "scripts/product_route_smoke_v9_8_1.py"]),
+        run(
+            "product-route-smoke-v9-8-1",
+            [sys.executable, "scripts/product_route_smoke_v9_8_1.py"],
+        ),
     ]
 
     required_failed = [c for c in checks if c["required"] and not c["ok"]]
@@ -51,7 +56,9 @@ def main() -> int:
         "summary": f"{len(checks) - len(required_failed)}/{len(checks)} required checks passed.",
         "checks": checks,
         "required_failed": [c["name"] for c in required_failed],
-        "next_action": "Merge v9.8.1 into master" if status == "pass" else "Fix route/hardening failures before merge.",
+        "next_action": "Merge v9.8.1 into master"
+        if status == "pass"
+        else "Fix route/hardening failures before merge.",
     }
 
     json_path = Path("release/V9_8_1_RELEASE_HARDENING_REPORT.json")

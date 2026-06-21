@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -52,36 +54,49 @@ def _preview():
 def test_v22_3_routes_and_ui(tmp_path, monkeypatch):
     from src.socmint import dossier_release_workspace_routes_v22_0 as routes
 
-    monkeypatch.setattr(routes, "build_dossier_release_workspace", lambda *a, **k: _workspace())
+    monkeypatch.setattr(
+        routes, "build_dossier_release_workspace", lambda *a, **k: _workspace()
+    )
     monkeypatch.setattr(routes, "latest_release_authorization", lambda case_id: None)
-    monkeypatch.setattr(routes, "build_release_package_preview", lambda case_id: _preview())
+    monkeypatch.setattr(
+        routes, "build_release_package_preview", lambda case_id: _preview()
+    )
     monkeypatch.setattr(routes, "latest_release_preview", lambda case_id: None)
-    monkeypatch.setattr(routes, "build_secure_distribution_readiness", lambda case_id: {
-        "status": "ready_for_final_confirmation",
-        "ready": True,
-        "blocker_count": 0,
-        "blockers": [],
-        "latest_distribution": None,
-    })
-    monkeypatch.setattr(routes, "dispatch_secure_distribution", lambda *a, **k: {
-        "status": "dispatch_recorded",
-        "distribution_record_id": 51,
-        "transport_invoked": True,
-        "transport_engine": "existing_case_delivery_operations_v16_0",
-    })
+    monkeypatch.setattr(
+        routes,
+        "build_secure_distribution_readiness",
+        lambda case_id: {
+            "status": "ready_for_final_confirmation",
+            "ready": True,
+            "blocker_count": 0,
+            "blockers": [],
+            "latest_distribution": None,
+        },
+    )
+    monkeypatch.setattr(
+        routes,
+        "dispatch_secure_distribution",
+        lambda *a, **k: {
+            "status": "dispatch_recorded",
+            "distribution_record_id": 51,
+            "transport_invoked": True,
+            "transport_engine": "existing_case_delivery_operations_v16_0",
+        },
+    )
 
     client = _app(tmp_path, monkeypatch).test_client()
-    assert client.get(
-        "/api/v1/dossier-release/case-alpha/distribution-readiness"
-    ).status_code == 401
+    assert (
+        client.get(
+            "/api/v1/dossier-release/case-alpha/distribution-readiness"
+        ).status_code
+        == 401
+    )
     with client.session_transaction() as sess:
         sess["user"] = "operator"
         sess["_csrf_token"] = "test-csrf"
 
     ui = client.get("/dossier-release/case-alpha")
-    readiness = client.get(
-        "/api/v1/dossier-release/case-alpha/distribution-readiness"
-    )
+    readiness = client.get("/api/v1/dossier-release/case-alpha/distribution-readiness")
     dispatched = client.post(
         "/api/v1/dossier-release/case-alpha/dispatch",
         json={"confirmed": True, "note": "Dispatch now."},
@@ -98,8 +113,12 @@ def test_v22_3_routes_and_ui(tmp_path, monkeypatch):
 
 
 def test_v22_3_release_note_client_and_no_migration():
-    note = Path("release/V22_3_SECURE_DISTRIBUTION_ACTION.md").read_text(encoding="utf-8")
-    script = Path("src/socmint/static/dossier_release_workspace_v22_0.js").read_text(encoding="utf-8")
+    note = Path("release/V22_3_SECURE_DISTRIBUTION_ACTION.md").read_text(
+        encoding="utf-8"
+    )
+    script = Path("src/socmint/static/dossier_release_workspace_v22_0.js").read_text(
+        encoding="utf-8"
+    )
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

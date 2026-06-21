@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from . import database
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .dossier_delivery_receipt_v22_4 import (
     latest_delivery_receipt,
     latest_recipient_acknowledgement,
@@ -95,7 +100,9 @@ def build_delivery_recovery_state(case_id: str) -> dict[str, Any]:
     }
 
 
-def _record(case_id: str, action: str, actor: str, event: dict[str, Any], ip_address: str | None) -> tuple[int, str | None]:
+def _record(
+    case_id: str, action: str, actor: str, event: dict[str, Any], ip_address: str | None
+) -> tuple[int, str | None]:
     _ensure_storage()
     session = database.Session()
     try:
@@ -125,10 +132,24 @@ def review_failed_delivery(
     ip_address: str | None = None,
 ) -> dict[str, Any]:
     if confirmed is not True:
-        return {"schema": SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": [{"key": "explicit_failed_delivery_review_confirmation_required"}]}
+        return {
+            "schema": SCHEMA,
+            "version": VERSION,
+            "case_id": case_id,
+            "status": "blocked",
+            "blockers": [
+                {"key": "explicit_failed_delivery_review_confirmation_required"}
+            ],
+        }
     receipt = latest_delivery_receipt(case_id)
     if receipt is None or receipt.get("delivery_result") != "failed":
-        return {"schema": SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": [{"key": "failed_delivery_receipt_required"}]}
+        return {
+            "schema": SCHEMA,
+            "version": VERSION,
+            "case_id": case_id,
+            "status": "blocked",
+            "blockers": [{"key": "failed_delivery_receipt_required"}],
+        }
     content = {
         "case_id": case_id,
         "delivery_receipt_id": receipt.get("delivery_receipt_id"),
@@ -152,8 +173,17 @@ def review_failed_delivery(
         "dispatch_record_mutated": False,
         "delivery_receipt_mutated": False,
     }
-    record_id, recorded_at = _record(case_id, FAILURE_REVIEW_ACTION, reviewer, event, ip_address)
-    return {**event, "status": "failed_delivery_review_recorded", "record_id": record_id, "recorded_by": reviewer, "recorded_at": recorded_at, "next_action": "request_recall_or_authorize_reissue"}
+    record_id, recorded_at = _record(
+        case_id, FAILURE_REVIEW_ACTION, reviewer, event, ip_address
+    )
+    return {
+        **event,
+        "status": "failed_delivery_review_recorded",
+        "record_id": record_id,
+        "recorded_by": reviewer,
+        "recorded_at": recorded_at,
+        "next_action": "request_recall_or_authorize_reissue",
+    }
 
 
 def request_recall(
@@ -167,13 +197,31 @@ def request_recall(
     ip_address: str | None = None,
 ) -> dict[str, Any]:
     if confirmed is not True:
-        return {"schema": SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": [{"key": "explicit_recall_confirmation_required"}]}
+        return {
+            "schema": SCHEMA,
+            "version": VERSION,
+            "case_id": case_id,
+            "status": "blocked",
+            "blockers": [{"key": "explicit_recall_confirmation_required"}],
+        }
     distribution = latest_secure_distribution(case_id)
     acknowledgement = latest_recipient_acknowledgement(case_id)
     if distribution is None:
-        return {"schema": SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": [{"key": "secure_distribution_required"}]}
+        return {
+            "schema": SCHEMA,
+            "version": VERSION,
+            "case_id": case_id,
+            "status": "blocked",
+            "blockers": [{"key": "secure_distribution_required"}],
+        }
     if acknowledgement is not None:
-        return {"schema": SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": [{"key": "recall_blocked_after_recipient_acknowledgement"}]}
+        return {
+            "schema": SCHEMA,
+            "version": VERSION,
+            "case_id": case_id,
+            "status": "blocked",
+            "blockers": [{"key": "recall_blocked_after_recipient_acknowledgement"}],
+        }
     request = distribution.get("dispatch_request") or {}
     content = {
         "case_id": case_id,
@@ -197,8 +245,17 @@ def request_recall(
         "delivery_receipt_mutated": False,
         "acknowledgement_record_mutated": False,
     }
-    record_id, recorded_at = _record(case_id, RECALL_ACTION, requester, event, ip_address)
-    return {**event, "status": "recall_requested", "record_id": record_id, "recorded_by": requester, "recorded_at": recorded_at, "next_action": "review_recall_outcome"}
+    record_id, recorded_at = _record(
+        case_id, RECALL_ACTION, requester, event, ip_address
+    )
+    return {
+        **event,
+        "status": "recall_requested",
+        "record_id": record_id,
+        "recorded_by": requester,
+        "recorded_at": recorded_at,
+        "next_action": "review_recall_outcome",
+    }
 
 
 def authorize_reissue(
@@ -213,14 +270,32 @@ def authorize_reissue(
     ip_address: str | None = None,
 ) -> dict[str, Any]:
     if confirmed is not True:
-        return {"schema": SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": [{"key": "explicit_reissue_confirmation_required"}]}
+        return {
+            "schema": SCHEMA,
+            "version": VERSION,
+            "case_id": case_id,
+            "status": "blocked",
+            "blockers": [{"key": "explicit_reissue_confirmation_required"}],
+        }
     distribution = latest_secure_distribution(case_id)
     receipt = latest_delivery_receipt(case_id)
     recall = latest_recall_request(case_id)
     if distribution is None:
-        return {"schema": SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": [{"key": "secure_distribution_required"}]}
+        return {
+            "schema": SCHEMA,
+            "version": VERSION,
+            "case_id": case_id,
+            "status": "blocked",
+            "blockers": [{"key": "secure_distribution_required"}],
+        }
     if not (receipt and receipt.get("delivery_result") == "failed") and recall is None:
-        return {"schema": SCHEMA, "version": VERSION, "case_id": case_id, "status": "blocked", "blockers": [{"key": "failed_delivery_or_recall_required"}]}
+        return {
+            "schema": SCHEMA,
+            "version": VERSION,
+            "case_id": case_id,
+            "status": "blocked",
+            "blockers": [{"key": "failed_delivery_or_recall_required"}],
+        }
     request = distribution.get("dispatch_request") or {}
     history = {
         "original_distribution_id": distribution.get("distribution_id"),
@@ -253,5 +328,14 @@ def authorize_reissue(
         "acknowledgement_record_mutated": False,
         "recall_record_mutated": False,
     }
-    record_id, recorded_at = _record(case_id, REISSUE_ACTION, authorizer, event, ip_address)
-    return {**event, "status": "reissue_authorized", "record_id": record_id, "recorded_by": authorizer, "recorded_at": recorded_at, "next_action": "return_to_dossier_release_workspace"}
+    record_id, recorded_at = _record(
+        case_id, REISSUE_ACTION, authorizer, event, ip_address
+    )
+    return {
+        **event,
+        "status": "reissue_authorized",
+        "record_id": record_id,
+        "recorded_by": authorizer,
+        "recorded_at": recorded_at,
+        "next_action": "return_to_dossier_release_workspace",
+    }

@@ -5,7 +5,12 @@ from typing import Any
 from . import database
 from .case_delivery_handoff_package_v15_1 import canonical_json, sha256_text
 from .case_delivery_operations_v16_0 import build_case_delivery_operations_from_request
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .dossier_release_authorization_v22_1 import latest_release_authorization
 from .dossier_release_preview_v22_2 import latest_release_preview
 
@@ -88,7 +93,9 @@ def build_secure_distribution_readiness(case_id: str) -> dict[str, Any]:
         "final_operator_confirmation_required": True,
         "transport_invoked": False,
         "latest_distribution": latest_secure_distribution(case_id),
-        "next_action": "confirm_secure_distribution" if ready else "resolve_distribution_blockers",
+        "next_action": "confirm_secure_distribution"
+        if ready
+        else "resolve_distribution_blockers",
     }
 
 
@@ -185,16 +192,18 @@ def dispatch_secure_distribution(
         "execution_envelope_result": _execution_envelope_result(
             case_id, authorization, preview
         ),
-        "events": [{
-            "type": "dispatch_confirmed",
-            "status": "recorded",
-            "operator": operator,
-            "detail": (
-                f"Authorized dossier package {authorization.get('export_package_id')} "
-                f"for recipient {authorization.get('recipient_id')} via "
-                f"{authorization.get('delivery_channel')}"
-            ),
-        }],
+        "events": [
+            {
+                "type": "dispatch_confirmed",
+                "status": "recorded",
+                "operator": operator,
+                "detail": (
+                    f"Authorized dossier package {authorization.get('export_package_id')} "
+                    f"for recipient {authorization.get('recipient_id')} via "
+                    f"{authorization.get('delivery_channel')}"
+                ),
+            }
+        ],
     }
     operations_result = operations_builder(case_id, operations_payload)
     dispatched = (
@@ -242,6 +251,8 @@ def dispatch_secure_distribution(
         "operator": operator,
         "recorded_at": recorded_at,
         "next_action": (
-            "monitor_delivery_result" if dispatched else "review_case_delivery_operations"
+            "monitor_delivery_result"
+            if dispatched
+            else "review_case_delivery_operations"
         ),
     }

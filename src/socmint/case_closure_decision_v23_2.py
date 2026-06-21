@@ -4,7 +4,12 @@ from typing import Any
 
 from . import database
 from .case_closure_readiness_review_v23_1 import latest_closure_readiness_review
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 
 SCHEMA = "socmint.case_closure_decision.v23_2"
 VERSION = "v23.2.0"
@@ -73,9 +78,10 @@ def record_supervisor_closure_decision(
             "blockers": [{"key": "closure_readiness_review_required"}],
             "source_records_mutated": False,
         }
-    if review.get("decision") != "ready" or review.get(
-        "ready_for_supervisor_closure_decision"
-    ) is not True:
+    if (
+        review.get("decision") != "ready"
+        or review.get("ready_for_supervisor_closure_decision") is not True
+    ):
         return {
             "schema": SCHEMA,
             "version": VERSION,

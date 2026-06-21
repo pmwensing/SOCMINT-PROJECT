@@ -4,10 +4,18 @@ import base64
 
 from flask import Response, jsonify, request
 
-from .v10_28_final_delivery_capsule_export_pack import build_final_delivery_capsule_export_pack_files
-from .v10_28_final_delivery_capsule_export_pack import build_final_delivery_capsule_export_pack_from_request
-from .v10_28_final_delivery_capsule_export_pack import build_final_delivery_capsule_export_zip
-from .v10_28_final_delivery_capsule_export_pack import build_final_delivery_capsule_export_zip_from_request
+from .v10_28_final_delivery_capsule_export_pack import (
+    build_final_delivery_capsule_export_pack_files,
+)
+from .v10_28_final_delivery_capsule_export_pack import (
+    build_final_delivery_capsule_export_pack_from_request,
+)
+from .v10_28_final_delivery_capsule_export_pack import (
+    build_final_delivery_capsule_export_zip,
+)
+from .v10_28_final_delivery_capsule_export_pack import (
+    build_final_delivery_capsule_export_zip_from_request,
+)
 
 
 def _request_payload() -> dict:
@@ -34,7 +42,9 @@ def register_v10_28_final_delivery_capsule_export_pack_routes(app):
 
     @app.post("/api/v1/v10/final-delivery/evidence-capsule/export.zip")
     def api_v10_final_delivery_capsule_export_zip():
-        zip_bytes = build_final_delivery_capsule_export_zip_from_request(_request_payload())
+        zip_bytes = build_final_delivery_capsule_export_zip_from_request(
+            _request_payload()
+        )
         return Response(zip_bytes, mimetype="application/zip")
 
     return app

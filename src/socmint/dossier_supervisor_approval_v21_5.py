@@ -140,7 +140,9 @@ def record_supervisor_dossier_decision(
         "decision_sha256": decision_sha256,
         "export_preparation": {
             "eligible": decision == "approve",
-            "status": "ready_for_export_package" if decision == "approve" else "not_ready",
+            "status": "ready_for_export_package"
+            if decision == "approve"
+            else "not_ready",
             "next_action": next_action,
         },
         "draft_mutated": False,

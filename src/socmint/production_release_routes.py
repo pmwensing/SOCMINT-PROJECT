@@ -6,14 +6,20 @@ from .beta_readiness_routes import register_beta_readiness_routes
 from .case_access_routes import register_case_access_routes
 from .certification_routes import register_certification_routes
 from .dossier_builder_v3_routes import register_dossier_builder_v3_routes
-from .dossier_certification_index_routes import register_dossier_certification_index_routes
+from .dossier_certification_index_routes import (
+    register_dossier_certification_index_routes,
+)
 from .dossier_export_audit_routes import register_dossier_export_audit_routes
-from .dossier_export_certification_routes import register_dossier_export_certification_routes
+from .dossier_export_certification_routes import (
+    register_dossier_export_certification_routes,
+)
 from .dossier_export_gate_routes import register_dossier_export_gate_routes
 from .dossier_export_index_routes import register_dossier_export_index_routes
 from .dossier_export_pack_routes import register_dossier_export_pack_routes
 from .dossier_export_store_routes import register_dossier_export_store_routes
-from .dossier_export_verification_routes import register_dossier_export_verification_routes
+from .dossier_export_verification_routes import (
+    register_dossier_export_verification_routes,
+)
 from .hardening_routes import register_hardening_routes
 from .operator_smoke_routes import register_operator_smoke_routes
 from .production_installer_routes import register_production_installer_routes

@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 from socmint.dashboard import create_app

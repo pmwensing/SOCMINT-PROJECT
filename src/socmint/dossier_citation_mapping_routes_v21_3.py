@@ -59,9 +59,7 @@ def register_dossier_citation_mapping_routes_v21_3(app):
             return jsonify(
                 {
                     "status": "blocked",
-                    "blockers": [
-                        {"key": "subject_id_required_for_ledger_mapping"}
-                    ],
+                    "blockers": [{"key": "subject_id_required_for_ledger_mapping"}],
                 }
             ), 422
         result = save_citation_mapping_snapshot(

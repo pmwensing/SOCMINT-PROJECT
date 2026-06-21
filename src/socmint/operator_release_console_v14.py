@@ -12,7 +12,9 @@ OPERATOR_RELEASE_CONSOLE_SCHEMA = "socmint.operator_release_console.v14_0"
 DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[2]
 RELEASE_HEALTH_SNAPSHOT = Path("release/OPERATOR_RELEASE_HEALTH.json")
 DEFAULT_RELEASE_HEALTH_MAX_AGE_HOURS = 24
-RELEASE_HEALTH_REFRESH_COMMAND = "python scripts/refresh_operator_release_health_v14_1.py"
+RELEASE_HEALTH_REFRESH_COMMAND = (
+    "python scripts/refresh_operator_release_health_v14_1.py"
+)
 
 REQUIRED_RELEASE_DOCS = [
     {
@@ -83,7 +85,9 @@ def _git_value(root: Path, *args: str) -> str | None:
     return value or None
 
 
-def _status_item(key: str, label: str, ok: bool, source: str, detail: str) -> dict[str, Any]:
+def _status_item(
+    key: str, label: str, ok: bool, source: str, detail: str
+) -> dict[str, Any]:
     return {
         "key": key,
         "label": label,
@@ -138,11 +142,17 @@ def _git_summary(root: Path) -> dict[str, Any]:
 def _queue_summary(root: Path) -> dict[str, Any]:
     closure = _read_text(root / "release/OPEN_PR_QUEUE_CLOSURE.md")
     triage = _read_text(root / "release/V10_32_TO_37_OPEN_PR_TRIAGE.md")
-    closed_refs = [f"#{number}" for number in range(139, 145) if f"#{number}" in closure]
+    closed_refs = [
+        f"#{number}" for number in range(139, 145) if f"#{number}" in closure
+    ]
     closure_present = bool(closure)
     return {
-        "status": "clean_documented" if closure_present and len(closed_refs) == 6 else "needs_review",
-        "source": "release/OPEN_PR_QUEUE_CLOSURE.md" if closure_present else "release/V10_32_TO_37_OPEN_PR_TRIAGE.md",
+        "status": "clean_documented"
+        if closure_present and len(closed_refs) == 6
+        else "needs_review",
+        "source": "release/OPEN_PR_QUEUE_CLOSURE.md"
+        if closure_present
+        else "release/V10_32_TO_37_OPEN_PR_TRIAGE.md",
         "closed_superseded_prs": closed_refs,
         "triage_available": bool(triage),
         "live_open_pr_count": os.environ.get("SOCMINT_RELEASE_CONSOLE_OPEN_PR_COUNT"),
@@ -165,7 +175,9 @@ def _max_snapshot_age_hours() -> int:
     return max(1, hours)
 
 
-def _snapshot_freshness(generated_at: str | None, now: datetime | None = None) -> dict[str, Any]:
+def _snapshot_freshness(
+    generated_at: str | None, now: datetime | None = None
+) -> dict[str, Any]:
     max_age_hours = _max_snapshot_age_hours()
     if not generated_at:
         return {
@@ -253,7 +265,9 @@ def _load_release_health_snapshot(root: Path) -> dict[str, Any]:
     }
 
 
-def _operator_release_evaluation(checks: list[dict[str, Any]], release_health: dict[str, Any]) -> dict[str, Any]:
+def _operator_release_evaluation(
+    checks: list[dict[str, Any]], release_health: dict[str, Any]
+) -> dict[str, Any]:
     blockers = [item for item in checks if not item["ok"]]
     snapshot_status = release_health.get("status")
     freshness = release_health.get("freshness", {})
@@ -262,7 +276,9 @@ def _operator_release_evaluation(checks: list[dict[str, Any]], release_health: d
         next_action = "Repair release-console blockers before adding new release scope."
     elif snapshot_status == "pass" and freshness.get("ok"):
         decision = "EVALUATION_POINT_REACHED"
-        next_action = "Use the console state to choose the next product or release line."
+        next_action = (
+            "Use the console state to choose the next product or release line."
+        )
     else:
         decision = "REFRESH_RELEASE_HEALTH"
         next_action = RELEASE_HEALTH_REFRESH_COMMAND

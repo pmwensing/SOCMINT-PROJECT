@@ -124,9 +124,14 @@ def build_claim_evidence_ledger(subject_id: int) -> dict[str, Any]:
                     "unreviewed": 0,
                 },
             }
-        rows = [*_assertion_rows(subject_id, session), *_observation_rows(subject_id, session)]
+        rows = [
+            *_assertion_rows(subject_id, session),
+            *_observation_rows(subject_id, session),
+        ]
         with_evidence = sum(1 for row in rows if row["has_evidence"])
-        unreviewed = sum(1 for row in rows if row["review_state"] in {"unreviewed", "pending"})
+        unreviewed = sum(
+            1 for row in rows if row["review_state"] in {"unreviewed", "pending"}
+        )
         return {
             "schema": SCHEMA,
             "subject_id": subject_id,

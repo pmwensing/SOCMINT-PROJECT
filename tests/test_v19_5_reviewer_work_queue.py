@@ -1,11 +1,19 @@
 from pathlib import Path
 
 from src.socmint import database
-from src.socmint.case_intelligence_review_routes_v18 import register_case_intelligence_review_routes_v18
-from src.socmint.case_intelligence_review_workspace_v18 import record_case_review_decision
+from src.socmint.case_intelligence_review_routes_v18 import (
+    register_case_intelligence_review_routes_v18,
+)
+from src.socmint.case_intelligence_review_workspace_v18 import (
+    record_case_review_decision,
+)
 from src.socmint.dashboard import create_app
-from src.socmint.persistent_case_review_decisions_v19_0 import persist_case_review_decision
-from src.socmint.persistent_decision_supervisor_queue_v19_3 import assign_persistent_decision_reviewer
+from src.socmint.persistent_case_review_decisions_v19_0 import (
+    persist_case_review_decision,
+)
+from src.socmint.persistent_decision_supervisor_queue_v19_3 import (
+    assign_persistent_decision_reviewer,
+)
 from src.socmint.reviewer_work_queue_v19_5 import (
     REVIEWER_WORK_QUEUE_SCHEMA,
     build_reviewer_work_queue,
@@ -55,7 +63,10 @@ def test_v19_5_builds_current_reviewer_queue(tmp_path, monkeypatch):
     assert result["entries"][0]["decision_record_id"] == record_id
     assert result["entries"][0]["case_id"] == "case-alpha"
     assert result["entries"][0]["assignment_note"] == "review this case"
-    assert result["entries"][0]["case_workspace_href"] == "/case-intelligence-review/case-alpha"
+    assert (
+        result["entries"][0]["case_workspace_href"]
+        == "/case-intelligence-review/case-alpha"
+    )
 
 
 def test_v19_5_updates_only_assigned_reviewer_decision(tmp_path, monkeypatch):
@@ -109,11 +120,17 @@ def test_v19_5_routes_and_ui(tmp_path, monkeypatch):
 
 def test_v19_5_login_ui_script_release_note_and_no_migration(tmp_path, monkeypatch):
     client = _app(tmp_path, monkeypatch).test_client()
-    assert client.get("/api/v1/case-intelligence-review/my-assignments").status_code == 401
+    assert (
+        client.get("/api/v1/case-intelligence-review/my-assignments").status_code == 401
+    )
     assert client.get("/case-intelligence-review/my-assignments").status_code == 302
 
-    script = Path("src/socmint/static/reviewer_work_queue_v19_5.js").read_text(encoding="utf-8")
-    note = Path("release/V19_5_REVIEWER_WORK_QUEUE_MY_ASSIGNMENTS.md").read_text(encoding="utf-8")
+    script = Path("src/socmint/static/reviewer_work_queue_v19_5.js").read_text(
+        encoding="utf-8"
+    )
+    note = Path("release/V19_5_REVIEWER_WORK_QUEUE_MY_ASSIGNMENTS.md").read_text(
+        encoding="utf-8"
+    )
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

@@ -3,19 +3,31 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
-from .case_delivery_handoff_package_v15_1 import build_case_delivery_handoff_package_from_request
+from .case_delivery_handoff_package_v15_1 import (
+    build_case_delivery_handoff_package_from_request,
+)
 from .case_delivery_handoff_package_v15_1 import canonical_json
 from .case_delivery_handoff_package_v15_1 import sha256_text
-from .case_delivery_handoff_verification_v15_2 import verify_case_delivery_handoff_package
+from .case_delivery_handoff_verification_v15_2 import (
+    verify_case_delivery_handoff_package,
+)
 
 
 CASE_DELIVERY_READINESS_RECEIPT_SCHEMA = "socmint.case_delivery_readiness_receipt.v15_3"
-CASE_DELIVERY_READINESS_RECEIPT_RESULT_SCHEMA = "socmint.case_delivery_readiness_receipt.v15_3.result"
+CASE_DELIVERY_READINESS_RECEIPT_RESULT_SCHEMA = (
+    "socmint.case_delivery_readiness_receipt.v15_3.result"
+)
 VERSION = "v15.3.0"
 
 
-def _receipt_payload(package: dict[str, Any], verification: dict[str, Any], issuer: str | None) -> dict[str, Any]:
-    operator_receipt = package.get("operator_receipt") if isinstance(package.get("operator_receipt"), dict) else {}
+def _receipt_payload(
+    package: dict[str, Any], verification: dict[str, Any], issuer: str | None
+) -> dict[str, Any]:
+    operator_receipt = (
+        package.get("operator_receipt")
+        if isinstance(package.get("operator_receipt"), dict)
+        else {}
+    )
     return {
         "schema": CASE_DELIVERY_READINESS_RECEIPT_SCHEMA,
         "version": VERSION,
@@ -65,7 +77,9 @@ def build_case_delivery_readiness_receipt(
         "payload_sha256": payload_hash,
         "signature_algorithm": "sha256-canonical-json",
         "signature_sha256": sha256_text(canonical_json(signature_base)),
-        "receipt_id": sha256_text(canonical_json({**signature_base, "type": "delivery_readiness_receipt"})),
+        "receipt_id": sha256_text(
+            canonical_json({**signature_base, "type": "delivery_readiness_receipt"})
+        ),
     }
     return {
         "schema": CASE_DELIVERY_READINESS_RECEIPT_RESULT_SCHEMA,
@@ -80,10 +94,22 @@ def build_case_delivery_readiness_receipt(
     }
 
 
-def build_case_delivery_readiness_receipt_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def build_case_delivery_readiness_receipt_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     safe_payload = deepcopy(payload or {})
-    package = safe_payload.get("package") if isinstance(safe_payload.get("package"), dict) else None
+    package = (
+        safe_payload.get("package")
+        if isinstance(safe_payload.get("package"), dict)
+        else None
+    )
     if package is None:
-        package = build_case_delivery_handoff_package_from_request(case_id, safe_payload)
-    issuer = safe_payload.get("issuer") if isinstance(safe_payload.get("issuer"), str) else None
+        package = build_case_delivery_handoff_package_from_request(
+            case_id, safe_payload
+        )
+    issuer = (
+        safe_payload.get("issuer")
+        if isinstance(safe_payload.get("issuer"), str)
+        else None
+    )
     return build_case_delivery_readiness_receipt(package, issuer=issuer)

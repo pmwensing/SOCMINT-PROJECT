@@ -95,7 +95,7 @@ def _mhtml_bytes(
     payload = "\n".join(
         [
             "MIME-Version: 1.0",
-            f"Content-Type: multipart/related; boundary=\"{boundary}\"",
+            f'Content-Type: multipart/related; boundary="{boundary}"',
             f"X-SOCMINT-Source-URL: {url}",
             header_lines,
             "",
@@ -258,11 +258,7 @@ def case_payload(case_key: str) -> dict[str, Any]:
         "tags": _json_loads(row.tags_json, []),
         "payload": _json_loads(row.payload_json, {}),
         "subjects": sorted(
-            {
-                event.subject_id
-                for event in events
-                if event.subject_id is not None
-            }
+            {event.subject_id for event in events if event.subject_id is not None}
         ),
         "events": [_case_event_dict(event) for event in events],
         "captures": [_capture_dict(item) for item in captures],
@@ -569,8 +565,7 @@ def analyst_workbench_payload(limit: int = 100) -> dict[str, Any]:
             "high_risk": [
                 item
                 for item in queue
-                if item.get("confidence", 0) >= 0.8
-                or item.get("confidence", 0) < 0.45
+                if item.get("confidence", 0) >= 0.8 or item.get("confidence", 0) < 0.45
             ],
             "single_source": [
                 item for item in queue if "single_source" in item.get("reasons", [])
@@ -699,7 +694,9 @@ def build_export_manifest(
         "payload_sha256": digest,
         "signed_manifest": hashlib.sha256(f"{digest}:socmint".encode()).hexdigest(),
         "redaction_presets": ["client", "court", "internal"],
-        "export_blockers": analyst_workbench_payload().get("queues", {}).get(
+        "export_blockers": analyst_workbench_payload()
+        .get("queues", {})
+        .get(
             "export_blockers",
             [],
         ),

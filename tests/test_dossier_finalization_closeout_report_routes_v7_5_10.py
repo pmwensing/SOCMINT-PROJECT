@@ -3,11 +3,21 @@ from __future__ import annotations
 import base64
 
 from socmint.dashboard import create_app
-from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import build_handoff_index
-from socmint.dossier_finalization_closeout_report_routes_v7_5_10 import register_dossier_finalization_closeout_report_routes
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import build_handoff_export_bundle
-from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import build_handoff_export_zip
-from socmint.dossier_finalization_handoff_export_verify_v7_5_9 import verify_handoff_export_bundle
+from socmint.dossier_finalization_certificate_handoff_index_v7_5_7 import (
+    build_handoff_index,
+)
+from socmint.dossier_finalization_closeout_report_routes_v7_5_10 import (
+    register_dossier_finalization_closeout_report_routes,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    build_handoff_export_bundle,
+)
+from socmint.dossier_finalization_handoff_export_bundle_v7_5_8 import (
+    build_handoff_export_zip,
+)
+from socmint.dossier_finalization_handoff_export_verify_v7_5_9 import (
+    verify_handoff_export_bundle,
+)
 
 CSRF_TOKEN = "test-csrf-token"
 CSRF_HEADERS = {"X-CSRF-Token": CSRF_TOKEN}
@@ -26,8 +36,19 @@ def v756_report():
         "present_files": ["handoff_index.json", "manifest.json"],
         "missing_files": [],
         "unexpected_files": [],
-        "manifest": {"files": [{"path": "handoff_index.json", "content_type": "application/json", "size_bytes": 123, "sha256": "a" * 64}]},
-        "file_results": [{"path": "handoff_index.json", "hash_match": True, "size_match": True}],
+        "manifest": {
+            "files": [
+                {
+                    "path": "handoff_index.json",
+                    "content_type": "application/json",
+                    "size_bytes": 123,
+                    "sha256": "a" * 64,
+                }
+            ]
+        },
+        "file_results": [
+            {"path": "handoff_index.json", "hash_match": True, "size_match": True}
+        ],
         "failures": [],
         "warnings": [],
         "summary": {"status": "verified", "verified": True},
@@ -35,7 +56,9 @@ def v756_report():
 
 
 def handoff_export_bundle():
-    index = build_handoff_index(v756_report(), bundle_name="bundle-a", operator="analyst")
+    index = build_handoff_index(
+        v756_report(), bundle_name="bundle-a", operator="analyst"
+    )
     return build_handoff_export_bundle(index, bundle_name="closeout-source")
 
 
@@ -61,7 +84,11 @@ def test_json_route_returns_closeout_ready_report_from_wrapped_verification_repo
     response = post_json(
         client,
         "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report",
-        {"verification_report": verified_report(), "operator": "analyst", "notes": "Ready."},
+        {
+            "verification_report": verified_report(),
+            "operator": "analyst",
+            "notes": "Ready.",
+        },
     )
 
     assert response.status_code == 200
@@ -73,7 +100,11 @@ def test_json_route_returns_closeout_ready_report_from_wrapped_verification_repo
 
 def test_raw_verification_report_request_shape_works():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report", verified_report())
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report",
+        verified_report(),
+    )
 
     assert response.status_code == 200
     assert response.get_json()["closeout_action"] == "closeout_ready"
@@ -126,7 +157,11 @@ def test_invalid_base64_returns_regenerate_export_report_not_500():
 
 def test_csrf_token_is_used_in_route_tests():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report", {"verification_report": verified_report()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report",
+        {"verification_report": verified_report()},
+    )
 
     assert response.status_code == 200
 
@@ -139,7 +174,11 @@ def test_no_connector_execution_function_is_called(monkeypatch):
 
     monkeypatch.setattr(closeout_module, "execute_connector", explode, raising=False)
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report", {"verification_report": verified_report()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/closeout-report",
+        {"verification_report": verified_report()},
+    )
 
     assert response.status_code == 200
     assert response.get_json()["closeout_action"] == "closeout_ready"

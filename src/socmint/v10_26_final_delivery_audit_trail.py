@@ -17,7 +17,10 @@ def utc_now() -> str:
 
 
 def canonical_json(data: dict[str, Any]) -> str:
-    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
+    return (
+        json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        + "\n"
+    )
 
 
 def sha256_text(value: str) -> str:
@@ -25,7 +28,9 @@ def sha256_text(value: str) -> str:
 
 
 def _export_available(console: dict[str, Any]) -> bool:
-    commands = console.get("commands") if isinstance(console.get("commands"), list) else []
+    commands = (
+        console.get("commands") if isinstance(console.get("commands"), list) else []
+    )
     for command in commands:
         if isinstance(command, dict) and command.get("id") == "export_zip":
             return bool(command.get("enabled"))
@@ -33,7 +38,9 @@ def _export_available(console: dict[str, Any]) -> bool:
 
 
 def _workspace(console: dict[str, Any]) -> dict[str, Any]:
-    return console.get("workspace") if isinstance(console.get("workspace"), dict) else {}
+    return (
+        console.get("workspace") if isinstance(console.get("workspace"), dict) else {}
+    )
 
 
 def _core_audit_fields(console: dict[str, Any]) -> dict[str, Any]:
@@ -70,7 +77,9 @@ def build_operator_receipt(audit_fields: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_final_delivery_audit_trail_from_console(console: dict[str, Any]) -> dict[str, Any]:
+def build_final_delivery_audit_trail_from_console(
+    console: dict[str, Any],
+) -> dict[str, Any]:
     safe_console = deepcopy(console or {})
     core = _core_audit_fields(safe_console)
     audit_id = sha256_text(canonical_json(core))
@@ -85,7 +94,9 @@ def build_final_delivery_audit_trail_from_console(console: dict[str, Any]) -> di
     return audit
 
 
-def build_final_delivery_audit_trail_from_request(payload: dict[str, Any]) -> dict[str, Any]:
+def build_final_delivery_audit_trail_from_request(
+    payload: dict[str, Any],
+) -> dict[str, Any]:
     safe_payload = deepcopy(payload or {})
     if isinstance(safe_payload.get("console"), dict):
         console = safe_payload["console"]
@@ -94,5 +105,10 @@ def build_final_delivery_audit_trail_from_request(payload: dict[str, Any]) -> di
     return build_final_delivery_audit_trail_from_console(console)
 
 
-def build_final_delivery_audit_receipt_from_request(payload: dict[str, Any]) -> dict[str, Any]:
-    return deepcopy(build_final_delivery_audit_trail_from_request(payload).get("operator_receipt") or {})
+def build_final_delivery_audit_receipt_from_request(
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    return deepcopy(
+        build_final_delivery_audit_trail_from_request(payload).get("operator_receipt")
+        or {}
+    )

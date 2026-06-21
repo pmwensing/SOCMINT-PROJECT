@@ -85,11 +85,13 @@ def build_cross_case_intelligence_product_review(
     for route in routes or []:
         rule = str(getattr(route, "rule", route))
         methods = getattr(route, "methods", None)
-        method_tuple = tuple(sorted(
-            method
-            for method in (methods or {"UNKNOWN"})
-            if method not in {"HEAD", "OPTIONS"}
-        ))
+        method_tuple = tuple(
+            sorted(
+                method
+                for method in (methods or {"UNKNOWN"})
+                if method not in {"HEAD", "OPTIONS"}
+            )
+        )
         route_rules.add(rule)
         route_keys.append((rule, method_tuple))
 
@@ -104,7 +106,9 @@ def build_cross_case_intelligence_product_review(
         {"route": rule, "methods": list(methods), "count": count}
         for (rule, methods), count in Counter(route_keys).items()
         if count > 1
-        and rule.startswith(("/cross-case-intelligence", "/api/v1/cross-case-intelligence"))
+        and rule.startswith(
+            ("/cross-case-intelligence", "/api/v1/cross-case-intelligence")
+        )
     ]
     if duplicate_routes:
         blockers.append({"key": "duplicate_v25_route", "detail": str(duplicate_routes)})
@@ -117,14 +121,25 @@ def build_cross_case_intelligence_product_review(
         if path.is_file() and "v25" in path.name.lower()
     )
     if migrations:
-        blockers.append({"key": "unexpected_v25_migration", "detail": ", ".join(migrations)})
+        blockers.append(
+            {"key": "unexpected_v25_migration", "detail": ", ".join(migrations)}
+        )
 
     journey = [
         {"step": "candidate_discovery", "route": "/cross-case-intelligence"},
-        {"step": "analyst_review_decision", "route": "/api/v1/cross-case-intelligence/<correlation_id>/review"},
-        {"step": "confirmed_link_registration", "route": "/cross-case-intelligence/confirmed-links"},
+        {
+            "step": "analyst_review_decision",
+            "route": "/api/v1/cross-case-intelligence/<correlation_id>/review",
+        },
+        {
+            "step": "confirmed_link_registration",
+            "route": "/cross-case-intelligence/confirmed-links",
+        },
         {"step": "relationship_graph", "route": "/cross-case-intelligence/graph"},
-        {"step": "impact_analysis", "route": "/cross-case-intelligence/confirmed-links/<confirmed_link_id>/impact"},
+        {
+            "step": "impact_analysis",
+            "route": "/cross-case-intelligence/confirmed-links/<confirmed_link_id>/impact",
+        },
         {"step": "history_audit", "route": "/cross-case-intelligence/history"},
         {"step": "metrics_confidence", "route": "/cross-case-intelligence/metrics"},
     ]
@@ -151,8 +166,6 @@ def build_cross_case_intelligence_product_review(
         "checkpoint_record_created": False,
         "v25_closed_when_browser_e2e_passes": True,
         "next_action": (
-            "run_v25_browser_e2e"
-            if not blockers
-            else "resolve_v25_product_blockers"
+            "run_v25_browser_e2e" if not blockers else "resolve_v25_product_blockers"
         ),
     }

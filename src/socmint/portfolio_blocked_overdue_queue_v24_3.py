@@ -19,14 +19,19 @@ def _threshold(name: str, default: float) -> float:
 
 
 def _severity(
-    *, blocked: bool, stage_age: float | None, assignment_age: float | None,
-    stage_limit: float, assignment_limit: float,
+    *,
+    blocked: bool,
+    stage_age: float | None,
+    assignment_age: float | None,
+    stage_limit: float,
+    assignment_limit: float,
 ) -> tuple[str, int]:
     stage_overdue = stage_age is not None and stage_age > stage_limit
-    assignment_overdue = assignment_age is not None and assignment_age > assignment_limit
-    extreme = (
-        (stage_age is not None and stage_age > stage_limit * 2)
-        or (assignment_age is not None and assignment_age > assignment_limit * 2)
+    assignment_overdue = (
+        assignment_age is not None and assignment_age > assignment_limit
+    )
+    extreme = (stage_age is not None and stage_age > stage_limit * 2) or (
+        assignment_age is not None and assignment_age > assignment_limit * 2
     )
     if blocked and (extreme or (stage_overdue and assignment_overdue)):
         return "critical", 4
@@ -68,7 +73,9 @@ def build_blocked_overdue_case_queue() -> dict[str, Any]:
         stage_age = float(stage_age) if stage_age is not None else None
         blocked = bool(stage_case.get("blocked") or portfolio_case.get("blocked"))
         stage_overdue = stage_age is not None and stage_age > stage_limit
-        assignment_overdue = assignment_age is not None and assignment_age > assignment_limit
+        assignment_overdue = (
+            assignment_age is not None and assignment_age > assignment_limit
+        )
         if not (blocked or stage_overdue or assignment_overdue):
             continue
 
@@ -79,11 +86,13 @@ def build_blocked_overdue_case_queue() -> dict[str, Any]:
             stage_limit=stage_limit,
             assignment_limit=assignment_limit,
         )
-        reviewers = sorted({
-            str(item.get("assigned_reviewer"))
-            for item in assignments
-            if item.get("assigned_reviewer")
-        })
+        reviewers = sorted(
+            {
+                str(item.get("assigned_reviewer"))
+                for item in assignments
+                if item.get("assigned_reviewer")
+            }
+        )
         blockers = stage_case.get("blockers") or portfolio_case.get("blockers") or []
         blocking_reason = stage_case.get("blocking_reason") or (
             blockers[0].get("key") if blockers else None
@@ -94,37 +103,51 @@ def build_blocked_overdue_case_queue() -> dict[str, Any]:
             "closure_workspace": f"/case-closure/{case_id}",
             "closure_history": f"/case-closure/{case_id}/history",
         }
-        queue.append({
-            "case_id": case_id,
-            "severity": severity,
-            "severity_rank": severity_rank,
-            "current_stage": stage_case.get("current_stage") or portfolio_case.get("stage"),
-            "stage_age_hours": stage_age,
-            "stage_overdue": stage_overdue,
-            "stage_overdue_by_hours": round(stage_age - stage_limit, 2) if stage_overdue else 0.0,
-            "assignment_age_hours": assignment_age,
-            "assignment_overdue": assignment_overdue,
-            "assignment_overdue_by_hours": round(assignment_age - assignment_limit, 2) if assignment_overdue else 0.0,
-            "blocked": blocked,
-            "blocking_reason": blocking_reason,
-            "blockers": blockers,
-            "owner": portfolio_case.get("latest_actor"),
-            "assigned_reviewers": reviewers,
-            "active_assignment_count": len(assignments),
-            "review_states": sorted({str(item.get("review_state")) for item in assignments}),
-            "next_expected_action": stage_case.get("next_expected_action") or "review_case_status",
-            "remediation_links": {
-                **links,
-                "supervisor_queue": f"/case-intelligence-review/supervisor-queue?case_id={case_id}",
-                "reviewer_queue": "/case-intelligence-review/my-assignments",
-            },
-        })
+        queue.append(
+            {
+                "case_id": case_id,
+                "severity": severity,
+                "severity_rank": severity_rank,
+                "current_stage": stage_case.get("current_stage")
+                or portfolio_case.get("stage"),
+                "stage_age_hours": stage_age,
+                "stage_overdue": stage_overdue,
+                "stage_overdue_by_hours": round(stage_age - stage_limit, 2)
+                if stage_overdue
+                else 0.0,
+                "assignment_age_hours": assignment_age,
+                "assignment_overdue": assignment_overdue,
+                "assignment_overdue_by_hours": round(
+                    assignment_age - assignment_limit, 2
+                )
+                if assignment_overdue
+                else 0.0,
+                "blocked": blocked,
+                "blocking_reason": blocking_reason,
+                "blockers": blockers,
+                "owner": portfolio_case.get("latest_actor"),
+                "assigned_reviewers": reviewers,
+                "active_assignment_count": len(assignments),
+                "review_states": sorted(
+                    {str(item.get("review_state")) for item in assignments}
+                ),
+                "next_expected_action": stage_case.get("next_expected_action")
+                or "review_case_status",
+                "remediation_links": {
+                    **links,
+                    "supervisor_queue": f"/case-intelligence-review/supervisor-queue?case_id={case_id}",
+                    "reviewer_queue": "/case-intelligence-review/my-assignments",
+                },
+            }
+        )
 
-    queue.sort(key=lambda item: (
-        -item["severity_rank"],
-        -(item["stage_overdue_by_hours"] + item["assignment_overdue_by_hours"]),
-        item["case_id"],
-    ))
+    queue.sort(
+        key=lambda item: (
+            -item["severity_rank"],
+            -(item["stage_overdue_by_hours"] + item["assignment_overdue_by_hours"]),
+            item["case_id"],
+        )
+    )
     counts = {
         "total": len(queue),
         "critical": sum(1 for item in queue if item["severity"] == "critical"),
@@ -147,5 +170,7 @@ def build_blocked_overdue_case_queue() -> dict[str, Any]:
         "queue": queue,
         "source_records_mutated": False,
         "queue_record_created": False,
-        "next_action": "remediate_highest_priority_case" if queue else "monitor_portfolio",
+        "next_action": "remediate_highest_priority_case"
+        if queue
+        else "monitor_portfolio",
     }

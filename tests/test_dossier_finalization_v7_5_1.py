@@ -9,9 +9,25 @@ from socmint.dossier_finalization_v7_5_1 import summarize_finalization_decision
 def base_reports():
     return {
         "quality_gate": {"status": "pass", "finding_count": 0},
-        "export_enforcement": {"status": "allowed", "allowed": True, "final_export_blocked": False},
-        "evidence_manifest": {"status": "pass", "appendix_summary": {"missing_ref_count": 0, "missing_hash_count": 0, "missing_source_count": 0}},
-        "identity_confidence": {"status": "pass", "contradiction_count": 0, "low_confidence_count": 0, "needs_review_count": 0},
+        "export_enforcement": {
+            "status": "allowed",
+            "allowed": True,
+            "final_export_blocked": False,
+        },
+        "evidence_manifest": {
+            "status": "pass",
+            "appendix_summary": {
+                "missing_ref_count": 0,
+                "missing_hash_count": 0,
+                "missing_source_count": 0,
+            },
+        },
+        "identity_confidence": {
+            "status": "pass",
+            "contradiction_count": 0,
+            "low_confidence_count": 0,
+            "needs_review_count": 0,
+        },
         "connector_compliance": {"status": "pass", "finding_count": 0},
         "policy_coverage": {"status": "pass", "finding_count": 0},
     }
@@ -38,48 +54,79 @@ def test_blocked_when_quality_gate_fails():
     packet = packet_with(quality_gate={"status": "fail", "finding_count": 1})
 
     assert packet["decision"] == "blocked"
-    assert any(item["code"] == "quality_gate_failed" for item in packet["blocking_findings"])
+    assert any(
+        item["code"] == "quality_gate_failed" for item in packet["blocking_findings"]
+    )
 
 
 def test_blocked_when_final_export_blocked():
-    packet = packet_with(export_enforcement={"status": "blocked", "allowed": False, "final_export_blocked": True})
+    packet = packet_with(
+        export_enforcement={
+            "status": "blocked",
+            "allowed": False,
+            "final_export_blocked": True,
+        }
+    )
 
     assert packet["decision"] == "blocked"
     assert any(item["code"] == "export_blocked" for item in packet["blocking_findings"])
 
 
 def test_blocked_when_evidence_lineage_incomplete():
-    packet = packet_with(evidence_manifest={"status": "pass", "appendix_summary": {"missing_hash_count": 1}})
+    packet = packet_with(
+        evidence_manifest={
+            "status": "pass",
+            "appendix_summary": {"missing_hash_count": 1},
+        }
+    )
 
     assert packet["decision"] == "blocked"
     assert packet["component_status"]["evidence_manifest"] == "fail"
-    assert any(item["code"] == "evidence_lineage_incomplete" for item in packet["blocking_findings"])
+    assert any(
+        item["code"] == "evidence_lineage_incomplete"
+        for item in packet["blocking_findings"]
+    )
 
 
 def test_blocked_when_identity_contradictions_exist():
-    packet = packet_with(identity_confidence={"status": "pass", "contradiction_count": 1})
+    packet = packet_with(
+        identity_confidence={"status": "pass", "contradiction_count": 1}
+    )
 
     assert packet["decision"] == "blocked"
     assert packet["component_status"]["identity_confidence"] == "fail"
-    assert any(item["code"] == "identity_contradiction" for item in packet["blocking_findings"])
+    assert any(
+        item["code"] == "identity_contradiction" for item in packet["blocking_findings"]
+    )
 
 
 def test_blocked_when_connector_compliance_fails():
     packet = packet_with(connector_compliance={"status": "fail", "finding_count": 1})
 
     assert packet["decision"] == "blocked"
-    assert any(item["code"] == "connector_compliance_failed" for item in packet["blocking_findings"])
+    assert any(
+        item["code"] == "connector_compliance_failed"
+        for item in packet["blocking_findings"]
+    )
 
 
 def test_blocked_when_policy_coverage_fails():
     packet = packet_with(policy_coverage={"status": "fail", "finding_count": 1})
 
     assert packet["decision"] == "blocked"
-    assert any(item["code"] == "policy_coverage_failed" for item in packet["blocking_findings"])
+    assert any(
+        item["code"] == "policy_coverage_failed" for item in packet["blocking_findings"]
+    )
 
 
 def test_needs_human_review_when_identity_confidence_warns():
-    packet = packet_with(identity_confidence={"status": "warn", "contradiction_count": 0, "low_confidence_count": 1})
+    packet = packet_with(
+        identity_confidence={
+            "status": "warn",
+            "contradiction_count": 0,
+            "low_confidence_count": 1,
+        }
+    )
 
     assert packet["decision"] == "needs_human_review"
     assert packet["ready"] is False
@@ -92,7 +139,9 @@ def test_needs_human_review_when_connector_input_missing():
     packet = build_dossier_finalization_packet(payload, export_mode="final")
 
     assert packet["decision"] == "needs_human_review"
-    assert any(item["code"] == "connector_compliance_missing" for item in packet["warnings"])
+    assert any(
+        item["code"] == "connector_compliance_missing" for item in packet["warnings"]
+    )
 
 
 def test_needs_human_review_when_policy_events_missing():
@@ -101,7 +150,9 @@ def test_needs_human_review_when_policy_events_missing():
     packet = build_dossier_finalization_packet(payload, export_mode="final")
 
     assert packet["decision"] == "needs_human_review"
-    assert any(item["code"] == "policy_coverage_review_needed" for item in packet["warnings"])
+    assert any(
+        item["code"] == "policy_coverage_review_needed" for item in packet["warnings"]
+    )
 
 
 def test_attach_dossier_finalization_does_not_mutate_original_payload():

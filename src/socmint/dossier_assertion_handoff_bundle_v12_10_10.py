@@ -20,7 +20,9 @@ def _packet_row(packet: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_dossier_assertion_handoff_bundle(review_packet_payload: dict[str, Any]) -> dict[str, Any]:
+def build_dossier_assertion_handoff_bundle(
+    review_packet_payload: dict[str, Any],
+) -> dict[str, Any]:
     ready: list[dict[str, Any]] = []
     blocked: list[dict[str, Any]] = []
     for packet in review_packet_payload.get("packets", []) or []:
@@ -29,8 +31,15 @@ def build_dossier_assertion_handoff_bundle(review_packet_payload: dict[str, Any]
             ready.append(row)
         else:
             blocked.append(row)
-    ready.sort(key=lambda item: (-float(item.get("confidence") or 0), item.get("packet_id") or ""))
-    blocked.sort(key=lambda item: (len(item.get("blockers") or []), item.get("packet_id") or ""))
+    ready.sort(
+        key=lambda item: (
+            -float(item.get("confidence") or 0),
+            item.get("packet_id") or "",
+        )
+    )
+    blocked.sort(
+        key=lambda item: (len(item.get("blockers") or []), item.get("packet_id") or "")
+    )
     return {
         "schema": SCHEMA,
         "stage": PIPELINE_STAGE,
@@ -49,7 +58,9 @@ def build_dossier_assertion_handoff_bundle(review_packet_payload: dict[str, Any]
     }
 
 
-def export_dossier_assertion_handoff_bundle_report(payload: dict[str, Any], fmt: str = "json") -> tuple[str, str, str]:
+def export_dossier_assertion_handoff_bundle_report(
+    payload: dict[str, Any], fmt: str = "json"
+) -> tuple[str, str, str]:
     fmt = (fmt or "json").lower().strip()
     if fmt in {"md", "markdown"}:
         lines = [
@@ -68,9 +79,21 @@ def export_dossier_assertion_handoff_bundle_report(payload: dict[str, Any], fmt:
             "",
         ]
         for row in payload.get("ready_packets", []):
-            lines.extend([f"- {row.get('packet_id')}: {row.get('assertion_value')} ({row.get('recommended_action')})"])
+            lines.extend(
+                [
+                    f"- {row.get('packet_id')}: {row.get('assertion_value')} ({row.get('recommended_action')})"
+                ]
+            )
         lines.extend(["", "## Blocked Packets", ""])
         for row in payload.get("blocked_packets", []):
-            lines.extend([f"- {row.get('packet_id')}: {', '.join(row.get('blockers') or []) or 'blocked'}"])
+            lines.extend(
+                [
+                    f"- {row.get('packet_id')}: {', '.join(row.get('blockers') or []) or 'blocked'}"
+                ]
+            )
         return "text/markdown", "dossier-assertion-handoff-bundle.md", "\n".join(lines)
-    return "application/json", "dossier-assertion-handoff-bundle.json", json.dumps(payload, indent=2, sort_keys=True)
+    return (
+        "application/json",
+        "dossier-assertion-handoff-bundle.json",
+        json.dumps(payload, indent=2, sort_keys=True),
+    )

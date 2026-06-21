@@ -4,13 +4,27 @@ import io
 import zipfile
 from copy import deepcopy
 
-from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import build_master_delivery_export_bundle
-from socmint.dossier_finalization_master_delivery_index_v7_5_13 import build_master_delivery_index
-from socmint.v10_24_final_delivery_workspace import build_final_delivery_bundle_from_request
-from socmint.v10_24_final_delivery_workspace import build_final_delivery_export_zip_from_request
-from socmint.v10_24_final_delivery_workspace import build_final_delivery_workspace_from_bundle
-from socmint.v10_24_final_delivery_workspace import build_final_delivery_workspace_from_index
-from socmint.v10_24_final_delivery_workspace import build_final_delivery_workspace_from_request
+from socmint.dossier_finalization_master_delivery_export_bundle_v7_5_14 import (
+    build_master_delivery_export_bundle,
+)
+from socmint.dossier_finalization_master_delivery_index_v7_5_13 import (
+    build_master_delivery_index,
+)
+from socmint.v10_24_final_delivery_workspace import (
+    build_final_delivery_bundle_from_request,
+)
+from socmint.v10_24_final_delivery_workspace import (
+    build_final_delivery_export_zip_from_request,
+)
+from socmint.v10_24_final_delivery_workspace import (
+    build_final_delivery_workspace_from_bundle,
+)
+from socmint.v10_24_final_delivery_workspace import (
+    build_final_delivery_workspace_from_index,
+)
+from socmint.v10_24_final_delivery_workspace import (
+    build_final_delivery_workspace_from_request,
+)
 from socmint.v10_24_final_delivery_workspace import operator_actions_for_delivery
 
 REQUIRED_FILES = {
@@ -68,7 +82,9 @@ def delivery_index(status="verified"):
 
 
 def delivery_bundle(status="verified"):
-    return build_master_delivery_export_bundle(delivery_index(status=status), bundle_name="Final Package")
+    return build_master_delivery_export_bundle(
+        delivery_index(status=status), bundle_name="Final Package"
+    )
 
 
 def test_builds_workspace_from_v7514_bundle():
@@ -85,7 +101,9 @@ def test_builds_workspace_from_v7514_bundle():
 
 
 def test_builds_workspace_from_v7513_index():
-    workspace = build_final_delivery_workspace_from_index(delivery_index(), bundle_name="From Index")
+    workspace = build_final_delivery_workspace_from_index(
+        delivery_index(), bundle_name="From Index"
+    )
 
     assert workspace["delivery_action"] == "deliver_ready"
     assert workspace["bundle_name"] == "from-index"
@@ -93,29 +111,47 @@ def test_builds_workspace_from_v7513_index():
 
 
 def test_operator_action_mapping():
-    assert operator_actions_for_delivery("deliver_ready") == ["review_final_package", "export_zip", "record_delivery"]
+    assert operator_actions_for_delivery("deliver_ready") == [
+        "review_final_package",
+        "export_zip",
+        "record_delivery",
+    ]
     assert operator_actions_for_delivery("human_review_required") == [
         "review_findings",
         "resolve_or_acknowledge",
         "regenerate_if_needed",
     ]
-    assert operator_actions_for_delivery("regenerate_export") == ["regenerate_v7_5_14_package", "rerun_verification"]
+    assert operator_actions_for_delivery("regenerate_export") == [
+        "regenerate_v7_5_14_package",
+        "rerun_verification",
+    ]
 
 
 def test_human_review_workspace_actions():
-    workspace = build_final_delivery_workspace_from_bundle(delivery_bundle(status="needs_human_review"))
+    workspace = build_final_delivery_workspace_from_bundle(
+        delivery_bundle(status="needs_human_review")
+    )
 
     assert workspace["delivery_action"] == "human_review_required"
     assert workspace["package_ready"] is False
-    assert workspace["operator_actions"] == ["review_findings", "resolve_or_acknowledge", "regenerate_if_needed"]
+    assert workspace["operator_actions"] == [
+        "review_findings",
+        "resolve_or_acknowledge",
+        "regenerate_if_needed",
+    ]
 
 
 def test_regenerate_workspace_actions():
-    workspace = build_final_delivery_workspace_from_bundle(delivery_bundle(status="failed"))
+    workspace = build_final_delivery_workspace_from_bundle(
+        delivery_bundle(status="failed")
+    )
 
     assert workspace["delivery_action"] == "regenerate_export"
     assert workspace["package_ready"] is False
-    assert workspace["operator_actions"] == ["regenerate_v7_5_14_package", "rerun_verification"]
+    assert workspace["operator_actions"] == [
+        "regenerate_v7_5_14_package",
+        "rerun_verification",
+    ]
 
 
 def test_preserves_package_file_inventory():
@@ -132,14 +168,18 @@ def test_builds_bundle_from_request_with_bundle_passthrough():
 
 
 def test_builds_workspace_from_request_with_index():
-    workspace = build_final_delivery_workspace_from_request({"index": delivery_index(), "bundle_name": "Request Index"})
+    workspace = build_final_delivery_workspace_from_request(
+        {"index": delivery_index(), "bundle_name": "Request Index"}
+    )
 
     assert workspace["bundle_name"] == "request-index"
     assert workspace["delivery_action"] == "deliver_ready"
 
 
 def test_export_zip_from_request_contains_required_files():
-    zip_bytes = build_final_delivery_export_zip_from_request({"index": delivery_index()})
+    zip_bytes = build_final_delivery_export_zip_from_request(
+        {"index": delivery_index()}
+    )
 
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as archive:
         assert set(archive.namelist()) == REQUIRED_FILES

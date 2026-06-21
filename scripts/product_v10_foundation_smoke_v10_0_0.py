@@ -38,12 +38,23 @@ def main() -> int:
             ok = (
                 response.status_code == 200
                 and architecture.get("version") == "10.0.0"
-                and architecture.get("compatibility", {}).get("required_route_count", 0) >= 10
+                and architecture.get("compatibility", {}).get("required_route_count", 0)
+                >= 10
                 and architecture.get("compatibility", {}).get("missing") == []
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET v10 architecture API", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET v10 architecture API",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET v10 architecture API", response.status_code, response.get_data(as_text=True)[:4000]))
+                failures.append(
+                    (
+                        "GET v10 architecture API",
+                        response.status_code,
+                        response.get_data(as_text=True)[:4000],
+                    )
+                )
 
             response = client.get("/api/v1/product/v10/compatibility")
             compatibility = response.get_json() if response.is_json else {}
@@ -52,11 +63,24 @@ def main() -> int:
                 and compatibility.get("version") == "10.0.0"
                 and compatibility.get("compatibility", {}).get("missing") == []
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET v10 compatibility API", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET v10 compatibility API",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET v10 compatibility API", response.status_code, response.get_data(as_text=True)[:4000]))
+                failures.append(
+                    (
+                        "GET v10 compatibility API",
+                        response.status_code,
+                        response.get_data(as_text=True)[:4000],
+                    )
+                )
 
-            response = client.post("/api/v1/product/v10/architecture/write", headers={"X-CSRF-Token": "v1000-csrf"})
+            response = client.post(
+                "/api/v1/product/v10/architecture/write",
+                headers={"X-CSRF-Token": "v1000-csrf"},
+            )
             payload = response.get_json() if response.is_json else {}
             ok = (
                 response.status_code == 200
@@ -64,16 +88,36 @@ def main() -> int:
                 and Path("release/V10_0_0_PRODUCT_ARCHITECTURE_MANIFEST.json").exists()
                 and Path("release/V10_0_0_PRODUCT_ARCHITECTURE_MANIFEST.md").exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "POST v10 architecture manifest write", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "POST v10 architecture manifest write",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("POST v10 architecture manifest write", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "POST v10 architecture manifest write",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
             response = client.get("/product/v10")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Product v10 Foundation" in body and "v9.9.x Compatibility Routes" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET v10 foundation UI", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Product v10 Foundation" in body
+                and "v9.9.x Compatibility Routes" in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET v10 foundation UI",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET v10 foundation UI", response.status_code, body[:2500]))
+                failures.append(
+                    ("GET v10 foundation UI", response.status_code, body[:2500])
+                )
 
             # Migration-safe compatibility checks: these v9.9.x final routes must still respond.
             v9_routes = [
@@ -101,9 +145,19 @@ def main() -> int:
             for route in v9_routes:
                 response = client.get(route)
                 ok = response.status_code == 200
-                print(("[PASS]" if ok else "[FAIL]"), f"compat route {route}", response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"compat route {route}",
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append((f"compat route {route}", response.status_code, response.get_data(as_text=True)[:1000]))
+                    failures.append(
+                        (
+                            f"compat route {route}",
+                            response.status_code,
+                            response.get_data(as_text=True)[:1000],
+                        )
+                    )
 
             if failures:
                 for name, status, body in failures:

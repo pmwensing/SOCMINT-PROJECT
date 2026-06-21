@@ -56,7 +56,9 @@ def main() -> None:
             latest_name = names[0]
             old_name = names[-1]
 
-            page = client.get(f"/spine/subjects/{SUBJECT_ID}/full-report/retention?keep_latest=1")
+            page = client.get(
+                f"/spine/subjects/{SUBJECT_ID}/full-report/retention?keep_latest=1"
+            )
             assert page.status_code == 200
             text = page.get_data(as_text=True)
             assert "Full Report Retention" in text
@@ -69,7 +71,12 @@ def main() -> None:
             # Pin through the browser UI route.
             pin = client.post(
                 f"/spine/subjects/{SUBJECT_ID}/full-report/pin",
-                data={"name": old_name, "note": "ui smoke pin", "keep_latest": "1", "csrf_token": csrf},
+                data={
+                    "name": old_name,
+                    "note": "ui smoke pin",
+                    "keep_latest": "1",
+                    "csrf_token": csrf,
+                },
                 follow_redirects=True,
             )
             assert pin.status_code == 200
@@ -78,21 +85,36 @@ def main() -> None:
             # Delete without exact confirmation must be blocked by UI confirmation guard.
             bad_delete = client.post(
                 f"/spine/subjects/{SUBJECT_ID}/full-report/delete",
-                data={"name": old_name, "confirm_name": "wrong", "keep_latest": "1", "csrf_token": csrf},
+                data={
+                    "name": old_name,
+                    "confirm_name": "wrong",
+                    "keep_latest": "1",
+                    "csrf_token": csrf,
+                },
                 follow_redirects=True,
             )
             assert bad_delete.status_code == 200
-            assert "Delete blocked: confirmation did not match export filename" in bad_delete.get_data(as_text=True)
+            assert (
+                "Delete blocked: confirmation did not match export filename"
+                in bad_delete.get_data(as_text=True)
+            )
             assert old_name in export_names(client)
 
             # Delete pinned export with exact confirmation must still be blocked by retention safety.
             pinned_delete = client.post(
                 f"/spine/subjects/{SUBJECT_ID}/full-report/delete",
-                data={"name": old_name, "confirm_name": old_name, "keep_latest": "1", "csrf_token": csrf},
+                data={
+                    "name": old_name,
+                    "confirm_name": old_name,
+                    "keep_latest": "1",
+                    "csrf_token": csrf,
+                },
                 follow_redirects=True,
             )
             assert pinned_delete.status_code == 200
-            assert "Delete blocked: export_pinned" in pinned_delete.get_data(as_text=True)
+            assert "Delete blocked: export_pinned" in pinned_delete.get_data(
+                as_text=True
+            )
             assert old_name in export_names(client)
 
             # Dry-run through the browser UI route.
@@ -102,16 +124,27 @@ def main() -> None:
                 follow_redirects=True,
             )
             assert dry_run.status_code == 200
-            assert re.search(r"Dry-run complete: [1-9][0-9]* delete candidate", dry_run.get_data(as_text=True))
+            assert re.search(
+                r"Dry-run complete: [1-9][0-9]* delete candidate",
+                dry_run.get_data(as_text=True),
+            )
 
             # Applying real retention without APPLY must be blocked.
             blocked_apply = client.post(
                 f"/spine/subjects/{SUBJECT_ID}/full-report/apply-retention",
-                data={"keep_latest": "1", "dry_run": "false", "confirm_apply": "NO", "csrf_token": csrf},
+                data={
+                    "keep_latest": "1",
+                    "dry_run": "false",
+                    "confirm_apply": "NO",
+                    "csrf_token": csrf,
+                },
                 follow_redirects=True,
             )
             assert blocked_apply.status_code == 200
-            assert "Apply blocked: type APPLY to confirm deletion" in blocked_apply.get_data(as_text=True)
+            assert (
+                "Apply blocked: type APPLY to confirm deletion"
+                in blocked_apply.get_data(as_text=True)
+            )
 
             # Unpin old export through UI.
             unpin = client.post(
@@ -124,10 +157,17 @@ def main() -> None:
 
             # Delete an unpinned old export through the UI with exact confirmation.
             delete_names = export_names(client)
-            candidate = next(name for name in reversed(delete_names) if name != latest_name)
+            candidate = next(
+                name for name in reversed(delete_names) if name != latest_name
+            )
             delete_response = client.post(
                 f"/spine/subjects/{SUBJECT_ID}/full-report/delete",
-                data={"name": candidate, "confirm_name": candidate, "keep_latest": "1", "csrf_token": csrf},
+                data={
+                    "name": candidate,
+                    "confirm_name": candidate,
+                    "keep_latest": "1",
+                    "csrf_token": csrf,
+                },
                 follow_redirects=True,
             )
             assert delete_response.status_code == 200

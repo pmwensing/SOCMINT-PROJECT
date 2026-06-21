@@ -36,7 +36,9 @@ def test_v10_7_audit_summary_counts_actions(tmp_path):
 
 
 def test_v10_7_unknown_action_is_normalized(tmp_path):
-    event = audit_event("unexpected_action", "case-audit-107", "subject-audit-107", root=tmp_path)
+    event = audit_event(
+        "unexpected_action", "case-audit-107", "subject-audit-107", root=tmp_path
+    )
 
     assert event["action"] == "download_blocked"
 
@@ -56,5 +58,10 @@ def test_v10_7_audit_routes_are_registered():
 
     assert "/api/v1/dossier-builder/v3/export-audit" in routes
     assert "/api/v1/dossier-builder/v3/export-audit/<case_id>/<subject_id>" in routes
-    assert "/api/v1/dossier-builder/v3/export-audit/<case_id>/<subject_id>/summary" in routes
-    assert "/api/v1/dossier-builder/v3/export-audit/<case_id>/<subject_id>/event" in routes
+    assert (
+        "/api/v1/dossier-builder/v3/export-audit/<case_id>/<subject_id>/summary"
+        in routes
+    )
+    assert (
+        "/api/v1/dossier-builder/v3/export-audit/<case_id>/<subject_id>/event" in routes
+    )

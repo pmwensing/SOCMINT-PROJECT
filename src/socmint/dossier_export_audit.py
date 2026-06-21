@@ -23,7 +23,9 @@ ALLOWED_AUDIT_ACTIONS = {
 }
 
 
-def audit_path(case_id: str, subject_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> Path:
+def audit_path(
+    case_id: str, subject_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> Path:
     return export_directory(subject_id, case_id, root=root) / AUDIT_FILENAME
 
 
@@ -35,7 +37,9 @@ def audit_event(
     detail: dict[str, Any] | None = None,
     root: str | Path = DEFAULT_EXPORT_ROOT,
 ) -> dict[str, Any]:
-    normalized_action = action if action in ALLOWED_AUDIT_ACTIONS else "download_blocked"
+    normalized_action = (
+        action if action in ALLOWED_AUDIT_ACTIONS else "download_blocked"
+    )
     event = {
         "schema": DOSSIER_EXPORT_AUDIT_SCHEMA,
         "timestamp": datetime.now(UTC).isoformat(),
@@ -52,7 +56,9 @@ def audit_event(
     return event
 
 
-def read_audit_events(case_id: str, subject_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> list[dict[str, Any]]:
+def read_audit_events(
+    case_id: str, subject_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> list[dict[str, Any]]:
     path = audit_path(case_id, subject_id, root=root)
     if not path.exists():
         return []
@@ -76,7 +82,9 @@ def read_audit_events(case_id: str, subject_id: str, root: str | Path = DEFAULT_
     return events
 
 
-def audit_summary(case_id: str, subject_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def audit_summary(
+    case_id: str, subject_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     events = read_audit_events(case_id, subject_id, root=root)
     counts: dict[str, int] = {}
     for event in events:
@@ -103,7 +111,9 @@ def audit_index(root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
             except IndexError:
                 case_id = "unknown"
                 subject_id = "unknown"
-            events = read_audit_events(subject_id=subject_id, case_id=case_id, root=root_path)
+            events = read_audit_events(
+                subject_id=subject_id, case_id=case_id, root=root_path
+            )
             entries.append(
                 {
                     "case_slug": safe_slug(case_id),

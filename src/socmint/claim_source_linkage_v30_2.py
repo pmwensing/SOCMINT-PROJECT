@@ -4,7 +4,12 @@ from typing import Any
 
 from . import database
 from .corroboration_claim_v30_1 import find_claim
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .evidence_ingestion_v29_4 import current_artifacts, observations
 
 SCHEMA = "socmint.claim_source_linkage.v30_2"
@@ -50,10 +55,14 @@ def linkage_history() -> list[dict[str, Any]]:
 
 def claim_linkages(claim_id: str | None = None) -> list[dict[str, Any]]:
     rows = linkage_history()
-    return [row for row in rows if row.get("claim_id") == claim_id] if claim_id else rows
+    return (
+        [row for row in rows if row.get("claim_id") == claim_id] if claim_id else rows
+    )
 
 
-def _record(actor: str, claim_id: str, event: dict[str, Any], ip_address: str | None) -> dict[str, Any]:
+def _record(
+    actor: str, claim_id: str, event: dict[str, Any], ip_address: str | None
+) -> dict[str, Any]:
     _ensure_storage()
     session = database.Session()
     try:
@@ -89,8 +98,12 @@ def link_claim_sources(
 ) -> dict[str, Any]:
     claim = find_claim(claim_id)
     reason = str(reason or "").strip()
-    artifact_ids = sorted({str(value).strip() for value in (artifact_ids or []) if str(value).strip()})
-    observation_ids = sorted({str(value).strip() for value in (observation_ids or []) if str(value).strip()})
+    artifact_ids = sorted(
+        {str(value).strip() for value in (artifact_ids or []) if str(value).strip()}
+    )
+    observation_ids = sorted(
+        {str(value).strip() for value in (observation_ids or []) if str(value).strip()}
+    )
 
     if claim is None:
         return blocked("corroboration_claim_required")
@@ -104,14 +117,20 @@ def link_claim_sources(
         return blocked("evidence_or_observation_link_required")
 
     artifacts = {str(item.get("artifact_id")): item for item in current_artifacts()}
-    observation_index = {str(item.get("observation_id")): item for item in observations()}
+    observation_index = {
+        str(item.get("observation_id")): item for item in observations()
+    }
     missing_artifacts = [value for value in artifact_ids if value not in artifacts]
-    missing_observations = [value for value in observation_ids if value not in observation_index]
+    missing_observations = [
+        value for value in observation_ids if value not in observation_index
+    ]
     if missing_artifacts:
         return blocked("evidence_artifact_not_found")
     if missing_observations:
         return blocked("observation_not_found")
-    if any(artifacts[value].get("artifact_state") != "accepted" for value in artifact_ids):
+    if any(
+        artifacts[value].get("artifact_state") != "accepted" for value in artifact_ids
+    ):
         return blocked("accepted_evidence_artifact_required")
 
     observation_artifact_ids = {
@@ -124,7 +143,9 @@ def link_claim_sources(
         {
             "artifact_id": value,
             "content_sha256": artifacts[value].get("content_sha256"),
-            "artifact_event_sha256": (artifacts[value].get("state_history") or [artifacts[value]])[-1].get("artifact_event_sha256"),
+            "artifact_event_sha256": (
+                artifacts[value].get("state_history") or [artifacts[value]]
+            )[-1].get("artifact_event_sha256"),
         }
         for value in artifact_ids
     ]
@@ -133,7 +154,9 @@ def link_claim_sources(
             "observation_id": value,
             "observation_sha256": observation_index[value].get("observation_sha256"),
             "artifact_id": observation_index[value].get("artifact_id"),
-            "artifact_binding_sha256": observation_index[value].get("artifact_binding_sha256"),
+            "artifact_binding_sha256": observation_index[value].get(
+                "artifact_binding_sha256"
+            ),
         }
         for value in observation_ids
     ]
@@ -144,7 +167,9 @@ def link_claim_sources(
         "observation_bindings": observation_bindings,
     }
     linkage_sha256 = _sha(source_manifest)
-    if any(row.get("linkage_sha256") == linkage_sha256 for row in claim_linkages(claim_id)):
+    if any(
+        row.get("linkage_sha256") == linkage_sha256 for row in claim_linkages(claim_id)
+    ):
         return blocked("claim_source_linkage_already_exists")
 
     event = {
@@ -167,4 +192,8 @@ def link_claim_sources(
         "dossier_mutated": False,
     }
     result = _record(actor, claim_id, event, ip_address)
-    return {**result, "status": "corroboration_claim_sources_linked", "next_action": "review_contradictions_and_disagreement"}
+    return {
+        **result,
+        "status": "corroboration_claim_sources_linked",
+        "next_action": "review_contradictions_and_disagreement",
+    }

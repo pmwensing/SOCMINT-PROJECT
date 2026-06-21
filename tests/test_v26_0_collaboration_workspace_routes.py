@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -21,34 +23,44 @@ def test_v26_0_routes_require_login_apply_scope_and_render(tmp_path, monkeypatch
         "status": "attention_required",
         "user_identity": "paul",
         "access_scope": {"mode": "restricted", "allowed_case_ids": ["case-a"]},
-        "participating_cases": [{
-            "case_id": "case-a",
-            "assigned_roles": ["reviewer"],
-            "participation_reasons": ["assigned_review_work"],
-            "stage": "active",
-            "status": "operational",
-            "blocked": False,
-            "blockers": [],
-            "active_collaborators": ["alice"],
-            "latest_activity_at": "2026-06-16T09:00:00+00:00",
-            "links": {
-                "case": "/case-intelligence-review/case-a",
-                "evidence": "/dossier-assembly/case-a",
-                "review": "/case-intelligence-review/case-a",
-                "closure": "/case-closure/case-a",
-                "archive": "/case-closure/case-a/history",
-                "release": "/dossier-release/case-a",
-                "cross_case": "/cross-case-intelligence",
-                "relationship_graph": "/cross-case-intelligence/graph",
-            },
-        }],
-        "active_collaborators": [{"user_identity": "alice", "case_ids": ["case-a"], "shared_case_count": 1}],
-        "pending_requests": [{"collaboration_request_id": "request-1", "case_id": "case-a"}],
+        "participating_cases": [
+            {
+                "case_id": "case-a",
+                "assigned_roles": ["reviewer"],
+                "participation_reasons": ["assigned_review_work"],
+                "stage": "active",
+                "status": "operational",
+                "blocked": False,
+                "blockers": [],
+                "active_collaborators": ["alice"],
+                "latest_activity_at": "2026-06-16T09:00:00+00:00",
+                "links": {
+                    "case": "/case-intelligence-review/case-a",
+                    "evidence": "/dossier-assembly/case-a",
+                    "review": "/case-intelligence-review/case-a",
+                    "closure": "/case-closure/case-a",
+                    "archive": "/case-closure/case-a/history",
+                    "release": "/dossier-release/case-a",
+                    "cross_case": "/cross-case-intelligence",
+                    "relationship_graph": "/cross-case-intelligence/graph",
+                },
+            }
+        ],
+        "active_collaborators": [
+            {"user_identity": "alice", "case_ids": ["case-a"], "shared_case_count": 1}
+        ],
+        "pending_requests": [
+            {"collaboration_request_id": "request-1", "case_id": "case-a"}
+        ],
         "pending_handoffs": [],
-        "unread_updates": [{"collaboration_update_id": "mention-1", "case_id": "case-a"}],
+        "unread_updates": [
+            {"collaboration_update_id": "mention-1", "case_id": "case-a"}
+        ],
         "unresolved_review_requests": [],
         "blocked_collaboration_items": [],
-        "unresolved_collaboration_actions": [{"key": "respond_to_collaboration_request", "case_id": "case-a"}],
+        "unresolved_collaboration_actions": [
+            {"key": "respond_to_collaboration_request", "case_id": "case-a"}
+        ],
         "counts": {
             "participating_cases": 1,
             "active_collaborators": 1,

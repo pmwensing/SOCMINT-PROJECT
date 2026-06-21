@@ -18,7 +18,11 @@ def test_confidence_float_handles_bad_values():
 def test_filter_queue_items_by_kind_state_and_confidence():
     items = [
         {"kind": "observation", "review_state": "unreviewed", "confidence": "0.8"},
-        {"kind": "account_discovery", "review_state": "unreviewed", "confidence": "0.4"},
+        {
+            "kind": "account_discovery",
+            "review_state": "unreviewed",
+            "confidence": "0.4",
+        },
         {"kind": "observation", "review_state": "confirmed", "confidence": "0.9"},
     ]
 
@@ -29,4 +33,6 @@ def test_filter_queue_items_by_kind_state_and_confidence():
         min_confidence=0.5,
     )
 
-    assert result == [{"kind": "observation", "review_state": "unreviewed", "confidence": "0.8"}]
+    assert result == [
+        {"kind": "observation", "review_state": "unreviewed", "confidence": "0.8"}
+    ]

@@ -29,13 +29,17 @@ def _observation():
 
 def test_v30_2_links_accepted_evidence_and_observation(monkeypatch, tmp_path):
     database.configure_database(f"sqlite:///{tmp_path / 'linkage.db'}")
-    monkeypatch.setattr(linkage, "find_claim", lambda claim_id: {
-        "claim_id": claim_id,
-        "claim_state": "proposed",
-        "claim_event_sha256": "f" * 64,
-        "case_id": "case-1",
-        "entity_id": "entity-1",
-    })
+    monkeypatch.setattr(
+        linkage,
+        "find_claim",
+        lambda claim_id: {
+            "claim_id": claim_id,
+            "claim_state": "proposed",
+            "claim_event_sha256": "f" * 64,
+            "case_id": "case-1",
+            "entity_id": "entity-1",
+        },
+    )
     monkeypatch.setattr(linkage, "current_artifacts", lambda: [_accepted_artifact()])
     monkeypatch.setattr(linkage, "observations", lambda: [_observation()])
 
@@ -70,13 +74,17 @@ def test_v30_2_links_accepted_evidence_and_observation(monkeypatch, tmp_path):
 
 def test_v30_2_blocks_unaccepted_and_mismatched_sources(monkeypatch, tmp_path):
     database.configure_database(f"sqlite:///{tmp_path / 'blocked.db'}")
-    monkeypatch.setattr(linkage, "find_claim", lambda claim_id: {
-        "claim_id": claim_id,
-        "claim_state": "proposed",
-        "claim_event_sha256": "f" * 64,
-        "case_id": "case-2",
-        "entity_id": "entity-2",
-    })
+    monkeypatch.setattr(
+        linkage,
+        "find_claim",
+        lambda claim_id: {
+            "claim_id": claim_id,
+            "claim_state": "proposed",
+            "claim_event_sha256": "f" * 64,
+            "case_id": "case-2",
+            "entity_id": "entity-2",
+        },
+    )
     artifact = _accepted_artifact()
     artifact["artifact_state"] = "registered"
     monkeypatch.setattr(linkage, "current_artifacts", lambda: [artifact])

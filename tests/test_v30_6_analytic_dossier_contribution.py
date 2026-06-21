@@ -57,7 +57,9 @@ def test_v30_6_approves_and_reassesses_without_dossier_mutation(monkeypatch, tmp
     assert len(current["contribution_history"]) == 2
 
 
-def test_v30_6_blocks_approval_without_approved_human_review_and_invalid_withdrawal(monkeypatch, tmp_path):
+def test_v30_6_blocks_approval_without_approved_human_review_and_invalid_withdrawal(
+    monkeypatch, tmp_path
+):
     database.configure_database(f"sqlite:///{tmp_path / 'blocked.db'}")
     monkeypatch.setattr(contribution, "find_claim", lambda claim_id: _claim())
     monkeypatch.setattr(contribution, "latest_review", lambda claim_id: _review("held"))
@@ -84,4 +86,7 @@ def test_v30_6_blocks_approval_without_approved_human_review_and_invalid_withdra
         confirmed=True,
     )
     assert withdrawal["status"] == "blocked"
-    assert withdrawal["blockers"][0]["key"] == "approved_contribution_required_for_withdrawal"
+    assert (
+        withdrawal["blockers"][0]["key"]
+        == "approved_contribution_required_for_withdrawal"
+    )

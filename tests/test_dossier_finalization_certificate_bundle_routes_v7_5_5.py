@@ -4,8 +4,12 @@ import io
 import zipfile
 
 from socmint.dashboard import create_app
-from socmint.dossier_finalization_certificate_bundle_routes_v7_5_5 import register_dossier_finalization_certificate_bundle_routes
-from socmint.dossier_finalization_certificate_v7_5_4 import build_verification_certificate
+from socmint.dossier_finalization_certificate_bundle_routes_v7_5_5 import (
+    register_dossier_finalization_certificate_bundle_routes,
+)
+from socmint.dossier_finalization_certificate_v7_5_4 import (
+    build_verification_certificate,
+)
 
 CSRF_TOKEN = "test-csrf-token"
 CSRF_HEADERS = {"X-CSRF-Token": CSRF_TOKEN}
@@ -69,7 +73,11 @@ def test_json_route_returns_bundle_metadata_from_wrapped_certificate():
 
 def test_raw_certificate_request_shape_works():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle", valid_certificate())
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle",
+        valid_certificate(),
+    )
 
     assert response.status_code == 200
     assert response.get_json()["certificate_status"] == "valid"
@@ -102,7 +110,11 @@ def test_zip_route_contains_required_files():
 
 def test_csrf_token_is_used_in_route_tests():
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle", {"certificate": valid_certificate()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle",
+        {"certificate": valid_certificate()},
+    )
 
     assert response.status_code == 200
 
@@ -115,7 +127,11 @@ def test_no_connector_execution_function_is_called(monkeypatch):
 
     monkeypatch.setattr(bundle_module, "execute_connector", explode, raising=False)
     client = app_client()
-    response = post_json(client, "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle", {"certificate": valid_certificate()})
+    response = post_json(
+        client,
+        "/api/v1/dossier-builder/v3/intelligence/finalization/certificate/bundle",
+        {"certificate": valid_certificate()},
+    )
 
     assert response.status_code == 200
     assert response.get_json()["certificate_status"] == "valid"

@@ -6,18 +6,12 @@ from pathlib import Path
 
 def escape(value):
     return (
-        str(value or "")
-        .replace("%", "%25")
-        .replace("\n", "%0A")
-        .replace("\r", "%0D")
+        str(value or "").replace("%", "%25").replace("\n", "%0A").replace("\r", "%0D")
     )
 
 
 def emit_error(path, line, title, message):
-    print(
-        f"::error file={path},line={line},title={escape(title)}::"
-        f"{escape(message)}"
-    )
+    print(f"::error file={path},line={line},title={escape(title)}::{escape(message)}")
 
 
 def annotate_junit(path):

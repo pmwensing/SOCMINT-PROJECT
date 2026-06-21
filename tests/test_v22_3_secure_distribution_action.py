@@ -32,8 +32,12 @@ def _setup(tmp_path, monkeypatch, preview=None):
     url = f"sqlite:///{tmp_path / 'app.db'}"
     monkeypatch.setenv("DATABASE_URL", url)
     database.configure_database(url)
-    monkeypatch.setattr(service, "latest_release_authorization", lambda case_id: _authorization())
-    monkeypatch.setattr(service, "latest_release_preview", lambda case_id: preview or _preview())
+    monkeypatch.setattr(
+        service, "latest_release_authorization", lambda case_id: _authorization()
+    )
+    monkeypatch.setattr(
+        service, "latest_release_preview", lambda case_id: preview or _preview()
+    )
 
 
 def test_v22_3_requires_final_confirmation_and_ready_preview(tmp_path, monkeypatch):
@@ -42,10 +46,15 @@ def test_v22_3_requires_final_confirmation_and_ready_preview(tmp_path, monkeypat
         "case-alpha", confirmed=False, operator="operator"
     )
     assert unconfirmed["status"] == "blocked"
-    assert unconfirmed["blockers"][0]["key"] == "explicit_final_operator_confirmation_required"
+    assert (
+        unconfirmed["blockers"][0]["key"]
+        == "explicit_final_operator_confirmation_required"
+    )
     assert unconfirmed["transport_invoked"] is False
 
-    monkeypatch.setattr(service, "latest_release_preview", lambda case_id: _preview(False))
+    monkeypatch.setattr(
+        service, "latest_release_preview", lambda case_id: _preview(False)
+    )
     blocked = service.dispatch_secure_distribution(
         "case-alpha", confirmed=True, operator="operator"
     )

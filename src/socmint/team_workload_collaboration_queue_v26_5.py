@@ -6,8 +6,13 @@ from statistics import mean
 from typing import Any
 
 from .case_team_role_assignment_v26_1 import current_case_team
-from .collaboration_responses_resolution_v26_4 import build_collaboration_response_workspace
-from .collaboration_workspace_v26_0 import _collaboration_events, build_collaboration_workspace
+from .collaboration_responses_resolution_v26_4 import (
+    build_collaboration_response_workspace,
+)
+from .collaboration_workspace_v26_0 import (
+    _collaboration_events,
+    build_collaboration_workspace,
+)
 from .dossier_assembly_workspace_v21_0 import _sha
 from .portfolio_workload_monitoring_v24_2 import build_workload_assignment_monitoring
 
@@ -71,9 +76,7 @@ def build_team_workload_collaboration_queue(
 
     participating_cases = list(workspace.get("participating_cases") or [])
     participating_ids = {
-        str(item.get("case_id"))
-        for item in participating_cases
-        if item.get("case_id")
+        str(item.get("case_id")) for item in participating_cases if item.get("case_id")
     }
     workload_entries = [
         item
@@ -89,10 +92,13 @@ def build_team_workload_collaboration_queue(
         case_id: current_case_team(case_id) for case_id in case_ids
     }
     responses = response_by_case or {
-        case_id: build_collaboration_response_workspace(case_id)
-        for case_id in case_ids
+        case_id: build_collaboration_response_workspace(case_id) for case_id in case_ids
     }
-    events = collaboration_events if collaboration_events is not None else _collaboration_events()
+    events = (
+        collaboration_events
+        if collaboration_events is not None
+        else _collaboration_events()
+    )
     events = [
         event
         for event in events
@@ -119,13 +125,9 @@ def build_team_workload_collaboration_queue(
         and str(item.get("handoff_to") or "") == user
     ]
     delegated_by_me = [
-        item
-        for item in pending_requests
-        if str(item.get("requested_by") or "") == user
+        item for item in pending_requests if str(item.get("requested_by") or "") == user
     ] + [
-        item
-        for item in pending_handoffs
-        if str(item.get("handoff_from") or "") == user
+        item for item in pending_handoffs if str(item.get("handoff_from") or "") == user
     ]
 
     overdue_items = []
@@ -136,8 +138,7 @@ def build_team_workload_collaboration_queue(
                     **item,
                     "overdue": True,
                     "overdue_hours": _age_hours(item.get("due_at"), now_value),
-                    "links": item.get("links")
-                    or _links(str(item.get("case_id"))),
+                    "links": item.get("links") or _links(str(item.get("case_id"))),
                 }
             )
 
@@ -170,8 +171,7 @@ def build_team_workload_collaboration_queue(
                     "case_id": case_id,
                     "action": item.get("source_action")
                     or "case_collaboration_response_recorded",
-                    "actor": item.get("recorded_by")
-                    or item.get("responding_user"),
+                    "actor": item.get("recorded_by") or item.get("responding_user"),
                     "occurred_at": item.get("recorded_at"),
                     "record_id": item.get("action_record_id"),
                 }
@@ -230,15 +230,13 @@ def build_team_workload_collaboration_queue(
         )
 
     load_values = [
-        item["total_collaboration_load"]
-        for item in collaboration_load_by_user
+        item["total_collaboration_load"] for item in collaboration_load_by_user
     ]
     average_load = round(mean(load_values), 2) if load_values else 0.0
     workload_imbalance = [
         item
         for item in collaboration_load_by_user
-        if average_load
-        and item["total_collaboration_load"] > average_load * 1.5
+        if average_load and item["total_collaboration_load"] > average_load * 1.5
     ]
 
     activity = events + response_activity

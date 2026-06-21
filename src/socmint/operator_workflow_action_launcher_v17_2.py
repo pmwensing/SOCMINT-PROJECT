@@ -4,10 +4,14 @@ from copy import deepcopy
 from typing import Any
 
 from .operator_release_console_v14 import RELEASE_HEALTH_REFRESH_COMMAND
-from .unified_operator_workflow_dashboard_v17_1 import build_unified_operator_workflow_dashboard
+from .unified_operator_workflow_dashboard_v17_1 import (
+    build_unified_operator_workflow_dashboard,
+)
 
 
-OPERATOR_WORKFLOW_ACTION_LAUNCHER_SCHEMA = "socmint.operator_workflow_action_launcher.v17_2"
+OPERATOR_WORKFLOW_ACTION_LAUNCHER_SCHEMA = (
+    "socmint.operator_workflow_action_launcher.v17_2"
+)
 VERSION = "v17.2.0"
 
 NAVIGATION_ACTIONS = {
@@ -52,7 +56,9 @@ def _navigation_target(action: str, case_id: str) -> str:
 
 
 def _dispatch_ready(dashboard: dict[str, Any]) -> bool:
-    summary = dashboard.get("summary") if isinstance(dashboard.get("summary"), dict) else {}
+    summary = (
+        dashboard.get("summary") if isinstance(dashboard.get("summary"), dict) else {}
+    )
     return bool(
         summary.get("case_delivery_ready")
         and summary.get("recovery_chain_closed")
@@ -68,7 +74,9 @@ def launch_operator_workflow_action(
 ) -> dict[str, Any]:
     safe_payload = deepcopy(payload or {})
     action = str(safe_payload.get("action") or "").strip()
-    confirmed = safe_payload.get("confirmed") is True or str(safe_payload.get("confirmed") or "").lower() in {
+    confirmed = safe_payload.get("confirmed") is True or str(
+        safe_payload.get("confirmed") or ""
+    ).lower() in {
         "1",
         "true",
         "yes",
@@ -89,7 +97,12 @@ def launch_operator_workflow_action(
     blockers: list[dict[str, str]] = []
 
     if action not in SUPPORTED_ACTIONS:
-        blockers.append(_blocker("unsupported_action", f"unsupported operator workflow action: {action or 'missing'}"))
+        blockers.append(
+            _blocker(
+                "unsupported_action",
+                f"unsupported operator workflow action: {action or 'missing'}",
+            )
+        )
         return {
             "schema": OPERATOR_WORKFLOW_ACTION_LAUNCHER_SCHEMA,
             "version": VERSION,
@@ -164,7 +177,8 @@ def launch_operator_workflow_action(
                 "blocker_count": len(blockers),
                 "blockers": blockers,
                 "dashboard": dashboard,
-                "next_action": dashboard.get("next_action") or "resolve_operator_workflow_blockers",
+                "next_action": dashboard.get("next_action")
+                or "resolve_operator_workflow_blockers",
             }
         action_plan = {
             "type": "state_change_request",
@@ -172,7 +186,9 @@ def launch_operator_workflow_action(
             "method": "POST",
             "safe_to_launch": True,
             "confirmation_recorded": True,
-            "operation_id": dashboard.get("operations", {}).get("payload", {}).get("operation_id"),
+            "operation_id": dashboard.get("operations", {})
+            .get("payload", {})
+            .get("operation_id"),
         }
 
     return {
@@ -193,5 +209,7 @@ def launch_operator_workflow_action(
     }
 
 
-def launch_operator_workflow_action_from_request(case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def launch_operator_workflow_action_from_request(
+    case_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     return launch_operator_workflow_action(case_id, payload)

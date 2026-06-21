@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from src.socmint.dashboard import create_app
-from src.socmint.dossier_assembly_routes_v21_0 import register_dossier_assembly_routes_v21_0
+from src.socmint.dossier_assembly_routes_v21_0 import (
+    register_dossier_assembly_routes_v21_0,
+)
 
 
 def _app(tmp_path, monkeypatch):
@@ -17,27 +19,39 @@ def _workspace():
         "version": "v26.1.0",
         "status": "ready",
         "case_id": "case-a",
-        "role_catalog": ["case_owner", "lead_analyst", "analyst", "reviewer", "supervisor", "evidence_custodian", "observer"],
-        "current_assignments": [{
-            "case_team_assignment_id": "assignment-1",
-            "case_team_event_sha256": "a" * 64,
-            "user_identity": "alice",
-            "role": "reviewer",
-            "assignment_status": "active",
-            "effective_from": None,
-            "effective_until": None,
-        }],
+        "role_catalog": [
+            "case_owner",
+            "lead_analyst",
+            "analyst",
+            "reviewer",
+            "supervisor",
+            "evidence_custodian",
+            "observer",
+        ],
+        "current_assignments": [
+            {
+                "case_team_assignment_id": "assignment-1",
+                "case_team_event_sha256": "a" * 64,
+                "user_identity": "alice",
+                "role": "reviewer",
+                "assignment_status": "active",
+                "effective_from": None,
+                "effective_until": None,
+            }
+        ],
         "active_assignments": [],
         "active_assignment_count": 1,
-        "history": [{
-            "recorded_at": "2026-06-16T14:00:00+00:00",
-            "event_type": "assignment",
-            "user_identity": "alice",
-            "role": "reviewer",
-            "recorded_by": "supervisor",
-            "reason": "Review the case.",
-            "source_case_state_sha256": "s" * 64,
-        }],
+        "history": [
+            {
+                "recorded_at": "2026-06-16T14:00:00+00:00",
+                "event_type": "assignment",
+                "user_identity": "alice",
+                "role": "reviewer",
+                "recorded_by": "supervisor",
+                "reason": "Review the case.",
+                "source_case_state_sha256": "s" * 64,
+            }
+        ],
         "history_count": 1,
         "source_records_mutated": False,
         "read_only_view_created_record": False,
@@ -49,19 +63,29 @@ def _workspace():
 def test_v26_1_routes_require_login_enforce_scope_and_render(tmp_path, monkeypatch):
     from src.socmint import case_team_role_assignment_routes_v26_1 as routes
 
-    monkeypatch.setattr(routes, "build_case_team_workspace", lambda case_id: _workspace())
-    monkeypatch.setattr(routes, "assign_case_team_role", lambda case_id, **kwargs: {
-        "status": "case_team_assignment_recorded",
-        "case_id": case_id,
-        "case_team_assignment_id": "assignment-2",
-        "recorded_by": kwargs["assigned_by"],
-    })
-    monkeypatch.setattr(routes, "revoke_case_team_role", lambda case_id, assignment_id, **kwargs: {
-        "status": "case_team_revocation_recorded",
-        "case_id": case_id,
-        "case_team_assignment_id": assignment_id,
-        "recorded_by": kwargs["revoked_by"],
-    })
+    monkeypatch.setattr(
+        routes, "build_case_team_workspace", lambda case_id: _workspace()
+    )
+    monkeypatch.setattr(
+        routes,
+        "assign_case_team_role",
+        lambda case_id, **kwargs: {
+            "status": "case_team_assignment_recorded",
+            "case_id": case_id,
+            "case_team_assignment_id": "assignment-2",
+            "recorded_by": kwargs["assigned_by"],
+        },
+    )
+    monkeypatch.setattr(
+        routes,
+        "revoke_case_team_role",
+        lambda case_id, assignment_id, **kwargs: {
+            "status": "case_team_revocation_recorded",
+            "case_id": case_id,
+            "case_team_assignment_id": assignment_id,
+            "recorded_by": kwargs["revoked_by"],
+        },
+    )
 
     client = _app(tmp_path, monkeypatch).test_client()
     assert client.get("/api/v1/cases/case-a/team").status_code == 401
@@ -73,17 +97,25 @@ def test_v26_1_routes_require_login_enforce_scope_and_render(tmp_path, monkeypat
         sess["_csrf_token"] = "csrf-v26-1"
 
     assert client.get("/api/v1/cases/case-hidden/team").status_code == 403
-    assert client.post(
-        "/api/v1/cases/case-hidden/team/assignments",
-        json={"confirmed": True},
-        headers={"X-CSRF-Token": "csrf-v26-1"},
-    ).status_code == 403
+    assert (
+        client.post(
+            "/api/v1/cases/case-hidden/team/assignments",
+            json={"confirmed": True},
+            headers={"X-CSRF-Token": "csrf-v26-1"},
+        ).status_code
+        == 403
+    )
 
     ui = client.get("/cases/case-a/team")
     api = client.get("/api/v1/cases/case-a/team")
     assignment = client.post(
         "/api/v1/cases/case-a/team/assignments",
-        json={"user_identity": "bob", "role": "analyst", "reason": "Assist.", "confirmed": True},
+        json={
+            "user_identity": "bob",
+            "role": "analyst",
+            "reason": "Assist.",
+            "confirmed": True,
+        },
         headers={"X-CSRF-Token": "csrf-v26-1"},
     )
     revocation = client.post(
@@ -107,8 +139,12 @@ def test_v26_1_routes_require_login_enforce_scope_and_render(tmp_path, monkeypat
 
 
 def test_v26_1_release_note_client_and_no_migration():
-    note = Path("release/V26_1_CASE_TEAM_ROLE_ASSIGNMENT.md").read_text(encoding="utf-8")
-    client = Path("src/socmint/static/case_team_role_assignment_v26_1.js").read_text(encoding="utf-8")
+    note = Path("release/V26_1_CASE_TEAM_ROLE_ASSIGNMENT.md").read_text(
+        encoding="utf-8"
+    )
+    client = Path("src/socmint/static/case_team_role_assignment_v26_1.js").read_text(
+        encoding="utf-8"
+    )
     migrations = [
         path
         for directory in (Path("migrations"), Path("alembic"))

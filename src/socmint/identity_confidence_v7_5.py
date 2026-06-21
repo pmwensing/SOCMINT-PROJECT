@@ -35,7 +35,9 @@ def _claim_key(section: str, item: dict[str, Any]) -> str:
     if section == "accounts":
         return f"account:{item.get('platform') or 'unknown'}:{item.get('handle') or item.get('url') or item.get('id') or ''}"
     if section == "relationships":
-        return f"relationship:{item.get('target') or ''}:{item.get('relationship') or ''}"
+        return (
+            f"relationship:{item.get('target') or ''}:{item.get('relationship') or ''}"
+        )
     return f"attribute:{item.get('name') or item.get('claim') or item.get('attribute') or 'unknown'}:{item.get('value') or ''}"
 
 
@@ -73,14 +75,32 @@ def confidence_bucket(score: float) -> str:
     return "low"
 
 
-def explain_claim_confidence(section: str, index: int, item: dict[str, Any]) -> dict[str, Any]:
+def explain_claim_confidence(
+    section: str, index: int, item: dict[str, Any]
+) -> dict[str, Any]:
     base = _as_float(item.get("confidence"), default=0.5)
     refs = _evidence_refs(item)
     evidence_bonus = min(0.2, len(refs) * 0.05)
-    source_bonus = 0.05 if item.get("source") or item.get("source_url") or item.get("platform") else 0.0
-    review_bonus = 0.05 if item.get("validation_state") in {"promoted", "verified", "reviewed"} else 0.0
-    contradiction_penalty = 0.25 if item.get("status") in {"conflict", "contradicted"} else 0.0
-    final_score = max(0.0, min(1.0, base + evidence_bonus + source_bonus + review_bonus - contradiction_penalty))
+    source_bonus = (
+        0.05
+        if item.get("source") or item.get("source_url") or item.get("platform")
+        else 0.0
+    )
+    review_bonus = (
+        0.05
+        if item.get("validation_state") in {"promoted", "verified", "reviewed"}
+        else 0.0
+    )
+    contradiction_penalty = (
+        0.25 if item.get("status") in {"conflict", "contradicted"} else 0.0
+    )
+    final_score = max(
+        0.0,
+        min(
+            1.0,
+            base + evidence_bonus + source_bonus + review_bonus - contradiction_penalty,
+        ),
+    )
     return {
         "section": section,
         "index": index,
@@ -88,8 +108,12 @@ def explain_claim_confidence(section: str, index: int, item: dict[str, Any]) -> 
         "claim": _claim_label(section, item),
         "base_confidence": round(base, 3),
         "evidence_count": len(refs),
-        "source_present": bool(item.get("source") or item.get("source_url") or item.get("platform")),
-        "review_state": item.get("validation_state") or item.get("review_state") or item.get("status"),
+        "source_present": bool(
+            item.get("source") or item.get("source_url") or item.get("platform")
+        ),
+        "review_state": item.get("validation_state")
+        or item.get("review_state")
+        or item.get("status"),
         "contradiction_penalty": contradiction_penalty,
         "score": round(final_score, 3),
         "bucket": confidence_bucket(final_score),
@@ -98,15 +122,25 @@ def explain_claim_confidence(section: str, index: int, item: dict[str, Any]) -> 
 
 
 def find_contradictions(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    values_by_name: dict[str, dict[str, list[dict[str, Any]]]] = defaultdict(lambda: defaultdict(list))
+    values_by_name: dict[str, dict[str, list[dict[str, Any]]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
     for index, item in enumerate(payload.get("evidence_backed_attributes") or []):
         if not isinstance(item, dict):
             continue
-        name = str(item.get("name") or item.get("claim") or item.get("attribute") or "").strip()
+        name = str(
+            item.get("name") or item.get("claim") or item.get("attribute") or ""
+        ).strip()
         value = str(item.get("value") or "").strip()
         if not name or not value:
             continue
-        values_by_name[name][value].append({"index": index, "evidence_refs": _evidence_refs(item), "confidence": item.get("confidence")})
+        values_by_name[name][value].append(
+            {
+                "index": index,
+                "evidence_refs": _evidence_refs(item),
+                "confidence": item.get("confidence"),
+            }
+        )
 
     conflicts = []
     for name, values in sorted(values_by_name.items()):
@@ -124,11 +158,18 @@ def find_contradictions(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def build_identity_confidence_report(payload: dict[str, Any]) -> dict[str, Any]:
-    explanations = [explain_claim_confidence(section, index, item) for section, index, item in _iter_claims(payload)]
+    explanations = [
+        explain_claim_confidence(section, index, item)
+        for section, index, item in _iter_claims(payload)
+    ]
     contradictions = find_contradictions(payload)
     bucket_counts = Counter(item["bucket"] for item in explanations)
     low_confidence = [item for item in explanations if item["bucket"] == "low"]
-    needs_review = [item for item in explanations if item["bucket"] in {"low", "medium"} or item["contradiction_penalty"] > 0]
+    needs_review = [
+        item
+        for item in explanations
+        if item["bucket"] in {"low", "medium"} or item["contradiction_penalty"] > 0
+    ]
     status = "fail" if contradictions else "warn" if needs_review else "pass"
     return {
         "schema": IDENTITY_CONFIDENCE_SCHEMA,

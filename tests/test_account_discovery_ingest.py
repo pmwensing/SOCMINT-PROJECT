@@ -113,18 +113,14 @@ def test_account_discovery_routes(app):
             json={"capture_profiles": False},
             headers=csrf_headers(),
         )
-        queue = client.get(
-            f"/api/v1/spine/subjects/{subject_id}/account-discovery"
-        )
+        queue = client.get(f"/api/v1/spine/subjects/{subject_id}/account-discovery")
         discovery_id = queue.get_json()["discoveries"][0]["id"]
         review = client.post(
             f"/api/v1/spine/account-discovery/{discovery_id}/review",
             json={"action": "confirmed", "promote": True},
             headers=csrf_headers(),
         )
-        page = client.get(
-            f"/spine/subjects/{subject_id}/account-discovery"
-        )
+        page = client.get(f"/spine/subjects/{subject_id}/account-discovery")
 
     assert ingest.status_code == 201
     assert queue.status_code == 200

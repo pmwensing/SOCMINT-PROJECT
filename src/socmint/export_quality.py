@@ -13,15 +13,31 @@ def _score_bool(value: bool, points: int) -> int:
     return points if value else 0
 
 
-def redaction_coverage(payload: dict[str, Any], redacted: dict[str, Any]) -> dict[str, Any]:
+def redaction_coverage(
+    payload: dict[str, Any], redacted: dict[str, Any]
+) -> dict[str, Any]:
     sensitive_types = set(redacted.get("redaction", {}).get("sensitive_types") or [])
-    original_sensitive = [item for item in payload.get("assertions", []) if item.get("type") in sensitive_types]
-    redacted_sensitive = [item for item in redacted.get("assertions", []) if item.get("type") in sensitive_types]
-    protected = [item for item in redacted_sensitive if str(item.get("value", "")).startswith("redacted:")]
+    original_sensitive = [
+        item
+        for item in payload.get("assertions", [])
+        if item.get("type") in sensitive_types
+    ]
+    redacted_sensitive = [
+        item
+        for item in redacted.get("assertions", [])
+        if item.get("type") in sensitive_types
+    ]
+    protected = [
+        item
+        for item in redacted_sensitive
+        if str(item.get("value", "")).startswith("redacted:")
+    ]
     return {
         "sensitive_assertion_count": len(original_sensitive),
         "redacted_assertion_count": len(protected),
-        "coverage_ratio": 1.0 if not original_sensitive else round(len(protected) / len(original_sensitive), 3),
+        "coverage_ratio": 1.0
+        if not original_sensitive
+        else round(len(protected) / len(original_sensitive), 3),
         "sensitive_types": sorted(sensitive_types),
     }
 
@@ -35,11 +51,19 @@ def export_quality_report(subject_id: int, redacted: bool = True) -> dict[str, A
     parity = manifest.get("parity") or {}
     assertions = payload.get("assertions") or []
     traceability = payload.get("traceability") or []
-    traceable = [item for item in traceability if item.get("source_refs") or item.get("evidence_refs")]
-    confirmed = [item for item in assertions if item.get("validation_state") == "confirmed"]
+    traceable = [
+        item
+        for item in traceability
+        if item.get("source_refs") or item.get("evidence_refs")
+    ]
+    confirmed = [
+        item for item in assertions if item.get("validation_state") == "confirmed"
+    ]
 
     score = 0
-    score += _score_bool(manifest.get("assertion_count") == manifest.get("csv_assertion_count"), 20)
+    score += _score_bool(
+        manifest.get("assertion_count") == manifest.get("csv_assertion_count"), 20
+    )
     score += _score_bool(parity.get("csv_matches_assertions", False), 20)
     score += _score_bool(readiness.get("state") != "blocked", 20)
     score += _score_bool(redaction.get("coverage_ratio", 0) >= 1, 20)
@@ -62,7 +86,13 @@ def export_quality_report(subject_id: int, redacted: bool = True) -> dict[str, A
         "schema": EXPORT_QUALITY_SCHEMA,
         "subject_id": subject_id,
         "score": score,
-        "grade": "A" if score >= 90 else "B" if score >= 75 else "C" if score >= 60 else "D",
+        "grade": "A"
+        if score >= 90
+        else "B"
+        if score >= 75
+        else "C"
+        if score >= 60
+        else "D",
         "warnings": warnings,
         "manifest": manifest,
         "redaction": redaction,

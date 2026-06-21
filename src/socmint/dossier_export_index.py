@@ -14,7 +14,9 @@ DOSSIER_EXPORT_INDEX_SCHEMA = "socmint.dossier_export_index.v10_6_0"
 ALLOWED_DOWNLOAD_FILES = {"dossier.json", "dossier.html", "manifest.json"}
 
 
-def iter_export_manifests(root: str | Path = DEFAULT_EXPORT_ROOT) -> list[dict[str, Any]]:
+def iter_export_manifests(
+    root: str | Path = DEFAULT_EXPORT_ROOT,
+) -> list[dict[str, Any]]:
     root_path = Path(root)
     if not root_path.exists():
         return []
@@ -56,7 +58,9 @@ def export_index(root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
     }
 
 
-def find_export_entry(case_id: str, subject_id: str, root: str | Path = DEFAULT_EXPORT_ROOT) -> dict[str, Any]:
+def find_export_entry(
+    case_id: str, subject_id: str, root: str | Path = DEFAULT_EXPORT_ROOT
+) -> dict[str, Any]:
     manifest_path = export_directory(subject_id, case_id, root=root) / "manifest.json"
     if not manifest_path.exists():
         return {

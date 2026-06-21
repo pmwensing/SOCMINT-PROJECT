@@ -128,10 +128,20 @@ def test_v13_35c_cross_scope_ambiguous_profile_quarantines():
 
 
 def test_v13_35c_analyst_merge_is_explicit():
-    parent = {SCOPE_ID: "cs_parent", "target_type": "name", "target_value": "Alex Smith"}
-    finding = {SCOPE_ID: "cs_finding", "finding_type": "profile_url", "value": "https://social.example/alex-smith"}
+    parent = {
+        SCOPE_ID: "cs_parent",
+        "target_type": "name",
+        "target_value": "Alex Smith",
+    }
+    finding = {
+        SCOPE_ID: "cs_finding",
+        "finding_type": "profile_url",
+        "value": "https://social.example/alex-smith",
+    }
 
-    without_merge = scoped_promotion_decision(finding_record=finding, parent_record=parent)
+    without_merge = scoped_promotion_decision(
+        finding_record=finding, parent_record=parent
+    )
     with_merge = scoped_promotion_decision(
         finding_record=finding,
         parent_record=parent,
@@ -145,8 +155,20 @@ def test_v13_35c_analyst_merge_is_explicit():
 
 def test_v13_35c_backfill_records_batch():
     records = [
-        {"subject_id": "s1", "seed_id": "a", "connector_run_id": "r1", "finding_type": "email", "value": "a@example.test"},
-        {"subject_id": "s1", "seed_id": "b", "connector_run_id": "r2", "finding_type": "email", "value": "a@example.test"},
+        {
+            "subject_id": "s1",
+            "seed_id": "a",
+            "connector_run_id": "r1",
+            "finding_type": "email",
+            "value": "a@example.test",
+        },
+        {
+            "subject_id": "s1",
+            "seed_id": "b",
+            "connector_run_id": "r2",
+            "finding_type": "email",
+            "value": "a@example.test",
+        },
     ]
 
     filled = backfill_records(records)

@@ -4,7 +4,12 @@ from typing import Any
 
 from . import database
 from .case_closure_workspace_v23_0 import build_case_closure_workspace
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 
 SCHEMA = "socmint.case_closure_readiness_review.v23_1"
 VERSION = "v23.1.0"
@@ -70,9 +75,8 @@ def review_case_closure_readiness(
             "version": VERSION,
             "case_id": case_id,
             "status": "blocked",
-            "blockers": workspace.get("blockers") or [
-                {"key": "closure_eligibility_required"}
-            ],
+            "blockers": workspace.get("blockers")
+            or [{"key": "closure_eligibility_required"}],
             "source_records_mutated": False,
         }
 

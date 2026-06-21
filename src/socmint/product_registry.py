@@ -54,7 +54,6 @@ ALL_BLUEPRINT_OWNED_ROUTES = {
 }
 
 
-
 DASHBOARD_OWNED_SURFACES = [
     {
         "key": "legacy_dashboard_core",
@@ -89,7 +88,9 @@ DASHBOARD_OWNED_SURFACES = [
 def _route_inventory() -> list[dict[str, Any]]:
     routes: list[dict[str, Any]] = []
     for rule in sorted(current_app.url_map.iter_rules(), key=lambda item: item.rule):
-        methods = sorted(method for method in rule.methods if method not in {"HEAD", "OPTIONS"})
+        methods = sorted(
+            method for method in rule.methods if method not in {"HEAD", "OPTIONS"}
+        )
         routes.append(
             {
                 "rule": rule.rule,
@@ -145,12 +146,14 @@ def _module_surfaces() -> list[dict[str, Any]]:
     return DASHBOARD_OWNED_SURFACES + extracted
 
 
-
-def _v1007_route_lookup_for_ownership(route_inventory: list[dict[str, Any]], route: str, normalized: str, wave1_target: str | None) -> dict[str, Any] | None:
+def _v1007_route_lookup_for_ownership(
+    route_inventory: list[dict[str, Any]],
+    route: str,
+    normalized: str,
+    wave1_target: str | None,
+) -> dict[str, Any] | None:
     candidates = [
-        item
-        for item in route_inventory
-        if item.get("rule") in {route, normalized}
+        item for item in route_inventory if item.get("rule") in {route, normalized}
     ]
     if not candidates:
         return None
@@ -181,15 +184,23 @@ def _route_ownership_map() -> dict[str, Any]:
         for route in surface.get("routes", []):
             normalized = route.replace("{package_name}", "<package_name>")
             present = _route_exists(route) or _route_exists(normalized)
-            wave1_target = ALL_BLUEPRINT_OWNED_ROUTES.get(route) or ALL_BLUEPRINT_OWNED_ROUTES.get(normalized)
-            ownership_route = _v1007_route_lookup_for_ownership(route_inventory, route, normalized, wave1_target)
+            wave1_target = ALL_BLUEPRINT_OWNED_ROUTES.get(
+                route
+            ) or ALL_BLUEPRINT_OWNED_ROUTES.get(normalized)
+            ownership_route = _v1007_route_lookup_for_ownership(
+                route_inventory, route, normalized, wave1_target
+            )
             endpoint = ownership_route["endpoint"] if ownership_route else None
             methods: list[str] = ownership_route["methods"] if ownership_route else []
 
             endpoint_owner = (endpoint or "").split(".", 1)[0]
             expected_blueprint = WAVE1_TARGET_BLUEPRINTS.get(wave1_target)
-            wave1_blueprint_owned = bool(wave1_target and endpoint_owner == expected_blueprint)
-            effective_ownership = "blueprint-owned" if wave1_blueprint_owned else surface["ownership"]
+            wave1_blueprint_owned = bool(
+                wave1_target and endpoint_owner == expected_blueprint
+            )
+            effective_ownership = (
+                "blueprint-owned" if wave1_blueprint_owned else surface["ownership"]
+            )
             row = {
                 "route": route,
                 "normalized_route": normalized,
@@ -200,7 +211,9 @@ def _route_ownership_map() -> dict[str, Any]:
                 "surface_label": surface["label"],
                 "module": wave1_target or surface["module"],
                 "ownership": effective_ownership,
-                "compatibility_mode": "native-blueprint-wave1" if wave1_blueprint_owned else surface.get("compatibility_mode"),
+                "compatibility_mode": "native-blueprint-wave1"
+                if wave1_blueprint_owned
+                else surface.get("compatibility_mode"),
                 "wave1_blueprint_owned": wave1_blueprint_owned,
                 "fallback_owner": "dashboard.py" if wave1_target else None,
                 "target_blueprint": expected_blueprint,
@@ -220,7 +233,8 @@ def _route_ownership_map() -> dict[str, Any]:
             "present_route_count": sum(
                 1
                 for route in surface.get("routes", [])
-                if _route_exists(route) or _route_exists(route.replace("{package_name}", "<package_name>"))
+                if _route_exists(route)
+                or _route_exists(route.replace("{package_name}", "<package_name>"))
             ),
         }
         for surface in surfaces
@@ -282,7 +296,10 @@ def write_product_module_registry() -> dict[str, Any]:
             "",
         ]
     )
-    rows.extend([f"- `{row['route']}` ({row['module']})" for row in payload["missing_routes"]] or ["- None"])
+    rows.extend(
+        [f"- `{row['route']}` ({row['module']})" for row in payload["missing_routes"]]
+        or ["- None"]
+    )
     rows.extend(["", "## Ownership Map", ""])
     for row in payload["ownership"]:
         rows.append(
@@ -331,7 +348,6 @@ def product_v10_modules_view():
     return render_template("product_v10_modules.html", registry=payload)
 
 
-
 # ---- v10.0.5 Product Module Health Console + Extraction Readiness Score ----
 SMOKE_TARGETS_BY_MODULE = {
     "release_flow": [
@@ -366,7 +382,12 @@ def _makefile_targets() -> set[str]:
 
     targets: set[str] = set()
     for line in path.read_text().splitlines():
-        if not line or line.startswith("\t") or line.startswith(" ") or line.startswith("#"):
+        if (
+            not line
+            or line.startswith("\t")
+            or line.startswith(" ")
+            or line.startswith("#")
+        ):
             continue
         if ":" not in line:
             continue
@@ -380,15 +401,29 @@ def _helper_export_count(module_key: str) -> int:
     try:
         if module_key == "release_flow":
             from . import product_release_flow as module
+
             return sum(1 for name in dir(module) if name.startswith("_v99"))
         if module_key == "post_release":
             from . import product_post_release as module
-            return sum(1 for name in dir(module) if name.startswith(("_v995", "_v996", "_v997", "_v998", "_v999")))
+
+            return sum(
+                1
+                for name in dir(module)
+                if name.startswith(("_v995", "_v996", "_v997", "_v998", "_v999"))
+            )
         if module_key == "artifact_pipeline":
             from . import product_artifacts as module
-            return sum(1 for name in dir(module) if name.startswith(("_v984", "_v985", "_v986", "_v987", "_v988", "_v989", "_v98")))
+
+            return sum(
+                1
+                for name in dir(module)
+                if name.startswith(
+                    ("_v984", "_v985", "_v986", "_v987", "_v988", "_v989", "_v98")
+                )
+            )
         if module_key == "module_registry":
             from . import product_registry as module
+
             registry_helpers = {
                 "_route_inventory",
                 "_route_exists",
@@ -424,19 +459,43 @@ def _module_health_payload() -> dict[str, Any]:
         if key not in {"release_flow", "post_release", "artifact_pipeline"}:
             continue
 
-        route_score = 100 if module.get("route_count") == 0 else int(
-            100 * module.get("present_route_count", 0) / max(1, module.get("route_count", 1))
+        route_score = (
+            100
+            if module.get("route_count") == 0
+            else int(
+                100
+                * module.get("present_route_count", 0)
+                / max(1, module.get("route_count", 1))
+            )
         )
         helper_count = _helper_export_count(key)
         helper_floor = _expected_helper_floor(key)
-        helper_score = 100 if helper_count >= helper_floor else int(100 * helper_count / max(1, helper_floor))
+        helper_score = (
+            100
+            if helper_count >= helper_floor
+            else int(100 * helper_count / max(1, helper_floor))
+        )
 
         expected_targets = SMOKE_TARGETS_BY_MODULE.get(key, [])
         present_targets = [target for target in expected_targets if target in targets]
-        smoke_score = 100 if not expected_targets else int(100 * len(present_targets) / len(expected_targets))
+        smoke_score = (
+            100
+            if not expected_targets
+            else int(100 * len(present_targets) / len(expected_targets))
+        )
 
-        registry_score = 100 if module.get("module") and module.get("ownership") == "extracted-module-reexport" else 0
-        total_score = int((route_score * 0.40) + (helper_score * 0.25) + (smoke_score * 0.25) + (registry_score * 0.10))
+        registry_score = (
+            100
+            if module.get("module")
+            and module.get("ownership") == "extracted-module-reexport"
+            else 0
+        )
+        total_score = int(
+            (route_score * 0.40)
+            + (helper_score * 0.25)
+            + (smoke_score * 0.25)
+            + (registry_score * 0.10)
+        )
 
         health = {
             "key": key,
@@ -452,12 +511,18 @@ def _module_health_payload() -> dict[str, Any]:
             "helper_score": helper_score,
             "expected_smoke_targets": expected_targets,
             "present_smoke_targets": present_targets,
-            "missing_smoke_targets": [target for target in expected_targets if target not in targets],
+            "missing_smoke_targets": [
+                target for target in expected_targets if target not in targets
+            ],
             "smoke_score": smoke_score,
             "registry_score": registry_score,
             "total_score": total_score,
-            "status": "healthy" if total_score >= 90 and module.get("present_route_count") == module.get("route_count") else "needs_attention",
-            "ready_for_deeper_extraction": total_score >= 90 and module.get("present_route_count") == module.get("route_count"),
+            "status": "healthy"
+            if total_score >= 90
+            and module.get("present_route_count") == module.get("route_count")
+            else "needs_attention",
+            "ready_for_deeper_extraction": total_score >= 90
+            and module.get("present_route_count") == module.get("route_count"),
         }
         module_health.append(health)
 
@@ -486,11 +551,17 @@ def _module_health_payload() -> dict[str, Any]:
         "route_score": 100,
         "helper_export_count": registry_helper_count,
         "helper_export_floor": registry_helper_floor,
-        "helper_score": 100 if registry_helper_count >= registry_helper_floor else int(100 * registry_helper_count / max(1, registry_helper_floor)),
+        "helper_score": 100
+        if registry_helper_count >= registry_helper_floor
+        else int(100 * registry_helper_count / max(1, registry_helper_floor)),
         "expected_smoke_targets": expected_targets,
         "present_smoke_targets": present_targets,
-        "missing_smoke_targets": [target for target in expected_targets if target not in targets],
-        "smoke_score": 100 if not expected_targets else int(100 * len(present_targets) / len(expected_targets)),
+        "missing_smoke_targets": [
+            target for target in expected_targets if target not in targets
+        ],
+        "smoke_score": 100
+        if not expected_targets
+        else int(100 * len(present_targets) / len(expected_targets)),
         "registry_score": 100,
     }
     registry_module_health["total_score"] = int(
@@ -499,12 +570,20 @@ def _module_health_payload() -> dict[str, Any]:
         + (registry_module_health["smoke_score"] * 0.25)
         + (registry_module_health["registry_score"] * 0.10)
     )
-    registry_module_health["status"] = "healthy" if registry_module_health["total_score"] >= 90 else "needs_attention"
-    registry_module_health["ready_for_deeper_extraction"] = registry_module_health["total_score"] >= 90
+    registry_module_health["status"] = (
+        "healthy" if registry_module_health["total_score"] >= 90 else "needs_attention"
+    )
+    registry_module_health["ready_for_deeper_extraction"] = (
+        registry_module_health["total_score"] >= 90
+    )
     module_health.append(registry_module_health)
 
-    overall_score = int(sum(item["total_score"] for item in module_health) / max(1, len(module_health)))
-    all_ready = bool(module_health) and all(item["ready_for_deeper_extraction"] for item in module_health)
+    overall_score = int(
+        sum(item["total_score"] for item in module_health) / max(1, len(module_health))
+    )
+    all_ready = bool(module_health) and all(
+        item["ready_for_deeper_extraction"] for item in module_health
+    )
 
     return {
         "status": "healthy" if all_ready else "needs_attention",
@@ -512,7 +591,9 @@ def _module_health_payload() -> dict[str, Any]:
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "overall_score": overall_score,
         "module_count": len(module_health),
-        "healthy_count": sum(1 for item in module_health if item["status"] == "healthy"),
+        "healthy_count": sum(
+            1 for item in module_health if item["status"] == "healthy"
+        ),
         "ready_for_deeper_blueprint_extraction": all_ready,
         "modules": module_health,
         "registry": ownership,
@@ -597,8 +678,9 @@ def api_product_v10_module_health_write():
 def product_v10_module_health_view():
     payload = _module_health_payload()
     return render_template("product_v10_module_health.html", health=payload)
-# ---- end v10.0.5 product module health console ----
 
+
+# ---- end v10.0.5 product module health console ----
 
 
 # ---- v10.0.6 Product Blueprint Ownership Migration Plan ----
@@ -626,7 +708,13 @@ def _route_semantic_risk(route: str) -> int:
     risk = 0
     if "download" in text or "<" in text or "{" in text:
         risk += 18
-    if "write" in text or "build" in text or "publish" in text or "decision" in text or "signoff" in text:
+    if (
+        "write" in text
+        or "build" in text
+        or "publish" in text
+        or "decision" in text
+        or "signoff" in text
+    ):
         risk += 20
     if "archive" in text or "zip" in text or "package" in text:
         risk += 12
@@ -641,7 +729,9 @@ def _migration_route_phase(route: str, methods: list[str], module_key: str) -> s
     text = route.lower()
     method_set = set(methods or [])
 
-    if method_set <= {"GET"} and not any(token in text for token in ["download", "audit", "archive", "package"]):
+    if method_set <= {"GET"} and not any(
+        token in text for token in ["download", "audit", "archive", "package"]
+    ):
         return "phase_1_low_risk_get_views"
 
     if route.startswith("/api/") and method_set <= {"GET"}:
@@ -650,7 +740,14 @@ def _migration_route_phase(route: str, methods: list[str], module_key: str) -> s
     if "audit" in text or "download" in text or "package" in text or "archive" in text:
         return "phase_3_stateful_artifact_and_file_routes"
 
-    if "write" in text or "build" in text or "decision" in text or "signoff" in text or "publish" in text or "POST" in method_set:
+    if (
+        "write" in text
+        or "build" in text
+        or "decision" in text
+        or "signoff" in text
+        or "publish" in text
+        or "POST" in method_set
+    ):
         return "phase_4_mutating_action_routes"
 
     return "phase_2_read_only_api"
@@ -661,8 +758,7 @@ def _migration_plan_payload() -> dict[str, Any]:
     ownership = _route_ownership_map()
 
     health_by_module = {
-        module.get("module"): module
-        for module in health.get("modules", [])
+        module.get("module"): module for module in health.get("modules", [])
     }
 
     candidates = []
@@ -699,18 +795,32 @@ def _migration_plan_payload() -> dict[str, Any]:
             "surface_key": row.get("surface_key"),
             "surface_label": row.get("surface_label"),
             "risk_score": risk_score,
-            "risk_level": "low" if risk_score < 25 else "medium" if risk_score < 55 else "high",
-            "recommended_phase": _migration_route_phase(row.get("route", ""), methods, row.get("surface_key", "")),
+            "risk_level": "low"
+            if risk_score < 25
+            else "medium"
+            if risk_score < 55
+            else "high",
+            "recommended_phase": _migration_route_phase(
+                row.get("route", ""), methods, row.get("surface_key", "")
+            ),
             "safe_to_migrate": readiness_gate_passed and risk_score < 55,
             "readiness_gate_passed": readiness_gate_passed,
             "blocking_reasons": [
                 reason
                 for reason in [
-                    None if health.get("status") == "healthy" else "module health payload is not healthy",
-                    None if module_health.get("status") == "healthy" else f"{module_name} is not healthy",
-                    None if module_health.get("ready_for_deeper_extraction") is True else f"{module_name} is not ready for deeper extraction",
+                    None
+                    if health.get("status") == "healthy"
+                    else "module health payload is not healthy",
+                    None
+                    if module_health.get("status") == "healthy"
+                    else f"{module_name} is not healthy",
+                    None
+                    if module_health.get("ready_for_deeper_extraction") is True
+                    else f"{module_name} is not ready for deeper extraction",
                     None if row.get("present") is True else "route is missing",
-                    None if risk_score < 55 else "route risk is too high for first migration wave",
+                    None
+                    if risk_score < 55
+                    else "route risk is too high for first migration wave",
                 ]
                 if reason
             ],
@@ -724,7 +834,8 @@ def _migration_plan_payload() -> dict[str, Any]:
     first_wave = [
         item
         for item in safe
-        if item["recommended_phase"] in {"phase_1_low_risk_get_views", "phase_2_read_only_api"}
+        if item["recommended_phase"]
+        in {"phase_1_low_risk_get_views", "phase_2_read_only_api"}
     ][:10]
 
     return {
@@ -733,7 +844,9 @@ def _migration_plan_payload() -> dict[str, Any]:
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "module_health_status": health.get("status"),
         "module_health_overall_score": health.get("overall_score"),
-        "ready_for_deeper_blueprint_extraction": health.get("ready_for_deeper_blueprint_extraction"),
+        "ready_for_deeper_blueprint_extraction": health.get(
+            "ready_for_deeper_blueprint_extraction"
+        ),
         "candidate_count": len(candidates),
         "safe_candidate_count": len(safe),
         "blocked_candidate_count": len(blocked),
@@ -828,8 +941,9 @@ def api_product_v10_migration_plan_write():
 def product_v10_migration_plan_view():
     payload = _migration_plan_payload()
     return render_template("product_v10_migration_plan.html", plan=payload)
-# ---- end v10.0.6 product blueprint ownership migration plan ----
 
+
+# ---- end v10.0.6 product blueprint ownership migration plan ----
 
 
 # ---- v10.0.8 Blueprint Migration Wave 1 Guardrails + Rollback Console ----
@@ -846,11 +960,7 @@ V1008_FORBIDDEN_WAVE1_TOKENS = (
 
 
 def _v1008_rules_for_route(route: str) -> list[dict[str, Any]]:
-    return [
-        item
-        for item in _route_inventory()
-        if item.get("rule") == route
-    ]
+    return [item for item in _route_inventory() if item.get("rule") == route]
 
 
 def _v1008_expected_blueprint_for_route(route: str) -> str | None:
@@ -867,12 +977,11 @@ def _v1008_route_guardrail(route: str) -> dict[str, Any]:
     blueprint_rules = [
         item
         for item in rules
-        if expected_blueprint and str(item.get("endpoint", "")).startswith(expected_blueprint + ".")
+        if expected_blueprint
+        and str(item.get("endpoint", "")).startswith(expected_blueprint + ".")
     ]
     dashboard_rules = [
-        item
-        for item in rules
-        if str(item.get("endpoint", "")).startswith("dashboard.")
+        item for item in rules if str(item.get("endpoint", "")).startswith("dashboard.")
     ]
 
     primary_endpoint = rules[0].get("endpoint") if rules else None
@@ -884,9 +993,7 @@ def _v1008_route_guardrail(route: str) -> dict[str, Any]:
 
     route_text = route.lower()
     forbidden_token_hits = [
-        token
-        for token in V1008_FORBIDDEN_WAVE1_TOKENS
-        if token in route_text
+        token for token in V1008_FORBIDDEN_WAVE1_TOKENS if token in route_text
     ]
     blueprint_method_sets = [set(item.get("methods") or []) for item in blueprint_rules]
     non_get_blueprint_methods = sorted(
@@ -1012,8 +1119,13 @@ def write_blueprint_guardrails_report() -> dict[str, Any]:
         )
 
     rows.extend(["", "## Action Route Violations", ""])
-    rows.extend([f"- `{item['route']}`" for item in payload["action_route_violations"]] or ["- None"])
-    rows.extend(["", "## Recommended Next Action", "", payload["recommended_next_action"], ""])
+    rows.extend(
+        [f"- `{item['route']}`" for item in payload["action_route_violations"]]
+        or ["- None"]
+    )
+    rows.extend(
+        ["", "## Recommended Next Action", "", payload["recommended_next_action"], ""]
+    )
 
     md_path.write_text("\n".join(rows))
     payload["artifacts_written"] = {
@@ -1028,7 +1140,9 @@ def api_product_v10_blueprint_guardrails():
     return jsonify(_v1008_guardrails_payload())
 
 
-@product_registry_bp.route("/api/v1/product/v10/blueprint-guardrails/write", methods=["POST"])
+@product_registry_bp.route(
+    "/api/v1/product/v10/blueprint-guardrails/write", methods=["POST"]
+)
 def api_product_v10_blueprint_guardrails_write():
     return jsonify(write_blueprint_guardrails_report())
 
@@ -1037,8 +1151,9 @@ def api_product_v10_blueprint_guardrails_write():
 def product_v10_blueprint_guardrails_view():
     payload = _v1008_guardrails_payload()
     return render_template("product_v10_blueprint_guardrails.html", guardrails=payload)
-# ---- end v10.0.8 blueprint guardrails ----
 
+
+# ---- end v10.0.8 blueprint guardrails ----
 
 
 # ---- v10.0.9 Blueprint Migration Wave 2 Read-Only API Expansion ----
@@ -1060,7 +1175,8 @@ def _v1009_wave2_route_rows() -> list[dict[str, Any]]:
         blueprint_rules = [
             item
             for item in rules
-            if expected_blueprint and str(item.get("endpoint", "")).startswith(expected_blueprint + ".")
+            if expected_blueprint
+            and str(item.get("endpoint", "")).startswith(expected_blueprint + ".")
         ]
         dashboard_rules = [
             item
@@ -1068,11 +1184,19 @@ def _v1009_wave2_route_rows() -> list[dict[str, Any]]:
             if str(item.get("endpoint", "")).startswith("dashboard.")
         ]
         primary_endpoint = rules[0].get("endpoint") if rules else None
-        primary_is_blueprint = bool(primary_endpoint and expected_blueprint and str(primary_endpoint).startswith(expected_blueprint + "."))
+        primary_is_blueprint = bool(
+            primary_endpoint
+            and expected_blueprint
+            and str(primary_endpoint).startswith(expected_blueprint + ".")
+        )
         method_sets = [set(item.get("methods") or []) for item in blueprint_rules]
-        non_get_methods = sorted({method for methods in method_sets for method in methods if method != "GET"})
+        non_get_methods = sorted(
+            {method for methods in method_sets for method in methods if method != "GET"}
+        )
         route_text = route.lower()
-        forbidden_hits = [token for token in V1009_FORBIDDEN_ROUTE_TOKENS if token in route_text]
+        forbidden_hits = [
+            token for token in V1009_FORBIDDEN_ROUTE_TOKENS if token in route_text
+        ]
         rows.append(
             {
                 "wave": "wave2",
@@ -1086,11 +1210,19 @@ def _v1009_wave2_route_rows() -> list[dict[str, Any]]:
                 "dashboard_fallback_count": len(dashboard_rules),
                 "has_blueprint_primary": bool(primary_is_blueprint and blueprint_rules),
                 "has_dashboard_fallback": bool(dashboard_rules),
-                "rollback_ready": bool(primary_is_blueprint and blueprint_rules and dashboard_rules),
+                "rollback_ready": bool(
+                    primary_is_blueprint and blueprint_rules and dashboard_rules
+                ),
                 "non_get_blueprint_methods": non_get_methods,
                 "forbidden_token_hits": forbidden_hits,
                 "blocked_action_route": bool(forbidden_hits or non_get_methods),
-                "status": "pass" if primary_is_blueprint and blueprint_rules and dashboard_rules and not forbidden_hits and not non_get_methods else "fail",
+                "status": "pass"
+                if primary_is_blueprint
+                and blueprint_rules
+                and dashboard_rules
+                and not forbidden_hits
+                and not non_get_methods
+                else "fail",
             }
         )
     return rows
@@ -1112,8 +1244,7 @@ def _v1009_wave2_payload() -> dict[str, Any]:
         if row.get("route") in ALL_BLUEPRINT_OWNED_ROUTES
     }
     wave2_ownership_rows = {
-        route: ownership_rows.get(route, {})
-        for route in WAVE2_BLUEPRINT_OWNED_ROUTES
+        route: ownership_rows.get(route, {}) for route in WAVE2_BLUEPRINT_OWNED_ROUTES
     }
     wave2_ownership_ok = all(
         row.get("ownership") == "blueprint-owned"
@@ -1121,12 +1252,16 @@ def _v1009_wave2_payload() -> dict[str, Any]:
         for row in wave2_ownership_rows.values()
     )
 
-    status = "pass" if (
-        not failed_wave2
-        and not blocked_actions
-        and not missing_primary
-        and not missing_fallback
-    ) else "fail"
+    status = (
+        "pass"
+        if (
+            not failed_wave2
+            and not blocked_actions
+            and not missing_primary
+            and not missing_fallback
+        )
+        else "fail"
+    )
 
     return {
         "status": status,
@@ -1135,7 +1270,9 @@ def _v1009_wave2_payload() -> dict[str, Any]:
         "wave1_status": wave1_guardrails.get("status"),
         "wave1_route_count": wave1_guardrails.get("moved_route_count"),
         "wave2_route_count": len(wave2_rows),
-        "wave2_passed_route_count": sum(1 for row in wave2_rows if row["status"] == "pass"),
+        "wave2_passed_route_count": sum(
+            1 for row in wave2_rows if row["status"] == "pass"
+        ),
         "wave2_failed_route_count": len(failed_wave2),
         "wave2_ownership_ok": wave2_ownership_ok,
         "wave2_ownership_advisory_only": True,
@@ -1190,8 +1327,13 @@ def write_blueprint_wave2_report() -> dict[str, Any]:
         )
 
     rows.extend(["", "## Blocked Action Route Violations", ""])
-    rows.extend([f"- `{item['route']}`" for item in payload["blocked_action_routes"]] or ["- None"])
-    rows.extend(["", "## Recommended Next Action", "", payload["recommended_next_action"], ""])
+    rows.extend(
+        [f"- `{item['route']}`" for item in payload["blocked_action_routes"]]
+        or ["- None"]
+    )
+    rows.extend(
+        ["", "## Recommended Next Action", "", payload["recommended_next_action"], ""]
+    )
 
     md_path.write_text("\n".join(rows))
     payload["artifacts_written"] = {
@@ -1206,7 +1348,9 @@ def api_product_v10_blueprint_wave2():
     return jsonify(_v1009_wave2_payload())
 
 
-@product_registry_bp.route("/api/v1/product/v10/blueprint-wave2/write", methods=["POST"])
+@product_registry_bp.route(
+    "/api/v1/product/v10/blueprint-wave2/write", methods=["POST"]
+)
 def api_product_v10_blueprint_wave2_write():
     return jsonify(write_blueprint_wave2_report())
 
@@ -1215,8 +1359,9 @@ def api_product_v10_blueprint_wave2_write():
 def product_v10_blueprint_wave2_view():
     payload = _v1009_wave2_payload()
     return render_template("product_v10_blueprint_wave2.html", wave2=payload)
-# ---- end v10.0.9 blueprint wave 2 expansion ----
 
+
+# ---- end v10.0.9 blueprint wave 2 expansion ----
 
 
 # ---- v10.1.0 Blueprint Migration Wave 3 Action Route Readiness Gate ----
@@ -1272,7 +1417,9 @@ def _v1010_action_route_rows() -> list[dict[str, Any]]:
         if not _v1010_is_action_route(route, methods):
             continue
 
-        token_hits = [token for token in V1010_ACTION_ROUTE_TOKENS if token in route.lower()]
+        token_hits = [
+            token for token in V1010_ACTION_ROUTE_TOKENS if token in route.lower()
+        ]
         mutating_methods = sorted(set(methods) - {"GET"})
         is_dashboard_owned = family == "dashboard"
         is_extracted_blueprint_owned = family in {
@@ -1309,9 +1456,15 @@ def _v1010_action_route_rows() -> list[dict[str, Any]]:
                 "safe_to_migrate": False,
                 "blocked_from_blueprint_migration": True,
                 "blocked_reasons": [reason for reason in blocked_reasons if reason],
-                "risk_score": min(100, 40 + (20 if mutating_methods else 0) + (10 * len(token_hits))),
-                "risk_level": "high" if mutating_methods or len(token_hits) > 1 else "medium",
-                "status": "pass" if is_dashboard_owned and not is_extracted_blueprint_owned else "fail",
+                "risk_score": min(
+                    100, 40 + (20 if mutating_methods else 0) + (10 * len(token_hits))
+                ),
+                "risk_level": "high"
+                if mutating_methods or len(token_hits) > 1
+                else "medium",
+                "status": "pass"
+                if is_dashboard_owned and not is_extracted_blueprint_owned
+                else "fail",
             }
         )
 
@@ -1328,12 +1481,16 @@ def _v1010_action_readiness_payload() -> dict[str, Any]:
     unsafe = [row for row in rows if row["safe_to_migrate"]]
     not_blocked = [row for row in rows if not row["blocked_from_blueprint_migration"]]
 
-    status = "pass" if (
-        wave2.get("status") == "pass"
-        and not migrated
-        and not unsafe
-        and not not_blocked
-    ) else "fail"
+    status = (
+        "pass"
+        if (
+            wave2.get("status") == "pass"
+            and not migrated
+            and not unsafe
+            and not not_blocked
+        )
+        else "fail"
+    )
 
     return {
         "status": status,
@@ -1344,11 +1501,15 @@ def _v1010_action_readiness_payload() -> dict[str, Any]:
         "dashboard_owned_count": sum(1 for row in rows if row["is_dashboard_owned"]),
         "non_dashboard_owned_count": len(non_dashboard),
         "extracted_blueprint_owned_count": len(migrated),
-        "blocked_count": sum(1 for row in rows if row["blocked_from_blueprint_migration"]),
+        "blocked_count": sum(
+            1 for row in rows if row["blocked_from_blueprint_migration"]
+        ),
         "safe_to_migrate_count": sum(1 for row in rows if row["safe_to_migrate"]),
         "csrf_required_count": sum(1 for row in rows if row["requires_csrf"]),
         "session_required_count": sum(1 for row in rows if row["requires_session"]),
-        "write_safety_required_count": sum(1 for row in rows if row["requires_write_safety_review"]),
+        "write_safety_required_count": sum(
+            1 for row in rows if row["requires_write_safety_review"]
+        ),
         "action_routes": rows,
         "migrated_action_routes": migrated,
         "non_dashboard_owned_action_routes": non_dashboard,
@@ -1398,9 +1559,17 @@ def write_action_readiness_report() -> dict[str, Any]:
         )
 
     rows.extend(["", "## Migrated Action Route Violations", ""])
-    rows.extend([f"- `{row['route']}` → `{row['endpoint']}`" for row in payload["migrated_action_routes"]] or ["- None"])
+    rows.extend(
+        [
+            f"- `{row['route']}` → `{row['endpoint']}`"
+            for row in payload["migrated_action_routes"]
+        ]
+        or ["- None"]
+    )
 
-    rows.extend(["", "## Recommended Next Action", "", payload["recommended_next_action"], ""])
+    rows.extend(
+        ["", "## Recommended Next Action", "", payload["recommended_next_action"], ""]
+    )
 
     md_path.write_text("\n".join(rows))
     payload["artifacts_written"] = {
@@ -1415,7 +1584,9 @@ def api_product_v10_action_route_readiness():
     return jsonify(_v1010_action_readiness_payload())
 
 
-@product_registry_bp.route("/api/v1/product/v10/action-route-readiness/write", methods=["POST"])
+@product_registry_bp.route(
+    "/api/v1/product/v10/action-route-readiness/write", methods=["POST"]
+)
 def api_product_v10_action_route_readiness_write():
     return jsonify(write_action_readiness_report())
 
@@ -1424,4 +1595,6 @@ def api_product_v10_action_route_readiness_write():
 def product_v10_action_route_readiness_view():
     payload = _v1010_action_readiness_payload()
     return render_template("product_v10_action_route_readiness.html", readiness=payload)
+
+
 # ---- end v10.1.0 action route readiness gate ----

@@ -18,15 +18,17 @@ def _draft():
         "status": "complete",
         "draft_id": "draft-1",
         "draft_sha256": "b" * 64,
-        "sections": [{
-            "section_id": "key_findings",
-            "title": "Key Findings",
-            "position": 1,
-            "narrative": "Supported narrative.",
-            "finding_count": 1,
-            "findings": [finding],
-            "completeness": {"complete": True, "score": 100.0, "missing": []},
-        }],
+        "sections": [
+            {
+                "section_id": "key_findings",
+                "title": "Key Findings",
+                "position": 1,
+                "narrative": "Supported narrative.",
+                "finding_count": 1,
+                "findings": [finding],
+                "completeness": {"complete": True, "score": 100.0, "missing": []},
+            }
+        ],
     }
 
 
@@ -38,29 +40,43 @@ def _mapping(unresolved=False):
         "unresolved_claim_ids": ["missing"] if unresolved else [],
         "unresolved_evidence_ids": [],
     }
-    unresolved_rows = [{
-        "key": "unresolved_claim", "section_id": "key_findings",
-        "finding_id": "finding-1", "reference": "missing"
-    }] if unresolved else []
+    unresolved_rows = (
+        [
+            {
+                "key": "unresolved_claim",
+                "section_id": "key_findings",
+                "finding_id": "finding-1",
+                "reference": "missing",
+            }
+        ]
+        if unresolved
+        else []
+    )
     return {
         "status": "unresolved_citations" if unresolved else "citation_ready",
         "mapping_id": "map-1",
         "mapping_sha256": "c" * 64,
         "unresolved_count": len(unresolved_rows),
         "unresolved": unresolved_rows,
-        "sections": [{
-            "section_id": "key_findings",
-            "citations_complete": not unresolved,
-            "findings": [finding],
-        }],
+        "sections": [
+            {
+                "section_id": "key_findings",
+                "citations_complete": not unresolved,
+                "findings": [finding],
+            }
+        ],
     }
 
 
 def test_v21_4_ready_review_is_deterministic(tmp_path, monkeypatch):
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     database.configure_database(f"sqlite:///{tmp_path / 'app.db'}")
-    monkeypatch.setattr(service, "build_dossier_section_draft", lambda *a, **k: _draft())
-    monkeypatch.setattr(service, "build_dossier_citation_mapping", lambda *a, **k: _mapping())
+    monkeypatch.setattr(
+        service, "build_dossier_section_draft", lambda *a, **k: _draft()
+    )
+    monkeypatch.setattr(
+        service, "build_dossier_citation_mapping", lambda *a, **k: _mapping()
+    )
     one = service.build_dossier_quality_review("case-alpha", subject_id=42)
     two = service.build_dossier_quality_review("case-alpha", subject_id=42)
     assert one["status"] == "ready"
@@ -76,8 +92,12 @@ def test_v21_4_ready_review_is_deterministic(tmp_path, monkeypatch):
 def test_v21_4_explicit_blockers_and_snapshot(tmp_path, monkeypatch):
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'app.db'}")
     database.configure_database(f"sqlite:///{tmp_path / 'app.db'}")
-    monkeypatch.setattr(service, "build_dossier_section_draft", lambda *a, **k: _draft())
-    monkeypatch.setattr(service, "build_dossier_citation_mapping", lambda *a, **k: _mapping(True))
+    monkeypatch.setattr(
+        service, "build_dossier_section_draft", lambda *a, **k: _draft()
+    )
+    monkeypatch.setattr(
+        service, "build_dossier_citation_mapping", lambda *a, **k: _mapping(True)
+    )
     review = service.build_dossier_quality_review("case-alpha", subject_id=42)
     saved = service.save_dossier_quality_review_snapshot(
         "case-alpha", subject_id=42, actor="supervisor"

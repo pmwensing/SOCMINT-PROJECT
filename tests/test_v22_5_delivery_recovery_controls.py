@@ -32,9 +32,15 @@ def _setup(tmp_path, monkeypatch):
     url = f"sqlite:///{tmp_path / 'app.db'}"
     monkeypatch.setenv("DATABASE_URL", url)
     database.configure_database(url)
-    monkeypatch.setattr(service, "latest_secure_distribution", lambda case_id: _distribution())
-    monkeypatch.setattr(service, "latest_delivery_receipt", lambda case_id: _failed_receipt())
-    monkeypatch.setattr(service, "latest_recipient_acknowledgement", lambda case_id: None)
+    monkeypatch.setattr(
+        service, "latest_secure_distribution", lambda case_id: _distribution()
+    )
+    monkeypatch.setattr(
+        service, "latest_delivery_receipt", lambda case_id: _failed_receipt()
+    )
+    monkeypatch.setattr(
+        service, "latest_recipient_acknowledgement", lambda case_id: None
+    )
 
 
 def test_v22_5_failed_delivery_review_and_recall(tmp_path, monkeypatch):
@@ -46,7 +52,10 @@ def test_v22_5_failed_delivery_review_and_recall(tmp_path, monkeypatch):
         root_cause="endpoint unavailable",
         resolution_plan="retry after confirmation",
     )
-    assert blocked["blockers"][0]["key"] == "explicit_failed_delivery_review_confirmation_required"
+    assert (
+        blocked["blockers"][0]["key"]
+        == "explicit_failed_delivery_review_confirmation_required"
+    )
 
     review = service.review_failed_delivery(
         "case-alpha",
@@ -73,9 +82,13 @@ def test_v22_5_failed_delivery_review_and_recall(tmp_path, monkeypatch):
 
 def test_v22_5_reissue_tied_to_original_history(tmp_path, monkeypatch):
     _setup(tmp_path, monkeypatch)
-    monkeypatch.setattr(service, "latest_recall_request", lambda case_id: {
-        "recall_request_id": "recall-1",
-    })
+    monkeypatch.setattr(
+        service,
+        "latest_recall_request",
+        lambda case_id: {
+            "recall_request_id": "recall-1",
+        },
+    )
     result = service.authorize_reissue(
         "case-alpha",
         confirmed=True,

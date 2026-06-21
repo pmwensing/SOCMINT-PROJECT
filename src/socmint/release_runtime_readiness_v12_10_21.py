@@ -47,7 +47,9 @@ def _http_probe(url: str, timeout: float = 4.0) -> dict[str, Any]:
         }
 
 
-def _socket_probe(host: str = "127.0.0.1", port: int = 5000, timeout: float = 3.0) -> dict[str, Any]:
+def _socket_probe(
+    host: str = "127.0.0.1", port: int = 5000, timeout: float = 3.0
+) -> dict[str, Any]:
     try:
         with socket.create_connection((host, port), timeout=timeout):
             return {"host": host, "port": port, "ok": True, "error": None}
@@ -70,13 +72,17 @@ def _tor_files() -> dict[str, Any]:
         "hidden_service_dir_present": hidden_dir.is_dir(),
         "hostname_present": bool(hostname_text),
         "hostname": hostname_text,
-        "hostname_format_valid": hostname_text.endswith(".onion") if hostname_text else False,
+        "hostname_format_valid": hostname_text.endswith(".onion")
+        if hostname_text
+        else False,
         "informational": True,
     }
 
 
 def release_runtime_readiness(base_url: str | None = None) -> dict[str, Any]:
-    base = (base_url or os.getenv("SOCMINT_LOCAL_BASE_URL") or "http://127.0.0.1:5000").rstrip("/")
+    base = (
+        base_url or os.getenv("SOCMINT_LOCAL_BASE_URL") or "http://127.0.0.1:5000"
+    ).rstrip("/")
     socket_probe = _socket_probe()
     readyz = _http_probe(f"{base}/readyz")
     dashboard = _http_probe(f"{base}/")

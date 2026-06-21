@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from . import database
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 
 SCHEMA = "socmint.collection_job_contract.v29_1"
 VERSION = "v29.1.0"
@@ -87,7 +92,9 @@ def history() -> list[dict[str, Any]]:
         session.close()
 
 
-def _record(action: str, actor: str, target: str, event: dict[str, Any], ip_address: str | None) -> dict[str, Any]:
+def _record(
+    action: str, actor: str, target: str, event: dict[str, Any], ip_address: str | None
+) -> dict[str, Any]:
     _ensure_storage()
     session = database.Session()
     try:
@@ -126,29 +133,64 @@ def current_contracts() -> list[dict[str, Any]]:
                 "attempt_number": 1,
                 "transition_history": [],
             }
-        elif event.get("event_type") == "collection_job_transitioned" and contract_id in contracts:
+        elif (
+            event.get("event_type") == "collection_job_transitioned"
+            and contract_id in contracts
+        ):
             current = dict(contracts[contract_id])
             current["current_state"] = event.get("to_state")
             current["attempt_number"] = event.get("attempt_number")
             current["failure_category"] = event.get("failure_category")
             current["retry_eligible"] = event.get("retry_eligible")
-            current["transition_history"] = [*current.get("transition_history", []), event]
+            current["transition_history"] = [
+                *current.get("transition_history", []),
+                event,
+            ]
             contracts[contract_id] = current
-    return sorted(contracts.values(), key=lambda item: str(item.get("recorded_at") or ""), reverse=True)
+    return sorted(
+        contracts.values(),
+        key=lambda item: str(item.get("recorded_at") or ""),
+        reverse=True,
+    )
 
 
 def find_contract(collection_job_id: str) -> dict[str, Any] | None:
-    return next((item for item in current_contracts() if item.get("collection_job_id") == collection_job_id), None)
+    return next(
+        (
+            item
+            for item in current_contracts()
+            if item.get("collection_job_id") == collection_job_id
+        ),
+        None,
+    )
 
 
-def create_collection_job_contract(*, actor: str, connector: str, target_value: str, target_type: str, case_id: str, entity_id: str, source_id: str, authorization_binding: Any, purpose: str, idempotency_key: str, legacy_scan_job_id: int | None, reason: str, confirmed: bool, ip_address: str | None = None) -> dict[str, Any]:
+def create_collection_job_contract(
+    *,
+    actor: str,
+    connector: str,
+    target_value: str,
+    target_type: str,
+    case_id: str,
+    entity_id: str,
+    source_id: str,
+    authorization_binding: Any,
+    purpose: str,
+    idempotency_key: str,
+    legacy_scan_job_id: int | None,
+    reason: str,
+    confirmed: bool,
+    ip_address: str | None = None,
+) -> dict[str, Any]:
     connector = str(connector or "").strip()
     target_value = str(target_value or "").strip()
     target_type = str(target_type or "").strip()
     purpose = str(purpose or "").strip()
     idempotency_key = str(idempotency_key or "").strip()
     reason = str(reason or "").strip()
-    authorization = authorization_binding if isinstance(authorization_binding, dict) else {}
+    authorization = (
+        authorization_binding if isinstance(authorization_binding, dict) else {}
+    )
     if confirmed is not True:
         return blocked("explicit_collection_job_creation_confirmation_required")
     if not connector:
@@ -164,7 +206,10 @@ def create_collection_job_contract(*, actor: str, connector: str, target_value: 
     if not reason:
         return blocked("administrative_reason_required")
     for item in current_contracts():
-        if item.get("idempotency_key") == idempotency_key and item.get("current_state") not in TERMINAL_STATES:
+        if (
+            item.get("idempotency_key") == idempotency_key
+            and item.get("current_state") not in TERMINAL_STATES
+        ):
             return blocked("active_idempotency_key_must_be_unique")
     definition = {
         "connector": connector,
@@ -200,16 +245,32 @@ def create_collection_job_contract(*, actor: str, connector: str, target_value: 
         "case_access_scope_changed": False,
     }
     result = _record(ACTIONS[0], actor, event["collection_job_id"], event, ip_address)
-    return {**result, "status": "collection_job_contract_created", "next_action": "authorize_collection_job"}
+    return {
+        **result,
+        "status": "collection_job_contract_created",
+        "next_action": "authorize_collection_job",
+    }
 
 
-def transition_collection_job(*, collection_job_id: str, actor: str, to_state: str, authorization_binding: Any, failure_category: str, reason: str, confirmed: bool, ip_address: str | None = None) -> dict[str, Any]:
+def transition_collection_job(
+    *,
+    collection_job_id: str,
+    actor: str,
+    to_state: str,
+    authorization_binding: Any,
+    failure_category: str,
+    reason: str,
+    confirmed: bool,
+    ip_address: str | None = None,
+) -> dict[str, Any]:
     contract = find_contract(collection_job_id)
     if contract is None:
         return blocked("collection_job_contract_required")
     to_state = str(to_state or "").strip()
     reason = str(reason or "").strip()
-    authorization = authorization_binding if isinstance(authorization_binding, dict) else None
+    authorization = (
+        authorization_binding if isinstance(authorization_binding, dict) else None
+    )
     current_state = str(contract.get("current_state") or "drafted")
     if confirmed is not True:
         return blocked("explicit_collection_job_transition_confirmation_required")
@@ -226,13 +287,22 @@ def transition_collection_job(*, collection_job_id: str, actor: str, to_state: s
     if to_state not in FAILURE_STATES:
         failure_category = ""
     retry_transition = current_state in FAILURE_STATES and to_state == "queued"
-    attempt_number = int(contract.get("attempt_number") or 1) + (1 if retry_transition else 0)
-    retry_eligible = to_state in FAILURE_STATES and failure_category not in {"authorization", "scope", "policy", "duplicate"}
+    attempt_number = int(contract.get("attempt_number") or 1) + (
+        1 if retry_transition else 0
+    )
+    retry_eligible = to_state in FAILURE_STATES and failure_category not in {
+        "authorization",
+        "scope",
+        "policy",
+        "duplicate",
+    }
     previous_binding = {
         "collection_job_id": collection_job_id,
         "current_state": current_state,
         "attempt_number": contract.get("attempt_number"),
-        "last_event_sha256": (contract.get("transition_history") or [contract])[-1].get("collection_job_event_sha256"),
+        "last_event_sha256": (contract.get("transition_history") or [contract])[-1].get(
+            "collection_job_event_sha256"
+        ),
     }
     content = {
         "event_type": "collection_job_transitioned",
@@ -270,4 +340,8 @@ def transition_collection_job(*, collection_job_id: str, actor: str, to_state: s
         "cancelled": "review_collection_history",
         "superseded": "review_replacement_collection_job",
     }.get(to_state, "review_collection_job")
-    return {**result, "status": "collection_job_transitioned", "next_action": next_action}
+    return {
+        **result,
+        "status": "collection_job_transitioned",
+        "next_action": next_action,
+    }

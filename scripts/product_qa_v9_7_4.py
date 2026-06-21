@@ -14,7 +14,9 @@ def now_iso() -> str:
 def run(name: str, cmd: list[str], required: bool = True, timeout: int = 180) -> dict:
     print(f"[+] {name}")
     try:
-        proc = subprocess.run(cmd, text=True, capture_output=True, timeout=timeout, check=False)
+        proc = subprocess.run(
+            cmd, text=True, capture_output=True, timeout=timeout, check=False
+        )
         ok = proc.returncode == 0
         print(("[PASS] " if ok else "[FAIL] ") + name)
         return {
@@ -27,13 +29,27 @@ def run(name: str, cmd: list[str], required: bool = True, timeout: int = 180) ->
         }
     except Exception as exc:
         print(f"[ERROR] {name}: {exc}")
-        return {"name": name, "required": required, "ok": False, "returncode": -1, "stdout_tail": "", "stderr_tail": str(exc)}
+        return {
+            "name": name,
+            "required": required,
+            "ok": False,
+            "returncode": -1,
+            "stdout_tail": "",
+            "stderr_tail": str(exc),
+        }
 
 
 def file_check(path: str, required: bool = True) -> dict:
     ok = Path(path).exists()
     print(("[PASS] " if ok else "[FAIL] ") + f"file {path}")
-    return {"name": f"file:{path}", "required": required, "ok": ok, "returncode": 0 if ok else 1, "stdout_tail": "", "stderr_tail": ""}
+    return {
+        "name": f"file:{path}",
+        "required": required,
+        "ok": ok,
+        "returncode": 0 if ok else 1,
+        "stdout_tail": "",
+        "stderr_tail": "",
+    }
 
 
 def main() -> int:
@@ -48,13 +64,45 @@ def main() -> int:
         file_check("src/socmint/entity_dossier_v2.py", required=False),
         file_check("src/socmint/dossier_export.py", required=False),
         run("compileall-src", [sys.executable, "-m", "compileall", "src/socmint"]),
-        run("product-control-import", [sys.executable, "-c", "from src.socmint.product_control_center import build_status, release_readiness; print(build_status()['version']); print(release_readiness()['status'])"]),
-        run("quality-gate-import", [sys.executable, "-c", "from src.socmint.dossier_quality_gate import dossier_quality_gate; print(dossier_quality_gate('demo-subject')['status'])"]),
-        run("traceability-import", [sys.executable, "-c", "from src.socmint.dossier_traceability import evidence_to_dossier_traceability; print(evidence_to_dossier_traceability('demo-subject')['status'])"]),
+        run(
+            "product-control-import",
+            [
+                sys.executable,
+                "-c",
+                "from src.socmint.product_control_center import build_status, release_readiness; print(build_status()['version']); print(release_readiness()['status'])",
+            ],
+        ),
+        run(
+            "quality-gate-import",
+            [
+                sys.executable,
+                "-c",
+                "from src.socmint.dossier_quality_gate import dossier_quality_gate; print(dossier_quality_gate('demo-subject')['status'])",
+            ],
+        ),
+        run(
+            "traceability-import",
+            [
+                sys.executable,
+                "-c",
+                "from src.socmint.dossier_traceability import evidence_to_dossier_traceability; print(evidence_to_dossier_traceability('demo-subject')['status'])",
+            ],
+        ),
     ]
 
     if Path("scripts/ultimate_dossier_smoke_v7_8_0.py").exists():
-        checks.append(run("ultimate-dossier-smoke", ["env", "PYTHONPATH=src", sys.executable, "scripts/ultimate_dossier_smoke_v7_8_0.py"], required=False))
+        checks.append(
+            run(
+                "ultimate-dossier-smoke",
+                [
+                    "env",
+                    "PYTHONPATH=src",
+                    sys.executable,
+                    "scripts/ultimate_dossier_smoke_v7_8_0.py",
+                ],
+                required=False,
+            )
+        )
 
     required_failed = [c for c in checks if c["required"] and not c["ok"]]
     optional_failed = [c for c in checks if not c["required"] and not c["ok"]]
@@ -69,11 +117,17 @@ def main() -> int:
         "checks": checks,
         "required_failed": [c["name"] for c in required_failed],
         "optional_failed": [c["name"] for c in optional_failed],
-        "next_action": "Cut v9.8 Productized Release" if status == "pass" else "Fix failed checks before v9.8.",
+        "next_action": "Cut v9.8 Productized Release"
+        if status == "pass"
+        else "Fix failed checks before v9.8.",
     }
 
-    Path("storage/product_qa/V9_7_4_PRODUCT_QA_REPORT.json").write_text(json.dumps(report, indent=2))
-    Path("release/V9_7_PRODUCT_SMOKE_REPORT.json").write_text(json.dumps(report, indent=2))
+    Path("storage/product_qa/V9_7_4_PRODUCT_QA_REPORT.json").write_text(
+        json.dumps(report, indent=2)
+    )
+    Path("release/V9_7_PRODUCT_SMOKE_REPORT.json").write_text(
+        json.dumps(report, indent=2)
+    )
 
     md = [
         "# v9.7.4 Product Smoke Report",
@@ -98,7 +152,12 @@ def main() -> int:
     ]
     Path("release/V9_7_PRODUCT_SMOKE_REPORT.md").write_text("\n".join(md))
 
-    print(json.dumps({"status": status, "report": "release/V9_7_PRODUCT_SMOKE_REPORT.md"}, indent=2))
+    print(
+        json.dumps(
+            {"status": status, "report": "release/V9_7_PRODUCT_SMOKE_REPORT.md"},
+            indent=2,
+        )
+    )
     return 0 if status in {"pass", "warn"} else 1
 
 

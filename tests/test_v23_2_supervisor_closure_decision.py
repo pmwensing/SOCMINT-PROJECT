@@ -6,7 +6,9 @@ def _setup(tmp_path, monkeypatch, review=None):
     url = f"sqlite:///{tmp_path / 'app.db'}"
     monkeypatch.setenv("DATABASE_URL", url)
     database.configure_database(url)
-    monkeypatch.setattr(service, "latest_closure_readiness_review", lambda case_id: review)
+    monkeypatch.setattr(
+        service, "latest_closure_readiness_review", lambda case_id: review
+    )
 
 
 def _ready_review():
@@ -46,7 +48,9 @@ def test_v23_2_records_close_decision_bound_to_ready_review(tmp_path, monkeypatc
     assert latest["decided_by"] == "supervisor"
 
 
-def test_v23_2_blocks_without_ready_review_and_supports_hold_return(tmp_path, monkeypatch):
+def test_v23_2_blocks_without_ready_review_and_supports_hold_return(
+    tmp_path, monkeypatch
+):
     _setup(tmp_path, monkeypatch, None)
     missing = service.record_supervisor_closure_decision(
         "case-alpha", decision="close", confirmed=True, supervisor="supervisor"
@@ -56,13 +60,17 @@ def test_v23_2_blocks_without_ready_review_and_supports_hold_return(tmp_path, mo
     not_ready = _ready_review()
     not_ready["decision"] = "not_ready"
     not_ready["ready_for_supervisor_closure_decision"] = False
-    monkeypatch.setattr(service, "latest_closure_readiness_review", lambda case_id: not_ready)
+    monkeypatch.setattr(
+        service, "latest_closure_readiness_review", lambda case_id: not_ready
+    )
     blocked = service.record_supervisor_closure_decision(
         "case-alpha", decision="hold", confirmed=True, supervisor="supervisor"
     )
     assert blocked["blockers"][0]["key"] == "ready_closure_readiness_review_required"
 
-    monkeypatch.setattr(service, "latest_closure_readiness_review", lambda case_id: _ready_review())
+    monkeypatch.setattr(
+        service, "latest_closure_readiness_review", lambda case_id: _ready_review()
+    )
     hold = service.record_supervisor_closure_decision(
         "case-alpha", decision="hold", confirmed=True, supervisor="supervisor"
     )

@@ -13,7 +13,9 @@ def now_iso() -> str:
 
 def run(name: str, cmd: list[str], timeout: int = 700) -> dict:
     print(f"[+] {name}: {' '.join(cmd)}")
-    proc = subprocess.run(cmd, text=True, capture_output=True, timeout=timeout, check=False)
+    proc = subprocess.run(
+        cmd, text=True, capture_output=True, timeout=timeout, check=False
+    )
     ok = proc.returncode == 0
     print(("[PASS] " if ok else "[FAIL] ") + name)
     if not ok:
@@ -37,7 +39,10 @@ def main() -> int:
     checks = [
         run("compileall-src", [sys.executable, "-m", "compileall", "src/socmint"]),
         run("final-self-test-smoke", ["make", "product-final-self-test-smoke"]),
-        run("v10-bootstrap-smoke-v9-9-9", [sys.executable, "scripts/product_v10_bootstrap_smoke_v9_9_9.py"]),
+        run(
+            "v10-bootstrap-smoke-v9-9-9",
+            [sys.executable, "scripts/product_v10_bootstrap_smoke_v9_9_9.py"],
+        ),
     ]
 
     failed = [c for c in checks if not c["ok"]]
@@ -50,7 +55,9 @@ def main() -> int:
         "summary": f"{len(checks) - len(failed)}/{len(checks)} checks passed.",
         "checks": checks,
         "failed": [c["name"] for c in failed],
-        "next_action": "Merge and tag v9.9.9 final v9 closure v10 bootstrap gate" if status == "pass" else "Fix v10 bootstrap gate failures before merge.",
+        "next_action": "Merge and tag v9.9.9 final v9 closure v10 bootstrap gate"
+        if status == "pass"
+        else "Fix v10 bootstrap gate failures before merge.",
     }
 
     json_path = Path("release/V9_9_9_V10_BOOTSTRAP_HARDENING_REPORT.json")

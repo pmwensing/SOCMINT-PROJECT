@@ -10,7 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-DEFAULT_MANIFEST = ROOT / "release" / "V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json"
+DEFAULT_MANIFEST = (
+    ROOT / "release" / "V13_42_EXPORT_BLOCKER_SCREENSHOT_ARTIFACT_MANIFEST.json"
+)
 
 
 def sha256_file(path: Path) -> str:
@@ -31,7 +33,9 @@ def refresh_manifest(
     manifest = json.loads(path.read_text(encoding="utf-8"))
     manifest["schema"] = "socmint.release_artifact_manifest.v13_43"
     manifest["version"] = "v13.43"
-    manifest["refresh_script"] = "scripts/refresh_export_blocker_screenshot_manifest_v13_43.py"
+    manifest["refresh_script"] = (
+        "scripts/refresh_export_blocker_screenshot_manifest_v13_43.py"
+    )
 
     missing: list[str] = []
     for item in manifest.get("artifacts", []):
@@ -45,7 +49,9 @@ def refresh_manifest(
             item["sha256"] = None
             missing.append(item["path"])
 
-    path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     if require_existing and missing:
         raise FileNotFoundError(f"Missing screenshot artifact(s): {', '.join(missing)}")
     return manifest

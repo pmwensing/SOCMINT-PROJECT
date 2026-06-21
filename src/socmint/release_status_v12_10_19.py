@@ -8,7 +8,13 @@ from typing import Any
 
 from .tor_production import tor_hidden_service_diagnostics
 from .release_runtime_readiness_v12_10_21 import release_runtime_readiness
-from .version import RELEASE_CHANNEL, RELEASE_NAME, RELEASE_TAG, VERSION, version_payload
+from .version import (
+    RELEASE_CHANNEL,
+    RELEASE_NAME,
+    RELEASE_TAG,
+    VERSION,
+    version_payload,
+)
 
 SCHEMA = "socmint.release_status.v12_10_21"
 GATES_SCHEMA = "socmint.release_gates.latest.v12_10_21"
@@ -58,7 +64,9 @@ def _is_release_gate(row: dict[str, Any]) -> bool:
     return "runtime_route_gate" in text or "post_merge_master_verify" in text
 
 
-def latest_gate_reports(report_root: str | Path = DEFAULT_REPORT_ROOT) -> dict[str, Any]:
+def latest_gate_reports(
+    report_root: str | Path = DEFAULT_REPORT_ROOT,
+) -> dict[str, Any]:
     root = Path(report_root)
     if not root.exists():
         return {
@@ -74,7 +82,11 @@ def latest_gate_reports(report_root: str | Path = DEFAULT_REPORT_ROOT) -> dict[s
             "reports": [],
             "report_count": 0,
         }
-    files = sorted([p for p in root.glob("*.json") if p.is_file()], key=lambda p: p.stat().st_mtime, reverse=True)
+    files = sorted(
+        [p for p in root.glob("*.json") if p.is_file()],
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
     reports = [_summary(p) for p in files[:40]]
     latest_overall = reports[0] if reports else None
     pass_reports = [row for row in reports if _is_pass(row)]
@@ -85,7 +97,11 @@ def latest_gate_reports(report_root: str | Path = DEFAULT_REPORT_ROOT) -> dict[s
     return {
         "schema": GATES_SCHEMA,
         "generated_at": utc_now(),
-        "status": "pass" if ok else "needs_review" if latest_overall else "missing_reports",
+        "status": "pass"
+        if ok
+        else "needs_review"
+        if latest_overall
+        else "missing_reports",
         "decision": "GO" if ok else "HOLD",
         "report_root": str(root),
         "latest": latest_release_gate_pass or latest_overall,
@@ -94,14 +110,20 @@ def latest_gate_reports(report_root: str | Path = DEFAULT_REPORT_ROOT) -> dict[s
         "latest_release_gate_pass": latest_release_gate_pass,
         "reports": reports,
         "report_count": len(files),
-        "failed_latest_does_not_block": bool(latest_overall and latest_pass and not _is_pass(latest_overall)),
+        "failed_latest_does_not_block": bool(
+            latest_overall and latest_pass and not _is_pass(latest_overall)
+        ),
     }
 
 
 def _manifest(root: str | Path = ".") -> dict[str, Any]:
     path = Path(root) / "release" / "CURRENT_STATUS.json"
     if not path.exists():
-        return {"exists": False, "path": str(path), "error": "missing release/CURRENT_STATUS.json"}
+        return {
+            "exists": False,
+            "path": str(path),
+            "error": "missing release/CURRENT_STATUS.json",
+        }
     data = _json(path)
     data["exists"] = True
     data["path"] = str(path)
@@ -133,10 +155,25 @@ def runtime_health() -> dict[str, Any]:
     try:
         diag = tor_hidden_service_diagnostics()
     except Exception as exc:
-        return {"status": "needs_review", "decision": "HOLD", "error": str(exc), "checks": {}, "runtime_ready": False, "file_visibility_ready": False}
+        return {
+            "status": "needs_review",
+            "decision": "HOLD",
+            "error": str(exc),
+            "checks": {},
+            "runtime_ready": False,
+            "file_visibility_ready": False,
+        }
     checks = diag.get("checks", {}) or {}
-    runtime_ready = bool(checks.get("app_socket_listening") and checks.get("readyz_http_ok") and checks.get("dashboard_http_ok"))
-    file_visibility_ready = bool(checks.get("torrc_available_to_process") and checks.get("hidden_service_dir_present") and checks.get("hostname_present"))
+    runtime_ready = bool(
+        checks.get("app_socket_listening")
+        and checks.get("readyz_http_ok")
+        and checks.get("dashboard_http_ok")
+    )
+    file_visibility_ready = bool(
+        checks.get("torrc_available_to_process")
+        and checks.get("hidden_service_dir_present")
+        and checks.get("hostname_present")
+    )
     diag["runtime_ready"] = runtime_ready
     diag["file_visibility_ready"] = file_visibility_ready
     diag["dashboard_blocking"] = False
@@ -145,12 +182,18 @@ def runtime_health() -> dict[str, Any]:
     return diag
 
 
-def release_status(root: str | Path = ".", report_root: str | Path = DEFAULT_REPORT_ROOT) -> dict[str, Any]:
+def release_status(
+    root: str | Path = ".", report_root: str | Path = DEFAULT_REPORT_ROOT
+) -> dict[str, Any]:
     manifest = _manifest(root)
     gates = latest_gate_reports(report_root)
     legacy_runtime = runtime_health()
     split_runtime = release_runtime_readiness()
-    runtime = {**legacy_runtime, **split_runtime, "legacy_tor_diagnostics": legacy_runtime}
+    runtime = {
+        **legacy_runtime,
+        **split_runtime,
+        "legacy_tor_diagnostics": legacy_runtime,
+    }
     required = [
         "release/CURRENT_STATUS.json",
         "release/V12_10_18_RELEASE_STATUS_DASHBOARD_UI.md",
@@ -161,7 +204,9 @@ def release_status(root: str | Path = ".", report_root: str | Path = DEFAULT_REP
     ]
     files = {item: (Path(root) / item).exists() for item in required}
     checks = {
-        "version_manifest_match": bool(manifest.get("exists") and manifest.get("version") == VERSION),
+        "version_manifest_match": bool(
+            manifest.get("exists") and manifest.get("version") == VERSION
+        ),
         "required_files_present": all(files.values()),
         "report_available": gates.get("report_count", 0) > 0,
         "latest_pass_gate_available": gates.get("latest_release_gate_pass") is not None,
@@ -180,7 +225,12 @@ def release_status(root: str | Path = ".", report_root: str | Path = DEFAULT_REP
         "status": "pass" if ok else "needs_review",
         "decision": "GO" if ok else "HOLD",
         "version": version_payload(),
-        "release": {"version": VERSION, "release_name": RELEASE_NAME, "release_channel": RELEASE_CHANNEL, "release_tag": RELEASE_TAG},
+        "release": {
+            "version": VERSION,
+            "release_name": RELEASE_NAME,
+            "release_channel": RELEASE_CHANNEL,
+            "release_tag": RELEASE_TAG,
+        },
         "manifest": manifest,
         "gates": gates,
         "tor": runtime,
@@ -188,11 +238,21 @@ def release_status(root: str | Path = ".", report_root: str | Path = DEFAULT_REP
         "checks": checks,
         "blocking_checks": blocking,
         "sections": {
-            "release_gate_health": "pass" if checks["latest_pass_gate_available"] else "needs_review",
-            "runtime_reachability": "pass" if checks["runtime_ready"] else "needs_review",
-            "file_visibility": "informational" if not runtime.get("file_visibility_ready") else "pass",
-            "report_availability": "pass" if checks["report_available"] else "needs_review",
-            "required_files": "pass" if checks["required_files_present"] else "needs_review",
+            "release_gate_health": "pass"
+            if checks["latest_pass_gate_available"]
+            else "needs_review",
+            "runtime_reachability": "pass"
+            if checks["runtime_ready"]
+            else "needs_review",
+            "file_visibility": "informational"
+            if not runtime.get("file_visibility_ready")
+            else "pass",
+            "report_availability": "pass"
+            if checks["report_available"]
+            else "needs_review",
+            "required_files": "pass"
+            if checks["required_files_present"]
+            else "needs_review",
         },
         "required_files": files,
     }

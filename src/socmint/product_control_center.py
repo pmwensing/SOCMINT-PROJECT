@@ -17,7 +17,9 @@ def now_iso() -> str:
 
 def run_cmd(args: list[str], timeout: int = 20) -> dict[str, Any]:
     try:
-        proc = subprocess.run(args, text=True, capture_output=True, timeout=timeout, check=False)
+        proc = subprocess.run(
+            args, text=True, capture_output=True, timeout=timeout, check=False
+        )
         return {
             "ok": proc.returncode == 0,
             "returncode": proc.returncode,
@@ -82,7 +84,11 @@ def system_health() -> dict[str, Any]:
 def smoke_summary() -> dict[str, Any]:
     path = Path("release/V9_7_PRODUCT_SMOKE_REPORT.json")
     if not path.exists():
-        return {"status": "not_run", "message": "Run make product-smoke.", "last_report": None}
+        return {
+            "status": "not_run",
+            "message": "Run make product-smoke.",
+            "last_report": None,
+        }
     try:
         data = json.loads(path.read_text())
     except Exception as exc:
@@ -125,7 +131,9 @@ def release_readiness() -> dict[str, Any]:
     if status["git"]["status_short"]:
         warnings.append("git_worktree_has_local_changes")
 
-    result = "pass" if not blockers and not warnings else "warn" if not blockers else "fail"
+    result = (
+        "pass" if not blockers and not warnings else "warn" if not blockers else "fail"
+    )
 
     return {
         "status": result,
@@ -133,7 +141,9 @@ def release_readiness() -> dict[str, Any]:
         "version": PRODUCT_VERSION,
         "blockers": blockers,
         "warnings": warnings,
-        "recommended_next_action": "Cut v9.8 Productized Release" if result == "pass" else "Resolve blockers/warnings before v9.8.",
+        "recommended_next_action": "Cut v9.8 Productized Release"
+        if result == "pass"
+        else "Resolve blockers/warnings before v9.8.",
         "build_status": status,
     }
 

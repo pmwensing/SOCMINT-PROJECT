@@ -14,7 +14,15 @@ from socmint import database as db  # noqa: E402
 from socmint.dashboard import create_app  # noqa: E402
 
 
-FORBIDDEN_TOKENS = ("write", "build", "download", "archive", "publish", "decision", "signoff")
+FORBIDDEN_TOKENS = (
+    "write",
+    "build",
+    "download",
+    "archive",
+    "publish",
+    "decision",
+    "signoff",
+)
 
 
 def main() -> int:
@@ -46,11 +54,22 @@ def main() -> int:
                 and payload.get("moved_route_count", 0) >= 16
                 and payload.get("failed_route_count") == 0
                 and payload.get("no_action_routes_moved") is True
-                and payload.get("rollback_readiness", {}).get("rollback_ready_count") == payload.get("moved_route_count")
+                and payload.get("rollback_readiness", {}).get("rollback_ready_count")
+                == payload.get("moved_route_count")
             )
-            print(("[PASS]" if ok else "[FAIL]"), "GET blueprint guardrails API", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET blueprint guardrails API",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET blueprint guardrails API", response.status_code, response.get_data(as_text=True)[:7000]))
+                failures.append(
+                    (
+                        "GET blueprint guardrails API",
+                        response.status_code,
+                        response.get_data(as_text=True)[:7000],
+                    )
+                )
 
             for row in rows:
                 route = row.get("route", "")
@@ -62,24 +81,51 @@ def main() -> int:
                     and not any(token in route.lower() for token in FORBIDDEN_TOKENS)
                     and row.get("non_get_blueprint_methods") == []
                 )
-                print(("[PASS]" if ok else "[FAIL]"), f"guardrail row {route}", row.get("status"))
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"guardrail row {route}",
+                    row.get("status"),
+                )
                 if not ok:
                     failures.append((f"guardrail row {route}", 0, str(row)[:3000]))
 
                 response = client.get(route)
                 ok = response.status_code == 200
-                print(("[PASS]" if ok else "[FAIL]"), f"GET moved route {route}", response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"GET moved route {route}",
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append((f"GET moved route {route}", response.status_code, response.get_data(as_text=True)[:2000]))
+                    failures.append(
+                        (
+                            f"GET moved route {route}",
+                            response.status_code,
+                            response.get_data(as_text=True)[:2000],
+                        )
+                    )
 
             response = client.get("/product/v10/blueprint-guardrails")
             body = response.get_data(as_text=True)
-            ok = response.status_code == 200 and "Blueprint Migration Wave 1 Guardrails" in body and "Moved Wave 1 Routes" in body
-            print(("[PASS]" if ok else "[FAIL]"), "GET blueprint guardrails UI", response.status_code)
+            ok = (
+                response.status_code == 200
+                and "Blueprint Migration Wave 1 Guardrails" in body
+                and "Moved Wave 1 Routes" in body
+            )
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "GET blueprint guardrails UI",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("GET blueprint guardrails UI", response.status_code, body[:2500]))
+                failures.append(
+                    ("GET blueprint guardrails UI", response.status_code, body[:2500])
+                )
 
-            response = client.post("/api/v1/product/v10/blueprint-guardrails/write", headers={"X-CSRF-Token": "v1008-csrf"})
+            response = client.post(
+                "/api/v1/product/v10/blueprint-guardrails/write",
+                headers={"X-CSRF-Token": "v1008-csrf"},
+            )
             written = response.get_json() if response.is_json else {}
             ok = (
                 response.status_code == 200
@@ -88,17 +134,38 @@ def main() -> int:
                 and Path("release/V10_0_8_BLUEPRINT_GUARDRAILS_REPORT.json").exists()
                 and Path("release/V10_0_8_BLUEPRINT_GUARDRAILS_REPORT.md").exists()
             )
-            print(("[PASS]" if ok else "[FAIL]"), "write blueprint guardrails report", response.status_code)
+            print(
+                ("[PASS]" if ok else "[FAIL]"),
+                "write blueprint guardrails report",
+                response.status_code,
+            )
             if not ok:
-                failures.append(("write blueprint guardrails report", response.status_code, response.get_data(as_text=True)[:3000]))
+                failures.append(
+                    (
+                        "write blueprint guardrails report",
+                        response.status_code,
+                        response.get_data(as_text=True)[:3000],
+                    )
+                )
 
-            for route in ["/product/v10", "/product/v10/modules", "/product/v10/module-health", "/product/v10/migration-plan"]:
+            for route in [
+                "/product/v10",
+                "/product/v10/modules",
+                "/product/v10/module-health",
+                "/product/v10/migration-plan",
+            ]:
                 response = client.get(route)
                 body = response.get_data(as_text=True)
                 ok = response.status_code == 200 and "Open Blueprint Guardrails" in body
-                print(("[PASS]" if ok else "[FAIL]"), f"guardrails link {route}", response.status_code)
+                print(
+                    ("[PASS]" if ok else "[FAIL]"),
+                    f"guardrails link {route}",
+                    response.status_code,
+                )
                 if not ok:
-                    failures.append((f"guardrails link {route}", response.status_code, body[:2500]))
+                    failures.append(
+                        (f"guardrails link {route}", response.status_code, body[:2500])
+                    )
 
             if failures:
                 for name, status, body in failures:

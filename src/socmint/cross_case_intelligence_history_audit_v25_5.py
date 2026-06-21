@@ -46,7 +46,9 @@ def _persisted_events(allowed_case_ids: set[str] | None) -> list[dict[str, Any]]
     try:
         rows = (
             session.query(database.AuditLog)
-            .filter(database.AuditLog.action.in_((REVIEW_ACTION, CONFIRMED_LINK_ACTION)))
+            .filter(
+                database.AuditLog.action.in_((REVIEW_ACTION, CONFIRMED_LINK_ACTION))
+            )
             .order_by(database.AuditLog.created_at.asc(), database.AuditLog.id.asc())
             .all()
         )
@@ -58,7 +60,9 @@ def _persisted_events(allowed_case_ids: set[str] | None) -> list[dict[str, Any]]
                     continue
                 event_type = "analyst_decision"
                 correlation_id = details.get("correlation_id") or row.target_value
-                case_ids = (details.get("candidate_snapshot") or {}).get("case_ids") or []
+                case_ids = (details.get("candidate_snapshot") or {}).get(
+                    "case_ids"
+                ) or []
             else:
                 if not _link_visible(details, allowed_case_ids):
                     continue
@@ -72,26 +76,32 @@ def _persisted_events(allowed_case_ids: set[str] | None) -> list[dict[str, Any]]
                 "target_value": row.target_value,
                 "details": details,
             }
-            events.append({
-                "history_event_id": f"audit-{row.id}",
-                "event_type": event_type,
-                "occurred_at": row.created_at.isoformat() if row.created_at else None,
-                "actor": row.actor,
-                "correlation_id": correlation_id,
-                "confirmed_link_id": details.get("confirmed_link_id"),
-                "case_ids": sorted(str(value) for value in case_ids),
-                "source_action": row.action,
-                "source_record_id": row.id,
-                "source_binding": binding,
-                "source_binding_sha256": _sha(binding),
-                "access_scope": (
-                    details.get("workspace_access_scope")
-                    if row.action == REVIEW_ACTION
-                    else (details.get("accepted_review") or {}).get("workspace_access_scope")
-                ),
-                "details": details,
-                "synthetic_checkpoint": False,
-            })
+            events.append(
+                {
+                    "history_event_id": f"audit-{row.id}",
+                    "event_type": event_type,
+                    "occurred_at": row.created_at.isoformat()
+                    if row.created_at
+                    else None,
+                    "actor": row.actor,
+                    "correlation_id": correlation_id,
+                    "confirmed_link_id": details.get("confirmed_link_id"),
+                    "case_ids": sorted(str(value) for value in case_ids),
+                    "source_action": row.action,
+                    "source_record_id": row.id,
+                    "source_binding": binding,
+                    "source_binding_sha256": _sha(binding),
+                    "access_scope": (
+                        details.get("workspace_access_scope")
+                        if row.action == REVIEW_ACTION
+                        else (details.get("accepted_review") or {}).get(
+                            "workspace_access_scope"
+                        )
+                    ),
+                    "details": details,
+                    "synthetic_checkpoint": False,
+                }
+            )
         return events
     finally:
         session.close()
@@ -149,9 +159,7 @@ def build_cross_case_intelligence_history_audit(
     registry_workspace = build_confirmed_link_registry_workspace(
         allowed_case_ids=allowed_case_ids
     )
-    graph = build_cross_case_relationship_graph(
-        allowed_case_ids=allowed_case_ids
-    )
+    graph = build_cross_case_relationship_graph(allowed_case_ids=allowed_case_ids)
 
     events = _persisted_events(allowed_case_ids)
     events.append(
@@ -160,7 +168,10 @@ def build_cross_case_intelligence_history_audit(
             occurred_at,
             candidate_workspace,
             access_scope=candidate_workspace.get("access_scope"),
-            case_ids=list(candidate_workspace.get("access_scope", {}).get("visible_case_ids") or []),
+            case_ids=list(
+                candidate_workspace.get("access_scope", {}).get("visible_case_ids")
+                or []
+            ),
         )
     )
     events.append(
@@ -216,7 +227,9 @@ def build_cross_case_intelligence_history_audit(
         "reviews": {
             "disposition_counts": registry_workspace.get("review_disposition_counts"),
             "accepted_pending_count": registry_workspace.get("accepted_pending_count"),
-            "reviewed_correlation_count": len(registry_workspace.get("review_histories") or {}),
+            "reviewed_correlation_count": len(
+                registry_workspace.get("review_histories") or {}
+            ),
         },
         "confirmed_links": {
             "count": registry_workspace.get("confirmed_link_count"),
@@ -248,7 +261,9 @@ def build_cross_case_intelligence_history_audit(
 
     access_scope = {
         "mode": "restricted" if allowed_case_ids is not None else "all_visible_cases",
-        "allowed_case_ids": sorted(allowed_case_ids) if allowed_case_ids is not None else None,
+        "allowed_case_ids": sorted(allowed_case_ids)
+        if allowed_case_ids is not None
+        else None,
     }
     current_state["access_scope"] = access_scope
 
@@ -263,17 +278,21 @@ def build_cross_case_intelligence_history_audit(
         "event_type_counts": dict(sorted(event_counts.items())),
         "actor_counts": dict(sorted(actor_counts.items())),
         "correlation_count": len(
-            {item.get("correlation_id") for item in events if item.get("correlation_id")}
+            {
+                item.get("correlation_id")
+                for item in events
+                if item.get("correlation_id")
+            }
         ),
         "confirmed_link_count": len(
-            {item.get("confirmed_link_id") for item in events if item.get("confirmed_link_id")}
+            {
+                item.get("confirmed_link_id")
+                for item in events
+                if item.get("confirmed_link_id")
+            }
         ),
         "case_count": len(
-            {
-                case_id
-                for item in events
-                for case_id in item.get("case_ids") or []
-            }
+            {case_id for item in events for case_id in item.get("case_ids") or []}
         ),
         "source_bound_event_count": sum(
             1 for item in events if item.get("source_binding_sha256")
