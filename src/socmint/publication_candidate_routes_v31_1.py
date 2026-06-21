@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from flask import jsonify, request, session
 
+from .draft_dossier_revision_routes_v31_2 import (
+    register_draft_dossier_revision_routes_v31_2,
+)
 from .publication_candidate_v31_1 import (
     candidates_for_contribution,
     create_publication_candidate,
@@ -95,4 +98,5 @@ def register_publication_candidate_routes_v31_1(app):
             "status"
         ) == "publication_candidate_state_recorded" else 422
 
+    register_draft_dossier_revision_routes_v31_2(app)
     return app
