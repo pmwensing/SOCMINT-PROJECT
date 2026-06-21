@@ -16,6 +16,15 @@ The read-only Publication Review Workspace is implemented on the Ruff-clean `mas
 - `GET /publication-review`
 - `GET /api/v1/publication-review`
 
+## Validation
+
+- CI lint: passed
+- CI test suite: passed
+- command-center export verification: passed
+- Compose, migration, backup, production boot, and dependency checks: passed
+- SOCMINT Full Verification: passed
+- v12.10.19 verification: passed
+
 ## Safety
 
 - no automatic publication
