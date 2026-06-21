@@ -2,6 +2,8 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
 
 os.environ.setdefault("PYTHON_DOTENV_DISABLED", "1")
 os.environ.setdefault("SOCMINT_CONNECTOR_DRY_RUN", "1")
@@ -16,3 +18,12 @@ for path in (PROJECT_ROOT, SRC_ROOT):
     path_text = str(path)
     if path_text not in sys.path:
         sys.path.insert(0, path_text)
+
+
+@pytest.fixture(autouse=True)
+def isolate_v31_0_workspace_draft_inventory(request, monkeypatch):
+    if request.node.path.name != "test_v31_0_publication_review_workspace.py":
+        return
+    from src.socmint import publication_review_workspace_v31_0 as workspace
+
+    monkeypatch.setattr(workspace, "current_draft_revisions", lambda: [])
