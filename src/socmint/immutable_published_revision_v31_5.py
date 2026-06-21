@@ -5,7 +5,7 @@ from typing import Any
 from . import database
 from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
 from .draft_dossier_revision_v31_2 import current_draft_revisions
-from .human_release_approval_v31_4 import current_release_approvals
+from .human_release_approval_v31_4 import approvals_for_revision
 
 SCHEMA = "socmint.immutable_published_revision.v31_5"
 VERSION = "v31.5.0"
@@ -69,13 +69,8 @@ def find_draft_revision(draft_revision_id: str) -> dict[str, Any] | None:
     return None
 
 
-def latest_approved_release(draft_revision_id: str) -> dict[str, Any] | None:
-    rows = [
-        item
-        for item in current_release_approvals()
-        if item.get("draft_revision_id") == draft_revision_id
-        and item.get("result_status") == "approved"
-    ]
+def latest_release_decision(draft_revision_id: str) -> dict[str, Any] | None:
+    rows = approvals_for_revision(draft_revision_id)
     return rows[-1] if rows else None
 
 
@@ -126,8 +121,8 @@ def create_immutable_published_revision(
     revision = find_draft_revision(draft_revision_id)
     if revision is None:
         return blocked("draft_dossier_revision_required")
-    approval = latest_approved_release(draft_revision_id)
-    if approval is None:
+    approval = latest_release_decision(draft_revision_id)
+    if approval is None or approval.get("result_status") != "approved":
         return blocked("approved_human_release_decision_required")
     if confirmed is not True:
         return blocked("explicit_publication_confirmation_required")
