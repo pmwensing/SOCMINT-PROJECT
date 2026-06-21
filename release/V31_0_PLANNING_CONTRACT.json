@@ -21,15 +21,20 @@
     "status": "v31_7_product_review_and_browser_e2e_implemented"
   },
   "validation": {
+    "focused": "pending",
+    "v31_regression": "pending",
+    "full_suite": "pending",
+    "lint": "pending",
+    "browser_e2e": "pending",
     "ci": "pending",
     "full_verification": "pending",
-    "v12_10_19_verify": "pending",
-    "browser_e2e": "pending"
+    "v12_10_19_verify": "pending"
   },
   "closure_contract": {
     "focused_tests_required": true,
     "v31_regression_required": true,
     "full_suite_required": true,
+    "lint_required": true,
     "browser_e2e_required": true,
     "v31_closed": false,
     "next_action": "confirm_test_gates_and_close_v31"
