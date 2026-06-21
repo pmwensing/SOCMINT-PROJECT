@@ -7,6 +7,9 @@ from .draft_dossier_revision_v31_2 import (
     current_draft_revisions,
     revisions_for_candidate,
 )
+from .editorial_validation_routes_v31_3 import (
+    register_editorial_validation_routes_v31_3,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -77,4 +80,5 @@ def register_draft_dossier_revision_routes_v31_2(app):
             "status"
         ) == "draft_dossier_revision_assembled" else 422
 
+    register_editorial_validation_routes_v31_3(app)
     return app
