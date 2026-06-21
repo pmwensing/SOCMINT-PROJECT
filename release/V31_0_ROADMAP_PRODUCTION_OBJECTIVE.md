@@ -2,4 +2,4 @@
 
 v31.0, v31.1, and v31.2 are implemented.
 
-Next: v31.3 Editorial Validation and Policy Gate.
+Next action: `implement_v31_3_editorial_validation_and_policy_gate`.
