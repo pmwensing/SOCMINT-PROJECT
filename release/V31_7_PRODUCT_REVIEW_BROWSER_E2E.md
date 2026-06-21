@@ -34,6 +34,10 @@ Validate the complete v31 publication workflow, required modules, assets, routes
 - supersessions API
 - ready checkpoint
 
+## Validation
+
+Focused tests, v31 regression tests, the full suite, Ruff, browser E2E, CI, and verification workflows are required.
+
 ## Safety
 
 - no publication workflow mutation
