@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from . import database
-from .dossier_assembly_workspace_v21_0 import _canonical, _ensure_storage, _json_details, _sha
+from .dossier_assembly_workspace_v21_0 import (
+    _canonical,
+    _ensure_storage,
+    _json_details,
+    _sha,
+)
 from .dossier_release_workspace_v22_0 import DEFAULT_CHANNELS
 
 SCHEMA = "socmint.audience_recipient_contract.v32_1"
@@ -66,32 +71,45 @@ def audience_contract_history() -> list[dict[str, Any]]:
         session.close()
 
 
-def audience_contracts_for_case(case_id: str | None = None) -> list[dict[str, Any]]:
+def audience_contracts_for_case(
+    case_id: str | None = None,
+) -> list[dict[str, Any]]:
     rows = audience_contract_history()
     if not case_id:
         return rows
     return [row for row in rows if row.get("case_id") == case_id]
 
 
-def find_audience_contract(audience_contract_id: str) -> dict[str, Any] | None:
+def find_audience_contract(
+    audience_contract_id: str,
+) -> dict[str, Any] | None:
     for item in audience_contract_history():
         if item.get("audience_contract_id") == audience_contract_id:
             return item
     return None
 
 
-def _normalize_recipient(value: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None]:
+def _normalize_recipient(
+    value: dict[str, Any],
+) -> tuple[dict[str, Any] | None, str | None]:
     recipient_id = str(value.get("recipient_id") or "").strip()
     display_name = str(value.get("display_name") or "").strip()
     organization = str(value.get("organization") or "").strip()
     role = str(value.get("role") or "").strip()
-    recipient_type = str(value.get("recipient_type") or "person").strip().lower()
+    recipient_type = (
+        str(value.get("recipient_type") or "person").strip().lower()
+    )
     purpose = str(value.get("dissemination_purpose") or "").strip()
-    max_classification = str(value.get("max_classification") or "internal").strip().lower()
+    max_classification = (
+        str(value.get("max_classification") or "internal").strip().lower()
+    )
+    raw_channels = value.get("allowed_channels")
+    if not isinstance(raw_channels, list):
+        return None, "recipient_allowed_channels_must_be_list"
     channels = sorted(
         {
             str(channel).strip().lower()
-            for channel in value.get("allowed_channels") or []
+            for channel in raw_channels
             if str(channel).strip()
         }
     )
@@ -112,7 +130,9 @@ def _normalize_recipient(value: dict[str, Any]) -> tuple[dict[str, Any] | None, 
         return None, "invalid_recipient_max_classification"
     if not channels:
         return None, "recipient_allowed_channel_required"
-    invalid_channels = [channel for channel in channels if channel not in DEFAULT_CHANNELS]
+    invalid_channels = [
+        channel for channel in channels if channel not in DEFAULT_CHANNELS
+    ]
     if invalid_channels:
         return None, "recipient_channel_not_supported"
 
@@ -209,7 +229,10 @@ def record_audience_recipient_contract(
         if error:
             return blocked(error, recipient_index=index)
         assert recipient is not None
-        if CLASSIFICATION_RANK[recipient["max_classification"]] < CLASSIFICATION_RANK[classification]:
+        if (
+            CLASSIFICATION_RANK[recipient["max_classification"]]
+            < CLASSIFICATION_RANK[classification]
+        ):
             return blocked(
                 "recipient_classification_insufficient",
                 recipient_index=index,
@@ -269,7 +292,12 @@ def record_audience_recipient_contract(
     ):
         return blocked("audience_contract_already_exists")
 
-    result = _record(actor, event["audience_contract_id"], event, ip_address)
+    result = _record(
+        actor,
+        event["audience_contract_id"],
+        event,
+        ip_address,
+    )
     return {
         **result,
         "status": "audience_contract_recorded",
