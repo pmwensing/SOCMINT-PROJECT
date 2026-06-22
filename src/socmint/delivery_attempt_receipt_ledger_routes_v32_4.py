@@ -12,6 +12,9 @@ from .delivery_attempt_receipt_ledger_v32_4 import (
     record_delivery_attempt,
     record_delivery_receipt,
 )
+from .recipient_feedback_correction_intake_routes_v32_5 import (
+    register_recipient_feedback_correction_intake_routes_v32_5,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -35,36 +38,48 @@ def register_delivery_attempt_receipt_ledger_routes_v32_4(app):
         actor, error = _authorized()
         if error:
             return error
-        return jsonify({
-            "schema": "socmint.delivery_attempts.v32_4",
-            "version": "v32.4.0",
-            "delivery_attempts": delivery_attempt_history(),
-        })
+        return jsonify(
+            {
+                "schema": "socmint.delivery_attempts.v32_4",
+                "version": "v32.4.0",
+                "delivery_attempts": delivery_attempt_history(),
+            }
+        )
 
     @app.get("/api/v1/dissemination-governance/delivery-receipts")
     def list_delivery_receipts_v32_4():
         actor, error = _authorized()
         if error:
             return error
-        return jsonify({
-            "schema": "socmint.delivery_receipts.v32_4",
-            "version": "v32.4.0",
-            "delivery_receipts": delivery_receipt_history(),
-        })
+        return jsonify(
+            {
+                "schema": "socmint.delivery_receipts.v32_4",
+                "version": "v32.4.0",
+                "delivery_receipts": delivery_receipt_history(),
+            }
+        )
 
-    @app.get("/api/v1/dissemination-governance/packages/<package_id>/delivery-attempts")
+    @app.get(
+        "/api/v1/dissemination-governance/packages/"
+        "<package_id>/delivery-attempts"
+    )
     def list_package_attempts_v32_4(package_id: str):
         actor, error = _authorized()
         if error:
             return error
-        return jsonify({
-            "schema": "socmint.package_delivery_attempts.v32_4",
-            "version": "v32.4.0",
-            "dissemination_package_id": package_id,
-            "delivery_attempts": attempts_for_package(package_id),
-        })
+        return jsonify(
+            {
+                "schema": "socmint.package_delivery_attempts.v32_4",
+                "version": "v32.4.0",
+                "dissemination_package_id": package_id,
+                "delivery_attempts": attempts_for_package(package_id),
+            }
+        )
 
-    @app.post("/api/v1/dissemination-governance/packages/<package_id>/delivery-attempts")
+    @app.post(
+        "/api/v1/dissemination-governance/packages/"
+        "<package_id>/delivery-attempts"
+    )
     def create_attempt_v32_4(package_id: str):
         actor, error = _authorized()
         if error:
@@ -85,9 +100,12 @@ def register_delivery_attempt_receipt_ledger_routes_v32_4(app):
             note=str(data.get("note") or ""),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 201 if result.get("status") == "delivery_attempt_recorded" else 422
+        status = 201 if result.get("status") == "delivery_attempt_recorded" else 422
+        return jsonify(result), status
 
-    @app.get("/api/v1/dissemination-governance/delivery-attempts/<attempt_id>")
+    @app.get(
+        "/api/v1/dissemination-governance/delivery-attempts/<attempt_id>"
+    )
     def get_attempt_v32_4(attempt_id: str):
         actor, error = _authorized()
         if error:
@@ -97,19 +115,27 @@ def register_delivery_attempt_receipt_ledger_routes_v32_4(app):
             return jsonify({"error": "delivery attempt not found"}), 404
         return jsonify(value)
 
-    @app.get("/api/v1/dissemination-governance/delivery-attempts/<attempt_id>/receipts")
+    @app.get(
+        "/api/v1/dissemination-governance/delivery-attempts/"
+        "<attempt_id>/receipts"
+    )
     def list_attempt_receipts_v32_4(attempt_id: str):
         actor, error = _authorized()
         if error:
             return error
-        return jsonify({
-            "schema": "socmint.attempt_delivery_receipts.v32_4",
-            "version": "v32.4.0",
-            "delivery_attempt_id": attempt_id,
-            "delivery_receipts": receipts_for_attempt(attempt_id),
-        })
+        return jsonify(
+            {
+                "schema": "socmint.attempt_delivery_receipts.v32_4",
+                "version": "v32.4.0",
+                "delivery_attempt_id": attempt_id,
+                "delivery_receipts": receipts_for_attempt(attempt_id),
+            }
+        )
 
-    @app.post("/api/v1/dissemination-governance/delivery-attempts/<attempt_id>/receipts")
+    @app.post(
+        "/api/v1/dissemination-governance/delivery-attempts/"
+        "<attempt_id>/receipts"
+    )
     def create_receipt_v32_4(attempt_id: str):
         actor, error = _authorized()
         if error:
@@ -128,9 +154,12 @@ def register_delivery_attempt_receipt_ledger_routes_v32_4(app):
             note=str(data.get("note") or ""),
             ip_address=request.remote_addr,
         )
-        return jsonify(result), 201 if result.get("status") == "delivery_receipt_recorded" else 422
+        status = 201 if result.get("status") == "delivery_receipt_recorded" else 422
+        return jsonify(result), status
 
-    @app.get("/api/v1/dissemination-governance/delivery-receipts/<receipt_id>")
+    @app.get(
+        "/api/v1/dissemination-governance/delivery-receipts/<receipt_id>"
+    )
     def get_receipt_v32_4(receipt_id: str):
         actor, error = _authorized()
         if error:
@@ -140,4 +169,5 @@ def register_delivery_attempt_receipt_ledger_routes_v32_4(app):
             return jsonify({"error": "delivery receipt not found"}), 404
         return jsonify(value)
 
+    register_recipient_feedback_correction_intake_routes_v32_5(app)
     return app
