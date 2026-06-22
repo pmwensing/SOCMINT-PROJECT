@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from flask import jsonify, request, session
 
+from .authorization_policy_release_gate_routes_v32_3 import (
+    register_authorization_policy_release_gate_routes_v32_3,
+)
 from .dissemination_package_v32_2 import (
     assemble_dissemination_package,
     dissemination_package_history,
@@ -97,4 +100,5 @@ def register_dissemination_package_routes_v32_2(app):
         )
         return jsonify(result), status
 
+    register_authorization_policy_release_gate_routes_v32_3(app)
     return app
