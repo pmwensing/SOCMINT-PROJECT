@@ -8,6 +8,9 @@ from .authorization_policy_release_gate_v32_3 import (
     find_authorization_decision,
     record_authorization_policy_decision,
 )
+from .delivery_attempt_receipt_ledger_routes_v32_4 import (
+    register_delivery_attempt_receipt_ledger_routes_v32_4,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -31,13 +34,11 @@ def register_authorization_policy_release_gate_routes_v32_3(app):
         actor, error = _authorized()
         if error:
             return error
-        return jsonify(
-            {
-                "schema": "socmint.authorization_policy_decisions.v32_3",
-                "version": "v32.3.0",
-                "authorization_decisions": authorization_decision_history(),
-            }
-        )
+        return jsonify({
+            "schema": "socmint.authorization_policy_decisions.v32_3",
+            "version": "v32.3.0",
+            "authorization_decisions": authorization_decision_history(),
+        })
 
     @app.get(
         "/api/v1/dissemination-governance/packages/"
@@ -49,16 +50,14 @@ def register_authorization_policy_release_gate_routes_v32_3(app):
         actor, error = _authorized()
         if error:
             return error
-        return jsonify(
-            {
-                "schema": "socmint.package_authorization_decisions.v32_3",
-                "version": "v32.3.0",
-                "dissemination_package_id": dissemination_package_id,
-                "authorization_decisions": decisions_for_package(
-                    dissemination_package_id
-                ),
-            }
-        )
+        return jsonify({
+            "schema": "socmint.package_authorization_decisions.v32_3",
+            "version": "v32.3.0",
+            "dissemination_package_id": dissemination_package_id,
+            "authorization_decisions": decisions_for_package(
+                dissemination_package_id
+            ),
+        })
 
     @app.get(
         "/api/v1/dissemination-governance/authorization-decisions/"
@@ -100,4 +99,5 @@ def register_authorization_policy_release_gate_routes_v32_3(app):
         } else 422
         return jsonify(result), status
 
+    register_delivery_attempt_receipt_ledger_routes_v32_4(app)
     return app
