@@ -34,19 +34,13 @@ def _app(db: Path):
     os.environ["SOCMINT_DATA_DIR"] = str(db.parent)
     os.environ["SOCMINT_SECRET_KEY"] = "v31-browser-e2e-stable-secret-key-32chars-minimum"
     os.environ["SOCMINT_AUTO_CREATE_DB"] = "true"
-    from src.socmint.dashboard import create_app
+
     from src.socmint import database
     from src.socmint import publication_product_review_routes_v31_7 as review_routes
-    from src.socmint.publication_review_routes_v31_0 import (
-        register_publication_review_routes_v31_0,
-    )
+    from src.socmint.wsgi import app
 
     review_routes.actor_is_administrator = lambda actor: actor == USER
-    app = create_app()
     app.config.update(TESTING=True)
-    route_rules = {rule.rule for rule in app.url_map.iter_rules()}
-    if "/publication-review" not in route_rules:
-        register_publication_review_routes_v31_0(app)
     database.ensure_configured()
     dbs = database.Session()
     try:
@@ -140,7 +134,10 @@ def run() -> dict:
             result = _get_json(driver, base + path)
             _check(report, key, result.get("status") == 200, json.dumps(result, sort_keys=True))
 
-        checkpoint = _get_json(driver, base + "/api/v1/publication-review/product-review-checkpoint")
+        checkpoint = _get_json(
+            driver,
+            base + "/api/v1/publication-review/product-review-checkpoint",
+        )
         _check(
             report,
             "checkpoint_ready",
