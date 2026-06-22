@@ -12,7 +12,7 @@ v32 reuses the existing v22 distribution primitives and the v31 publication work
 
 ## Implementation status
 
-Implemented slices: v32.0 through v32.5.
+Implemented slices: v32.0 through v32.6.
 
 The v32.1 Audience and Recipient Contract records proposed case-scoped audiences and recipient identity/scope declarations.
 
@@ -24,6 +24,8 @@ The v32.4 Delivery Attempt and Receipt Ledger records approved delivery attempts
 
 The v32.5 Recipient Feedback and Correction Intake records feedback only from delivered receipts, isolates that feedback from source intelligence, and creates append-only correction-review records for editorial, new-revision, or recall consideration.
 
+The v32.6 Recall, Retention, and Lifecycle History layer records explicit recall state transitions and policy-bound retention decisions without rewriting or deleting prior publication, distribution, feedback, or correction evidence. It also provides deterministic case-scoped lifecycle history and snapshots.
+
 ## Roadmap
 
 | Slice | Capability | Boundary |
@@ -34,9 +36,9 @@ The v32.5 Recipient Feedback and Correction Intake records feedback only from de
 | v32.3 | Authorization, Policy, and Release Gate | Implemented; human decision only |
 | v32.4 | Delivery Attempt and Receipt Ledger | Implemented; append-only evidence |
 | v32.5 | Recipient Feedback and Correction Intake | Implemented; source intelligence unchanged |
-| v32.6 | Recall, Retention, and Lifecycle History | Historical records remain immutable |
+| v32.6 | Recall, Retention, and Lifecycle History | Implemented; historical records remain immutable |
 | v32.7 | Product Review and Browser E2E | Closure gate |
 
 ## Next action
 
-`implement_v32_6_recall_retention_and_lifecycle_history`
+`implement_v32_7_product_review_and_browser_e2e_checkpoint`
