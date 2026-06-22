@@ -1,6 +1,6 @@
 {
   "schema": "socmint.v32.planning_contract.v32_0",
-  "version": "v32.4.0",
+  "version": "v32.5.0",
   "program": "Published Intelligence Dissemination, Feedback, and Lifecycle Governance",
   "primary_workspace": "Dissemination Governance Workspace",
   "production_objective": "Operationalize controlled dissemination of immutable published intelligence revisions to explicitly authorized audiences while preserving delivery evidence, recipient feedback, correction history, recall state, retention policy, and human accountability without duplicating existing publication or distribution primitives.",
@@ -22,7 +22,7 @@
     {"slice": "v32.2", "title": "Dissemination Package Assembly", "mode": "deterministic_package_binding", "implemented": true},
     {"slice": "v32.3", "title": "Authorization, Policy, and Release Gate", "mode": "human_policy_gate", "implemented": true},
     {"slice": "v32.4", "title": "Delivery Attempt and Receipt Ledger", "mode": "append_only_delivery_ledger", "implemented": true},
-    {"slice": "v32.5", "title": "Recipient Feedback and Correction Intake", "mode": "controlled_feedback", "implemented": false},
+    {"slice": "v32.5", "title": "Recipient Feedback and Correction Intake", "mode": "controlled_feedback", "implemented": true},
     {"slice": "v32.6", "title": "Recall, Retention, and Lifecycle History", "mode": "lifecycle_governance", "implemented": false},
     {"slice": "v32.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": false}
   ],
@@ -37,7 +37,7 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "entry_gate_status": "v32_4_delivery_attempt_and_receipt_ledger_implemented"
+    "entry_gate_status": "v32_5_recipient_feedback_and_correction_intake_implemented"
   },
   "scope_boundaries": {
     "automatic_external_transmission": false,
@@ -94,7 +94,7 @@
     "full_verification_required": true,
     "v12_10_19_verify_required": true,
     "v32_closed": false,
-    "next_action": "implement_v32_5_recipient_feedback_and_correction_intake"
+    "next_action": "implement_v32_6_recall_retention_and_lifecycle_history"
   },
-  "next_action": "implement_v32_5_recipient_feedback_and_correction_intake"
+  "next_action": "implement_v32_6_recall_retention_and_lifecycle_history"
 }
