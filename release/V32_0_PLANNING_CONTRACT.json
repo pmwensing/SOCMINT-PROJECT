@@ -1,6 +1,6 @@
 {
   "schema": "socmint.v32.planning_contract.v32_0",
-  "version": "v32.6.0",
+  "version": "v32.7.0",
   "program": "Published Intelligence Dissemination, Feedback, and Lifecycle Governance",
   "primary_workspace": "Dissemination Governance Workspace",
   "production_objective": "Operationalize controlled dissemination of immutable published intelligence revisions to explicitly authorized audiences while preserving delivery evidence, recipient feedback, correction history, recall state, retention policy, and human accountability without duplicating existing publication or distribution primitives.",
@@ -24,7 +24,7 @@
     {"slice": "v32.4", "title": "Delivery Attempt and Receipt Ledger", "mode": "append_only_delivery_ledger", "implemented": true},
     {"slice": "v32.5", "title": "Recipient Feedback and Correction Intake", "mode": "controlled_feedback", "implemented": true},
     {"slice": "v32.6", "title": "Recall, Retention, and Lifecycle History", "mode": "lifecycle_governance", "implemented": true},
-    {"slice": "v32.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": false}
+    {"slice": "v32.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": true}
   ],
   "entry_gate": {
     "roadmap_defined": true,
@@ -37,7 +37,7 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "entry_gate_status": "v32_6_recall_retention_and_lifecycle_history_implemented"
+    "entry_gate_status": "v32_7_product_review_browser_e2e_implemented"
   },
   "scope_boundaries": {
     "automatic_external_transmission": false,
@@ -84,6 +84,7 @@
     "v32_regression": "pending",
     "full_suite": "pending",
     "lint": "pending",
+    "browser_e2e": "pending",
     "ci": "pending",
     "full_verification": "pending",
     "v12_10_19_verify": "pending"
@@ -98,7 +99,7 @@
     "full_verification_required": true,
     "v12_10_19_verify_required": true,
     "v32_closed": false,
-    "next_action": "implement_v32_7_product_review_and_browser_e2e_checkpoint"
+    "next_action": "run_v32_7_closure_validation"
   },
-  "next_action": "implement_v32_7_product_review_and_browser_e2e_checkpoint"
+  "next_action": "run_v32_7_closure_validation"
 }
