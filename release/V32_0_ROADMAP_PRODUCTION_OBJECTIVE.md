@@ -12,13 +12,15 @@ v32 reuses the existing v22 distribution primitives and the v31 publication work
 
 ## Implementation status
 
-Implemented slices: v32.0 through v32.3.
+Implemented slices: v32.0 through v32.4.
 
 The v32.1 Audience and Recipient Contract records proposed case-scoped audiences and recipient identity/scope declarations.
 
 The v32.2 Dissemination Package Assembly binds one active immutable published revision to one proposed audience contract and produces deterministic source, manifest, payload, and package hashes.
 
-The v32.3 Authorization, Policy, and Release Gate verifies package integrity and policy compatibility, then records an explicit human approve, deny, or hold decision. Approval only makes the package eligible for delivery-attempt creation; it does not resolve an endpoint or transmit anything.
+The v32.3 Authorization, Policy, and Release Gate verifies package integrity and policy compatibility, then records an explicit human approve, deny, or hold decision.
+
+The v32.4 Delivery Attempt and Receipt Ledger records approved delivery attempts and transport receipts as append-only events. It stores only a hash of the endpoint reference, preserves retry and failure history, and does not invoke transport itself.
 
 ## Roadmap
 
@@ -28,11 +30,11 @@ The v32.3 Authorization, Policy, and Release Gate verifies package integrity and
 | v32.1 | Audience and Recipient Contract | Implemented; no delivery authorization |
 | v32.2 | Dissemination Package Assembly | Implemented; pending authorization |
 | v32.3 | Authorization, Policy, and Release Gate | Implemented; human decision only |
-| v32.4 | Delivery Attempt and Receipt Ledger | Append-only delivery history |
+| v32.4 | Delivery Attempt and Receipt Ledger | Implemented; append-only evidence |
 | v32.5 | Recipient Feedback and Correction Intake | Feedback cannot rewrite source intelligence |
 | v32.6 | Recall, Retention, and Lifecycle History | Historical records remain immutable |
 | v32.7 | Product Review and Browser E2E | Closure gate |
 
 ## Next action
 
-`implement_v32_4_delivery_attempt_and_receipt_ledger`
+`implement_v32_5_recipient_feedback_and_correction_intake`
