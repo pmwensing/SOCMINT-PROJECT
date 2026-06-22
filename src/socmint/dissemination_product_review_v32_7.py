@@ -34,6 +34,7 @@ REQUIRED_ASSETS = (
     "release/V32_4_DELIVERY_ATTEMPT_RECEIPT_LEDGER.md",
     "release/V32_5_RECIPIENT_FEEDBACK_CORRECTION_INTAKE.md",
     "release/V32_6_RECALL_RETENTION_LIFECYCLE_HISTORY.md",
+    "release/V32_7_PRODUCT_REVIEW_BROWSER_E2E.md",
 )
 
 REQUIRED_ROUTES = (
@@ -60,7 +61,10 @@ def build_dissemination_product_review(
     root_path = Path(root) if root is not None else REPO_ROOT
     blockers: list[dict[str, str]] = []
 
-    def check_paths(paths: tuple[str, ...], key: str) -> list[dict[str, Any]]:
+    def check_paths(
+        paths: tuple[str, ...],
+        key: str,
+    ) -> list[dict[str, Any]]:
         checks = []
         for item in paths:
             ok = (root_path / item).exists()
@@ -98,11 +102,19 @@ def build_dissemination_product_review(
         for (rule, methods), count in Counter(route_keys).items()
         if count > 1
         and rule.startswith(
-            ("/dissemination-governance", "/api/v1/dissemination-governance")
+            (
+                "/dissemination-governance",
+                "/api/v1/dissemination-governance",
+            )
         )
     ]
     if duplicate_routes:
-        blockers.append({"key": "duplicate_v32_route", "detail": str(duplicate_routes)})
+        blockers.append(
+            {
+                "key": "duplicate_v32_route",
+                "detail": str(duplicate_routes),
+            }
+        )
 
     migrations = sorted(
         str(path.relative_to(root_path))
@@ -112,7 +124,12 @@ def build_dissemination_product_review(
         if path.is_file() and "v32" in path.name.lower()
     )
     if migrations:
-        blockers.append({"key": "unexpected_v32_migration", "detail": ", ".join(migrations)})
+        blockers.append(
+            {
+                "key": "unexpected_v32_migration",
+                "detail": ", ".join(migrations),
+            }
+        )
 
     journey = [
         {"step": "audience_contract", "route": REQUIRED_ROUTES[0]},
@@ -150,5 +167,9 @@ def build_dissemination_product_review(
         "automatic_external_transmission_unavailable_validated": True,
         "destructive_retention_unavailable_validated": True,
         "v32_closed_when_all_closure_gates_pass": True,
-        "next_action": "run_v32_browser_e2e" if not blockers else "resolve_v32_product_blockers",
+        "next_action": (
+            "run_v32_browser_e2e"
+            if not blockers
+            else "resolve_v32_product_blockers"
+        ),
     }
