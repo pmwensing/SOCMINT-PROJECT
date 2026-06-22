@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import jsonify, redirect, render_template, session, url_for
 
 from .analytic_product_review_v30_7 import build_analytic_product_review
+from .publication_review_routes_v31_0 import register_publication_review_routes_v31_0
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -40,4 +41,5 @@ def register_analytic_product_review_routes_v30_7(app):
         payload = build_analytic_product_review(routes=list(app.url_map.iter_rules()))
         return jsonify(payload), 200 if payload.get("ready") else 503
 
+    register_publication_review_routes_v31_0(app)
     return app

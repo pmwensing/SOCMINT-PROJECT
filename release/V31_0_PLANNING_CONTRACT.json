@@ -1,0 +1,44 @@
+{
+  "schema": "socmint.v31.planning_contract.v31_0",
+  "version": "v31.7.0",
+  "program": "Operational Analytic Workflow and Dossier Publication",
+  "primary_workspace": "Publication Review Workspace",
+  "roadmap": [
+    {"slice": "v31.0", "title": "Publication Review Workspace", "implemented": true},
+    {"slice": "v31.1", "title": "Publication Candidate Contract", "implemented": true},
+    {"slice": "v31.2", "title": "Draft Dossier Revision Assembly", "implemented": true},
+    {"slice": "v31.3", "title": "Editorial Validation and Policy Gate", "implemented": true},
+    {"slice": "v31.4", "title": "Human Release Approval", "implemented": true},
+    {"slice": "v31.5", "title": "Immutable Published Revision", "implemented": true},
+    {"slice": "v31.6", "title": "Supersession and Revision History", "implemented": true},
+    {"slice": "v31.7", "title": "Product Review and Browser E2E", "implemented": true}
+  ],
+  "entry_gate": {
+    "planning_complete": true,
+    "runtime_code_added": true,
+    "route_added": true,
+    "migration_added": false,
+    "status": "v31_7_final_browser_validation_pending"
+  },
+  "validation": {
+    "focused": "passed_prior_head",
+    "v31_regression": "passed_prior_head",
+    "full_suite": "passed_prior_head",
+    "lint": "passed_final_head_ci",
+    "browser_e2e": "pending_final_production_wsgi_head",
+    "ci": "passed_final_head",
+    "full_verification": "passed_final_head",
+    "v12_10_19_verify": "passed_final_head"
+  },
+  "closure_contract": {
+    "focused_tests_required": true,
+    "v31_regression_required": true,
+    "full_suite_required": true,
+    "lint_required": true,
+    "browser_e2e_required": true,
+    "production_wsgi_registration_required": true,
+    "v31_closed": false,
+    "next_action": "run_final_production_browser_e2e"
+  },
+  "next_action": "run_final_production_browser_e2e"
+}
