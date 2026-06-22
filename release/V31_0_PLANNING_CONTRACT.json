@@ -18,17 +18,17 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "status": "v31_7_production_wiring_validation_pending"
+    "status": "v31_7_final_browser_validation_pending"
   },
   "validation": {
-    "focused": "pending_final_head",
-    "v31_regression": "pending_final_head",
-    "full_suite": "pending_final_head",
-    "lint": "pending_final_head",
-    "browser_e2e": "pending_final_head",
-    "ci": "pending_final_head",
-    "full_verification": "pending_final_head",
-    "v12_10_19_verify": "pending_final_head"
+    "focused": "passed_prior_head",
+    "v31_regression": "passed_prior_head",
+    "full_suite": "passed_prior_head",
+    "lint": "passed_final_head_ci",
+    "browser_e2e": "pending_final_production_wsgi_head",
+    "ci": "passed_final_head",
+    "full_verification": "passed_final_head",
+    "v12_10_19_verify": "passed_final_head"
   },
   "closure_contract": {
     "focused_tests_required": true,
@@ -38,7 +38,7 @@
     "browser_e2e_required": true,
     "production_wsgi_registration_required": true,
     "v31_closed": false,
-    "next_action": "validate_production_wiring_and_close_v31"
+    "next_action": "run_final_production_browser_e2e"
   },
-  "next_action": "validate_production_wiring_and_close_v31"
+  "next_action": "run_final_production_browser_e2e"
 }
