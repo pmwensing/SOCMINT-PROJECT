@@ -26,21 +26,17 @@ def test_v32_1_routes_require_admin_and_create_contract(monkeypatch):
     register_audience_recipient_contract_routes_v32_1(app)
     client = app.test_client()
 
-    assert (
-        client.get(
-            "/api/v1/dissemination-governance/audience-contracts"
-        ).status_code
-        == 401
+    response = client.get(
+        "/api/v1/dissemination-governance/audience-contracts"
     )
+    assert response.status_code == 401
 
     with client.session_transaction() as session:
         session["user"] = "viewer"
-    assert (
-        client.get(
-            "/api/v1/dissemination-governance/audience-contracts"
-        ).status_code
-        == 403
+    response = client.get(
+        "/api/v1/dissemination-governance/audience-contracts"
     )
+    assert response.status_code == 403
 
     with client.session_transaction() as session:
         session["user"] = "admin"
