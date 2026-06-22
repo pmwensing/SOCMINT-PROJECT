@@ -8,6 +8,9 @@ from .audience_recipient_contract_v32_1 import (
     find_audience_contract,
     record_audience_recipient_contract,
 )
+from .dissemination_package_routes_v32_2 import (
+    register_dissemination_package_routes_v32_2,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -82,13 +85,20 @@ def register_audience_recipient_contract_routes_v32_1(app):
             audience_type=str(data.get("audience_type") or ""),
             dissemination_purpose=str(data.get("dissemination_purpose") or ""),
             classification=str(data.get("classification") or ""),
-            recipients=data.get("recipients") if isinstance(data.get("recipients"), list) else [],
+            recipients=(
+                data.get("recipients")
+                if isinstance(data.get("recipients"), list)
+                else []
+            ),
             reason=str(data.get("reason") or ""),
             confirmed=data.get("confirmed") is True,
             note=str(data.get("note") or ""),
             ip_address=request.remote_addr,
         )
-        status = 201 if result.get("status") == "audience_contract_recorded" else 422
+        status = (
+            201 if result.get("status") == "audience_contract_recorded" else 422
+        )
         return jsonify(result), status
 
+    register_dissemination_package_routes_v32_2(app)
     return app
