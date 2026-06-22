@@ -15,14 +15,18 @@ REQUIRED_ROUTES = (
 )
 
 
-def test_v31_7_production_wsgi_registers_publication_route_chain():
-    content = Path("src/socmint/wsgi.py").read_text(encoding="utf-8")
+def test_v31_7_production_route_chain_is_registered_once():
+    wsgi_content = Path("src/socmint/wsgi.py").read_text(encoding="utf-8")
+    v30_content = Path(
+        "src/socmint/analytic_product_review_routes_v30_7.py"
+    ).read_text(encoding="utf-8")
 
+    assert "register_publication_review_routes_v31_0(app)" not in wsgi_content
     assert (
         "from .publication_review_routes_v31_0 import "
         "register_publication_review_routes_v31_0"
-    ) in content
-    assert "register_publication_review_routes_v31_0(app)" in content
+    ) in v30_content
+    assert "register_publication_review_routes_v31_0(app)" in v30_content
 
 
 def test_v31_7_required_route_contract_is_complete():
