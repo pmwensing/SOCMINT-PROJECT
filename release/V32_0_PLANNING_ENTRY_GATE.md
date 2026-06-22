@@ -18,7 +18,9 @@ The entry gate itself added no runtime implementation, route, migration, deliver
 
 v32.1 Audience and Recipient Contract is implemented as an append-only, proposed identity-and-scope contract.
 
-v32.2 Dissemination Package Assembly is implemented as an append-only deterministic binding between one active immutable publication and one proposed audience contract. Packages remain pending human authorization and perform no delivery or transmission.
+v32.2 Dissemination Package Assembly is implemented as an append-only deterministic binding between one active immutable publication and one proposed audience contract.
+
+v32.3 Authorization, Policy, and Release Gate is implemented as an append-only human decision record. It verifies package integrity and policy compatibility before recording approval, denial, or hold. Approval creates eligibility only; it does not create or execute delivery.
 
 ## Reuse contract
 
@@ -29,4 +31,4 @@ v32 builds on:
 
 ## Next action
 
-`implement_v32_3_authorization_policy_and_release_gate`
+`implement_v32_4_delivery_attempt_and_receipt_ledger`
