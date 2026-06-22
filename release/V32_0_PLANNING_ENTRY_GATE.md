@@ -12,11 +12,13 @@
 
 The v32 roadmap, production objective, workflow spine, scope boundaries, production invariants, existing-capability inventory, and closure gates are defined.
 
-The entry gate added no runtime implementation, route, migration, delivery execution, recipient authorization, or mutation of published revisions and delivery history.
+The entry gate itself added no runtime implementation, route, migration, delivery execution, recipient authorization, or mutation of published revisions and delivery history.
 
 ## Current status
 
-v32.1 Audience and Recipient Contract is implemented as an append-only, proposed identity-and-scope contract. It does not authorize delivery or store contact secrets.
+v32.1 Audience and Recipient Contract is implemented as an append-only, proposed identity-and-scope contract.
+
+v32.2 Dissemination Package Assembly is implemented as an append-only deterministic binding between one active immutable publication and one proposed audience contract. Packages remain pending human authorization and perform no delivery or transmission.
 
 ## Reuse contract
 
@@ -27,4 +29,4 @@ v32 builds on:
 
 ## Next action
 
-`implement_v32_2_dissemination_package_assembly`
+`implement_v32_3_authorization_policy_and_release_gate`
