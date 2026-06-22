@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from flask import jsonify, request, session
 
+from .recall_retention_lifecycle_routes_v32_6 import (
+    register_recall_retention_lifecycle_routes_v32_6,
+)
 from .recipient_feedback_correction_intake_v32_5 import (
     correction_intake_history,
     corrections_for_feedback,
@@ -155,4 +158,5 @@ def register_recipient_feedback_correction_intake_routes_v32_5(app):
             return jsonify({"error": "correction intake not found"}), 404
         return jsonify(value)
 
+    register_recall_retention_lifecycle_routes_v32_6(app)
     return app
