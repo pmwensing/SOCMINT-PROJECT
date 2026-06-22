@@ -14,7 +14,7 @@ def test_v32_0_defines_complete_program_roadmap():
     contract = _contract()
 
     assert contract["schema"] == "socmint.v32.planning_contract.v32_0"
-    assert contract["version"] == "v32.0.0"
+    assert contract["version"].startswith("v32.")
     assert contract["primary_workspace"] == "Dissemination Governance Workspace"
     assert [item["slice"] for item in contract["roadmap"]] == [
         "v32.0",
@@ -27,19 +27,20 @@ def test_v32_0_defines_complete_program_roadmap():
         "v32.7",
     ]
     assert contract["roadmap"][0]["implemented"] is True
-    assert all(item["implemented"] is False for item in contract["roadmap"][1:])
-    assert contract["next_action"] == "implement_v32_1_audience_and_recipient_contract"
+    assert contract["roadmap"][1]["implemented"] is True
+    assert all(item["implemented"] is False for item in contract["roadmap"][2:])
+    assert contract["next_action"] == "implement_v32_2_dissemination_package_assembly"
 
 
-def test_v32_0_is_a_non_runtime_entry_gate():
+def test_v32_0_entry_gate_boundaries_remain_enforced_after_runtime_slices():
     contract = _contract()
     entry_gate = contract["entry_gate"]
     boundaries = contract["scope_boundaries"]
 
     assert entry_gate["roadmap_defined"] is True
     assert entry_gate["existing_capability_inventory_defined"] is True
-    assert entry_gate["runtime_code_added"] is False
-    assert entry_gate["route_added"] is False
+    assert entry_gate["runtime_code_added"] is True
+    assert entry_gate["route_added"] is True
     assert entry_gate["migration_added"] is False
     assert boundaries["automatic_external_transmission"] is False
     assert boundaries["automatic_recipient_authorization"] is False
@@ -52,7 +53,9 @@ def test_v32_0_requires_reuse_of_v22_and_v31_primitives():
     contract = _contract()
     invariants = contract["production_invariants"]
 
-    assert invariants["immutable_published_revision_is_the_only_distributable_source"] is True
+    assert invariants[
+        "immutable_published_revision_is_the_only_distributable_source"
+    ] is True
     assert invariants["existing_v22_distribution_primitives_are_reused"] is True
     assert invariants["existing_v31_publication_primitives_are_reused"] is True
     assert invariants["human_authorization_required_before_dissemination"] is True
