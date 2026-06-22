@@ -1,0 +1,91 @@
+{
+  "schema": "socmint.v32.planning_contract.v32_0",
+  "version": "v32.0.0",
+  "program": "Published Intelligence Dissemination, Feedback, and Lifecycle Governance",
+  "primary_workspace": "Dissemination Governance Workspace",
+  "production_objective": "Operationalize controlled dissemination of immutable published intelligence revisions to explicitly authorized audiences while preserving delivery evidence, recipient feedback, correction history, recall state, retention policy, and human accountability without duplicating existing publication or distribution primitives.",
+  "workflow_spine": [
+    "case",
+    "published_revision",
+    "audience_contract",
+    "dissemination_package",
+    "authorization_gate",
+    "delivery_attempt",
+    "delivery_receipt",
+    "recipient_feedback",
+    "correction_or_recall",
+    "retention_and_audit"
+  ],
+  "roadmap": [
+    {"slice": "v32.0", "title": "Dissemination Governance Planning Baseline", "mode": "planning_entry_gate", "implemented": true},
+    {"slice": "v32.1", "title": "Audience and Recipient Contract", "mode": "controlled_identity_scope", "implemented": false},
+    {"slice": "v32.2", "title": "Dissemination Package Assembly", "mode": "deterministic_package_binding", "implemented": false},
+    {"slice": "v32.3", "title": "Authorization, Policy, and Release Gate", "mode": "human_policy_gate", "implemented": false},
+    {"slice": "v32.4", "title": "Delivery Attempt and Receipt Ledger", "mode": "append_only_delivery_ledger", "implemented": false},
+    {"slice": "v32.5", "title": "Recipient Feedback and Correction Intake", "mode": "controlled_feedback", "implemented": false},
+    {"slice": "v32.6", "title": "Recall, Retention, and Lifecycle History", "mode": "lifecycle_governance", "implemented": false},
+    {"slice": "v32.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": false}
+  ],
+  "entry_gate": {
+    "roadmap_defined": true,
+    "production_objective_defined": true,
+    "primary_workspace_defined": true,
+    "workflow_spine_defined": true,
+    "scope_boundaries_defined": true,
+    "production_invariants_defined": true,
+    "existing_capability_inventory_defined": true,
+    "runtime_code_added": false,
+    "route_added": false,
+    "migration_added": false,
+    "entry_gate_status": "v32_0_planning_entry_gate_complete"
+  },
+  "scope_boundaries": {
+    "automatic_external_transmission": false,
+    "automatic_recipient_authorization": false,
+    "automatic_release_approval": false,
+    "published_revision_mutation": false,
+    "prior_delivery_record_mutation": false,
+    "recipient_feedback_overwrites_source_intelligence": false,
+    "secret_or_credential_exposure": false,
+    "case_access_change": false,
+    "new_connector_family_without_proven_need": false,
+    "migration_allowed_without_proven_schema_gap": false
+  },
+  "production_invariants": {
+    "immutable_published_revision_is_the_only_distributable_source": true,
+    "explicit_actor_reason_scope_and_recipient_required": true,
+    "human_authorization_required_before_dissemination": true,
+    "delivery_attempts_and_receipts_are_append_only": true,
+    "failed_delivery_and retry_history_are_preserved": true,
+    "recipient_feedback_is_separate_from_source_intelligence": true,
+    "corrections_create_new_revision_or lifecycle_records": true,
+    "recall_never_deletes_historical_evidence": true,
+    "retention_actions_are_policy_bound_and_auditable": true,
+    "deterministic_hash_bindings_are_required": true,
+    "existing_v22_distribution_primitives_are_reused": true,
+    "existing_v31_publication_primitives_are_reused": true
+  },
+  "entry_requirements": [
+    "inventory existing v22 distribution, receipt, recall, reissue, and release-history contracts",
+    "inventory existing v31 publication, approval, immutable revision, and supersession contracts",
+    "prove no existing v32-equivalent governance workspace is authoritative",
+    "define canonical audience, recipient, dissemination package, delivery, feedback, recall, and retention identifiers",
+    "define deterministic bindings from immutable published revision to every dissemination package",
+    "define human authorization roles, reasons, confirmation, and policy requirements",
+    "define recipient feedback isolation and correction escalation behavior",
+    "define focused, regression, full-suite, lint, browser, CI, and verification closure gates"
+  ],
+  "closure_contract": {
+    "focused_tests_required": true,
+    "v32_regression_required": true,
+    "full_suite_required": true,
+    "lint_required": true,
+    "browser_e2e_required": true,
+    "ci_required": true,
+    "full_verification_required": true,
+    "v12_10_19_verify_required": true,
+    "v32_closed": false,
+    "next_action": "implement_v32_1_audience_and_recipient_contract"
+  },
+  "next_action": "implement_v32_1_audience_and_recipient_contract"
+}
