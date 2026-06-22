@@ -100,6 +100,7 @@ from .integrity_gate_routes_v12_7_1 import register_integrity_gate_routes
 from .assertion_trust_routes_v12_8 import register_assertion_trust_routes
 from .assertion_trust_gate_routes_v12_8_1 import register_assertion_trust_gate_routes
 from .guided_investigation_routes_v12_9 import register_guided_investigation_routes
+from .publication_review_routes_v31_0 import register_publication_review_routes_v31_0
 
 install_support_bundle_route_health_fix_v13_34()
 app = create_app()
@@ -165,3 +166,4 @@ register_integrity_gate_routes(app)
 register_assertion_trust_routes(app)
 register_assertion_trust_gate_routes(app)
 register_guided_investigation_routes(app)
+register_publication_review_routes_v31_0(app)
