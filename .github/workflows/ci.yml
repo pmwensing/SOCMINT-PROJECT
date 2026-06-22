@@ -55,6 +55,14 @@ jobs:
           fi
           exit "$status"
 
+      - name: v31 publication browser E2E
+        env:
+          SOCMINT_SECRET_KEY: ci-v31-browser-e2e-secret-key-000000000000000000
+          SOCMINT_AUTO_CREATE_DB: "true"
+        run: |
+          python scripts/run_v31_7_publication_browser_e2e.py --json
+
+
       - name: Command Center export gate verification
         run: |
           pytest -q tests/test_command_center_export_gate_v13_40.py tests/test_export_blocker_routes_v13_39.py
