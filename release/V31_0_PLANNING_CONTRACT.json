@@ -18,17 +18,17 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "status": "v31_closed"
+    "status": "v31_7_production_wiring_validation_pending"
   },
   "validation": {
-    "focused": "passed_4",
-    "v31_regression": "passed_31",
-    "full_suite": "passed_1531",
-    "lint": "passed",
-    "browser_e2e": "passed_10_of_10",
-    "ci": "passed",
-    "full_verification": "passed",
-    "v12_10_19_verify": "passed"
+    "focused": "pending_final_head",
+    "v31_regression": "pending_final_head",
+    "full_suite": "pending_final_head",
+    "lint": "pending_final_head",
+    "browser_e2e": "pending_final_head",
+    "ci": "pending_final_head",
+    "full_verification": "pending_final_head",
+    "v12_10_19_verify": "pending_final_head"
   },
   "closure_contract": {
     "focused_tests_required": true,
@@ -36,8 +36,9 @@
     "full_suite_required": true,
     "lint_required": true,
     "browser_e2e_required": true,
-    "v31_closed": true,
-    "next_action": "begin_v32"
+    "production_wsgi_registration_required": true,
+    "v31_closed": false,
+    "next_action": "validate_production_wiring_and_close_v31"
   },
-  "next_action": "begin_v32"
+  "next_action": "validate_production_wiring_and_close_v31"
 }
