@@ -32,11 +32,15 @@ def _port() -> int:
 def _app(db: Path):
     os.environ["DATABASE_URL"] = f"sqlite:///{db}"
     os.environ["SOCMINT_DATA_DIR"] = str(db.parent)
-    os.environ["SOCMINT_SECRET_KEY"] = "v32-browser-e2e-stable-secret-key-32chars-minimum"
+    os.environ["SOCMINT_SECRET_KEY"] = (
+        "v32-browser-e2e-stable-secret-key-32chars-minimum"
+    )
     os.environ["SOCMINT_AUTO_CREATE_DB"] = "true"
 
     from src.socmint import database
-    from src.socmint import dissemination_product_review_routes_v32_7 as review_routes
+    from src.socmint import (
+        dissemination_product_review_routes_v32_7 as review_routes,
+    )
     from src.socmint.wsgi import app
 
     review_routes.actor_is_administrator = lambda actor: actor == USER
@@ -44,11 +48,18 @@ def _app(db: Path):
     database.ensure_configured()
     dbs = database.Session()
     try:
-        if not dbs.query(database.User).filter(database.User.username == USER).first():
+        user = (
+            dbs.query(database.User)
+            .filter(database.User.username == USER)
+            .first()
+        )
+        if not user:
             dbs.add(
                 database.User(
                     username=USER,
-                    password_hash=generate_password_hash("v32-e2e-internal"),
+                    password_hash=generate_password_hash(
+                        "v32-e2e-internal"
+                    ),
                     is_admin=True,
                     role="admin",
                     is_active=True,
@@ -68,8 +79,15 @@ def _app(db: Path):
     return app
 
 
-def _check(report: dict, key: str, ok: bool, detail: str = "") -> None:
-    report["checks"].append({"key": key, "ok": bool(ok), "detail": detail})
+def _check(
+    report: dict,
+    key: str,
+    ok: bool,
+    detail: str = "",
+) -> None:
+    report["checks"].append(
+        {"key": key, "ok": bool(ok), "detail": detail}
+    )
 
 
 def _get_json(driver, url: str) -> dict:
@@ -107,10 +125,17 @@ def run() -> dict:
             or shutil.which("chromium-browser")
             or shutil.which("google-chrome")
         )
-        executable = os.getenv("SOCMINT_CHROMEDRIVER") or shutil.which("chromedriver")
+        executable = (
+            os.getenv("SOCMINT_CHROMEDRIVER")
+            or shutil.which("chromedriver")
+        )
         if binary:
             options.binary_location = binary
-        service = ChromeService(executable_path=executable) if executable else ChromeService()
+        service = (
+            ChromeService(executable_path=executable)
+            if executable
+            else ChromeService()
+        )
         driver = webdriver.Chrome(service=service, options=options)
         base = f"http://127.0.0.1:{port}"
         driver.get(base + "/_v32_e2e_login")
@@ -123,18 +148,46 @@ def run() -> dict:
             driver.current_url,
         )
 
-        for key, path in [
-            ("audience_contracts_api", "/api/v1/dissemination-governance/audience-contracts"),
+        checks = [
+            (
+                "audience_contracts_api",
+                "/api/v1/dissemination-governance/audience-contracts",
+            ),
             ("packages_api", "/api/v1/dissemination-governance/packages"),
-            ("authorization_api", "/api/v1/dissemination-governance/authorization-decisions"),
-            ("attempts_api", "/api/v1/dissemination-governance/delivery-attempts"),
-            ("receipts_api", "/api/v1/dissemination-governance/delivery-receipts"),
-            ("feedback_api", "/api/v1/dissemination-governance/recipient-feedback"),
-            ("corrections_api", "/api/v1/dissemination-governance/correction-intakes"),
-            ("recalls_api", "/api/v1/dissemination-governance/recall-decisions"),
-            ("retention_api", "/api/v1/dissemination-governance/retention-decisions"),
-            ("lifecycle_api", "/api/v1/dissemination-governance/lifecycle-history"),
-        ]:
+            (
+                "authorization_api",
+                "/api/v1/dissemination-governance/authorization-decisions",
+            ),
+            (
+                "attempts_api",
+                "/api/v1/dissemination-governance/delivery-attempts",
+            ),
+            (
+                "receipts_api",
+                "/api/v1/dissemination-governance/delivery-receipts",
+            ),
+            (
+                "feedback_api",
+                "/api/v1/dissemination-governance/recipient-feedback",
+            ),
+            (
+                "corrections_api",
+                "/api/v1/dissemination-governance/correction-intakes",
+            ),
+            (
+                "recalls_api",
+                "/api/v1/dissemination-governance/recall-decisions",
+            ),
+            (
+                "retention_api",
+                "/api/v1/dissemination-governance/retention-decisions",
+            ),
+            (
+                "lifecycle_api",
+                "/api/v1/dissemination-governance/lifecycle-history",
+            ),
+        ]
+        for key, path in checks:
             result = _get_json(driver, base + path)
             _check(
                 report,
@@ -145,7 +198,9 @@ def run() -> dict:
 
         checkpoint = _get_json(
             driver,
-            base + "/api/v1/dissemination-governance/product-review-checkpoint",
+            base
+            + "/api/v1/dissemination-governance/"
+            "product-review-checkpoint",
         )
         _check(
             report,
@@ -182,7 +237,13 @@ def main() -> int:
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
     report = run()
-    print(json.dumps(report, indent=2 if args.json else None, sort_keys=True))
+    print(
+        json.dumps(
+            report,
+            indent=2 if args.json else None,
+            sort_keys=True,
+        )
+    )
     return 0 if report["failed_count"] == 0 else 1
 
 
