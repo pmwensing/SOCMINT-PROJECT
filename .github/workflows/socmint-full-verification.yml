@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - master
       - feat/v11.0-command-center
       - feat/v12.0-full-dossier-production-gate
   pull_request:
