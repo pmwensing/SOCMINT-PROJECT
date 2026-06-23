@@ -6,7 +6,16 @@ from .audience_package_authorization_panels_v33_3 import (
     build_case_audience_package_authorization_panels,
     build_case_governance_panel,
 )
+from .delivery_receipt_feedback_panels_routes_v33_4 import (
+    register_delivery_receipt_feedback_panels_routes_v33_4,
+)
+from .delivery_receipt_feedback_panels_v33_4 import (
+    build_case_delivery_receipt_feedback_panel,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
+
+
+V33_4_PANEL_NAMES = {"delivery", "receipt", "feedback", "correction"}
 
 
 def _authorized():
@@ -41,10 +50,17 @@ def register_audience_package_authorization_panels_routes_v33_3(app):
         actor, error = _authorized()
         if error:
             return error
-        payload = build_case_governance_panel(case_id, panel_name)
+        normalized_panel = str(panel_name or "").strip().lower()
+        if normalized_panel in V33_4_PANEL_NAMES:
+            payload = build_case_delivery_receipt_feedback_panel(
+                case_id, normalized_panel
+            )
+        else:
+            payload = build_case_governance_panel(case_id, normalized_panel)
         status_code = 200
         if payload.get("status") == "blocked":
             status_code = 422
         return jsonify(payload), status_code
 
+    register_delivery_receipt_feedback_panels_routes_v33_4(app)
     return app
