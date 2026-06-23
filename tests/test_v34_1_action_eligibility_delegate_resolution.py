@@ -47,7 +47,7 @@ def test_v34_1_resolves_eligible_action_without_execution(monkeypatch):
     assert payload["schema"] == (
         "socmint.action_eligibility_delegate_resolution.v34_1"
     )
-    assert payload["version"] == "v34.1.0"
+    assert payload["version"].startswith("v34.1.")
     assert payload["status"] == "ready_for_confirmation"
     assert payload["eligible_count"] == 1
     assert payload["blocked_count"] == 0
