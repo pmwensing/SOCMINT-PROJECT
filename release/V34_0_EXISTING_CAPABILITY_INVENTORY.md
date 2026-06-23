@@ -1,6 +1,6 @@
 # v34.0 — Existing Capability Inventory
 
-v34 must compose existing capabilities rather than create a parallel execution system.
+v34 composes existing capabilities rather than creating a parallel execution system.
 
 ## Authoritative v32 services to delegate to
 
@@ -31,22 +31,15 @@ v34 must compose existing capabilities rather than create a parallel execution s
 - AuditLog and authoritative domain histories
 - existing CI, full verification, production smoke, and browser E2E workflows
 
-## Proven gap
+## Implemented v34 composition layer
 
-v33 provides a coherent read and decision-support surface, but operators cannot yet invoke eligible authoritative governance actions from that workspace through one consistent, explicit confirmation contract.
+v34.1 adds deterministic action eligibility and delegate resolution over the canonical v33.2 action queue. The read model recognizes the eight supported governance actions, requires an exact authoritative delegate match, checks action-specific target identifiers, preserves explicit confirmation requirements, disables automatic execution, and emits deterministic resolution hashes.
 
-## Required v34 composition layer
+The v34.1 API is administrator-only and read-only. It does not invoke delegates or mutate source records.
 
-v34 should add:
+## Remaining gap
 
-- deterministic action eligibility evaluation
-- exact authoritative delegate resolution
-- explicit confirmation summaries
-- validated action inputs
-- replay or duplicate-submission protection
-- authoritative execution result and audit-record linkage
-- workspace refresh after completion
-- clear blocked and failed states with no mutation
+Operators still cannot review a canonical confirmation form, submit an idempotent confirmation, or invoke an authoritative service from the workspace. Those capabilities remain deferred to v34.2 and later slices.
 
 ## Non-goals
 
