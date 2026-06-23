@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="container py-4" data-workspace="v33.6">
+  <header class="mb-4">
+    <h1>{{ title }}</h1>
+    {% if payload.case_id %}<p><strong>Case:</strong> {{ payload.case_id }}</p>{% endif %}
+    <p><strong>Status:</strong> {{ payload.status }}</p>
+  </header>
+
+  {% if payload.error %}
+    <div class="alert alert-danger">{{ payload.error }}</div>
+  {% else %}
+    <section id="governance-summary" class="mb-4">
+      <h2>Governance Summary</h2>
+      <dl>
+        <dt>Blockers</dt><dd>{{ payload.summary.blocker_count }}</dd>
+        <dt>Available actions</dt><dd>{{ payload.summary.action_count }}</dd>
+        <dt>Current stage</dt><dd>{{ payload.summary.current_stage or "review" }}</dd>
+        <dt>Next action</dt><dd>{{ payload.summary.next_action or "review_case_governance" }}</dd>
+        <dt>Retention</dt><dd>{{ payload.summary.retention_state or "unassigned" }}</dd>
+      </dl>
+    </section>
+
+    <section id="action-queue" class="mb-4">
+      <h2>Action Queue</h2>
+      {% for item in payload.sections.action_queue.action_queue or [] %}
+        <article class="card mb-2"><div class="card-body">
+          <h3 class="h5">{{ item.action }}</h3>
+          <p>{{ item.rationale }}</p>
+          <p><strong>Stage:</strong> {{ item.stage }} · <strong>Confirmation:</strong> {{ item.confirmation_required }}</p>
+        </div></article>
+      {% else %}<p>No queued actions.</p>{% endfor %}
+    </section>
+
+    {% for group_name in ["audience_package_authorization", "delivery_receipt_feedback"] %}
+      <section id="{{ group_name }}" class="mb-4">
+        <h2>{{ group_name|replace("_", " ")|title }}</h2>
+        {% for panel_name, panel in payload.sections[group_name].panels.items() %}
+          <article class="card mb-2" data-panel="{{ panel_name }}"><div class="card-body">
+            <h3>{{ panel_name|title }}</h3>
+            <p><strong>Records:</strong> {{ panel.record_count }}</p>
+            <p><strong>Blockers:</strong> {{ panel.blockers|length }}</p>
+          </div></article>
+        {% endfor %}
+      </section>
+    {% endfor %}
+
+    <section id="lifecycle-timeline" class="mb-4">
+      <h2>Recall, Retention, and Lifecycle Timeline</h2>
+      {% for event in payload.sections.recall_retention_lifecycle.timeline or [] %}
+        <article class="card mb-2"><div class="card-body">
+          <h3 class="h5">{{ event.stage|title }} — {{ event.state }}</h3>
+          <p>{{ event.recorded_at or "Time unavailable" }}</p>
+        </div></article>
+      {% else %}<p>No lifecycle events.</p>{% endfor %}
+    </section>
+  {% endif %}
+</section>
+{% endblock %}
