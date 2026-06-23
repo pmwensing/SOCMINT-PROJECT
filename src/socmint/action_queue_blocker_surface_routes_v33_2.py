@@ -3,6 +3,9 @@ from __future__ import annotations
 from flask import jsonify, session
 
 from .action_queue_blocker_surface_v33_2 import build_case_action_queue
+from .audience_package_authorization_panels_routes_v33_3 import (
+    register_audience_package_authorization_panels_routes_v33_3,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -52,4 +55,5 @@ def register_action_queue_blocker_surface_routes_v33_2(app):
             }
         )
 
+    register_audience_package_authorization_panels_routes_v33_3(app)
     return app
