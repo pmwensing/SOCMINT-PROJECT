@@ -30,7 +30,9 @@ def _snapshot(case_id="case-1"):
                 "correction_review": {"correction_action": "editorial_review"},
             },
         },
-        "blockers": [{"key": "correction_review_required", "stage": "feedback"}],
+        "blockers": [
+            {"key": "correction_review_required", "stage": "feedback"}
+        ],
     }
 
 
@@ -55,8 +57,16 @@ def _patch(monkeypatch):
         panels,
         "delivery_attempt_history",
         lambda: [
-            {"case_id": "case-1", "delivery_attempt_id": "attempt-1", "attempt_result": "accepted"},
-            {"case_id": "case-1", "delivery_attempt_id": "attempt-2", "attempt_result": "failed"},
+            {
+                "case_id": "case-1",
+                "delivery_attempt_id": "attempt-1",
+                "attempt_result": "accepted",
+            },
+            {
+                "case_id": "case-1",
+                "delivery_attempt_id": "attempt-2",
+                "attempt_result": "failed",
+            },
         ],
     )
     monkeypatch.setattr(
@@ -69,7 +79,11 @@ def _patch(monkeypatch):
                 "delivery_result": "delivered",
                 "acknowledgement_required": True,
             },
-            {"case_id": "case-1", "delivery_receipt_id": "receipt-2", "delivery_result": "failed"},
+            {
+                "case_id": "case-1",
+                "delivery_receipt_id": "receipt-2",
+                "delivery_result": "failed",
+            },
         ],
     )
     monkeypatch.setattr(
@@ -79,13 +93,18 @@ def _patch(monkeypatch):
             {
                 "case_id": "case-1",
                 "recipient_feedback_id": "feedback-1",
-                "feedback_type": "acknowledgement",
+                "delivery_receipt_id": "receipt-1",
+                "feedback_payload": {"feedback_type": "acknowledgement"},
                 "correction_review_required": False,
             },
             {
                 "case_id": "case-1",
                 "recipient_feedback_id": "feedback-2",
-                "feedback_payload": {"feedback_type": "error_report", "severity": "high"},
+                "delivery_receipt_id": "receipt-2",
+                "feedback_payload": {
+                    "feedback_type": "error_report",
+                    "severity": "high",
+                },
                 "correction_review_required": True,
                 "api-token": "hidden",
             },
@@ -110,20 +129,36 @@ def test_v33_4_builds_current_state_panels(monkeypatch):
     _patch(monkeypatch)
     result = panels.build_case_delivery_receipt_feedback_panels("case-1")
 
-    assert result["panel_order"] == ["delivery", "receipt", "feedback", "correction"]
+    assert result["panel_order"] == [
+        "delivery",
+        "receipt",
+        "feedback",
+        "correction",
+    ]
     assert result["panels"]["delivery"]["state"]["current_result"] == "failed"
     assert result["panels"]["receipt"]["state"]["current_result"] == "failed"
-    assert result["panels"]["receipt"]["state"]["acknowledgement_verified"] is True
-    assert result["panels"]["feedback"]["state"]["unresolved_feedback_ids"] == ["feedback-2"]
-    assert result["panels"]["feedback"]["state"]["resolved_feedback_ids"] == ["feedback-1"]
+    assert (
+        result["panels"]["receipt"]["state"]["acknowledgement_verified"]
+        is False
+    )
+    assert result["panels"]["feedback"]["state"][
+        "unresolved_feedback_ids"
+    ] == ["feedback-2"]
+    assert result["panels"]["feedback"]["state"][
+        "resolved_feedback_ids"
+    ] == ["feedback-1"]
     assert result["status"] == "attention_required"
     assert result["panels_sha256"]
 
 
 def test_v33_4_sanitizes_sensitive_fields(monkeypatch):
     _patch(monkeypatch)
-    delivery = panels.build_case_delivery_receipt_feedback_panel("case-1", "delivery")
-    feedback = panels.build_case_delivery_receipt_feedback_panel("case-1", "feedback")
+    delivery = panels.build_case_delivery_receipt_feedback_panel(
+        "case-1", "delivery"
+    )
+    feedback = panels.build_case_delivery_receipt_feedback_panel(
+        "case-1", "feedback"
+    )
 
     assert "endpoint_reference" not in delivery["current"]
     assert "api-token" not in feedback["history"][1]
@@ -132,6 +167,8 @@ def test_v33_4_sanitizes_sensitive_fields(monkeypatch):
 
 def test_v33_4_blocks_invalid_panel(monkeypatch):
     _patch(monkeypatch)
-    result = panels.build_case_delivery_receipt_feedback_panel("case-1", "unknown")
+    result = panels.build_case_delivery_receipt_feedback_panel(
+        "case-1", "unknown"
+    )
     assert result["status"] == "blocked"
     assert result["blockers"][0]["key"] == "invalid_panel"
