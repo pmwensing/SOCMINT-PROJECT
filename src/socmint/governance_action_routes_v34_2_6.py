@@ -14,6 +14,7 @@ from .delivery_attempt_receipt_ledger_v32_4 import (
 )
 from .dissemination_package_v32_2 import assemble_dissemination_package
 from .governance_action_execution_v34_3_6 import execute_confirmed_action
+from .governance_execution_hardening_v34_8 import audit_delegate_signatures
 from .human_confirmation_framework_v34_2 import build_confirmation_contract
 from .recall_retention_lifecycle_v32_6 import (
     record_recall_decision,
@@ -70,6 +71,14 @@ def _actor_or_error():
 
 
 def register_governance_action_routes_v34_2_6(app):
+    @app.get("/api/v1/dissemination-governance/delegate-signature-audit")
+    def api_delegate_signature_audit_v34_8():
+        _, error = _actor_or_error()
+        if error:
+            return error
+        payload = audit_delegate_signatures(DELEGATES)
+        return jsonify(payload), 200 if payload["status"] == "passed" else 503
+
     @app.post(
         "/api/v1/dissemination-governance/cases/<case_id>/actions/"
         "<action>/confirmation"
