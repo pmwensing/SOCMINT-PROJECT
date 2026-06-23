@@ -19,18 +19,21 @@ v33 composes existing capabilities. It does not replace them.
 - existing command-center and workspace navigation patterns
 - current templates, API response conventions, AuditLog persistence, and deterministic hashing utilities
 
-## Implemented v33 composition layer
+## Implemented v33 composition layers
 
 v33.1 provides the canonical case-scoped governance snapshot. It composes existing v32 histories into a read-only model with current records, counts, unresolved review state, blockers, lifecycle summary, safe next actions, and a deterministic snapshot hash.
 
+v33.2 provides a deterministic action queue and blocker surface over the snapshot. Queue entries are ordered, hashed, human-confirmed, decision-support-only descriptions that identify the authoritative v32 delegate service and relevant target records.
+
 ## Remaining gap
 
-The canonical snapshot is not yet presented as a complete operator action queue or integrated browser workspace.
+The snapshot and action queue are not yet presented as integrated audience, package, authorization, delivery, feedback, recall, retention, and lifecycle browser panels.
 
 ## Non-goals
 
 - no parallel governance database or service family
 - no replacement for v32 APIs
+- no automatic queue-item execution
 - no automatic authorization, delivery, recall, or retention execution
 - no mutation of immutable publications or historical evidence
 - no raw endpoint, credential, or contact-secret exposure
