@@ -13,65 +13,107 @@ ACTION_DEFINITIONS: dict[str, dict[str, Any]] = {
         "stage": "audience",
         "priority": 10,
         "severity": "high",
-        "service": "audience_recipient_contract_v32_1.record_audience_recipient_contract",
+        "service": (
+            "audience_recipient_contract_v32_1."
+            "record_audience_recipient_contract"
+        ),
         "confirmation_required": True,
-        "rationale": "A case-scoped audience and recipient contract is required before package assembly.",
+        "rationale": (
+            "A case-scoped audience and recipient contract is required "
+            "before package assembly."
+        ),
     },
     "assemble_dissemination_package": {
         "stage": "package",
         "priority": 20,
         "severity": "high",
-        "service": "dissemination_package_v32_2.assemble_dissemination_package",
+        "service": (
+            "dissemination_package_v32_2.assemble_dissemination_package"
+        ),
         "confirmation_required": True,
-        "rationale": "An immutable published revision must be bound to the approved audience scope.",
+        "rationale": (
+            "An immutable published revision must be bound to the approved "
+            "audience scope."
+        ),
     },
     "record_authorization_policy_decision": {
         "stage": "authorization",
         "priority": 30,
         "severity": "critical",
-        "service": "authorization_policy_release_gate_v32_3.record_authorization_policy_decision",
+        "service": (
+            "authorization_policy_release_gate_v32_3."
+            "record_authorization_policy_decision"
+        ),
         "confirmation_required": True,
-        "rationale": "Human authorization and policy approval are required before delivery activity.",
+        "rationale": (
+            "Human authorization and policy approval are required before "
+            "delivery activity."
+        ),
     },
     "record_delivery_attempt": {
         "stage": "delivery",
         "priority": 40,
         "severity": "high",
-        "service": "delivery_attempt_receipt_ledger_v32_4.record_delivery_attempt",
+        "service": (
+            "delivery_attempt_receipt_ledger_v32_4.record_delivery_attempt"
+        ),
         "confirmation_required": True,
-        "rationale": "An approved package requires an append-only delivery-attempt record.",
+        "rationale": (
+            "An approved package requires an append-only delivery-attempt "
+            "record."
+        ),
     },
     "record_delivery_receipt": {
         "stage": "receipt",
         "priority": 50,
         "severity": "medium",
-        "service": "delivery_attempt_receipt_ledger_v32_4.record_delivery_receipt",
+        "service": (
+            "delivery_attempt_receipt_ledger_v32_4.record_delivery_receipt"
+        ),
         "confirmation_required": True,
-        "rationale": "Delivery outcome evidence must be recorded without altering the attempt.",
+        "rationale": (
+            "Delivery outcome evidence must be recorded without altering "
+            "the attempt."
+        ),
     },
     "record_correction_intake": {
         "stage": "feedback",
         "priority": 60,
         "severity": "high",
-        "service": "recipient_feedback_correction_intake_v32_5.record_correction_intake",
+        "service": (
+            "recipient_feedback_correction_intake_v32_5."
+            "record_correction_intake"
+        ),
         "confirmation_required": True,
-        "rationale": "Substantive recipient feedback requires explicit correction review.",
+        "rationale": (
+            "Substantive recipient feedback requires explicit correction "
+            "review."
+        ),
     },
     "record_recall_decision": {
         "stage": "recall",
         "priority": 70,
         "severity": "critical",
-        "service": "recall_retention_lifecycle_v32_6.record_recall_decision",
+        "service": (
+            "recall_retention_lifecycle_v32_6.record_recall_decision"
+        ),
         "confirmation_required": True,
-        "rationale": "A recall-review correction requires an explicit human recall decision.",
+        "rationale": (
+            "A recall-review correction requires an explicit human recall "
+            "decision."
+        ),
     },
     "record_retention_decision": {
         "stage": "retention",
         "priority": 80,
         "severity": "medium",
-        "service": "recall_retention_lifecycle_v32_6.record_retention_decision",
+        "service": (
+            "recall_retention_lifecycle_v32_6.record_retention_decision"
+        ),
         "confirmation_required": True,
-        "rationale": "The case requires a policy-bound retention disposition.",
+        "rationale": (
+            "The case requires a policy-bound retention disposition."
+        ),
     },
 }
 
@@ -82,9 +124,9 @@ def _targets(snapshot: dict[str, Any], action: str) -> dict[str, Any]:
     mapping = {
         "create_audience_contract": {},
         "assemble_dissemination_package": {
-            "audience_contract_id": (current.get("audience_contract") or {}).get(
-                "audience_contract_id"
-            )
+            "audience_contract_id": (
+                current.get("audience_contract") or {}
+            ).get("audience_contract_id")
         },
         "record_authorization_policy_decision": {
             "dissemination_package_id": (
@@ -100,15 +142,17 @@ def _targets(snapshot: dict[str, Any], action: str) -> dict[str, Any]:
             ).get("authorization_decision_id"),
         },
         "record_delivery_receipt": {
-            "delivery_attempt_id": (current.get("delivery_attempt") or {}).get(
-                "delivery_attempt_id"
-            )
+            "delivery_attempt_id": (
+                current.get("delivery_attempt") or {}
+            ).get("delivery_attempt_id")
         },
         "record_correction_intake": {
             "recipient_feedback_ids": state.get("open_feedback_ids") or []
         },
         "record_recall_decision": {
-            "correction_intake_ids": state.get("open_recall_correction_ids") or []
+            "correction_intake_ids": (
+                state.get("open_recall_correction_ids") or []
+            )
         },
         "record_retention_decision": {},
     }
@@ -156,7 +200,9 @@ def build_case_action_queue(case_id: str) -> dict[str, Any]:
             "blocker_key": blocker.get("key"),
             "rationale": definition["rationale"],
             "delegate_service": definition["service"],
-            "confirmation_required": definition["confirmation_required"],
+            "confirmation_required": definition[
+                "confirmation_required"
+            ],
             "targets": _targets(snapshot, action),
             "automatic_execution_allowed": False,
         }
@@ -164,7 +210,9 @@ def build_case_action_queue(case_id: str) -> dict[str, Any]:
         queue.append(
             {
                 **content,
-                "action_queue_item_id": f"action-queue-item-{digest[:24]}",
+                "action_queue_item_id": (
+                    f"action-queue-item-{digest[:24]}"
+                ),
                 "action_queue_item_sha256": digest,
             }
         )
@@ -182,8 +230,12 @@ def build_case_action_queue(case_id: str) -> dict[str, Any]:
         "critical_count": sum(
             1 for item in queue if item.get("severity") == "critical"
         ),
-        "blocking_count": sum(1 for item in queue if item.get("blocking") is True),
-        "next_action": queue[0]["action"] if queue else "review_case_governance",
+        "blocking_count": sum(
+            1 for item in queue if item.get("blocking") is True
+        ),
+        "next_action": (
+            queue[0]["action"] if queue else "review_case_governance"
+        ),
     }
     return {
         "schema": SCHEMA,
