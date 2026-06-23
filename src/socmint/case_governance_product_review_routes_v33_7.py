@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from flask import jsonify, render_template, session
 
+from .action_eligibility_delegate_resolution_routes_v34_1 import (
+    register_action_eligibility_delegate_resolution_routes_v34_1,
+)
 from .case_governance_product_review_v33_7 import (
     build_case_governance_product_review,
 )
@@ -45,4 +48,5 @@ def register_case_governance_product_review_routes_v33_7(app):
         )
         return jsonify(payload), 200 if payload.get("ready") else 503
 
+    register_action_eligibility_delegate_resolution_routes_v34_1(app)
     return app
