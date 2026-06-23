@@ -76,7 +76,13 @@ def test_v34_3_to_v34_6_execute_only_confirmed_allowlisted_delegate(monkeypatch)
     assert result["status"] == "executed"
     assert result["action_family"] == "recall_retention"
     assert result["automatic_execution"] is False
-    assert calls == [{"disposition": "retain"}]
+    assert calls == [
+        {
+            "disposition": "retain",
+            "case_id": "case-1",
+            "confirmed": True,
+        }
+    ]
 
     duplicate = execute_confirmed_action(
         contract, contract["confirmation_id"], True, "admin", delegates
