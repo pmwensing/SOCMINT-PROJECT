@@ -5,6 +5,9 @@ from flask import jsonify, session
 from .delivery_receipt_feedback_panels_v33_4 import (
     build_case_delivery_receipt_feedback_panels,
 )
+from .recall_retention_lifecycle_timeline_routes_v33_5 import (
+    register_recall_retention_lifecycle_timeline_routes_v33_5,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -29,4 +32,5 @@ def register_delivery_receipt_feedback_panels_routes_v33_4(app):
         payload = build_case_delivery_receipt_feedback_panels(case_id)
         return jsonify(payload), 200 if payload.get("status") != "blocked" else 422
 
+    register_recall_retention_lifecycle_timeline_routes_v33_5(app)
     return app
