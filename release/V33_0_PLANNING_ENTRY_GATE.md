@@ -18,7 +18,9 @@ The v33.0 commit itself was planning-only and added no runtime service, route, m
 
 v33.1 Case-Centric Governance Snapshot is implemented as a deterministic, read-only composition of the authoritative v32 governance records for one case.
 
-v33.2 Action Queue and Blocker Surface is implemented as a deterministic decision-support layer over that snapshot. It prioritizes safe next actions, identifies blockers and targets, states the required human confirmation, and names the authoritative v32 service that a future workspace action must invoke.
+v33.2 Action Queue and Blocker Surface is implemented as deterministic decision support over that snapshot. It prioritizes safe next actions and identifies the authoritative v32 service for each future action.
+
+v33.3 Audience, Package, and Authorization Panels are implemented as case-scoped, read-only views over the canonical snapshot, action queue, and v32 histories. Sensitive fields are removed, panel payloads are deterministically hashed, and displayed actions remain explicit human-confirmed v32 delegations.
 
 ## Reuse contract
 
@@ -28,7 +30,7 @@ v33 composes the completed v32 governance services and existing authenticated ca
 
 - no parallel governance backend
 - no source-record persistence or mutation
-- no automatic queue-item execution
+- no automatic panel action execution
 - no automatic authorization, delivery, recall, or retention action
 - no raw endpoint, credential, or contact-secret rendering
 - no case-access change
@@ -36,4 +38,4 @@ v33 composes the completed v32 governance services and existing authenticated ca
 
 ## Next action
 
-`implement_v33_3_audience_package_and_authorization_panels`
+`implement_v33_4_delivery_receipt_and_feedback_panels`
