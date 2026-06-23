@@ -12,23 +12,25 @@
 
 The production objective, eight-slice roadmap, workflow spine, capability inventory, scope boundaries, invariants, validation gates, and closure contract are defined.
 
-This first commit is planning-only. It adds no runtime service, route, template, migration, automatic action, access change, or historical-record mutation.
+The v33.0 commit itself was planning-only and added no runtime service, route, migration, automatic action, access change, or historical-record mutation.
+
+## Current status
+
+v33.1 Case-Centric Governance Snapshot is implemented as a deterministic, read-only composition of the authoritative v32 governance records for one case. It exposes counts, current records, unresolved review state, blockers, lifecycle summary, and safe next actions through one canonical API read model.
 
 ## Reuse contract
 
-v33 must compose the completed v32 governance services and the existing authenticated case/dashboard patterns. Operator actions must delegate to existing v32 service functions and retain their confirmation, policy, and append-only controls.
+v33 composes the completed v32 governance services and existing authenticated case/dashboard patterns. Future operator actions must delegate to existing v32 functions and retain their confirmation, policy, and append-only controls.
 
-## Core workspace contract
+## Preserved boundaries
 
-The workspace must:
-
-- be selected and rendered in a case context;
-- use one canonical read model for browser and API views;
-- show current state, blockers, history, and safe next actions;
-- keep mutating actions explicitly human-confirmed;
-- preserve separation among authorization, delivery, feedback, recall, and retention;
-- never render raw endpoints, credentials, or contact secrets.
+- no parallel governance backend
+- no source-record persistence or mutation
+- no automatic authorization, delivery, recall, or retention action
+- no raw endpoint, credential, or contact-secret rendering
+- no case-access change
+- no database migration
 
 ## Next action
 
-`implement_v33_1_case_centric_governance_snapshot`
+`implement_v33_2_action_queue_and_blocker_surface`
