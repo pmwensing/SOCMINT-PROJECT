@@ -66,6 +66,8 @@ def test_v33_3_builds_read_only_panels(monkeypatch):
     assert authorization["available_actions"][0]["action"] == (
         "record_authorization_policy_decision"
     )
+    assert authorization["state"]["current_outcome"] is None
+    assert authorization["state"]["delivery_eligible"] is False
     assert result["read_only"] is True
     assert result["actions_executed"] is False
     assert result["panels_sha256"]
@@ -83,6 +85,10 @@ def test_v33_3_sanitizes_sensitive_values(monkeypatch):
                 "audience_contract": {
                     "audience_contract_id": "audience-1",
                     "endpoint_reference": "secret-value",
+                    "nested": {
+                        "api-token": "hidden-token",
+                        "contact secret": "hidden-contact-secret",
+                    },
                 },
                 "dissemination_package": None,
                 "authorization_decision": None,
@@ -107,6 +113,7 @@ def test_v33_3_sanitizes_sensitive_values(monkeypatch):
                 "case_id": "case-1",
                 "audience_contract_id": "audience-1",
                 "contact_secret": "hidden",
+                "refreshToken": "hidden-refresh-token",
             }
         ],
     )
@@ -116,8 +123,66 @@ def test_v33_3_sanitizes_sensitive_values(monkeypatch):
     result = panels.build_case_governance_panel("case-1", "audience")
 
     assert "endpoint_reference" not in result["current"]
+    assert "api-token" not in result["current"]["nested"]
+    assert "contact secret" not in result["current"]["nested"]
     assert "contact_secret" not in result["history"][0]
+    assert "refreshToken" not in result["history"][0]
     assert result["sensitive_values_rendered"] is False
+
+
+def test_v33_3_delivery_eligibility_uses_current_authorization(monkeypatch):
+    monkeypatch.setattr(
+        panels,
+        "build_case_governance_snapshot",
+        lambda case_id: {
+            "status": "ready",
+            "case_id": case_id,
+            "snapshot_sha256": "snapshot-sha-1",
+            "current": {
+                "audience_contract": None,
+                "dissemination_package": None,
+                "authorization_decision": {
+                    "authorization_decision_id": "authorization-2",
+                    "result_status": "release_denied",
+                },
+            },
+            "blockers": [],
+        },
+    )
+    monkeypatch.setattr(
+        panels,
+        "build_case_action_queue",
+        lambda case_id: {
+            "queue_summary_sha256": "queue-sha-1",
+            "next_action": "review_case_governance",
+            "action_queue": [],
+        },
+    )
+    monkeypatch.setattr(panels, "audience_contract_history", lambda: [])
+    monkeypatch.setattr(panels, "dissemination_package_history", lambda: [])
+    monkeypatch.setattr(
+        panels,
+        "authorization_decision_history",
+        lambda: [
+            {
+                "case_id": "case-1",
+                "authorization_decision_id": "authorization-1",
+                "result_status": "approved_for_delivery_attempt",
+            },
+            {
+                "case_id": "case-1",
+                "authorization_decision_id": "authorization-2",
+                "result_status": "release_denied",
+            },
+        ],
+    )
+
+    result = panels.build_case_governance_panel("case-1", "authorization")
+
+    assert result["state"]["approved_count"] == 1
+    assert result["state"]["denied_count"] == 1
+    assert result["state"]["current_outcome"] == "release_denied"
+    assert result["state"]["delivery_eligible"] is False
 
 
 def test_v33_3_blocks_invalid_panel(monkeypatch):
