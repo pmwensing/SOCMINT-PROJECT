@@ -74,7 +74,7 @@ def test_v34_1_blocks_delegate_mismatch_and_missing_targets(monkeypatch):
             "action_queue": [
                 _queue_item(
                     delegate_service="unexpected.service",
-                    targets={"dissemination_package_id": "package-1"},
+                    targets={},
                 )
             ],
             "blockers": [],
@@ -92,7 +92,7 @@ def test_v34_1_blocks_delegate_mismatch_and_missing_targets(monkeypatch):
         "delegate_service_mismatch",
         "required_target_missing",
     }
-    assert resolution["missing_targets"] == ["authorization_decision_id"]
+    assert resolution["missing_targets"] == ["dissemination_package_id"]
 
 
 def test_v34_1_preserves_blocked_queue_state(monkeypatch):
