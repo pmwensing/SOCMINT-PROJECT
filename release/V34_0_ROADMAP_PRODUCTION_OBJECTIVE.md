@@ -10,15 +10,15 @@ v34 must not create a second execution backend, weaken policy controls, or autom
 
 **Human-Confirmed Case Governance Action Workspace**
 
-The workspace will begin from the canonical v33 case view, resolve action eligibility, identify the authoritative delegate service, present a deterministic confirmation summary, execute only after explicit operator confirmation, surface the authoritative result and audit record, and refresh the case workspace.
+The workspace begins from the canonical v33 case view, resolves action eligibility, identifies the authoritative delegate service, presents a deterministic confirmation summary, executes only after explicit operator confirmation, surfaces the authoritative result and audit record, and refreshes the case workspace.
 
 ## Roadmap
 
-### v34.0 — Planning Baseline and Execution Contract
-Defines the production objective, workflow spine, capability inventory, boundaries, invariants, validation gates, and closure contract. Planning-only.
+### v34.0 — Planning Baseline and Execution Contract — Implemented
+Defines the production objective, workflow spine, capability inventory, boundaries, invariants, validation gates, and closure contract.
 
-### v34.1 — Action Eligibility and Delegate Resolution
-Build a deterministic read model that maps eligible v33 queue items to exactly one existing authoritative v32 service and explains why blocked items cannot proceed.
+### v34.1 — Action Eligibility and Delegate Resolution — Implemented
+Provides a deterministic read model that maps eligible v33 queue items to exactly one registered authoritative v32 service, verifies required targets and confirmation constraints, and explains why blocked items cannot proceed. No delegate is invoked.
 
 ### v34.2 — Human Confirmation Form Framework
 Define browser and API confirmation contracts, deterministic summaries, replay protection, validation errors, cancellation, and audit context.
@@ -52,10 +52,10 @@ Verify the full operator flow, audit linkage, blocked-state behavior, browser/AP
 - no case-access change
 - no migration without a proven schema gap
 
-## Entry status
+## Current status
 
-v34.0 is planning-only. Runtime code, routes, migrations, and mutating actions remain unavailable until the planning gate passes.
+v34.1 is implemented as a read-only eligibility and delegate-resolution layer over the v33.2 action queue. It registers the eight supported governance actions, requires exact delegate matches, validates required targets, preserves explicit confirmation requirements, and never executes a service.
 
 ## Next action
 
-`implement_v34_1_action_eligibility_and_delegate_resolution`
+`implement_v34_2_human_confirmation_form_framework`
