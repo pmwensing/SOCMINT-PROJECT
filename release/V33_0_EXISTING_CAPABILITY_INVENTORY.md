@@ -25,17 +25,19 @@ v33.1 provides the canonical case-scoped governance snapshot. It composes existi
 
 v33.2 provides a deterministic action queue and blocker surface over the snapshot. Queue entries are ordered, hashed, human-confirmed, decision-support-only descriptions that identify the authoritative v32 delegate service and relevant target records.
 
+v33.3 provides case-scoped audience, package, and authorization panels. Each panel combines current state, full case history, blockers, and applicable action-queue entries while removing endpoint, credential, token, password, and contact-secret fields.
+
 ## Remaining gap
 
-The snapshot and action queue are not yet presented as integrated audience, package, authorization, delivery, feedback, recall, retention, and lifecycle browser panels.
+Delivery, receipt, feedback, correction, recall, retention, and lifecycle information is not yet exposed through the remaining integrated panel surfaces and browser workspace.
 
 ## Non-goals
 
 - no parallel governance database or service family
 - no replacement for v32 APIs
-- no automatic queue-item execution
+- no automatic panel or queue-item execution
 - no automatic authorization, delivery, recall, or retention execution
 - no mutation of immutable publications or historical evidence
-- no raw endpoint, credential, or contact-secret exposure
+- no raw endpoint, credential, token, password, or contact-secret exposure
 - no new connector family without a proven gap
 - no migration without a proven storage requirement
