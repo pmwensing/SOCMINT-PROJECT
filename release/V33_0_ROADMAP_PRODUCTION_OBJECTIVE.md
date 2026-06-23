@@ -2,20 +2,24 @@
 
 ## Production objective
 
-Turn the completed v32 dissemination-governance backend contracts into one coherent operator-facing, case-centric workspace that exposes current state, required human actions, blockers, history, and safe next steps.
-
-v33 is a composition and operator-experience program. It must reuse the existing v32 services and records rather than create a second governance backend.
+Turn the completed v32 dissemination-governance contracts into one coherent operator-facing, case-centric workspace showing current state, required human actions, blockers, history, and safe next steps.
 
 ## Primary workspace
 
 **Case-Centric Dissemination Command Surface**
 
+## Implementation status
+
+Implemented: v33.0 and v33.1.
+
+v33.1 adds a deterministic, read-only, case-scoped governance snapshot composed from existing v32 records. It exposes current records, counts, unresolved review state, blockers, and safe next actions without persisting or changing source records.
+
 ## Roadmap
 
 | Slice | Capability | Boundary |
 |---|---|---|
-| v33.0 | Planning Baseline and Workspace Contract | Planning only |
-| v33.1 | Case-Centric Governance Snapshot | Canonical read model |
+| v33.0 | Planning Baseline and Workspace Contract | Complete |
+| v33.1 | Case-Centric Governance Snapshot | Implemented; canonical read model |
 | v33.2 | Action Queue and Blocker Surface | Decision support only |
 | v33.3 | Audience, Package, and Authorization Panels | Delegate to v32 actions |
 | v33.4 | Delivery, Receipt, and Feedback Panels | Preserve evidence separation |
@@ -25,4 +29,4 @@ v33 is a composition and operator-experience program. It must reuse the existing
 
 ## Next action
 
-`implement_v33_1_case_centric_governance_snapshot`
+`implement_v33_2_action_queue_and_blocker_surface`
