@@ -10,8 +10,14 @@ def test_v33_2_builds_prioritized_read_only_action_queue(monkeypatch):
             "case_id": case_id,
             "snapshot_sha256": "snapshot-sha-1",
             "blockers": [
-                {"key": "authorization_approval_required", "stage": "authorization"},
-                {"key": "retention_decision_required", "stage": "retention"},
+                {
+                    "key": "authorization_approval_required",
+                    "stage": "authorization",
+                },
+                {
+                    "key": "retention_decision_required",
+                    "stage": "retention",
+                },
             ],
             "safe_next_actions": [
                 "record_authorization_policy_decision",
@@ -31,8 +37,13 @@ def test_v33_2_builds_prioritized_read_only_action_queue(monkeypatch):
     assert result["status"] == "attention_required"
     assert result["queue_count"] == 2
     assert result["critical_count"] == 1
-    assert result["next_action"] == "record_authorization_policy_decision"
-    assert [item["priority"] for item in result["action_queue"]] == [30, 80]
+    assert result["next_action"] == (
+        "record_authorization_policy_decision"
+    )
+    assert [item["priority"] for item in result["action_queue"]] == [
+        30,
+        80,
+    ]
     first = result["action_queue"][0]
     assert first["stage"] == "authorization"
     assert first["targets"]["dissemination_package_id"] == "package-1"
@@ -74,7 +85,9 @@ def test_v33_2_preserves_snapshot_blocked_state(monkeypatch):
         lambda case_id: {
             "status": "blocked",
             "case_id": "",
-            "blockers": [{"key": "case_id_required", "stage": "case"}],
+            "blockers": [
+                {"key": "case_id_required", "stage": "case"}
+            ],
         },
     )
 
