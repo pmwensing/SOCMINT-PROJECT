@@ -12,25 +12,24 @@
 
 The production objective, eight-slice roadmap, workflow spine, capability inventory, scope boundaries, production invariants, validation gates, and closure contract are defined.
 
-This v34.0 slice is planning-only. It adds no runtime action service, route, migration, transport invocation, automatic execution, access change, or historical-record mutation.
+v34.0 began as planning-only. v34.1 now adds the first runtime slice: a read-only action eligibility and delegate-resolution layer. It adds no mutating execution path, transport invocation, migration, access change, or historical-record mutation.
 
 ## Reuse contract
 
 v34 begins from the canonical v33 case-centric workspace and delegates every eligible mutating action to exactly one existing authoritative v32 service.
 
-The workspace may collect validated operator input and explicit confirmation, but it must not duplicate domain persistence, bypass policy or transition rules, or infer confirmation from navigation or form display.
+The workspace may collect validated operator input and explicit confirmation in later slices, but it must not duplicate domain persistence, bypass policy or transition rules, or infer confirmation from navigation or form display.
 
-## Required action lifecycle
+## Implemented v34.1 lifecycle
 
-1. Resolve the current case and canonical v33 workspace state.
-2. Evaluate action eligibility and blockers.
-3. Identify the authoritative v32 delegate service.
-4. Validate inputs without mutation.
-5. Present a deterministic impact and confirmation summary.
-6. Require explicit human confirmation.
-7. Invoke the authoritative service once with replay protection.
-8. Surface the authoritative result and audit-record reference.
-9. Refresh the canonical workspace state.
+1. Resolve the canonical v33.2 action queue for one case.
+2. Match each supported action to the fixed authoritative v32 delegate registry.
+3. Verify the queue delegate exactly matches that registry.
+4. Check action-specific required target identifiers.
+5. Verify explicit confirmation remains required.
+6. Verify automatic execution remains disabled.
+7. Return deterministic eligible or blocked resolutions.
+8. Do not invoke any delegate or mutate any source record.
 
 ## Preserved boundaries
 
@@ -46,10 +45,10 @@ The workspace may collect validated operator input and explicit confirmation, bu
 - no case-access change
 - no database migration without a proven schema gap
 
-## Validation gate
+## Current status
 
-The v34.0 planning contract test must verify the complete roadmap, planning-only status, reuse boundaries, and required authoritative-delegation invariants before v34.1 runtime work begins.
+v34.0 planning gate passed. v34.1 Action Eligibility and Delegate Resolution is implemented and under cumulative validation.
 
 ## Next action
 
-`implement_v34_1_action_eligibility_and_delegate_resolution`
+`implement_v34_2_human_confirmation_form_framework`
