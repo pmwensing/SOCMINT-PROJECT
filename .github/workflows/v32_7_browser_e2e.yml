@@ -29,15 +29,9 @@ jobs:
           pip install -r requirements-dev.txt --quiet
 
       - name: Run focused v32 tests
-        id: focused
-        continue-on-error: true
         run: |
-          set +e
-          pytest -q tests/test_v32*.py --tb=short -ra > /tmp/v32-focused.log 2>&1
-          status=$?
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          cat /tmp/v32-focused.log
-          exit 0
+          set -o pipefail
+          pytest -q tests/test_v32*.py --tb=short -ra 2>&1 | tee /tmp/v32-focused.log
 
       - name: Upload focused test diagnostics
         if: always()
@@ -47,10 +41,6 @@ jobs:
           path: /tmp/v32-focused.log
           if-no-files-found: error
           retention-days: 7
-
-      - name: Fail when focused tests fail
-        if: steps.focused.outputs.status != '0'
-        run: exit 1
 
       - name: Run v32 browser E2E
         run: python scripts/run_v32_7_dissemination_browser_e2e.py --json
