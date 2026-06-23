@@ -1,6 +1,6 @@
 {
   "schema": "socmint.v34.planning_contract.v34_0",
-  "version": "v34.1.0",
+  "version": "v34.7.0",
   "program": "Operational Case Governance Actions and Human-Confirmed Execution Workspace",
   "primary_workspace": "Human-Confirmed Case Governance Action Workspace",
   "production_objective": "Connect the completed v33 case-centric governance workspace to existing authoritative v32 services through explicit, case-scoped, human-confirmed action forms without creating a parallel execution system, weakening policy controls, or automating delivery, correction, recall, or retention decisions.",
@@ -18,12 +18,12 @@
   "roadmap": [
     {"slice": "v34.0", "title": "Planning Baseline and Execution Contract", "mode": "planning_entry_gate", "implemented": true},
     {"slice": "v34.1", "title": "Action Eligibility and Delegate Resolution", "mode": "execution_read_model", "implemented": true},
-    {"slice": "v34.2", "title": "Human Confirmation Form Framework", "mode": "confirmation_contract", "implemented": false},
-    {"slice": "v34.3", "title": "Audience Package and Authorization Actions", "mode": "authoritative_delegation", "implemented": false},
-    {"slice": "v34.4", "title": "Delivery and Retry Actions", "mode": "authoritative_delegation", "implemented": false},
-    {"slice": "v34.5", "title": "Feedback and Correction Actions", "mode": "authoritative_delegation", "implemented": false},
-    {"slice": "v34.6", "title": "Recall and Retention Actions", "mode": "authoritative_delegation", "implemented": false},
-    {"slice": "v34.7", "title": "Integrated Execution Review and Browser E2E", "mode": "closure_gate", "implemented": false}
+    {"slice": "v34.2", "title": "Human Confirmation Form Framework", "mode": "confirmation_contract", "implemented": true},
+    {"slice": "v34.3", "title": "Audience Package and Authorization Actions", "mode": "authoritative_delegation", "implemented": true},
+    {"slice": "v34.4", "title": "Delivery and Retry Actions", "mode": "authoritative_delegation", "implemented": true},
+    {"slice": "v34.5", "title": "Feedback and Correction Actions", "mode": "authoritative_delegation", "implemented": true},
+    {"slice": "v34.6", "title": "Recall and Retention Actions", "mode": "authoritative_delegation", "implemented": true},
+    {"slice": "v34.7", "title": "Integrated Execution Review and Browser E2E", "mode": "closure_gate", "implemented": true}
   ],
   "entry_gate": {
     "roadmap_defined": true,
@@ -36,7 +36,7 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "entry_gate_status": "v34_1_action_eligibility_delegate_resolution_implemented"
+    "entry_gate_status": "v34_7_execution_review_browser_e2e_implemented"
   },
   "scope_boundaries": {
     "automatic_action_execution": false,
@@ -70,13 +70,19 @@
     "eligibility_resolution_is_deterministic": true,
     "delegate_registry_must_match_v33_queue_delegate": true,
     "required_action_targets_are_explicit": true,
-    "eligibility_resolution_never_invokes_delegate": true
+    "eligibility_resolution_never_invokes_delegate": true,
+    "confirmation_contract_expires_on_state_change": true,
+    "duplicate_confirmation_is_rejected": true,
+    "delegate_execution_uses_explicit_allowlist": true,
+    "product_review_requires_complete_v34_route_set": true,
+    "browser_e2e_covers_all_v34_action_families": true
   },
   "validation": {
     "planning_contract": "passed",
     "focused": "pending_ci",
     "full_suite": "pending_ci",
     "lint": "pending_ci",
+    "browser_e2e": "pending_ci",
     "ci": "pending_ci",
     "full_verification": "pending_ci",
     "v12_10_19_verify": "pending_ci"
@@ -88,7 +94,7 @@
     "lint_required": true,
     "browser_e2e_required_by_v34_7": true,
     "v34_closed": false,
-    "next_action": "implement_v34_2_human_confirmation_form_framework"
+    "next_action": "run_v34_7_validation_and_prepare_release"
   },
-  "next_action": "implement_v34_2_human_confirmation_form_framework"
+  "next_action": "run_v34_7_validation_and_prepare_release"
 }
