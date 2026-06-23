@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from typing import Any, Callable
 
 from .action_eligibility_delegate_resolution_v34_1 import DELEGATE_REGISTRY
@@ -14,7 +15,7 @@ from .governance_execution_hardening_v34_8 import (
 from .human_confirmation_framework_v34_2 import validate_confirmation
 
 SCHEMA = "socmint.governance_action_execution.v34_3_6"
-VERSION = "v34.8.0"
+VERSION = "v34.8.1"
 
 ACTION_FAMILIES = {
     "create_audience_contract": "audience_package_authorization",
@@ -28,6 +29,30 @@ ACTION_FAMILIES = {
 }
 
 Delegate = Callable[..., Any]
+
+
+def _delegate_kwargs(
+    delegate: Delegate,
+    contract: dict[str, Any],
+    actor: str,
+) -> dict[str, Any]:
+    payload = {
+        **dict(contract.get("targets") or {}),
+        **dict(contract.get("inputs") or {}),
+    }
+    payload.setdefault("case_id", contract.get("case_id"))
+    payload.setdefault("confirmed", True)
+    parameters = inspect.signature(delegate).parameters
+    for actor_parameter in ("actor", "reviewer", "operator", "recorder"):
+        if actor_parameter in parameters:
+            payload.setdefault(actor_parameter, actor)
+            break
+    if any(
+        item.kind == inspect.Parameter.VAR_KEYWORD
+        for item in parameters.values()
+    ):
+        return payload
+    return {key: value for key, value in payload.items() if key in parameters}
 
 
 def execute_confirmed_action(
@@ -86,10 +111,7 @@ def execute_confirmed_action(
             "durable_replay_protection": True,
         }
 
-    kwargs = {
-        **dict(contract.get("targets") or {}),
-        **dict(contract.get("inputs") or {}),
-    }
+    kwargs = _delegate_kwargs(delegate, contract, actor)
     result = delegate(**kwargs)
     result_reference = _sha(
         {
@@ -119,6 +141,7 @@ def execute_confirmed_action(
         "action": action,
         "action_family": ACTION_FAMILIES[action],
         "delegate_service": service,
+        "delegate_arguments": sorted(kwargs),
         "actor": actor,
         "confirmation_sha256": confirmation_sha256,
         "confirmation_claim_audit": claim,
