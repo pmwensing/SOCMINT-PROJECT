@@ -52,7 +52,9 @@ def _sanitize(value: Any) -> Any:
     return value
 
 
-def _panel_items(payload: dict[str, Any], key: str, stages: set[str]) -> list[dict[str, Any]]:
+def _panel_items(
+    payload: dict[str, Any], key: str, stages: set[str]
+) -> list[dict[str, Any]]:
     return [
         _sanitize(item)
         for item in payload.get(key) or []
@@ -112,6 +114,19 @@ def _feedback_resolution_state(
     return unresolved, resolved
 
 
+def _feedback_type(item: dict[str, Any]) -> str:
+    return str((item.get("feedback_payload") or {}).get("feedback_type") or "")
+
+
+def _acknowledges_receipt(
+    item: dict[str, Any], delivery_receipt_id: str
+) -> bool:
+    return (
+        _feedback_type(item) == "acknowledgement"
+        and str(item.get("delivery_receipt_id") or "") == delivery_receipt_id
+    )
+
+
 def build_case_delivery_receipt_feedback_panels(case_id: str) -> dict[str, Any]:
     case_id = str(case_id or "").strip()
     snapshot = build_case_governance_snapshot(case_id)
@@ -140,6 +155,7 @@ def build_case_delivery_receipt_feedback_panels(case_id: str) -> dict[str, Any]:
     current_receipt = current.get("delivery_receipt") or {}
     current_feedback = current.get("recipient_feedback") or {}
     current_correction = current.get("correction_intake") or {}
+    current_receipt_id = str(current_receipt.get("delivery_receipt_id") or "")
 
     panels = {
         "delivery": _panel(
@@ -151,9 +167,15 @@ def build_case_delivery_receipt_feedback_panels(case_id: str) -> dict[str, Any]:
             queue=queue,
             state={
                 "attempt_count": len(attempts),
-                "accepted_count": sum(i.get("attempt_result") == "accepted" for i in attempts),
-                "failed_count": sum(i.get("attempt_result") == "failed" for i in attempts),
-                "blocked_count": sum(i.get("attempt_result") == "blocked" for i in attempts),
+                "accepted_count": sum(
+                    item.get("attempt_result") == "accepted" for item in attempts
+                ),
+                "failed_count": sum(
+                    item.get("attempt_result") == "failed" for item in attempts
+                ),
+                "blocked_count": sum(
+                    item.get("attempt_result") == "blocked" for item in attempts
+                ),
                 "current_result": current_attempt.get("attempt_result"),
                 "receipt_required": bool(current_attempt) and not bool(current_receipt),
             },
@@ -167,13 +189,23 @@ def build_case_delivery_receipt_feedback_panels(case_id: str) -> dict[str, Any]:
             queue=queue,
             state={
                 "receipt_count": len(receipts),
-                "delivered_count": sum(i.get("delivery_result") == "delivered" for i in receipts),
-                "failed_count": sum(i.get("delivery_result") == "failed" for i in receipts),
-                "pending_count": sum(i.get("delivery_result") == "pending" for i in receipts),
+                "delivered_count": sum(
+                    item.get("delivery_result") == "delivered" for item in receipts
+                ),
+                "failed_count": sum(
+                    item.get("delivery_result") == "failed" for item in receipts
+                ),
+                "pending_count": sum(
+                    item.get("delivery_result") == "pending" for item in receipts
+                ),
                 "current_result": current_receipt.get("delivery_result"),
-                "acknowledgement_required": current_receipt.get("acknowledgement_required") is True,
-                "acknowledgement_verified": any(
-                    i.get("feedback_type") == "acknowledgement" for i in feedback
+                "acknowledgement_required": (
+                    current_receipt.get("acknowledgement_required") is True
+                ),
+                "acknowledgement_verified": bool(current_receipt_id)
+                and any(
+                    _acknowledges_receipt(item, current_receipt_id)
+                    for item in feedback
                 ),
             },
         ),
@@ -186,8 +218,10 @@ def build_case_delivery_receipt_feedback_panels(case_id: str) -> dict[str, Any]:
             queue=queue,
             state={
                 "feedback_count": len(feedback),
-                "current_type": (current_feedback.get("feedback_payload") or {}).get("feedback_type"),
-                "current_severity": (current_feedback.get("feedback_payload") or {}).get("severity"),
+                "current_type": _feedback_type(current_feedback),
+                "current_severity": (
+                    current_feedback.get("feedback_payload") or {}
+                ).get("severity"),
                 "unresolved_feedback_ids": unresolved_ids,
                 "resolved_feedback_ids": resolved_ids,
                 "unresolved_count": len(unresolved_ids),
@@ -202,18 +236,27 @@ def build_case_delivery_receipt_feedback_panels(case_id: str) -> dict[str, Any]:
             queue=queue,
             state={
                 "correction_count": len(corrections),
-                "current_action": (current_correction.get("correction_review") or {}).get("correction_action"),
+                "current_action": (
+                    current_correction.get("correction_review") or {}
+                ).get("correction_action"),
                 "new_revision_review_count": sum(
-                    (i.get("correction_review") or {}).get("correction_action") == "new_revision_review"
-                    for i in corrections
+                    (item.get("correction_review") or {}).get(
+                        "correction_action"
+                    )
+                    == "new_revision_review"
+                    for item in corrections
                 ),
                 "recall_review_count": sum(
-                    (i.get("correction_review") or {}).get("correction_action") == "recall_review"
-                    for i in corrections
+                    (item.get("correction_review") or {}).get(
+                        "correction_action"
+                    )
+                    == "recall_review"
+                    for item in corrections
                 ),
                 "pending_action_count": sum(
-                    i.get("correction_state") == "intake_recorded_pending_action"
-                    for i in corrections
+                    item.get("correction_state")
+                    == "intake_recorded_pending_action"
+                    for item in corrections
                 ),
             },
         ),
@@ -228,7 +271,11 @@ def build_case_delivery_receipt_feedback_panels(case_id: str) -> dict[str, Any]:
     return {
         "schema": SCHEMA,
         "version": VERSION,
-        "status": "attention_required" if any(p.get("blockers") for p in panels.values()) else "ready",
+        "status": (
+            "attention_required"
+            if any(panel.get("blockers") for panel in panels.values())
+            else "ready"
+        ),
         **content,
         "panels_sha256": _sha(content),
         "read_only": True,
@@ -238,11 +285,15 @@ def build_case_delivery_receipt_feedback_panels(case_id: str) -> dict[str, Any]:
         "human_confirmation_required": True,
         "source_records_mutated": False,
         "raw_endpoint_or_contact_secret_rendered": False,
-        "next_action": queue.get("next_action") or "review_delivery_receipt_feedback",
+        "next_action": (
+            queue.get("next_action") or "review_delivery_receipt_feedback"
+        ),
     }
 
 
-def build_case_delivery_receipt_feedback_panel(case_id: str, panel_name: str) -> dict[str, Any]:
+def build_case_delivery_receipt_feedback_panel(
+    case_id: str, panel_name: str
+) -> dict[str, Any]:
     payload = build_case_delivery_receipt_feedback_panels(case_id)
     if payload.get("status") == "blocked":
         return payload
