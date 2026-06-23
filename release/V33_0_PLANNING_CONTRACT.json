@@ -99,7 +99,7 @@
     "full_verification_required": true,
     "v12_10_19_verify_required": true,
     "v33_closed": true,
-    "next_action": "merge_v33_release"
+    "next_action": "prepare_v33_merge"
   },
-  "next_action": "merge_v33_release"
+  "next_action": "prepare_v33_merge"
 }
