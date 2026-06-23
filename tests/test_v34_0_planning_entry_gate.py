@@ -83,7 +83,7 @@ def test_v34_0_requires_authoritative_human_confirmed_delegation():
         "workspace_refreshes_after_authoritative_execution",
         "idempotency_or_replay_protection_is_required",
         "authorization_delivery_feedback_recall_and_retention_boundaries_remain_distinct",
-        "no_raw_endpoint_credential_token_password_or_contact_secret_is_rendered",
+        "no_raw_secret_material_is_rendered",
         "browser_and_api_actions_share_one_canonical_contract",
         "failed_or_blocked_actions_do_not_mutate_state",
         "bulk_actions_are_unavailable_without_separate_reviewed_contract",
