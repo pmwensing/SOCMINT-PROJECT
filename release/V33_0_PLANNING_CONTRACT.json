@@ -1,6 +1,6 @@
 {
   "schema": "socmint.v33.planning_contract.v33_0",
-  "version": "v33.1.0",
+  "version": "v33.2.0",
   "program": "Operational Dissemination Governance Workspace and Case-Centric Command Surface",
   "primary_workspace": "Case-Centric Dissemination Command Surface",
   "production_objective": "Turn the completed v32 dissemination-governance backend contracts into one coherent operator-facing, case-centric workspace that exposes current state, required human actions, blockers, history, and safe next steps without creating a parallel governance system or bypassing existing authorization, delivery, feedback, recall, retention, and lifecycle controls.",
@@ -19,7 +19,7 @@
   "roadmap": [
     {"slice": "v33.0", "title": "Planning Baseline and Workspace Contract", "mode": "planning_entry_gate", "implemented": true},
     {"slice": "v33.1", "title": "Case-Centric Governance Snapshot", "mode": "read_model", "implemented": true},
-    {"slice": "v33.2", "title": "Action Queue and Blocker Surface", "mode": "operator_decision_support", "implemented": false},
+    {"slice": "v33.2", "title": "Action Queue and Blocker Surface", "mode": "operator_decision_support", "implemented": true},
     {"slice": "v33.3", "title": "Audience, Package, and Authorization Panels", "mode": "workflow_composition", "implemented": false},
     {"slice": "v33.4", "title": "Delivery, Receipt, and Feedback Panels", "mode": "evidence_and_feedback_surface", "implemented": false},
     {"slice": "v33.5", "title": "Recall, Retention, and Lifecycle Timeline", "mode": "lifecycle_surface", "implemented": false},
@@ -37,7 +37,7 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "entry_gate_status": "v33_1_case_centric_governance_snapshot_implemented"
+    "entry_gate_status": "v33_2_action_queue_and_blocker_surface_implemented"
   },
   "scope_boundaries": {
     "parallel_governance_backend": false,
@@ -62,7 +62,11 @@
     "no_raw_endpoint_or_contact_secret_is_rendered": true,
     "browser_and_api_views_share_one_canonical_read_model": true,
     "snapshot_is_deterministically_hashed": true,
-    "snapshot_does_not_persist_or_mutate_source_records": true
+    "snapshot_does_not_persist_or_mutate_source_records": true,
+    "action_queue_is_deterministically_ordered": true,
+    "action_queue_is_decision_support_only": true,
+    "automatic_action_execution_is_unavailable": true,
+    "every_queue_item_identifies_its_v32_delegate_service": true
   },
   "validation": {
     "focused": "pending",
@@ -84,7 +88,7 @@
     "full_verification_required": true,
     "v12_10_19_verify_required": true,
     "v33_closed": false,
-    "next_action": "implement_v33_2_action_queue_and_blocker_surface"
+    "next_action": "implement_v33_3_audience_package_and_authorization_panels"
   },
-  "next_action": "implement_v33_2_action_queue_and_blocker_surface"
+  "next_action": "implement_v33_3_audience_package_and_authorization_panels"
 }
