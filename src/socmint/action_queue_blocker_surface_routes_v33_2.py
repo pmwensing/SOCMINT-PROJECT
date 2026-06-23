@@ -24,7 +24,10 @@ def register_action_queue_blocker_surface_routes_v33_2(app):
         if error:
             return error
         payload = build_case_action_queue(case_id)
-        return jsonify(payload), 200 if payload.get("status") != "blocked" else 422
+        status_code = 200
+        if payload.get("status") == "blocked":
+            status_code = 422
+        return jsonify(payload), status_code
 
     @app.get(
         "/api/v1/dissemination-governance/cases/<case_id>/blockers"
