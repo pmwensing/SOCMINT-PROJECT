@@ -3,7 +3,9 @@ from src.socmint import case_governance_snapshot_v33_1 as snapshot
 
 def _patch_histories(monkeypatch, *, populated: bool = True):
     case_id = "case-1"
-    audience = [{"case_id": case_id, "audience_contract_id": "audience-1"}]
+    audience = [
+        {"case_id": case_id, "audience_contract_id": "audience-1"}
+    ]
     package = [
         {
             "case_id": case_id,
@@ -34,29 +36,65 @@ def _patch_histories(monkeypatch, *, populated: bool = True):
     if not populated:
         rows = [[] for _ in rows]
 
-    monkeypatch.setattr(snapshot, "audience_contract_history", lambda: rows[0])
-    monkeypatch.setattr(snapshot, "dissemination_package_history", lambda: rows[1])
-    monkeypatch.setattr(snapshot, "authorization_decision_history", lambda: rows[2])
-    monkeypatch.setattr(snapshot, "delivery_attempt_history", lambda: rows[3])
-    monkeypatch.setattr(snapshot, "delivery_receipt_history", lambda: rows[4])
+    monkeypatch.setattr(
+        snapshot,
+        "audience_contract_history",
+        lambda: rows[0],
+    )
+    monkeypatch.setattr(
+        snapshot,
+        "dissemination_package_history",
+        lambda: rows[1],
+    )
+    monkeypatch.setattr(
+        snapshot,
+        "authorization_decision_history",
+        lambda: rows[2],
+    )
+    monkeypatch.setattr(
+        snapshot,
+        "delivery_attempt_history",
+        lambda: rows[3],
+    )
+    monkeypatch.setattr(
+        snapshot,
+        "delivery_receipt_history",
+        lambda: rows[4],
+    )
     monkeypatch.setattr(snapshot, "recipient_feedback_history", lambda: [])
     monkeypatch.setattr(snapshot, "correction_intake_history", lambda: [])
     monkeypatch.setattr(snapshot, "recall_decision_history", lambda: [])
     monkeypatch.setattr(
         snapshot,
         "retention_decision_history",
-        lambda: ([{"case_id": case_id, "retention_decision_id": "retention-1"}] if populated else []),
+        lambda: (
+            [
+                {
+                    "case_id": case_id,
+                    "retention_decision_id": "retention-1",
+                }
+            ]
+            if populated
+            else []
+        ),
     )
     monkeypatch.setattr(
         snapshot,
         "current_retention_state",
         lambda value: "retained" if populated else "unassigned",
     )
-    monkeypatch.setattr(snapshot, "current_recall_state", lambda value: "not_recalled")
+    monkeypatch.setattr(
+        snapshot,
+        "current_recall_state",
+        lambda value: "not_recalled",
+    )
     monkeypatch.setattr(
         snapshot,
         "lifecycle_snapshot",
-        lambda value: {"case_id": value, "event_count": 5 if populated else 0},
+        lambda value: {
+            "case_id": value,
+            "event_count": 5 if populated else 0,
+        },
     )
 
 
