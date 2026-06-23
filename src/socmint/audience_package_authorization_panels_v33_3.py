@@ -16,8 +16,7 @@ SENSITIVE_KEY_FRAGMENTS = (
     "contact_secret",
     "credential",
     "password",
-    "access_token",
-    "refresh_token",
+    "token",
 )
 PANEL_STAGES = {
     "audience": {"audience"},
@@ -30,12 +29,17 @@ def _for_case(rows: list[dict[str, Any]], case_id: str) -> list[dict[str, Any]]:
     return [row for row in rows if str(row.get("case_id") or "") == case_id]
 
 
+def _is_sensitive_key(key: Any) -> bool:
+    normalized = str(key).strip().lower().replace("-", "_").replace(" ", "_")
+    return any(fragment in normalized for fragment in SENSITIVE_KEY_FRAGMENTS)
+
+
 def _sanitize(value: Any) -> Any:
     if isinstance(value, dict):
         return {
             key: _sanitize(item)
             for key, item in value.items()
-            if not any(fragment in key.lower() for fragment in SENSITIVE_KEY_FRAGMENTS)
+            if not _is_sensitive_key(key)
         }
     if isinstance(value, list):
         return [_sanitize(item) for item in value]
@@ -114,6 +118,10 @@ def build_case_audience_package_authorization_panels(
     packages = _for_case(dissemination_package_history(), case_id)
     decisions = _for_case(authorization_decision_history(), case_id)
     current = snapshot.get("current") or {}
+    current_decision = current.get("authorization_decision") or {}
+    current_outcome = current_decision.get("result_status") or current_decision.get(
+        "status"
+    )
 
     approved = [
         item
@@ -145,9 +153,9 @@ def build_case_audience_package_authorization_panels(
             state={
                 "configured": bool(audiences),
                 "recipient_count": len(
-                    (
-                        current.get("audience_contract") or {}
-                    ).get("recipient_inventory")
+                    (current.get("audience_contract") or {}).get(
+                        "recipient_inventory"
+                    )
                     or []
                 ),
             },
@@ -178,7 +186,9 @@ def build_case_audience_package_authorization_panels(
                 "approved_count": len(approved),
                 "denied_count": len(denied),
                 "held_count": len(held),
-                "delivery_eligible": bool(approved),
+                "current_outcome": current_outcome,
+                "delivery_eligible": current_outcome
+                == "approved_for_delivery_attempt",
             },
         ),
     }
