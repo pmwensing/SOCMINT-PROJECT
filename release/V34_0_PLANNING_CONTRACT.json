@@ -1,0 +1,88 @@
+{
+  "schema": "socmint.v34.planning_contract.v34_0",
+  "version": "v34.0.0",
+  "program": "Operational Case Governance Actions and Human-Confirmed Execution Workspace",
+  "primary_workspace": "Human-Confirmed Case Governance Action Workspace",
+  "production_objective": "Connect the completed v33 case-centric governance workspace to existing authoritative v32 services through explicit, case-scoped, human-confirmed action forms without creating a parallel execution system, weakening policy controls, or automating delivery, correction, recall, or retention decisions.",
+  "workflow_spine": [
+    "case_selection",
+    "workspace_state_review",
+    "action_eligibility_resolution",
+    "delegate_service_resolution",
+    "operator_confirmation",
+    "authoritative_service_execution",
+    "result_and_audit_capture",
+    "workspace_refresh",
+    "product_review_and_closure"
+  ],
+  "roadmap": [
+    {"slice": "v34.0", "title": "Planning Baseline and Execution Contract", "mode": "planning_entry_gate", "implemented": true},
+    {"slice": "v34.1", "title": "Action Eligibility and Delegate Resolution", "mode": "execution_read_model", "implemented": false},
+    {"slice": "v34.2", "title": "Human Confirmation Form Framework", "mode": "confirmation_contract", "implemented": false},
+    {"slice": "v34.3", "title": "Audience Package and Authorization Actions", "mode": "authoritative_delegation", "implemented": false},
+    {"slice": "v34.4", "title": "Delivery and Retry Actions", "mode": "authoritative_delegation", "implemented": false},
+    {"slice": "v34.5", "title": "Feedback and Correction Actions", "mode": "authoritative_delegation", "implemented": false},
+    {"slice": "v34.6", "title": "Recall and Retention Actions", "mode": "authoritative_delegation", "implemented": false},
+    {"slice": "v34.7", "title": "Integrated Execution Review and Browser E2E", "mode": "closure_gate", "implemented": false}
+  ],
+  "entry_gate": {
+    "roadmap_defined": true,
+    "production_objective_defined": true,
+    "primary_workspace_defined": true,
+    "workflow_spine_defined": true,
+    "scope_boundaries_defined": true,
+    "production_invariants_defined": true,
+    "existing_capability_inventory_defined": true,
+    "runtime_code_added": false,
+    "route_added": false,
+    "migration_added": false,
+    "entry_gate_status": "v34_0_planning_entry_gate_defined"
+  },
+  "scope_boundaries": {
+    "automatic_action_execution": false,
+    "parallel_execution_backend": false,
+    "direct_transport_logic_in_workspace": false,
+    "duplicate_governance_persistence": false,
+    "v32_validation_or_transition_bypass": false,
+    "action_without_explicit_confirmation": false,
+    "bulk_delivery_recall_or_retention_by_default": false,
+    "published_or_historical_record_mutation": false,
+    "secret_or_endpoint_exposure": false,
+    "case_access_change": false,
+    "migration_allowed_without_proven_schema_gap": false
+  },
+  "production_invariants": {
+    "v32_services_remain_authoritative": true,
+    "v33_workspace_remains_canonical_read_surface": true,
+    "actions_are_case_scoped": true,
+    "every_action_resolves_one_authoritative_delegate": true,
+    "every_mutating_action_requires_explicit_human_confirmation": true,
+    "eligibility_is_checked_before_confirmation": true,
+    "confirmation_payload_is_deterministically_summarized": true,
+    "execution_result_identifies_authoritative_audit_record": true,
+    "workspace_refreshes_after_authoritative_execution": true,
+    "idempotency_or_replay_protection_is_required": true,
+    "authorization_delivery_feedback_recall_and_retention_boundaries_remain_distinct": true,
+    "no_raw_endpoint_credential_token_password_or_contact_secret_is_rendered": true,
+    "browser_and_api_actions_share_one_canonical_contract": true,
+    "failed_or_blocked_actions_do_not_mutate_state": true,
+    "bulk_actions_are_unavailable_without_separate_reviewed_contract": true
+  },
+  "validation": {
+    "planning_contract": "pending_ci",
+    "focused": "pending_ci",
+    "full_suite": "pending_ci",
+    "lint": "pending_ci",
+    "ci": "pending_ci"
+  },
+  "closure_contract": {
+    "planning_contract_required": true,
+    "focused_tests_required": true,
+    "full_suite_required": true,
+    "lint_required": true,
+    "browser_e2e_required_by_v34_7": true,
+    "v34_closed": false,
+    "next_action": "implement_v34_1_action_eligibility_and_delegate_resolution"
+  },
+  "next_action": "implement_v34_1_action_eligibility_and_delegate_resolution"
+}
