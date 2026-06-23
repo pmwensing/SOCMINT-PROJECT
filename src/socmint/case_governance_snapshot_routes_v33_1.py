@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from flask import jsonify, session
 
+from .action_queue_blocker_surface_routes_v33_2 import (
+    register_action_queue_blocker_surface_routes_v33_2,
+)
 from .case_governance_snapshot_v33_1 import build_case_governance_snapshot
 from .user_account_workspace_v28_1 import actor_is_administrator
 
@@ -26,4 +29,5 @@ def register_case_governance_snapshot_routes_v33_1(app):
         payload = build_case_governance_snapshot(case_id)
         return jsonify(payload), 200 if payload.get("status") != "blocked" else 422
 
+    register_action_queue_blocker_surface_routes_v33_2(app)
     return app
