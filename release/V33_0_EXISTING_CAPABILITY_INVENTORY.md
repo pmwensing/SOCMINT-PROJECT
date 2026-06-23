@@ -19,9 +19,13 @@ v33 composes existing capabilities. It does not replace them.
 - existing command-center and workspace navigation patterns
 - current templates, API response conventions, AuditLog persistence, and deterministic hashing utilities
 
-## Proven gap
+## Implemented v33 composition layer
 
-The repository has complete v32 backend contracts but no single case-centric operator surface that summarizes all dissemination-governance state and guides safe actions across the full lifecycle.
+v33.1 provides the canonical case-scoped governance snapshot. It composes existing v32 histories into a read-only model with current records, counts, unresolved review state, blockers, lifecycle summary, safe next actions, and a deterministic snapshot hash.
+
+## Remaining gap
+
+The canonical snapshot is not yet presented as a complete operator action queue or integrated browser workspace.
 
 ## Non-goals
 
