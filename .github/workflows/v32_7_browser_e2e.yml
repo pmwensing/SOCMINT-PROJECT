@@ -1,14 +1,20 @@
-name: SOCMINT v32.7 Browser E2E
+name: SOCMINT v32.7 and v33.7 Browser E2E
 
 on:
   pull_request:
     paths:
       - "src/socmint/*v32*.py"
+      - "src/socmint/*v33*.py"
       - "src/socmint/templates/*v32*.html"
+      - "src/socmint/templates/*v33*.html"
       - "scripts/run_v32_7_dissemination_browser_e2e.py"
+      - "scripts/run_v33_7_case_governance_browser_e2e.py"
       - "tests/test_v32*.py"
+      - "tests/test_v33*.py"
       - "release/V32*.md"
       - "release/V32*.json"
+      - "release/V33*.md"
+      - "release/V33*.json"
       - ".github/workflows/v32_7_browser_e2e.yml"
   workflow_dispatch:
 
@@ -28,19 +34,22 @@ jobs:
           python -m pip install --upgrade pip --quiet
           pip install -r requirements-dev.txt --quiet
 
-      - name: Run focused v32 tests
+      - name: Run focused v32 and v33 tests
         run: |
           set -o pipefail
-          pytest -q tests/test_v32*.py --tb=short -ra 2>&1 | tee /tmp/v32-focused.log
+          pytest -q tests/test_v32*.py tests/test_v33*.py --tb=short -ra 2>&1 | tee /tmp/v32-v33-focused.log
 
       - name: Upload focused test diagnostics
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: v32-focused-test-diagnostics-${{ github.run_id }}
-          path: /tmp/v32-focused.log
+          name: v32-v33-focused-test-diagnostics-${{ github.run_id }}
+          path: /tmp/v32-v33-focused.log
           if-no-files-found: error
           retention-days: 7
 
       - name: Run v32 browser E2E
         run: python scripts/run_v32_7_dissemination_browser_e2e.py --json
+
+      - name: Run v33 browser E2E
+        run: python scripts/run_v33_7_case_governance_browser_e2e.py

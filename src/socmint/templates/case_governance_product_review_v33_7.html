@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="container py-4" data-product-review="v33.7">
+  <h1>{{ title }}</h1>
+  <p><strong>Status:</strong> {{ payload.status }}</p>
+  <p><strong>Ready:</strong> {{ payload.ready }}</p>
+  {% if payload.missing_routes %}
+    <h2>Missing Routes</h2>
+    <ul>{% for route in payload.missing_routes %}<li>{{ route }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if payload.checks %}
+    <h2>Closure Checks</h2>
+    <ul>{% for name, passed in payload.checks.items() %}<li data-check="{{ name }}">{{ name }}: {{ passed }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if payload.review_sha256 %}<p><strong>Review hash:</strong> {{ payload.review_sha256 }}</p>{% endif %}
+</section>
+{% endblock %}
