@@ -37,7 +37,7 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "entry_gate_status": "v32_7_product_review_browser_e2e_implemented"
+    "entry_gate_status": "v32_closed"
   },
   "scope_boundaries": {
     "automatic_external_transmission": false,
@@ -80,14 +80,14 @@
     "define focused, regression, full-suite, lint, browser, CI, and verification closure gates"
   ],
   "validation": {
-    "focused": "pending",
-    "v32_regression": "pending",
-    "full_suite": "pending",
-    "lint": "pending",
-    "browser_e2e": "pending",
-    "ci": "pending",
-    "full_verification": "pending",
-    "v12_10_19_verify": "pending"
+    "focused": "passed",
+    "v32_regression": "passed",
+    "full_suite": "passed",
+    "lint": "passed",
+    "browser_e2e": "passed",
+    "ci": "passed",
+    "full_verification": "passed",
+    "v12_10_19_verify": "passed"
   },
   "closure_contract": {
     "focused_tests_required": true,
@@ -98,8 +98,13 @@
     "ci_required": true,
     "full_verification_required": true,
     "v12_10_19_verify_required": true,
-    "v32_closed": false,
-    "next_action": "run_v32_7_closure_validation"
+    "v32_closed": true,
+    "closure_head_sha": "9380a8010dbc4991dbe6b4fd6a84c4999aba1640",
+    "browser_e2e_run": 4,
+    "ci_run": 3717,
+    "full_verification_run": 863,
+    "v12_10_19_verify_run": 2038,
+    "next_action": "prepare_v32_pull_request_for_review"
   },
-  "next_action": "run_v32_7_closure_validation"
+  "next_action": "prepare_v32_pull_request_for_review"
 }
