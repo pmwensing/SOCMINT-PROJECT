@@ -6,7 +6,7 @@ from .action_queue_blocker_surface_v33_2 import build_case_action_queue
 from .dossier_assembly_workspace_v21_0 import _sha
 
 SCHEMA = "socmint.action_eligibility_delegate_resolution.v34_1"
-VERSION = "v34.1.0"
+VERSION = "v34.1.1"
 
 DELEGATE_REGISTRY: dict[str, dict[str, Any]] = {
     "create_audience_contract": {
@@ -49,13 +49,13 @@ DELEGATE_REGISTRY: dict[str, dict[str, Any]] = {
             "recipient_feedback_correction_intake_v32_5."
             "record_correction_intake"
         ),
-        "required_targets": ("recipient_feedback_ids",),
+        "required_targets": ("recipient_feedback_id",),
     },
     "record_recall_decision": {
         "delegate_service": (
             "recall_retention_lifecycle_v32_6.record_recall_decision"
         ),
-        "required_targets": ("correction_intake_ids",),
+        "required_targets": ("correction_intake_id",),
     },
     "record_retention_decision": {
         "delegate_service": (
