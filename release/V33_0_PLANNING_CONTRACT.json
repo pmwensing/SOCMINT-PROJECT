@@ -1,0 +1,88 @@
+{
+  "schema": "socmint.v33.planning_contract.v33_0",
+  "version": "v33.0.0",
+  "program": "Operational Dissemination Governance Workspace and Case-Centric Command Surface",
+  "primary_workspace": "Case-Centric Dissemination Command Surface",
+  "production_objective": "Turn the completed v32 dissemination-governance backend contracts into one coherent operator-facing, case-centric workspace that exposes current state, required human actions, blockers, history, and safe next steps without creating a parallel governance system or bypassing existing authorization, delivery, feedback, recall, retention, and lifecycle controls.",
+  "workflow_spine": [
+    "case_selection",
+    "governance_snapshot",
+    "audience_and_package_state",
+    "authorization_queue",
+    "delivery_and_receipt_state",
+    "feedback_and_correction_queue",
+    "recall_and_retention_state",
+    "lifecycle_timeline",
+    "operator_action",
+    "review_and_closure"
+  ],
+  "roadmap": [
+    {"slice": "v33.0", "title": "Planning Baseline and Workspace Contract", "mode": "planning_entry_gate", "implemented": true},
+    {"slice": "v33.1", "title": "Case-Centric Governance Snapshot", "mode": "read_model", "implemented": false},
+    {"slice": "v33.2", "title": "Action Queue and Blocker Surface", "mode": "operator_decision_support", "implemented": false},
+    {"slice": "v33.3", "title": "Audience, Package, and Authorization Panels", "mode": "workflow_composition", "implemented": false},
+    {"slice": "v33.4", "title": "Delivery, Receipt, and Feedback Panels", "mode": "evidence_and_feedback_surface", "implemented": false},
+    {"slice": "v33.5", "title": "Recall, Retention, and Lifecycle Timeline", "mode": "lifecycle_surface", "implemented": false},
+    {"slice": "v33.6", "title": "Case-Centric Operator Workspace", "mode": "integrated_command_surface", "implemented": false},
+    {"slice": "v33.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": false}
+  ],
+  "entry_gate": {
+    "roadmap_defined": true,
+    "production_objective_defined": true,
+    "primary_workspace_defined": true,
+    "workflow_spine_defined": true,
+    "scope_boundaries_defined": true,
+    "production_invariants_defined": true,
+    "existing_capability_inventory_defined": true,
+    "runtime_code_added": false,
+    "route_added": false,
+    "migration_added": false,
+    "entry_gate_status": "v33_0_planning_entry_gate_complete"
+  },
+  "scope_boundaries": {
+    "parallel_governance_backend": false,
+    "automatic_external_transmission": false,
+    "automatic_authorization_or_recall": false,
+    "published_or_historical_record_mutation": false,
+    "destructive_retention": false,
+    "case_access_change": false,
+    "secret_or_endpoint_exposure": false,
+    "new_connector_family_without_proven_need": false,
+    "migration_allowed_without_proven_schema_gap": false
+  },
+  "production_invariants": {
+    "v32_contracts_remain_authoritative": true,
+    "workspace_is_case_scoped": true,
+    "workspace_is_read_first": true,
+    "human_confirmation_precedes_every_mutating_action": true,
+    "actions_delegate_to_existing_v32_services": true,
+    "blockers_and_safe_next_actions_are_explicit": true,
+    "append_only_history_remains_visible": true,
+    "authorization_delivery_feedback_recall_and_retention_separation_is_preserved": true,
+    "no_raw_endpoint_or_contact_secret_is_rendered": true,
+    "browser_and_api_views_share_one_canonical_read_model": true
+  },
+  "validation": {
+    "focused": "pending",
+    "v33_regression": "pending",
+    "full_suite": "pending",
+    "lint": "pending",
+    "browser_e2e": "pending",
+    "ci": "pending",
+    "full_verification": "pending",
+    "v12_10_19_verify": "pending"
+  },
+  "closure_contract": {
+    "focused_tests_required": true,
+    "v33_regression_required": true,
+    "full_suite_required": true,
+    "lint_required": true,
+    "browser_e2e_required": true,
+    "ci_required": true,
+    "full_verification_required": true,
+    "v12_10_19_verify_required": true,
+    "v33_closed": false,
+    "next_action": "implement_v33_1_case_centric_governance_snapshot"
+  },
+  "next_action": "implement_v33_1_case_centric_governance_snapshot"
+}
