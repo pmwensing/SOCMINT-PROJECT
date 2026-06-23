@@ -19,18 +19,44 @@ from .recall_retention_lifecycle_v32_6 import (
     record_recall_decision,
     record_retention_decision,
 )
-from .recipient_feedback_correction_intake_v32_5 import record_correction_intake
+from .recipient_feedback_correction_intake_v32_5 import (
+    record_correction_intake,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 DELEGATES = {
-    "audience_recipient_contract_v32_1.record_audience_recipient_contract": record_audience_recipient_contract,
-    "dissemination_package_v32_2.assemble_dissemination_package": assemble_dissemination_package,
-    "authorization_policy_release_gate_v32_3.record_authorization_policy_decision": record_authorization_policy_decision,
-    "delivery_attempt_receipt_ledger_v32_4.record_delivery_attempt": record_delivery_attempt,
-    "delivery_attempt_receipt_ledger_v32_4.record_delivery_receipt": record_delivery_receipt,
-    "recipient_feedback_correction_intake_v32_5.record_correction_intake": record_correction_intake,
-    "recall_retention_lifecycle_v32_6.record_recall_decision": record_recall_decision,
-    "recall_retention_lifecycle_v32_6.record_retention_decision": record_retention_decision,
+    (
+        "audience_recipient_contract_v32_1."
+        "record_audience_recipient_contract"
+    ): record_audience_recipient_contract,
+    (
+        "dissemination_package_v32_2."
+        "assemble_dissemination_package"
+    ): assemble_dissemination_package,
+    (
+        "authorization_policy_release_gate_v32_3."
+        "record_authorization_policy_decision"
+    ): record_authorization_policy_decision,
+    (
+        "delivery_attempt_receipt_ledger_v32_4."
+        "record_delivery_attempt"
+    ): record_delivery_attempt,
+    (
+        "delivery_attempt_receipt_ledger_v32_4."
+        "record_delivery_receipt"
+    ): record_delivery_receipt,
+    (
+        "recipient_feedback_correction_intake_v32_5."
+        "record_correction_intake"
+    ): record_correction_intake,
+    (
+        "recall_retention_lifecycle_v32_6."
+        "record_recall_decision"
+    ): record_recall_decision,
+    (
+        "recall_retention_lifecycle_v32_6."
+        "record_retention_decision"
+    ): record_retention_decision,
 }
 
 
@@ -59,7 +85,8 @@ def register_governance_action_routes_v34_2_6(app):
             inputs=dict(body.get("inputs") or {}),
         )
         payload["actor"] = actor
-        return jsonify(payload), 200 if payload.get("status") != "blocked" else 422
+        code = 200 if payload.get("status") != "blocked" else 422
+        return jsonify(payload), code
 
     @app.post(
         "/api/v1/dissemination-governance/cases/<case_id>/actions/"
@@ -71,7 +98,11 @@ def register_governance_action_routes_v34_2_6(app):
             return error
         body = request.get_json(silent=True) or {}
         contract = dict(body.get("contract") or {})
-        if contract.get("case_id") != case_id or contract.get("action") != action:
+        route_mismatch = (
+            contract.get("case_id") != case_id
+            or contract.get("action") != action
+        )
+        if route_mismatch:
             return jsonify({"error": "contract route mismatch"}), 409
         payload = execute_confirmed_action(
             contract,
