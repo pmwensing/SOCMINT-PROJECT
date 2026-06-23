@@ -28,7 +28,10 @@ def test_v32_0_defines_complete_program_roadmap():
     ]
     assert contract["roadmap"][0]["implemented"] is True
     assert all(isinstance(item["implemented"], bool) for item in contract["roadmap"])
-    assert str(contract["next_action"]).startswith("implement_v32_")
+    if all(item["implemented"] for item in contract["roadmap"]):
+        assert contract["next_action"] == "run_v32_7_closure_validation"
+    else:
+        assert str(contract["next_action"]).startswith("implement_v32_")
 
 
 def test_v32_0_entry_gate_boundaries_remain_enforced_after_runtime_slices():
