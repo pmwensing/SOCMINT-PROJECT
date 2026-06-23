@@ -10,13 +10,17 @@ Turn the completed v32 dissemination-governance contracts into one coherent oper
 
 ## Implementation status
 
-Implemented: v33.0 through v33.3.
+Implemented: v33.0 through v33.7.
 
-v33.1 adds a deterministic, read-only, case-scoped governance snapshot composed from existing v32 records. It exposes current records, counts, unresolved review state, blockers, and safe next actions without persisting or changing source records.
+- v33.1: canonical case governance snapshot
+- v33.2: deterministic action queue and blocker surface
+- v33.3: audience, package, and authorization panels
+- v33.4: delivery, receipt, feedback, and correction panels
+- v33.5: recall, retention, and lifecycle timeline
+- v33.6: integrated case-centric operator workspace
+- v33.7: product review, browser E2E checkpoint, and release closure
 
-v33.2 converts snapshot blockers into a deterministic, prioritized action queue. Every queue item identifies its stage, severity, rationale, targets, confirmation requirement, and authoritative v32 delegate service. The queue is decision support only and cannot execute actions automatically.
-
-v33.3 composes audience, package, and authorization histories into three deterministic, case-scoped panels. Each panel shares the canonical snapshot and action queue, exposes current state and history, removes sensitive fields, and presents only human-confirmed actions delegated to existing v32 services.
+All runtime surfaces remain read-only and delegate future confirmed actions to existing v32 services. No migration or parallel governance backend was introduced.
 
 ## Roadmap
 
@@ -26,11 +30,11 @@ v33.3 composes audience, package, and authorization histories into three determi
 | v33.1 | Case-Centric Governance Snapshot | Implemented; canonical read model |
 | v33.2 | Action Queue and Blocker Surface | Implemented; decision support only |
 | v33.3 | Audience, Package, and Authorization Panels | Implemented; read-only workflow composition |
-| v33.4 | Delivery, Receipt, and Feedback Panels | Preserve evidence separation |
-| v33.5 | Recall, Retention, and Lifecycle Timeline | Append-only lifecycle view |
-| v33.6 | Case-Centric Operator Workspace | Integrated command surface |
-| v33.7 | Product Review and Browser E2E | Closure gate |
+| v33.4 | Delivery, Receipt, Feedback, and Correction Panels | Implemented; evidence and feedback surface |
+| v33.5 | Recall, Retention, and Lifecycle Timeline | Implemented; append-only lifecycle view |
+| v33.6 | Case-Centric Operator Workspace | Implemented; integrated command surface |
+| v33.7 | Product Review and Browser E2E | Implemented; closure gate pending validation |
 
 ## Next action
 
-`implement_v33_4_delivery_receipt_and_feedback_panels`
+`confirm_validation_gates_and_merge_v33_release`
