@@ -6,7 +6,7 @@ from .case_governance_snapshot_v33_1 import build_case_governance_snapshot
 from .dossier_assembly_workspace_v21_0 import _sha
 
 SCHEMA = "socmint.action_queue_blocker_surface.v33_2"
-VERSION = "v33.2.0"
+VERSION = "v33.2.1"
 
 ACTION_DEFINITIONS: dict[str, dict[str, Any]] = {
     "create_audience_contract": {
@@ -118,6 +118,13 @@ ACTION_DEFINITIONS: dict[str, dict[str, Any]] = {
 }
 
 
+def _first_identifier(values: Any) -> str | None:
+    normalized = sorted(
+        {str(value).strip() for value in (values or []) if str(value).strip()}
+    )
+    return normalized[0] if normalized else None
+
+
 def _targets(snapshot: dict[str, Any], action: str) -> dict[str, Any]:
     current = snapshot.get("current") or {}
     state = snapshot.get("state") or {}
@@ -147,11 +154,13 @@ def _targets(snapshot: dict[str, Any], action: str) -> dict[str, Any]:
             ).get("delivery_attempt_id")
         },
         "record_correction_intake": {
-            "recipient_feedback_ids": state.get("open_feedback_ids") or []
+            "recipient_feedback_id": _first_identifier(
+                state.get("open_feedback_ids")
+            )
         },
         "record_recall_decision": {
-            "correction_intake_ids": (
-                state.get("open_recall_correction_ids") or []
+            "correction_intake_id": _first_identifier(
+                state.get("open_recall_correction_ids")
             )
         },
         "record_retention_decision": {},
