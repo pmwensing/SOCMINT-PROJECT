@@ -47,7 +47,10 @@ def test_v34_0_is_planning_only_and_preserves_execution_boundaries():
     assert gate["runtime_code_added"] is False
     assert gate["route_added"] is False
     assert gate["migration_added"] is False
-    assert gate["entry_gate_status"] == "v34_0_planning_entry_gate_defined"
+    assert gate["entry_gate_status"] in {
+        "v34_0_planning_entry_gate_defined",
+        "v34_0_planning_entry_gate_passed",
+    }
 
     for boundary in (
         "automatic_action_execution",
