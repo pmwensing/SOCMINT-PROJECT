@@ -29,11 +29,7 @@ def confirmation_claimed(confirmation_sha256: str) -> bool:
 
 
 def claim_confirmation(
-    *,
-    confirmation_sha256: str,
-    actor: str,
-    case_id: str,
-    action: str,
+    *, confirmation_sha256: str, actor: str, case_id: str, action: str
 ) -> dict[str, Any] | None:
     _ensure_storage()
     session = database.Session()
@@ -111,12 +107,12 @@ def record_execution_result(
 def authoritative_record_ids(result: Any) -> dict[str, Any]:
     if not isinstance(result, dict):
         return {}
-    identifiers: dict[str, Any] = {}
-    for key, value in result.items():
-        if key == "id" or key.endswith("_id") or key == "audit_record_id":
-            if value not in (None, ""):
-                identifiers[key] = value
-    return identifiers
+    return {
+        key: value
+        for key, value in result.items()
+        if (key == "id" or key.endswith("_id") or key == "audit_record_id")
+        and value not in (None, "")
+    }
 
 
 def audit_delegate_signatures(
@@ -130,11 +126,10 @@ def audit_delegate_signatures(
         if delegate is None:
             missing = ["delegate_unavailable"]
         else:
-            signature = inspect.signature(delegate)
-            parameters = signature.parameters
+            parameters = inspect.signature(delegate).parameters
             accepts_kwargs = any(
-                parameter.kind == inspect.Parameter.VAR_KEYWORD
-                for parameter in parameters.values()
+                item.kind == inspect.Parameter.VAR_KEYWORD
+                for item in parameters.values()
             )
             if not accepts_kwargs:
                 missing = [
@@ -160,3 +155,15 @@ def audit_delegate_signatures(
 
 def refreshed_workspace(case_id: str) -> dict[str, Any]:
     return build_case_centric_operator_workspace(case_id)
+
+
+def reset_execution_ledger_for_tests() -> None:
+    _ensure_storage()
+    session = database.Session()
+    try:
+        session.query(database.AuditLog).filter(
+            database.AuditLog.action.in_((CLAIM_ACTION, RESULT_ACTION))
+        ).delete(synchronize_session=False)
+        session.commit()
+    finally:
+        session.close()
