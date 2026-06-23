@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from flask import jsonify, session
 
+from .case_centric_operator_workspace_routes_v33_6 import (
+    register_case_centric_operator_workspace_routes_v33_6,
+)
 from .recall_retention_lifecycle_timeline_v33_5 import (
     build_case_recall_retention_lifecycle_timeline,
 )
@@ -29,4 +32,5 @@ def register_recall_retention_lifecycle_timeline_routes_v33_5(app):
         payload = build_case_recall_retention_lifecycle_timeline(case_id)
         return jsonify(payload), 200 if payload.get("status") != "blocked" else 422
 
+    register_case_centric_operator_workspace_routes_v33_6(app)
     return app
