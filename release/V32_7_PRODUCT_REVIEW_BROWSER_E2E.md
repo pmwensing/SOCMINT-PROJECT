@@ -32,10 +32,23 @@ python scripts/run_v32_7_dissemination_browser_e2e.py --json
 
 The harness verifies the product-review page, all primary v32 list APIs, and the final checkpoint response.
 
-## Closure rule
+## Closure validation
 
-v32 is closed only after all focused tests, v32 regression tests, the full suite, Ruff, browser E2E, CI, Full Verification, and v12.10.19 Verify pass.
+All required closure gates passed on validated implementation head `9380a8010dbc4991dbe6b4fd6a84c4999aba1640`:
+
+- focused v32 tests
+- v32 regression tests
+- complete test suite
+- Ruff lint
+- v32 browser E2E run 4
+- CI run 3717
+- SOCMINT Full Verification run 863
+- SOCMINT v12.10.19 Verify run 2038
+
+## Closure result
+
+`v32_closed: true`
 
 ## Next action
 
-`run_v32_7_closure_validation`
+`prepare_v32_pull_request_for_review`
