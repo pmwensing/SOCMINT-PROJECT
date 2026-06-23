@@ -1,6 +1,6 @@
 {
   "schema": "socmint.v33.planning_contract.v33_0",
-  "version": "v33.2.0",
+  "version": "v33.3.0",
   "program": "Operational Dissemination Governance Workspace and Case-Centric Command Surface",
   "primary_workspace": "Case-Centric Dissemination Command Surface",
   "production_objective": "Turn the completed v32 dissemination-governance backend contracts into one coherent operator-facing, case-centric workspace that exposes current state, required human actions, blockers, history, and safe next steps without creating a parallel governance system or bypassing existing authorization, delivery, feedback, recall, retention, and lifecycle controls.",
@@ -20,7 +20,7 @@
     {"slice": "v33.0", "title": "Planning Baseline and Workspace Contract", "mode": "planning_entry_gate", "implemented": true},
     {"slice": "v33.1", "title": "Case-Centric Governance Snapshot", "mode": "read_model", "implemented": true},
     {"slice": "v33.2", "title": "Action Queue and Blocker Surface", "mode": "operator_decision_support", "implemented": true},
-    {"slice": "v33.3", "title": "Audience, Package, and Authorization Panels", "mode": "workflow_composition", "implemented": false},
+    {"slice": "v33.3", "title": "Audience, Package, and Authorization Panels", "mode": "workflow_composition", "implemented": true},
     {"slice": "v33.4", "title": "Delivery, Receipt, and Feedback Panels", "mode": "evidence_and_feedback_surface", "implemented": false},
     {"slice": "v33.5", "title": "Recall, Retention, and Lifecycle Timeline", "mode": "lifecycle_surface", "implemented": false},
     {"slice": "v33.6", "title": "Case-Centric Operator Workspace", "mode": "integrated_command_surface", "implemented": false},
@@ -37,7 +37,7 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "entry_gate_status": "v33_2_action_queue_and_blocker_surface_implemented"
+    "entry_gate_status": "v33_3_audience_package_authorization_panels_implemented"
   },
   "scope_boundaries": {
     "parallel_governance_backend": false,
@@ -66,7 +66,11 @@
     "action_queue_is_deterministically_ordered": true,
     "action_queue_is_decision_support_only": true,
     "automatic_action_execution_is_unavailable": true,
-    "every_queue_item_identifies_its_v32_delegate_service": true
+    "every_queue_item_identifies_its_v32_delegate_service": true,
+    "audience_package_authorization_panels_share_snapshot_and_queue": true,
+    "panel_histories_are_case_scoped_and_read_only": true,
+    "panel_payloads_remove_sensitive_fields": true,
+    "panel_actions_remain_human_confirmed_v32_delegations": true
   },
   "validation": {
     "focused": "pending",
@@ -88,7 +92,7 @@
     "full_verification_required": true,
     "v12_10_19_verify_required": true,
     "v33_closed": false,
-    "next_action": "implement_v33_3_audience_package_and_authorization_panels"
+    "next_action": "implement_v33_4_delivery_receipt_and_feedback_panels"
   },
-  "next_action": "implement_v33_3_audience_package_and_authorization_panels"
+  "next_action": "implement_v33_4_delivery_receipt_and_feedback_panels"
 }
