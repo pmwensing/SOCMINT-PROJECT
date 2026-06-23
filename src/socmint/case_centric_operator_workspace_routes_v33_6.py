@@ -5,6 +5,9 @@ from flask import jsonify, redirect, render_template, session, url_for
 from .case_centric_operator_workspace_v33_6 import (
     build_case_centric_operator_workspace,
 )
+from .case_governance_product_review_routes_v33_7 import (
+    register_case_governance_product_review_routes_v33_7,
+)
 from .user_account_workspace_v28_1 import actor_is_administrator
 
 
@@ -43,4 +46,5 @@ def register_case_centric_operator_workspace_routes_v33_6(app):
         payload = build_case_centric_operator_workspace(case_id)
         return jsonify(payload), 200 if payload.get("status") != "blocked" else 422
 
+    register_case_governance_product_review_routes_v33_7(app)
     return app
