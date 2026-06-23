@@ -1,6 +1,6 @@
 {
   "schema": "socmint.v33.planning_contract.v33_0",
-  "version": "v33.4.0",
+  "version": "v33.7.0",
   "program": "Operational Dissemination Governance Workspace and Case-Centric Command Surface",
   "primary_workspace": "Case-Centric Dissemination Command Surface",
   "production_objective": "Turn the completed v32 dissemination-governance backend contracts into one coherent operator-facing, case-centric workspace that exposes current state, required human actions, blockers, history, and safe next steps without creating a parallel governance system or bypassing existing authorization, delivery, feedback, recall, retention, and lifecycle controls.",
@@ -22,9 +22,9 @@
     {"slice": "v33.2", "title": "Action Queue and Blocker Surface", "mode": "operator_decision_support", "implemented": true},
     {"slice": "v33.3", "title": "Audience, Package, and Authorization Panels", "mode": "workflow_composition", "implemented": true},
     {"slice": "v33.4", "title": "Delivery, Receipt, and Feedback Panels", "mode": "evidence_and_feedback_surface", "implemented": true},
-    {"slice": "v33.5", "title": "Recall, Retention, and Lifecycle Timeline", "mode": "lifecycle_surface", "implemented": false},
-    {"slice": "v33.6", "title": "Case-Centric Operator Workspace", "mode": "integrated_command_surface", "implemented": false},
-    {"slice": "v33.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": false}
+    {"slice": "v33.5", "title": "Recall, Retention, and Lifecycle Timeline", "mode": "lifecycle_surface", "implemented": true},
+    {"slice": "v33.6", "title": "Case-Centric Operator Workspace", "mode": "integrated_command_surface", "implemented": true},
+    {"slice": "v33.7", "title": "Product Review and Browser E2E Checkpoint", "mode": "closure_gate", "implemented": true}
   ],
   "entry_gate": {
     "roadmap_defined": true,
@@ -37,7 +37,7 @@
     "runtime_code_added": true,
     "route_added": true,
     "migration_added": false,
-    "entry_gate_status": "v33_4_delivery_receipt_feedback_panels_implemented"
+    "entry_gate_status": "v33_7_product_review_browser_e2e_release_closure_implemented"
   },
   "scope_boundaries": {
     "parallel_governance_backend": false,
@@ -67,24 +67,27 @@
     "action_queue_is_decision_support_only": true,
     "automatic_action_execution_is_unavailable": true,
     "every_queue_item_identifies_its_v32_delegate_service": true,
-    "audience_package_authorization_panels_share_snapshot_and_queue": true,
-    "delivery_receipt_feedback_panels_share_snapshot_and_queue": true,
     "panel_histories_are_case_scoped_and_read_only": true,
     "panel_payloads_remove_sensitive_fields": true,
     "panel_actions_remain_human_confirmed_v32_delegations": true,
     "current_delivery_and_receipt_state_supersedes_historical_success": true,
     "receipt_presence_does_not_imply_acknowledgement": true,
-    "feedback_and_correction_histories_remain_distinct": true
+    "feedback_and_correction_histories_remain_distinct": true,
+    "lifecycle_timeline_is_deterministically_ordered": true,
+    "historical_lifecycle_evidence_is_preserved": true,
+    "integrated_workspace_composes_existing_read_models": true,
+    "product_review_requires_complete_route_set": true,
+    "browser_e2e_covers_integrated_workspace_sections": true
   },
   "validation": {
-    "focused": "pending",
-    "v33_regression": "pending",
-    "full_suite": "pending",
-    "lint": "pending",
-    "browser_e2e": "pending",
-    "ci": "pending",
-    "full_verification": "pending",
-    "v12_10_19_verify": "pending"
+    "focused": "pending_ci",
+    "v33_regression": "pending_ci",
+    "full_suite": "pending_ci",
+    "lint": "pending_ci",
+    "browser_e2e": "pending_ci",
+    "ci": "pending_ci",
+    "full_verification": "pending_ci",
+    "v12_10_19_verify": "pending_ci"
   },
   "closure_contract": {
     "focused_tests_required": true,
@@ -96,7 +99,7 @@
     "full_verification_required": true,
     "v12_10_19_verify_required": true,
     "v33_closed": false,
-    "next_action": "implement_v33_5_recall_retention_and_lifecycle_timeline"
+    "next_action": "confirm_validation_gates_and_merge_v33_release"
   },
-  "next_action": "implement_v33_5_recall_retention_and_lifecycle_timeline"
+  "next_action": "confirm_validation_gates_and_merge_v33_release"
 }
