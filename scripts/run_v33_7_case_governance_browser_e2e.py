@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
+import secrets
 import shutil
 import socket
 import sys
+import tempfile
 import threading
 from pathlib import Path
 
@@ -26,7 +29,13 @@ def _port() -> int:
         return int(sock.getsockname()[1])
 
 
-def _app():
+def _app(temp_dir: Path):
+    os.environ["DATABASE_URL"] = f"sqlite:///{temp_dir / 'e2e.db'}"
+    os.environ["SOCMINT_DATA_DIR"] = str(temp_dir)
+    os.environ["SOCMINT_SECRET_KEY"] = secrets.token_hex(32)
+    os.environ["SOCMINT_AUTO_CREATE_DB"] = "true"
+
+    from src.socmint import database
     from src.socmint import case_centric_operator_workspace_routes_v33_6 as routes
     from src.socmint.wsgi import app
 
@@ -48,7 +57,8 @@ def _app():
             "recall_retention_lifecycle": {"timeline": []},
         },
     }
-    app.config.update(TESTING=True)
+    app.config.update(TESTING=True, SECRET_KEY=secrets.token_hex(32))
+    database.ensure_configured()
 
     @app.get("/_v33_e2e_login")
     def _login():
@@ -59,8 +69,9 @@ def _app():
 
 
 def run() -> dict:
+    temp_dir = Path(tempfile.mkdtemp(prefix="socmint-v33-e2e-"))
     port = _port()
-    server = make_server("127.0.0.1", port, _app())
+    server = make_server("127.0.0.1", port, _app(temp_dir))
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     driver = None
@@ -74,7 +85,11 @@ def run() -> dict:
         executable = shutil.which("chromedriver")
         if binary:
             options.binary_location = binary
-        service = ChromeService(executable_path=executable) if executable else ChromeService()
+        service = (
+            ChromeService(executable_path=executable)
+            if executable
+            else ChromeService()
+        )
         driver = webdriver.Chrome(service=service, options=options)
         driver.get(f"http://127.0.0.1:{port}/_v33_e2e_login")
         source = driver.page_source
@@ -90,6 +105,7 @@ def run() -> dict:
         if driver is not None:
             driver.quit()
         server.shutdown()
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
     failed = [item for item in checks if not item["ok"]]
     return {
