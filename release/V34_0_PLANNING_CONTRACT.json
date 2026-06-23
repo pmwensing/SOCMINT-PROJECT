@@ -36,7 +36,7 @@
     "runtime_code_added": false,
     "route_added": false,
     "migration_added": false,
-    "entry_gate_status": "v34_0_planning_entry_gate_defined"
+    "entry_gate_status": "v34_0_planning_entry_gate_passed"
   },
   "scope_boundaries": {
     "automatic_action_execution": false,
@@ -69,11 +69,13 @@
     "bulk_actions_are_unavailable_without_separate_reviewed_contract": true
   },
   "validation": {
-    "planning_contract": "pending_ci",
-    "focused": "pending_ci",
-    "full_suite": "pending_ci",
-    "lint": "pending_ci",
-    "ci": "pending_ci"
+    "planning_contract": "passed",
+    "focused": "passed",
+    "full_suite": "passed",
+    "lint": "passed",
+    "ci": "passed",
+    "full_verification": "passed",
+    "v12_10_19_verify": "passed"
   },
   "closure_contract": {
     "planning_contract_required": true,
