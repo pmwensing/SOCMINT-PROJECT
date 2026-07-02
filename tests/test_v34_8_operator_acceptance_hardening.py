@@ -13,6 +13,10 @@ from src.socmint.governance_execution_hardening_v34_8 import (
     confirmation_claimed,
     reset_execution_ledger_for_tests,
 )
+from src.socmint.human_confirmation_framework_v34_2 import (
+    confirmation_identity,
+    record_issued_confirmation,
+)
 
 
 ACTION_PAYLOADS = {
@@ -57,18 +61,25 @@ ACTION_PAYLOADS = {
 }
 
 
-def _contract(action, service, confirmation_id, confirmation_sha256, case_id="case-1"):
+def _contract(action, service, case_id="case-1"):
     payload = ACTION_PAYLOADS[action]
-    return {
+    contract = {
         "status": "confirmation_required",
         "case_id": case_id,
         "action": action,
         "delegate_service": service,
-        "confirmation_id": confirmation_id,
-        "confirmation_sha256": confirmation_sha256,
+        "eligibility_resolution_sha256": f"eligibility-{action}",
         "targets": dict(payload["targets"]),
         "inputs": dict(payload["inputs"]),
+        "impact_summary": f"Confirm {action} for case {case_id} using {service}",
     }
+    identity = confirmation_identity(contract)
+    assert identity is not None
+    contract["confirmation_id"] = identity["confirmation_id"]
+    contract["confirmation_sha256"] = identity["confirmation_sha256"]
+    issuance = record_issued_confirmation(contract, "admin")
+    assert issuance["issued"] is True
+    return contract
 
 
 def test_v34_8_actual_delegate_signatures_are_compatible():
@@ -140,29 +151,25 @@ def test_v34_8_operator_acceptance_across_action_families(
         "src.socmint.governance_action_execution_v34_3_6.refreshed_workspace",
         lambda case_id: {"case_id": case_id, "workspace_sha256": "workspace-sha"},
     )
-    contract = _contract(
-        action,
-        service,
-        confirmation_id="confirm-1",
-        confirmation_sha256=f"sha-{action}",
-    )
+    contract = _contract(action, service)
     delegates = {
         service: lambda **kwargs: calls.append(kwargs)
         or {"audit_record_id": 55, "domain_record_id": "domain-1"}
     }
 
     cancelled = execute_confirmed_action(
-        contract, "confirm-1", False, "admin", delegates
+        contract, contract["confirmation_id"], False, "admin", delegates
     )
     assert cancelled["execution_performed"] is False
     assert cancelled["confirmation_consumed"] is False
     assert calls == []
 
     result = execute_confirmed_action(
-        contract, "confirm-1", True, "admin", delegates
+        contract, contract["confirmation_id"], True, "admin", delegates
     )
     assert result["status"] == "executed"
     assert result["action_family"] == family
+    assert result["confirmation_issue_audit"]["audit_record_id"]
     assert result["confirmation_claim_audit"]["audit_record_id"]
     assert result["execution_audit"]["audit_record_id"] == 11
     assert result["execution_state"] == "succeeded"
@@ -188,8 +195,6 @@ def test_v35_1_delegate_exception_becomes_uncertain_without_retry(tmp_path):
     contract = _contract(
         "record_delivery_attempt",
         service,
-        confirmation_id="confirm-uncertain",
-        confirmation_sha256="uncertain-confirmation",
         case_id="case-uncertain",
     )
     calls = []
@@ -200,7 +205,7 @@ def test_v35_1_delegate_exception_becomes_uncertain_without_retry(tmp_path):
 
     result = execute_confirmed_action(
         contract,
-        "confirm-uncertain",
+        contract["confirmation_id"],
         True,
         "admin",
         {service: delegate},
@@ -220,7 +225,7 @@ def test_v35_1_delegate_exception_becomes_uncertain_without_retry(tmp_path):
 
     duplicate = execute_confirmed_action(
         contract,
-        "confirm-uncertain",
+        contract["confirmation_id"],
         True,
         "admin",
         {service: delegate},
@@ -238,8 +243,6 @@ def test_v35_1_pre_invocation_failure_is_failed(monkeypatch, tmp_path):
     contract = _contract(
         "record_delivery_attempt",
         service,
-        confirmation_id="confirm-failed",
-        confirmation_sha256="failed-confirmation",
         case_id="case-failed",
     )
     calls = []
@@ -250,7 +253,7 @@ def test_v35_1_pre_invocation_failure_is_failed(monkeypatch, tmp_path):
 
     result = execute_confirmed_action(
         contract,
-        "confirm-failed",
+        contract["confirmation_id"],
         True,
         "admin",
         {service: lambda **kwargs: calls.append(kwargs)},
