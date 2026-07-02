@@ -40,6 +40,16 @@ def upgrade() -> None:
             ["governance_executions.execution_id"],
             ondelete="CASCADE",
         ),
+        sa.ForeignKeyConstraint(
+            ["confirmation_issue_audit_id"],
+            ["audit_logs.id"],
+            ondelete="RESTRICT",
+        ),
+        sa.ForeignKeyConstraint(
+            ["execution_audit_record_id"],
+            ["audit_logs.id"],
+            ondelete="RESTRICT",
+        ),
         sa.UniqueConstraint(
             "execution_id",
             name="uq_governance_execution_results_execution_id",
