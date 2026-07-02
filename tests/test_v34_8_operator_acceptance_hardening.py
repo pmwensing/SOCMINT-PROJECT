@@ -15,6 +15,62 @@ from src.socmint.governance_execution_hardening_v34_8 import (
 )
 
 
+ACTION_PAYLOADS = {
+    "create_audience_contract": {
+        "targets": {},
+        "inputs": {
+            "audience_name": "Legal Review",
+            "audience_type": "legal",
+            "dissemination_purpose": "case review",
+            "classification": "restricted",
+            "recipients": [{"recipient_id": "recipient-1"}],
+            "reason": "approved review workflow",
+        },
+    },
+    "record_delivery_attempt": {
+        "targets": {"dissemination_package_id": "package-1"},
+        "inputs": {
+            "recipient_id": "recipient-1",
+            "delivery_channel": "secure_portal",
+            "endpoint_reference": "reference-1",
+            "attempt_result": "accepted",
+            "transport_reference": "transport-1",
+            "reason": "confirmed delivery attempt",
+        },
+    },
+    "record_correction_intake": {
+        "targets": {"recipient_feedback_id": "feedback-1"},
+        "inputs": {
+            "correction_action": "editorial_review",
+            "reason": "recipient reported an error",
+            "affected_section_ids": ["section-1"],
+        },
+    },
+    "record_retention_decision": {
+        "targets": {},
+        "inputs": {
+            "disposition": "retain",
+            "policy_id": "policy-1",
+            "reason": "retention policy applies",
+        },
+    },
+}
+
+
+def _contract(action, service, confirmation_id, confirmation_sha256, case_id="case-1"):
+    payload = ACTION_PAYLOADS[action]
+    return {
+        "status": "confirmation_required",
+        "case_id": case_id,
+        "action": action,
+        "delegate_service": service,
+        "confirmation_id": confirmation_id,
+        "confirmation_sha256": confirmation_sha256,
+        "targets": dict(payload["targets"]),
+        "inputs": dict(payload["inputs"]),
+    }
+
+
 def test_v34_8_actual_delegate_signatures_are_compatible():
     report = audit_delegate_signatures(DELEGATES)
     assert report["status"] == "passed", report["checks"]
@@ -84,16 +140,12 @@ def test_v34_8_operator_acceptance_across_action_families(
         "src.socmint.governance_action_execution_v34_3_6.refreshed_workspace",
         lambda case_id: {"case_id": case_id, "workspace_sha256": "workspace-sha"},
     )
-    contract = {
-        "status": "confirmation_required",
-        "case_id": "case-1",
-        "action": action,
-        "delegate_service": service,
-        "confirmation_id": "confirm-1",
-        "confirmation_sha256": f"sha-{action}",
-        "targets": {},
-        "inputs": {},
-    }
+    contract = _contract(
+        action,
+        service,
+        confirmation_id="confirm-1",
+        confirmation_sha256=f"sha-{action}",
+    )
     delegates = {
         service: lambda **kwargs: calls.append(kwargs)
         or {"audit_record_id": 55, "domain_record_id": "domain-1"}
@@ -103,6 +155,7 @@ def test_v34_8_operator_acceptance_across_action_families(
         contract, "confirm-1", False, "admin", delegates
     )
     assert cancelled["execution_performed"] is False
+    assert cancelled["confirmation_consumed"] is False
     assert calls == []
 
     result = execute_confirmed_action(
@@ -121,6 +174,7 @@ def test_v34_8_operator_acceptance_across_action_families(
     }
     assert result["workspace_sha256"] == "workspace-sha"
     assert result["durable_replay_protection"] is True
+    assert result["contract_validation"]["valid"] is True
     assert result["automatic_retry"] is False
     assert len(calls) == 1
 
@@ -131,16 +185,13 @@ def test_v35_1_delegate_exception_becomes_uncertain_without_retry(tmp_path):
     )
     reset_confirmation_consumption_for_tests()
     service = "delivery_attempt_receipt_ledger_v32_4.record_delivery_attempt"
-    contract = {
-        "status": "confirmation_required",
-        "case_id": "case-uncertain",
-        "action": "record_delivery_attempt",
-        "delegate_service": service,
-        "confirmation_id": "confirm-uncertain",
-        "confirmation_sha256": "uncertain-confirmation",
-        "targets": {},
-        "inputs": {},
-    }
+    contract = _contract(
+        "record_delivery_attempt",
+        service,
+        confirmation_id="confirm-uncertain",
+        confirmation_sha256="uncertain-confirmation",
+        case_id="case-uncertain",
+    )
     calls = []
 
     def delegate(**kwargs):
@@ -159,6 +210,7 @@ def test_v35_1_delegate_exception_becomes_uncertain_without_retry(tmp_path):
     assert result["execution_state"] == "uncertain"
     assert result["state_version"] == 2
     assert result["external_effect_unknown"] is True
+    assert result["contract_validation"]["valid"] is True
     assert result["automatic_retry"] is False
     assert len(calls) == 1
     snapshot = execution_snapshot(result["execution_id"])
@@ -183,16 +235,13 @@ def test_v35_1_pre_invocation_failure_is_failed(monkeypatch, tmp_path):
     )
     reset_confirmation_consumption_for_tests()
     service = "delivery_attempt_receipt_ledger_v32_4.record_delivery_attempt"
-    contract = {
-        "status": "confirmation_required",
-        "case_id": "case-failed",
-        "action": "record_delivery_attempt",
-        "delegate_service": service,
-        "confirmation_id": "confirm-failed",
-        "confirmation_sha256": "failed-confirmation",
-        "targets": {},
-        "inputs": {},
-    }
+    contract = _contract(
+        "record_delivery_attempt",
+        service,
+        confirmation_id="confirm-failed",
+        confirmation_sha256="failed-confirmation",
+        case_id="case-failed",
+    )
     calls = []
     monkeypatch.setattr(
         "src.socmint.governance_action_execution_v34_3_6._delegate_kwargs",
@@ -211,5 +260,6 @@ def test_v35_1_pre_invocation_failure_is_failed(monkeypatch, tmp_path):
     assert result["execution_state"] == "failed"
     assert result["state_version"] == 1
     assert result["execution_performed"] is False
+    assert result["execution_created"] is True
     assert result["automatic_retry"] is False
     assert calls == []
