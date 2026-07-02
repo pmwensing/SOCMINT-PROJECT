@@ -12,6 +12,7 @@ from .governance_execution_result_model_v35_3 import (
     GovernanceExecutionResult,
     result_row_snapshot,
 )
+from .governance_execution_result_store_v35_3 import ensure_result_storage
 
 SCHEMA = "socmint.execution_reconciliation_read_model.v35_4"
 VERSION = "v35.4.0"
@@ -51,7 +52,6 @@ def _execution_payload(session, row: GovernanceExecution) -> dict[str, Any]:
         .first()
     )
     result = result_row_snapshot(result_row) if result_row is not None else None
-    result_audit = None
     operator_metadata: dict[str, Any] = {}
     if result_row is not None:
         result_audit = (
@@ -116,7 +116,7 @@ def list_uncertain_executions(
     limit: int = 100,
     offset: int = 0,
 ) -> dict[str, Any]:
-    database.ensure_configured()
+    ensure_result_storage()
     safe_limit = max(1, min(int(limit), 200))
     safe_offset = max(0, int(offset))
     session = database.Session()
@@ -158,7 +158,7 @@ def list_uncertain_executions(
 def execution_reconciliation_detail(
     execution_id: str,
 ) -> dict[str, Any] | None:
-    database.ensure_configured()
+    ensure_result_storage()
     normalized = str(execution_id or "").strip()
     if not normalized:
         return None
