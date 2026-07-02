@@ -19,6 +19,7 @@ from .durable_execution_ledger_v35_1 import (
     _transition_statement,
 )
 from .governance_execution_hardening_v34_8 import RESULT_ACTION
+from .governance_execution_result_binding_v35_3 import verify_result_bindings
 from .governance_execution_result_model_v35_3 import (
     RESULT_IDENTITY_SCHEMA,
     VERSION,
@@ -117,6 +118,13 @@ def _persist_result_transition(
         )
         if existing is not None:
             return existing_result_response(session, existing, **expected)
+
+        verify_result_bindings(
+            session,
+            execution,
+            confirmation_issue_audit_id=confirmation_issue_audit_id,
+            contract_validation_sha256=contract_validation_sha256,
+        )
 
         if execution.current_state != expected_state:
             raise ExecutionStateConflict(
