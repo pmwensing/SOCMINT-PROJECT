@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from copy import deepcopy
 from typing import Any
 
 from sqlalchemy.exc import IntegrityError
@@ -56,6 +57,7 @@ def _persist_result_transition(
     authoritative_record_ids: Mapping[str, Any],
     result_reference_sha256: str,
     workspace_sha256: str,
+    operator_metadata: Mapping[str, Any] | None = None,
     failure_hook: FailureHook | None = None,
 ) -> dict[str, Any]:
     execution_id = required_text(execution_id, "execution_id")
@@ -77,6 +79,11 @@ def _persist_result_transition(
     )
     workspace_sha256 = required_text(workspace_sha256, "workspace_sha256")
     record_ids = normalized_record_ids(authoritative_record_ids)
+    normalized_operator_metadata = (
+        deepcopy(dict(operator_metadata))
+        if isinstance(operator_metadata, Mapping)
+        else {}
+    )
 
     if expected_state not in EXECUTION_STATES:
         raise InvalidExecutionTransition(f"unknown expected state: {expected_state}")
@@ -110,6 +117,7 @@ def _persist_result_transition(
             "result_reference_sha256": result_reference_sha256,
             "final_state": final_state,
             "workspace_sha256": workspace_sha256,
+            "operator_metadata": normalized_operator_metadata,
         }
         existing = (
             session.query(GovernanceExecutionResult)
@@ -170,6 +178,8 @@ def _persist_result_transition(
             "execution_audit_record_id": execution_audit.id,
             "recorded_at": recorded_at.isoformat(),
         }
+        if normalized_operator_metadata:
+            envelope_content["operator_metadata"] = normalized_operator_metadata
         envelope_sha256 = _sha(envelope_content)
         execution_audit.details = _canonical(
             {
@@ -218,6 +228,16 @@ def _persist_result_transition(
             )
         _checkpoint(failure_hook, "after_state_update")
 
+        ledger_metadata = {
+            "result_record_id": result_row.id,
+            "result_envelope_sha256": envelope_sha256,
+            "execution_audit_record_id": execution_audit.id,
+            "authoritative_record_ids": record_ids,
+            "result_reference_sha256": result_reference_sha256,
+            "workspace_sha256": workspace_sha256,
+        }
+        if normalized_operator_metadata:
+            ledger_metadata["operator_metadata"] = normalized_operator_metadata
         ledger_event = database.AuditLog(
             actor=actor,
             action=LEDGER_ACTION,
@@ -236,14 +256,7 @@ def _persist_result_transition(
                     "state": final_state,
                     "state_version": next_version,
                     "reason": reason,
-                    "metadata": {
-                        "result_record_id": result_row.id,
-                        "result_envelope_sha256": envelope_sha256,
-                        "execution_audit_record_id": execution_audit.id,
-                        "authoritative_record_ids": record_ids,
-                        "result_reference_sha256": result_reference_sha256,
-                        "workspace_sha256": workspace_sha256,
-                    },
+                    "metadata": ledger_metadata,
                     "automatic_retry": False,
                     "retry_authorized": False,
                 }
@@ -277,6 +290,7 @@ def _persist_result_transition(
             "execution_audit": {
                 "audit_record_id": execution_audit.id,
                 "recorded_at": recorded_at.isoformat(),
+                "operator_metadata": normalized_operator_metadata,
             },
             "ledger_record_id": ledger_event.id,
         }

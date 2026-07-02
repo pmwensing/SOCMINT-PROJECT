@@ -8,6 +8,9 @@ from .action_eligibility_delegate_resolution_routes_v34_1 import (
 from .case_governance_product_review_v33_7 import (
     build_case_governance_product_review,
 )
+from .execution_reconciliation_routes_v35_4 import (
+    register_execution_reconciliation_routes_v35_4,
+)
 from .governance_action_routes_v34_2_6 import (
     register_governance_action_routes_v34_2_6,
 )
@@ -57,4 +60,5 @@ def register_case_governance_product_review_routes_v33_7(app):
     register_action_eligibility_delegate_resolution_routes_v34_1(app)
     register_governance_action_routes_v34_2_6(app)
     register_governance_execution_product_review_routes_v34_7(app)
+    register_execution_reconciliation_routes_v35_4(app)
     return app
