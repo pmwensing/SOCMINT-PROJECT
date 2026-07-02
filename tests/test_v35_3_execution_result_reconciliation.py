@@ -1,7 +1,10 @@
+import json
+
 import pytest
 
 from src.socmint import database
 from src.socmint.durable_execution_ledger_v35_1 import (
+    LEDGER_ACTION,
     create_execution,
     execution_snapshot,
     transition_execution,
@@ -160,4 +163,60 @@ def test_v35_3_reconciliation_rejects_wrong_issuance_binding(tmp_path):
         match="confirmation issuance audit does not match execution",
     ):
         reconcile_uncertain_execution_result(**args)
+    assert execution_result_snapshot(setup["execution"]["execution_id"]) is None
+
+
+def test_v35_3_reconciliation_rejects_tampered_issuance_identity(tmp_path):
+    setup = _setup_uncertain(tmp_path)
+    session = database.Session()
+    try:
+        issue = session.query(database.AuditLog).filter_by(
+            id=setup["issuance"]["audit_record_id"]
+        ).one()
+        details = json.loads(issue.details)
+        details["case_id"] = "different-case"
+        issue.details = json.dumps(details, sort_keys=True, separators=(",", ":"))
+        session.commit()
+    finally:
+        session.close()
+
+    with pytest.raises(
+        ExecutionResultError,
+        match="confirmation issuance identity does not match execution",
+    ):
+        reconcile_uncertain_execution_result(**_reconcile_args(setup))
+    assert execution_result_snapshot(setup["execution"]["execution_id"]) is None
+
+
+def test_v35_3_reconciliation_rejects_running_issue_id_mismatch(tmp_path):
+    setup = _setup_uncertain(tmp_path)
+    session = database.Session()
+    try:
+        rows = (
+            session.query(database.AuditLog)
+            .filter_by(
+                action=LEDGER_ACTION,
+                target_value=setup["execution"]["execution_id"],
+            )
+            .all()
+        )
+        running = next(
+            row for row in rows if json.loads(row.details).get("state") == "running"
+        )
+        details = json.loads(running.details)
+        details["metadata"]["confirmation_issue_audit_id"] += 1
+        running.details = json.dumps(
+            details,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    with pytest.raises(
+        ExecutionResultError,
+        match="confirmation issuance audit does not match invocation",
+    ):
+        reconcile_uncertain_execution_result(**_reconcile_args(setup))
     assert execution_result_snapshot(setup["execution"]["execution_id"]) is None
