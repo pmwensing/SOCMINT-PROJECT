@@ -1,5 +1,6 @@
 from flask import Flask
 
+from src.socmint import database
 from src.socmint.governance_action_execution_v34_3_6 import (
     execute_confirmed_action,
     reset_confirmation_consumption_for_tests,
@@ -10,6 +11,7 @@ from src.socmint.governance_execution_product_review_v34_7 import (
 )
 from src.socmint.human_confirmation_framework_v34_2 import (
     build_confirmation_contract,
+    record_issued_confirmation,
 )
 
 
@@ -32,6 +34,14 @@ def _eligible_resolution(case_id="case-1", action="record_retention_decision"):
     }
 
 
+def _retention_inputs():
+    return {
+        "disposition": "retain",
+        "policy_id": "policy-1",
+        "reason": "retention policy applies",
+    }
+
+
 def test_v34_2_builds_deterministic_confirmation(monkeypatch):
     monkeypatch.setattr(
         "src.socmint.human_confirmation_framework_v34_2."
@@ -39,10 +49,10 @@ def test_v34_2_builds_deterministic_confirmation(monkeypatch):
         lambda case_id: _eligible_resolution(case_id),
     )
     first = build_confirmation_contract(
-        "case-1", "record_retention_decision", {"disposition": "retain"}
+        "case-1", "record_retention_decision", _retention_inputs()
     )
     second = build_confirmation_contract(
-        "case-1", "record_retention_decision", {"disposition": "retain"}
+        "case-1", "record_retention_decision", _retention_inputs()
     )
     assert first["status"] == "confirmation_required"
     assert first["confirmation_id"] == second["confirmation_id"]
@@ -50,7 +60,14 @@ def test_v34_2_builds_deterministic_confirmation(monkeypatch):
     assert first["execution_performed"] is False
 
 
-def test_v34_3_to_v34_6_execute_only_confirmed_allowlisted_delegate(monkeypatch):
+def test_v34_3_to_v34_6_execute_only_confirmed_allowlisted_delegate(
+    monkeypatch,
+    tmp_path,
+):
+    database.configure_database(
+        f"sqlite:///{tmp_path / 'governance-execution.db'}",
+        create_schema=True,
+    )
     reset_confirmation_consumption_for_tests()
     monkeypatch.setattr(
         "src.socmint.human_confirmation_framework_v34_2."
@@ -58,8 +75,10 @@ def test_v34_3_to_v34_6_execute_only_confirmed_allowlisted_delegate(monkeypatch)
         lambda case_id: _eligible_resolution(case_id),
     )
     contract = build_confirmation_contract(
-        "case-1", "record_retention_decision", {"disposition": "retain"}
+        "case-1", "record_retention_decision", _retention_inputs()
     )
+    issuance = record_issued_confirmation(contract, "admin")
+    assert issuance["issued"] is True
     calls = []
     service = contract["delegate_service"]
     delegates = {service: lambda **kwargs: calls.append(kwargs) or {"id": "r-1"}}
@@ -68,6 +87,7 @@ def test_v34_3_to_v34_6_execute_only_confirmed_allowlisted_delegate(monkeypatch)
         contract, contract["confirmation_id"], False, "admin", delegates
     )
     assert denied["execution_performed"] is False
+    assert denied["confirmation_consumed"] is False
     assert calls == []
 
     result = execute_confirmed_action(
@@ -76,11 +96,16 @@ def test_v34_3_to_v34_6_execute_only_confirmed_allowlisted_delegate(monkeypatch)
     assert result["status"] == "executed"
     assert result["action_family"] == "recall_retention"
     assert result["automatic_execution"] is False
+    assert result["confirmation_issue_audit"]["audit_record_id"]
+    assert result["contract_validation"]["valid"] is True
     assert calls == [
         {
             "disposition": "retain",
-            "case_id": "case-1",
+            "policy_id": "policy-1",
+            "reason": "retention policy applies",
+            "reviewer": "admin",
             "confirmed": True,
+            "case_id": "case-1",
         }
     ]
 

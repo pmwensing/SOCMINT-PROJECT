@@ -15,7 +15,10 @@ from .delivery_attempt_receipt_ledger_v32_4 import (
 from .dissemination_package_v32_2 import assemble_dissemination_package
 from .governance_action_execution_v34_3_6 import execute_confirmed_action
 from .governance_execution_hardening_v34_8 import audit_delegate_signatures
-from .human_confirmation_framework_v34_2 import build_confirmation_contract
+from .human_confirmation_framework_v34_2 import (
+    build_confirmation_contract,
+    record_issued_confirmation,
+)
 from .recall_retention_lifecycle_v32_6 import (
     record_recall_decision,
     record_retention_decision,
@@ -94,6 +97,13 @@ def register_governance_action_routes_v34_2_6(app):
             inputs=dict(body.get("inputs") or {}),
         )
         payload["actor"] = actor
+        if payload.get("status") == "confirmation_required":
+            issuance = record_issued_confirmation(payload, actor)
+            payload["confirmation_issued"] = issuance["issued"]
+            payload["confirmation_issue_audit_id"] = issuance["audit_record_id"]
+            if issuance["issued"] is not True:
+                payload["status"] = "blocked"
+                payload["blockers"] = [{"key": issuance["reason"]}]
         code = 200 if payload.get("status") != "blocked" else 422
         return jsonify(payload), code
 
