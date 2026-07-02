@@ -208,25 +208,32 @@ def test_v35_4_reconciles_without_delegate_and_persists_evidence(tmp_path):
     assert snapshot is not None and snapshot["state"] == "reconciled"
 
 
-def test_v35_4_identical_replay_and_conflicting_evidence(tmp_path):
+def test_v35_4_cross_admin_replay_and_conflicting_evidence(tmp_path):
     setup = _setup_uncertain(tmp_path, "replay")
     payload = _request(setup)
     first = reconcile_execution(setup["execution_id"], payload, actor="admin")
-    second = reconcile_execution(setup["execution_id"], payload, actor="admin")
+    second = reconcile_execution(
+        setup["execution_id"], payload, actor="second-admin"
+    )
 
     assert first["reconciliation"]["created"] is True
+    assert first["reconciliation"]["result"]["actor"] == "admin"
     assert second["reconciliation"]["created"] is False
     assert second["reconciliation"]["replay_detected"] is True
+    assert second["reconciliation"]["result"]["actor"] == "admin"
 
     with pytest.raises(ExecutionResultConflict):
         reconcile_execution(
             setup["execution_id"],
             _request(setup, reason="Different evidence interpretation"),
-            actor="admin",
+            actor="second-admin",
         )
 
 
-def test_v35_4_api_authorization_validation_and_page_controls(monkeypatch, tmp_path):
+def test_v35_4_api_authorization_validation_stale_version_and_page_controls(
+    monkeypatch,
+    tmp_path,
+):
     setup = _setup_uncertain(tmp_path, "routes")
     app = _app(monkeypatch)
     client = app.test_client()
@@ -268,6 +275,15 @@ def test_v35_4_api_authorization_validation_and_page_controls(monkeypatch, tmp_p
     )
     assert response.status_code == 422
     assert "forged-admin" not in response.get_data(as_text=True)
+
+    stale = _request(setup)
+    stale["expected_version"] -= 1
+    response = client.post(
+        f"/api/v1/dissemination-governance/executions/{setup['execution_id']}/reconcile",
+        json=stale,
+    )
+    assert response.status_code == 409
+    assert response.get_json() == {"error": "execution state conflict"}
 
     reconciled = client.post(
         f"/api/v1/dissemination-governance/executions/{setup['execution_id']}/reconcile",
