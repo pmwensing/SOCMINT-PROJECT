@@ -50,7 +50,11 @@ class GovernanceExecutionResult(database.Base):
         nullable=False,
     )
     confirmation_sha256 = Column(String(128), nullable=False)
-    confirmation_issue_audit_id = Column(Integer, nullable=False)
+    confirmation_issue_audit_id = Column(
+        Integer,
+        ForeignKey("audit_logs.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
     contract_validation_sha256 = Column(String(128), nullable=False)
     case_id = Column(String(255), nullable=False)
     governance_action = Column(String(128), nullable=False)
@@ -61,7 +65,11 @@ class GovernanceExecutionResult(database.Base):
     state_version = Column(Integer, nullable=False)
     workspace_sha256 = Column(String(128), nullable=False)
     actor = Column(String(255), nullable=False)
-    execution_audit_record_id = Column(Integer, nullable=False)
+    execution_audit_record_id = Column(
+        Integer,
+        ForeignKey("audit_logs.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
     recorded_at = Column(DateTime(timezone=True), nullable=False)
     result_envelope_sha256 = Column(String(128), nullable=False)
 
