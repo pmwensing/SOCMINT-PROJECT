@@ -16,7 +16,11 @@ from src.socmint.governance_execution_result_service_v35_3 import (
 )
 from src.socmint.governance_execution_result_store_v35_3 import (
     ExecutionResultConflict,
+    ExecutionResultError,
     execution_result_snapshot,
+)
+from src.socmint.governance_execution_result_transition_v35_3 import (
+    complete_execution_result as persist_completed_result,
 )
 from src.socmint.human_confirmation_framework_v34_2 import (
     confirmation_identity,
@@ -161,6 +165,28 @@ def test_v35_3_conflicting_duplicate_result_is_rejected(tmp_path):
     with pytest.raises(ExecutionResultConflict):
         complete_execution_result(**args)
     assert _counts()["results"] == 1
+
+
+def test_v35_3_low_level_transition_cannot_bypass_binding_checks(tmp_path):
+    setup = _setup_running(tmp_path, "low-level-binding")
+    args = _complete_args(setup)
+    args["contract_validation_sha256"] = "forged-validation"
+
+    with pytest.raises(
+        ExecutionResultError,
+        match="contract validation digest does not match invocation",
+    ):
+        persist_completed_result(**args)
+
+    snapshot = execution_snapshot(setup["execution"]["execution_id"])
+    assert snapshot is not None
+    assert snapshot["state"] == "running"
+    assert execution_result_snapshot(setup["execution"]["execution_id"]) is None
+    assert _counts() == {
+        "results": 0,
+        "result_audits": 0,
+        "ledger_events": 2,
+    }
 
 
 @pytest.mark.parametrize(
