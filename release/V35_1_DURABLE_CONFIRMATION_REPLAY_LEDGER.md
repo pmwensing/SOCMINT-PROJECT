@@ -56,7 +56,7 @@ validate human confirmation
 ## Concurrency guarantees
 
 - simultaneous creates are serialized by database uniqueness; exactly one `pending` record and one creation event survive
-- transitions require matching `execution_id`, `current_state`, and `state_version`
+- transitions use a conditional database update matching `execution_id`, `current_state`, and `state_version`
 - a zero-row conditional update is treated as `ExecutionStateConflict`
 - the authoritative state update and corresponding append-only event are committed or rolled back together
 - SQL compatibility is checked for SQLite and PostgreSQL
