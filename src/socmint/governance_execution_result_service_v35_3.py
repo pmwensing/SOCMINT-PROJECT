@@ -48,6 +48,7 @@ def complete_execution_result(
     authoritative_record_ids: Mapping[str, Any],
     result_reference_sha256: str,
     workspace_sha256: str,
+    operator_metadata: Mapping[str, Any] | None = None,
     failure_hook=None,
 ) -> dict[str, Any]:
     _verify(
@@ -64,6 +65,7 @@ def complete_execution_result(
         authoritative_record_ids=authoritative_record_ids,
         result_reference_sha256=result_reference_sha256,
         workspace_sha256=workspace_sha256,
+        operator_metadata=operator_metadata,
         failure_hook=failure_hook,
     )
 
@@ -78,6 +80,7 @@ def reconcile_uncertain_execution_result(
     authoritative_record_ids: Mapping[str, Any],
     result_reference_sha256: str,
     workspace_sha256: str,
+    operator_metadata: Mapping[str, Any] | None = None,
     failure_hook=None,
 ) -> dict[str, Any]:
     _verify(
@@ -94,5 +97,6 @@ def reconcile_uncertain_execution_result(
         authoritative_record_ids=authoritative_record_ids,
         result_reference_sha256=result_reference_sha256,
         workspace_sha256=workspace_sha256,
+        operator_metadata=operator_metadata,
         failure_hook=failure_hook,
     )
