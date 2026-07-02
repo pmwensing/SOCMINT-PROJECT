@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from copy import deepcopy
 from typing import Any
@@ -118,14 +119,36 @@ def same_result(
     )
 
 
+def _audit_details(row: database.AuditLog | None) -> dict[str, Any]:
+    if row is None:
+        return {}
+    try:
+        payload = json.loads(row.details or "{}")
+    except (TypeError, ValueError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
 def existing_result_response(
     session,
     existing: GovernanceExecutionResult,
     **expected: Any,
 ) -> dict[str, Any]:
+    expected_operator_metadata = expected.pop("operator_metadata", {}) or {}
     if not same_result(existing, **expected):
         raise ExecutionResultConflict(
             "execution already has a different authoritative result"
+        )
+    audit_row = (
+        session.query(database.AuditLog)
+        .filter_by(id=existing.execution_audit_record_id)
+        .first()
+    )
+    audit_details = _audit_details(audit_row)
+    stored_operator_metadata = audit_details.get("operator_metadata") or {}
+    if stored_operator_metadata != expected_operator_metadata:
+        raise ExecutionResultConflict(
+            "execution already has different reconciliation evidence"
         )
     execution = (
         session.query(GovernanceExecution)
@@ -146,5 +169,6 @@ def existing_result_response(
                 if existing.recorded_at
                 else None
             ),
+            "operator_metadata": stored_operator_metadata,
         },
     }
