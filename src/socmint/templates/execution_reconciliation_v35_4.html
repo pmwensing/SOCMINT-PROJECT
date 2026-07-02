@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="container py-4" data-execution-reconciliation="v35.4">
+  <h1>{{ title }}</h1>
+  <p>This administrator workflow attaches a verified authoritative result to an uncertain execution. It does not invoke the delegate service.</p>
+  <p><strong>Status:</strong> {{ payload.status }}</p>
+  <p><strong>Uncertain executions:</strong> {{ payload.total | default(0) }}</p>
+  <p data-automatic-retry="false"><strong>Automatic retry:</strong> disabled</p>
+
+  {% if not payload.executions %}
+    <p data-empty-queue="true">No uncertain executions are awaiting reconciliation.</p>
+  {% endif %}
+
+  {% for execution in payload.executions %}
+  <article class="card" data-execution-id="{{ execution.execution_id }}">
+    <h2>{{ execution.case_id }} — {{ execution.governance_action }}</h2>
+    <dl>
+      <dt>Execution ID</dt><dd><code>{{ execution.execution_id }}</code></dd>
+      <dt>State</dt><dd>{{ execution.state }} / version {{ execution.state_version }}</dd>
+      <dt>Delegate service</dt><dd><code>{{ execution.delegate_service }}</code></dd>
+      <dt>Ledger consistent</dt><dd>{{ execution.ledger_consistent }}</dd>
+      <dt>Last reason</dt><dd>{{ execution.last_reason }}</dd>
+      <dt>Confirmation issuance audit</dt><dd>{{ execution.invocation_binding.confirmation_issue_audit_id }}</dd>
+      <dt>Contract validation digest</dt><dd><code>{{ execution.invocation_binding.contract_validation_sha256 }}</code></dd>
+      <dt>Recorded result reference</dt><dd><code>{{ execution.uncertain_outcome.result_reference_sha256 or 'not recorded' }}</code></dd>
+    </dl>
+
+    <details>
+      <summary>Durable execution history</summary>
+      <ol>
+      {% for event in execution.history %}
+        <li>
+          <strong>{{ event.state }}</strong> v{{ event.state_version }} — {{ event.reason }}
+          <span>{{ event.recorded_at }}</span>
+        </li>
+      {% endfor %}
+      </ol>
+    </details>
+
+    <form method="post" action="{{ url_for('execution_reconciliation_submit_v35_4', execution_id=execution.execution_id) }}" data-reconciliation-form="true">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="expected_state" value="uncertain">
+      <input type="hidden" name="expected_version" value="{{ execution.state_version }}">
+
+      <label>
+        Authoritative record IDs (JSON object)
+        <textarea name="authoritative_record_ids" required rows="4">{{ execution.uncertain_outcome.authoritative_record_ids | tojson }}</textarea>
+      </label>
+
+      <label>
+        Result reference SHA-256
+        <input name="result_reference_sha256" required minlength="64" maxlength="64" pattern="[0-9a-fA-F]{64}" value="{{ execution.uncertain_outcome.result_reference_sha256 or '' }}">
+      </label>
+
+      <label>
+        Workspace SHA-256
+        <input name="workspace_sha256" required minlength="64" maxlength="64" pattern="[0-9a-fA-F]{64}">
+      </label>
+
+      <label>
+        Reconciliation reason
+        <textarea name="reconciliation_reason" required rows="3"></textarea>
+      </label>
+
+      <label>
+        Evidence references (JSON array)
+        <textarea name="evidence_references" required rows="5">[{"reference_type":"audit","reference_id":""}]</textarea>
+      </label>
+
+      <button type="submit" name="reconcile" value="1">Record verified reconciliation</button>
+    </form>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}
