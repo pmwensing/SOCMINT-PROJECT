@@ -33,6 +33,20 @@ def run_migrations_offline():
         context.run_migrations()
 
 
+def _prepare_postgresql_version_table(connection) -> None:
+    if connection.dialect.name != "postgresql":
+        return
+    connection.exec_driver_sql(
+        "CREATE TABLE IF NOT EXISTS alembic_version "
+        "(version_num VARCHAR(64) NOT NULL)"
+    )
+    connection.exec_driver_sql(
+        "ALTER TABLE alembic_version "
+        "ALTER COLUMN version_num TYPE VARCHAR(64)"
+    )
+    connection.commit()
+
+
 def run_migrations_online():
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
@@ -41,6 +55,7 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
+        _prepare_postgresql_version_table(connection)
         context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
