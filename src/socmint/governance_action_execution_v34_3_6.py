@@ -17,7 +17,10 @@ from .governance_execution_hardening_v34_8 import (
     refreshed_workspace,
     reset_execution_ledger_for_tests as reset_v34_execution_audit_for_tests,
 )
-from .human_confirmation_framework_v34_2 import validate_confirmation
+from .human_confirmation_framework_v34_2 import (
+    reset_issued_confirmations_for_tests,
+    validate_confirmation,
+)
 
 SCHEMA = "socmint.governance_action_execution.v34_3_6"
 VERSION = "v35.2.0"
@@ -114,10 +117,30 @@ def execute_confirmed_action(
     actor: str,
     delegates: dict[str, Delegate],
 ) -> dict[str, Any]:
+    action = str(contract.get("action") or "")
+    contract_validation = validate_action_payload(
+        action,
+        targets=contract.get("targets"),
+        inputs=contract.get("inputs"),
+    )
+    validation_summary = _contract_validation_summary(contract_validation)
+    if any(
+        error.get("key") == "invalid_container_type"
+        for error in contract_validation.get("errors") or []
+    ):
+        return {
+            **_blocked(action, "action_contract_invalid"),
+            "case_id": str(contract.get("case_id") or ""),
+            "confirmation_accepted": False,
+            "confirmation_consumed": False,
+            "execution_attempted": False,
+            "execution_created": False,
+            "contract_validation": validation_summary,
+        }
+
     confirmation_validation = validate_confirmation(
         contract, confirmation_id, confirmed
     )
-    action = str(contract.get("action") or "")
     registered = DELEGATE_REGISTRY.get(action)
     if not confirmation_validation["accepted"]:
         return {
@@ -127,6 +150,9 @@ def execute_confirmed_action(
             "confirmation_consumed": False,
         }
 
+    confirmation_issue_audit = confirmation_validation.get(
+        "confirmation_issue_audit"
+    )
     service = str(contract.get("delegate_service") or "")
     if registered is None or registered["delegate_service"] != service:
         return {
@@ -134,6 +160,7 @@ def execute_confirmed_action(
             "execution_attempted": False,
             "execution_created": False,
             "confirmation_consumed": False,
+            "confirmation_issue_audit": confirmation_issue_audit,
         }
 
     delegate = delegates.get(service)
@@ -143,14 +170,9 @@ def execute_confirmed_action(
             "execution_attempted": False,
             "execution_created": False,
             "confirmation_consumed": False,
+            "confirmation_issue_audit": confirmation_issue_audit,
         }
 
-    contract_validation = validate_action_payload(
-        action,
-        targets=dict(contract.get("targets") or {}),
-        inputs=dict(contract.get("inputs") or {}),
-    )
-    validation_summary = _contract_validation_summary(contract_validation)
     if contract_validation.get("service") != service:
         return {
             **_blocked(action, "action_contract_service_mismatch"),
@@ -160,6 +182,7 @@ def execute_confirmed_action(
             "confirmation_consumed": False,
             "execution_attempted": False,
             "execution_created": False,
+            "confirmation_issue_audit": confirmation_issue_audit,
             "contract_validation": validation_summary,
         }
     if contract_validation.get("valid") is not True:
@@ -171,6 +194,7 @@ def execute_confirmed_action(
             "confirmation_consumed": False,
             "execution_attempted": False,
             "execution_created": False,
+            "confirmation_issue_audit": confirmation_issue_audit,
             "contract_validation": validation_summary,
         }
 
@@ -195,6 +219,7 @@ def execute_confirmed_action(
             "confirmation_consumed": True,
             "execution_attempted": False,
             "execution_created": False,
+            "confirmation_issue_audit": confirmation_issue_audit,
             "contract_validation": validation_summary,
             "durable_replay_protection": True,
         }
@@ -223,6 +248,7 @@ def execute_confirmed_action(
             "execution_id": execution["execution_id"],
             "execution_state": failed["state"],
             "state_version": failed["state_version"],
+            "confirmation_issue_audit": confirmation_issue_audit,
             "confirmation_claim_audit": _ledger_claim(execution),
             "confirmation_consumed": True,
             "execution_attempted": False,
@@ -243,6 +269,9 @@ def execute_confirmed_action(
             "contract_validation_sha256": contract_validation.get(
                 "validation_sha256"
             ),
+            "confirmation_issue_audit_id": (
+                confirmation_issue_audit or {}
+            ).get("audit_record_id"),
         },
     )
 
@@ -266,6 +295,7 @@ def execute_confirmed_action(
             "delegate_arguments": sorted(kwargs),
             "actor": actor,
             "confirmation_sha256": confirmation_sha256,
+            "confirmation_issue_audit": confirmation_issue_audit,
             "confirmation_claim_audit": _ledger_claim(execution),
             "confirmation_consumed": True,
             "execution_id": execution["execution_id"],
@@ -321,6 +351,7 @@ def execute_confirmed_action(
             "delegate_arguments": sorted(kwargs),
             "actor": actor,
             "confirmation_sha256": confirmation_sha256,
+            "confirmation_issue_audit": confirmation_issue_audit,
             "confirmation_claim_audit": _ledger_claim(execution),
             "confirmation_consumed": True,
             "execution_id": execution["execution_id"],
@@ -365,6 +396,7 @@ def execute_confirmed_action(
         ),
         "actor": actor,
         "confirmation_sha256": confirmation_sha256,
+        "confirmation_issue_audit": confirmation_issue_audit,
         "confirmation_claim_audit": _ledger_claim(execution),
         "confirmation_consumed": True,
         "execution_audit": execution_audit,
@@ -391,3 +423,4 @@ def execute_confirmed_action(
 def reset_confirmation_consumption_for_tests() -> None:
     reset_v34_execution_audit_for_tests()
     reset_durable_execution_ledger_for_tests()
+    reset_issued_confirmations_for_tests()
