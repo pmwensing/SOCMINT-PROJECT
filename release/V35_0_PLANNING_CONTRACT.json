@@ -1,0 +1,58 @@
+{
+  "schema": "socmint.v35.planning_contract.v35_0",
+  "version": "v35.0.0",
+  "program": "Durable Action Orchestration, Audit Traceability, and Operational Recovery",
+  "primary_workspace": "Governance Execution Recovery and Reconciliation Workspace",
+  "production_objective": "Extend the hardened v34 human-confirmed execution surface with durable orchestration state, authoritative audit linkage, safe retry and recovery controls, reconciliation, and operator-visible observability without replacing v32 domain services or weakening explicit confirmation requirements.",
+  "roadmap": [
+    {"slice": "v35.0", "title": "Planning Baseline and Production Contract", "implemented": true},
+    {"slice": "v35.1", "title": "Durable Confirmation and Replay Ledger", "implemented": false},
+    {"slice": "v35.2", "title": "Delegate Signature and Input Schema Registry", "implemented": false},
+    {"slice": "v35.3", "title": "Execution Result and Authoritative Audit Linkage", "implemented": false},
+    {"slice": "v35.4", "title": "Workspace Refresh and Operator Result Surfaces", "implemented": false},
+    {"slice": "v35.5", "title": "Failure Recovery and Safe Retry Controls", "implemented": false},
+    {"slice": "v35.6", "title": "Operational Observability and Reconciliation", "implemented": false},
+    {"slice": "v35.7", "title": "Integrated Recovery Review and Browser E2E", "implemented": false}
+  ],
+  "entry_gate": {
+    "planning_only": true,
+    "runtime_code_added": false,
+    "route_added": false,
+    "migration_added": false,
+    "v34_8_hardened_baseline_required": true,
+    "status": "v35_0_planning_entry_gate_defined"
+  },
+  "scope_boundaries": {
+    "replace_v32_domain_services": false,
+    "automatic_action_execution": false,
+    "confirmation_bypass": false,
+    "generic_job_orchestration_platform": false,
+    "direct_transport_implementation": false,
+    "destructive_retry": false,
+    "historical_audit_mutation": false,
+    "case_access_change": false
+  },
+  "production_invariants": {
+    "v32_services_remain_authoritative": true,
+    "v34_confirmation_contract_remains_required": true,
+    "every_execution_has_durable_state": true,
+    "every_result_links_authoritative_and_platform_audit_records": true,
+    "retry_requires_explicit_eligibility_and_confirmation": true,
+    "reconciliation_is_read_only_until_human_action": true,
+    "failed_or_uncertain_execution_is_never_silently_replayed": true,
+    "operator_surfaces_explain_current_state_and_next_safe_action": true,
+    "browser_and_api_use_one_canonical_contract": true
+  },
+  "validation": {
+    "planning_contract": "pending_ci",
+    "focused": "pending_ci",
+    "full_suite": "pending_ci",
+    "lint": "pending_ci",
+    "ci": "pending_ci"
+  },
+  "closure_contract": {
+    "v35_closed": false,
+    "next_action": "implement_v35_1_durable_confirmation_and_replay_ledger"
+  },
+  "next_action": "implement_v35_1_durable_confirmation_and_replay_ledger"
+}
