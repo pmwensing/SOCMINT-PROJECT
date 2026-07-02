@@ -8,14 +8,19 @@ from .action_eligibility_delegate_resolution_v34_1 import DELEGATE_REGISTRY
 from .dossier_assembly_workspace_v21_0 import _sha
 from .durable_execution_ledger_v35_1 import (
     create_execution,
+    execution_snapshot,
     reset_execution_ledger_for_tests as reset_durable_execution_ledger_for_tests,
     transition_execution,
 )
 from .governance_execution_hardening_v34_8 import (
     authoritative_record_ids,
-    record_execution_result,
     refreshed_workspace,
     reset_execution_ledger_for_tests as reset_v34_execution_audit_for_tests,
+)
+from .governance_execution_result_store_v35_3 import execution_result_snapshot
+from .governance_execution_result_transition_v35_3 import (
+    complete_execution_result,
+    reset_execution_results_for_tests,
 )
 from .human_confirmation_framework_v34_2 import (
     reset_issued_confirmations_for_tests,
@@ -23,7 +28,7 @@ from .human_confirmation_framework_v34_2 import (
 )
 
 SCHEMA = "socmint.governance_action_execution.v34_3_6"
-VERSION = "v35.2.0"
+VERSION = "v35.3.0"
 
 ACTION_FAMILIES = {
     "create_audience_contract": "audience_package_authorization",
@@ -107,6 +112,134 @@ def _blocked(action: str, reason: str, status: str = "blocked") -> dict[str, Any
         "reason": reason,
         "execution_performed": False,
         "automatic_retry": False,
+    }
+
+
+def _uncertain_after_delegate(
+    *,
+    action: str,
+    case_id: str,
+    service: str,
+    kwargs: dict[str, Any],
+    actor: str,
+    confirmation_sha256: str,
+    confirmation_issue_audit: dict[str, Any] | None,
+    execution: dict[str, Any],
+    running: dict[str, Any],
+    contract_validation: dict[str, Any],
+    validation_summary: dict[str, Any],
+    reason: str,
+    exc: Exception,
+    record_ids: dict[str, Any] | None = None,
+    result_reference: str | None = None,
+) -> dict[str, Any]:
+    metadata: dict[str, Any] = {"exception_type": type(exc).__name__}
+    if record_ids is not None:
+        metadata["authoritative_record_ids"] = record_ids
+    if result_reference:
+        metadata["result_reference_sha256"] = result_reference
+    uncertain = transition_execution(
+        execution_id=execution["execution_id"],
+        expected_state="running",
+        expected_version=running["state_version"],
+        new_state="uncertain",
+        actor=actor,
+        reason=reason,
+        metadata=metadata,
+    )
+    return {
+        **_blocked(action, reason, "uncertain"),
+        "case_id": case_id,
+        "action_family": ACTION_FAMILIES[action],
+        "delegate_service": service,
+        "delegate_arguments": sorted(kwargs),
+        "actor": actor,
+        "confirmation_sha256": confirmation_sha256,
+        "confirmation_issue_audit": confirmation_issue_audit,
+        "confirmation_claim_audit": _ledger_claim(execution),
+        "confirmation_consumed": True,
+        "execution_id": execution["execution_id"],
+        "execution_state": uncertain["state"],
+        "state_version": uncertain["state_version"],
+        "execution_attempted": True,
+        "execution_created": True,
+        "external_effect_unknown": True,
+        "authoritative_record_ids": record_ids or {},
+        "result_reference_sha256": result_reference,
+        "contract_validation": validation_summary,
+        "contract_validation_sha256": contract_validation.get(
+            "validation_sha256"
+        ),
+        "durable_replay_protection": True,
+        "automatic_retry": False,
+        "source_of_authority": "v32_delegate_service",
+    }
+
+
+def _successful_execution_payload(
+    *,
+    action: str,
+    case_id: str,
+    service: str,
+    kwargs: dict[str, Any],
+    actor: str,
+    confirmation_sha256: str,
+    confirmation_issue_audit: dict[str, Any] | None,
+    execution: dict[str, Any],
+    contract_validation: dict[str, Any],
+    validation_summary: dict[str, Any],
+    record_ids: dict[str, Any],
+    result_reference: str,
+    result: Any,
+    workspace: dict[str, Any],
+    completion: dict[str, Any],
+) -> dict[str, Any]:
+    succeeded = completion["execution"]
+    result_envelope = completion["result"]
+    return {
+        "schema": SCHEMA,
+        "version": VERSION,
+        "status": "executed",
+        "case_id": case_id,
+        "action": action,
+        "action_family": ACTION_FAMILIES[action],
+        "delegate_service": service,
+        "delegate_arguments": sorted(kwargs),
+        "validated_operator_fields": sorted(
+            contract_validation.get("normalized_fields") or {}
+        ),
+        "actor": actor,
+        "confirmation_sha256": confirmation_sha256,
+        "confirmation_issue_audit": confirmation_issue_audit,
+        "confirmation_claim_audit": _ledger_claim(execution),
+        "confirmation_consumed": True,
+        "execution_audit": completion["execution_audit"],
+        "execution_id": execution["execution_id"],
+        "execution_state": succeeded["state"],
+        "state_version": succeeded["state_version"],
+        "execution_ledger_consistent": succeeded["ledger_consistent"],
+        "authoritative_record_ids": record_ids,
+        "result_reference_sha256": result_reference,
+        "result_envelope": result_envelope,
+        "result_envelope_sha256": result_envelope[
+            "result_envelope_sha256"
+        ],
+        "result": result,
+        "workspace": workspace,
+        "workspace_sha256": workspace.get("workspace_sha256"),
+        "contract_validation": validation_summary,
+        "contract_validation_sha256": contract_validation.get(
+            "validation_sha256"
+        ),
+        "execution_performed": True,
+        "execution_attempted": True,
+        "execution_created": True,
+        "atomic_result_completion": True,
+        "result_replay_detected": completion.get("replay_detected", False),
+        "automatic_execution": False,
+        "automatic_retry": False,
+        "durable_replay_protection": True,
+        "source_of_authority": "v32_delegate_service",
     }
 
 
@@ -278,37 +411,23 @@ def execute_confirmed_action(
     try:
         result = delegate(**kwargs)
     except Exception as exc:
-        uncertain = transition_execution(
-            execution_id=execution["execution_id"],
-            expected_state="running",
-            expected_version=running["state_version"],
-            new_state="uncertain",
+        return _uncertain_after_delegate(
+            action=action,
+            case_id=case_id,
+            service=service,
+            kwargs=kwargs,
             actor=actor,
+            confirmation_sha256=confirmation_sha256,
+            confirmation_issue_audit=confirmation_issue_audit,
+            execution=execution,
+            running=running,
+            contract_validation=contract_validation,
+            validation_summary=validation_summary,
             reason="delegate_outcome_not_confirmed",
-            metadata={"exception_type": type(exc).__name__},
+            exc=exc,
         )
-        return {
-            **_blocked(action, "delegate_outcome_not_confirmed", "uncertain"),
-            "case_id": case_id,
-            "action_family": ACTION_FAMILIES[action],
-            "delegate_service": service,
-            "delegate_arguments": sorted(kwargs),
-            "actor": actor,
-            "confirmation_sha256": confirmation_sha256,
-            "confirmation_issue_audit": confirmation_issue_audit,
-            "confirmation_claim_audit": _ledger_claim(execution),
-            "confirmation_consumed": True,
-            "execution_id": execution["execution_id"],
-            "execution_state": uncertain["state"],
-            "state_version": uncertain["state_version"],
-            "execution_attempted": True,
-            "execution_created": True,
-            "external_effect_unknown": True,
-            "contract_validation": validation_summary,
-            "durable_replay_protection": True,
-            "source_of_authority": "v32_delegate_service",
-        }
 
+    record_ids = authoritative_record_ids(result)
     result_reference = _sha(
         {
             "case_id": case_id,
@@ -316,111 +435,86 @@ def execute_confirmed_action(
             "actor": actor,
             "confirmation_sha256": confirmation_sha256,
             "result_type": type(result).__name__,
+            "authoritative_record_ids": record_ids,
         }
     )
-    record_ids = authoritative_record_ids(result)
     try:
-        execution_audit = record_execution_result(
+        workspace = refreshed_workspace(case_id)
+        completion = complete_execution_result(
+            execution_id=execution["execution_id"],
+            expected_version=running["state_version"],
             actor=actor,
-            case_id=case_id,
-            action=action,
-            confirmation_sha256=confirmation_sha256,
-            delegate_service=service,
-            result_reference_sha256=result_reference,
+            confirmation_issue_audit_id=(
+                confirmation_issue_audit or {}
+            ).get("audit_record_id"),
+            contract_validation_sha256=str(
+                contract_validation.get("validation_sha256") or ""
+            ),
             authoritative_record_ids=record_ids,
+            result_reference_sha256=result_reference,
+            workspace_sha256=str(workspace.get("workspace_sha256") or ""),
         )
     except Exception as exc:
-        uncertain = transition_execution(
-            execution_id=execution["execution_id"],
-            expected_state="running",
-            expected_version=running["state_version"],
-            new_state="uncertain",
-            actor=actor,
-            reason="delegate_result_persistence_failed",
-            metadata={
-                "exception_type": type(exc).__name__,
-                "result_reference_sha256": result_reference,
-                "authoritative_record_ids": record_ids,
-            },
-        )
-        return {
-            **_blocked(action, "delegate_result_persistence_failed", "uncertain"),
-            "case_id": case_id,
-            "action_family": ACTION_FAMILIES[action],
-            "delegate_service": service,
-            "delegate_arguments": sorted(kwargs),
-            "actor": actor,
-            "confirmation_sha256": confirmation_sha256,
-            "confirmation_issue_audit": confirmation_issue_audit,
-            "confirmation_claim_audit": _ledger_claim(execution),
-            "confirmation_consumed": True,
-            "execution_id": execution["execution_id"],
-            "execution_state": uncertain["state"],
-            "state_version": uncertain["state_version"],
-            "execution_attempted": True,
-            "execution_created": True,
-            "external_effect_unknown": True,
-            "authoritative_record_ids": record_ids,
-            "result_reference_sha256": result_reference,
-            "contract_validation": validation_summary,
-            "durable_replay_protection": True,
-            "source_of_authority": "v32_delegate_service",
-        }
+        persisted_result = execution_result_snapshot(execution["execution_id"])
+        persisted_execution = execution_snapshot(execution["execution_id"])
+        if (
+            persisted_result is not None
+            and persisted_execution is not None
+            and persisted_execution.get("state") == "succeeded"
+        ):
+            completion = {
+                "created": False,
+                "replay_detected": True,
+                "result": persisted_result,
+                "execution": persisted_execution,
+                "execution_audit": {
+                    "audit_record_id": persisted_result.get(
+                        "execution_audit_record_id"
+                    ),
+                    "recorded_at": persisted_result.get("recorded_at"),
+                },
+            }
+            workspace = {"workspace_sha256": persisted_result.get("workspace_sha256")}
+        else:
+            return _uncertain_after_delegate(
+                action=action,
+                case_id=case_id,
+                service=service,
+                kwargs=kwargs,
+                actor=actor,
+                confirmation_sha256=confirmation_sha256,
+                confirmation_issue_audit=confirmation_issue_audit,
+                execution=execution,
+                running=running,
+                contract_validation=contract_validation,
+                validation_summary=validation_summary,
+                reason="delegate_result_atomic_commit_failed",
+                exc=exc,
+                record_ids=record_ids,
+                result_reference=result_reference,
+            )
 
-    succeeded = transition_execution(
-        execution_id=execution["execution_id"],
-        expected_state="running",
-        expected_version=running["state_version"],
-        new_state="succeeded",
+    return _successful_execution_payload(
+        action=action,
+        case_id=case_id,
+        service=service,
+        kwargs=kwargs,
         actor=actor,
-        reason="authoritative_delegate_result_persisted",
-        metadata={
-            "execution_audit_record_id": execution_audit.get("audit_record_id"),
-            "result_reference_sha256": result_reference,
-            "authoritative_record_ids": record_ids,
-        },
+        confirmation_sha256=confirmation_sha256,
+        confirmation_issue_audit=confirmation_issue_audit,
+        execution=execution,
+        contract_validation=contract_validation,
+        validation_summary=validation_summary,
+        record_ids=record_ids,
+        result_reference=result_reference,
+        result=result,
+        workspace=workspace,
+        completion=completion,
     )
-
-    workspace = refreshed_workspace(case_id)
-    return {
-        "schema": SCHEMA,
-        "version": VERSION,
-        "status": "executed",
-        "case_id": case_id,
-        "action": action,
-        "action_family": ACTION_FAMILIES[action],
-        "delegate_service": service,
-        "delegate_arguments": sorted(kwargs),
-        "validated_operator_fields": sorted(
-            contract_validation.get("normalized_fields") or {}
-        ),
-        "actor": actor,
-        "confirmation_sha256": confirmation_sha256,
-        "confirmation_issue_audit": confirmation_issue_audit,
-        "confirmation_claim_audit": _ledger_claim(execution),
-        "confirmation_consumed": True,
-        "execution_audit": execution_audit,
-        "execution_id": execution["execution_id"],
-        "execution_state": succeeded["state"],
-        "state_version": succeeded["state_version"],
-        "execution_ledger_consistent": succeeded["ledger_consistent"],
-        "authoritative_record_ids": record_ids,
-        "result_reference_sha256": result_reference,
-        "result": result,
-        "workspace": workspace,
-        "workspace_sha256": workspace.get("workspace_sha256"),
-        "contract_validation": validation_summary,
-        "execution_performed": True,
-        "execution_attempted": True,
-        "execution_created": True,
-        "automatic_execution": False,
-        "automatic_retry": False,
-        "durable_replay_protection": True,
-        "source_of_authority": "v32_delegate_service",
-    }
 
 
 def reset_confirmation_consumption_for_tests() -> None:
+    reset_execution_results_for_tests()
     reset_v34_execution_audit_for_tests()
     reset_durable_execution_ledger_for_tests()
     reset_issued_confirmations_for_tests()
