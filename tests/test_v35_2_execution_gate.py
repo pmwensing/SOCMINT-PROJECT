@@ -101,3 +101,28 @@ def test_rejected_contract_can_be_resubmitted_without_duplicate_state(tmp_path):
     assert first["confirmation_consumed"] is False
     assert second["confirmation_consumed"] is False
     assert _ledger_counts() == (0, 0)
+
+
+def test_operator_cannot_supply_system_controlled_reviewer(tmp_path):
+    _configure(tmp_path)
+    contract = _retention_contract()
+    contract["inputs"]["policy_id"] = "policy-1"
+    contract["inputs"]["reviewer"] = "supplied-reviewer"
+    service = contract["delegate_service"]
+
+    result = execute_confirmed_action(
+        contract,
+        contract["confirmation_id"],
+        True,
+        "admin",
+        {service: lambda **kwargs: kwargs},
+    )
+
+    assert result["reason"] == "action_contract_invalid"
+    errors = {
+        (item["key"], item["field"])
+        for item in result["contract_validation"]["errors"]
+    }
+    assert ("system_field_not_operator_supplied", "reviewer") in errors
+    assert "supplied-reviewer" not in repr(result)
+    assert _ledger_counts() == (0, 0)
