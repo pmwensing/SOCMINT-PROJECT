@@ -32,6 +32,14 @@ def _eligible_resolution(case_id="case-1", action="record_retention_decision"):
     }
 
 
+def _retention_inputs():
+    return {
+        "disposition": "retain",
+        "policy_id": "policy-1",
+        "reason": "retention policy applies",
+    }
+
+
 def test_v34_2_builds_deterministic_confirmation(monkeypatch):
     monkeypatch.setattr(
         "src.socmint.human_confirmation_framework_v34_2."
@@ -39,10 +47,10 @@ def test_v34_2_builds_deterministic_confirmation(monkeypatch):
         lambda case_id: _eligible_resolution(case_id),
     )
     first = build_confirmation_contract(
-        "case-1", "record_retention_decision", {"disposition": "retain"}
+        "case-1", "record_retention_decision", _retention_inputs()
     )
     second = build_confirmation_contract(
-        "case-1", "record_retention_decision", {"disposition": "retain"}
+        "case-1", "record_retention_decision", _retention_inputs()
     )
     assert first["status"] == "confirmation_required"
     assert first["confirmation_id"] == second["confirmation_id"]
@@ -58,7 +66,7 @@ def test_v34_3_to_v34_6_execute_only_confirmed_allowlisted_delegate(monkeypatch)
         lambda case_id: _eligible_resolution(case_id),
     )
     contract = build_confirmation_contract(
-        "case-1", "record_retention_decision", {"disposition": "retain"}
+        "case-1", "record_retention_decision", _retention_inputs()
     )
     calls = []
     service = contract["delegate_service"]
@@ -68,6 +76,7 @@ def test_v34_3_to_v34_6_execute_only_confirmed_allowlisted_delegate(monkeypatch)
         contract, contract["confirmation_id"], False, "admin", delegates
     )
     assert denied["execution_performed"] is False
+    assert denied["confirmation_consumed"] is False
     assert calls == []
 
     result = execute_confirmed_action(
@@ -76,11 +85,15 @@ def test_v34_3_to_v34_6_execute_only_confirmed_allowlisted_delegate(monkeypatch)
     assert result["status"] == "executed"
     assert result["action_family"] == "recall_retention"
     assert result["automatic_execution"] is False
+    assert result["contract_validation"]["valid"] is True
     assert calls == [
         {
             "disposition": "retain",
-            "case_id": "case-1",
+            "policy_id": "policy-1",
+            "reason": "retention policy applies",
+            "reviewer": "admin",
             "confirmed": True,
+            "case_id": "case-1",
         }
     ]
 
