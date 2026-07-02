@@ -130,21 +130,18 @@ def register_execution_reconciliation_routes_v35_4(app):
         if error:
             return error
         body = request.get_json(silent=True)
-        payload = reconcile_execution(execution_id, body, actor=actor)
+        try:
+            payload = reconcile_execution(execution_id, body, actor=actor)
+        except (
+            ExecutionNotFound,
+            ExecutionStateConflict,
+            ExecutionResultConflict,
+            ReconciliationBindingError,
+        ) as exc:
+            return _error_response(exc)
         if payload.get("status") == "invalid_request":
             return jsonify(payload), 422
         return jsonify(payload), 200
-
-    @app.errorhandler(ExecutionNotFound)
-    @app.errorhandler(ExecutionStateConflict)
-    @app.errorhandler(ExecutionResultConflict)
-    @app.errorhandler(ReconciliationBindingError)
-    def api_reconciliation_error_v35_4(exc):
-        if request.path.startswith(
-            "/api/v1/dissemination-governance/executions/"
-        ):
-            return _error_response(exc)
-        raise exc
 
     @app.get("/dissemination-governance/execution-reconciliation")
     def execution_reconciliation_page_v35_4():
