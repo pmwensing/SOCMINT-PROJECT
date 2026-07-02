@@ -123,7 +123,7 @@ jobs:
       DATABASE_URL: postgresql+psycopg://socmint:socmint@localhost:5432/socmint_test
       SOCMINT_POSTGRES_TEST_URL: postgresql+psycopg://socmint:socmint@localhost:5432/socmint_test
       SOCMINT_AUTO_CREATE_DB: "false"
-      SOCMINT_SECRET_KEY: ci-v35-3-postgres-concurrency-secret-key-000000000000
+      SOCMINT_SECRET_KEY: ci-v35-4-postgres-concurrency-secret-key-000000000000
     steps:
       - uses: actions/checkout@v6
 
@@ -157,8 +157,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-      - name: Run v35.3 PostgreSQL concurrency tests
-        run: pytest -q tests/test_v35_3_postgres_concurrency.py
+      - name: Run v35.3 and v35.4 PostgreSQL concurrency tests
+        run: |
+          pytest -q \
+            tests/test_v35_3_postgres_concurrency.py \
+            tests/test_v35_4_postgres_reconciliation.py
 
   docker-smoke:
     if: github.event_name == 'workflow_dispatch' && inputs.docker_smoke == 'true'
