@@ -148,6 +148,15 @@ jobs:
           fi
           exit "$status"
 
+      - name: Upload PostgreSQL migration diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: postgres-alembic-${{ github.run_id }}
+          path: /tmp/postgres-alembic.log
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Run v35.3 PostgreSQL concurrency tests
         run: pytest -q tests/test_v35_3_postgres_concurrency.py
 
