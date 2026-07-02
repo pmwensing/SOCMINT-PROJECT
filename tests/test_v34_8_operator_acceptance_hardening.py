@@ -144,10 +144,6 @@ def test_v34_8_operator_acceptance_across_action_families(
     reset_confirmation_consumption_for_tests()
     calls = []
     monkeypatch.setattr(
-        "src.socmint.governance_action_execution_v34_3_6.record_execution_result",
-        lambda **kwargs: {"audit_record_id": 11},
-    )
-    monkeypatch.setattr(
         "src.socmint.governance_action_execution_v34_3_6.refreshed_workspace",
         lambda case_id: {"case_id": case_id, "workspace_sha256": "workspace-sha"},
     )
@@ -171,7 +167,7 @@ def test_v34_8_operator_acceptance_across_action_families(
     assert result["action_family"] == family
     assert result["confirmation_issue_audit"]["audit_record_id"]
     assert result["confirmation_claim_audit"]["audit_record_id"]
-    assert result["execution_audit"]["audit_record_id"] == 11
+    assert result["execution_audit"]["audit_record_id"]
     assert result["execution_state"] == "succeeded"
     assert result["state_version"] == 2
     assert result["execution_ledger_consistent"] is True
@@ -180,6 +176,9 @@ def test_v34_8_operator_acceptance_across_action_families(
         "domain_record_id": "domain-1",
     }
     assert result["workspace_sha256"] == "workspace-sha"
+    assert result["result_envelope"]["final_state"] == "succeeded"
+    assert result["result_envelope_sha256"]
+    assert result["atomic_result_completion"] is True
     assert result["durable_replay_protection"] is True
     assert result["contract_validation"]["valid"] is True
     assert result["automatic_retry"] is False
