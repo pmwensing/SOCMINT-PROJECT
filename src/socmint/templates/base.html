@@ -86,11 +86,12 @@
                 </details>
 
                 {% if session.get('is_admin') %}
-                <details class="nav-group" {% if current_path.startswith('/admin') or current_path.startswith('/api/v1/admin') or current_path == '/api/v1/tor/status' %}open{% endif %}>
-                    <summary class="{{ 'active' if current_path.startswith('/admin') or current_path.startswith('/api/v1/admin') or current_path == '/api/v1/tor/status' else '' }}">Admin</summary>
+                <details class="nav-group" {% if current_path.startswith('/admin') or current_path.startswith('/api/v1/admin') or current_path == '/api/v1/tor/status' or current_path.startswith('/dissemination-governance/execution-reconciliation') %}open{% endif %}>
+                    <summary class="{{ 'active' if current_path.startswith('/admin') or current_path.startswith('/api/v1/admin') or current_path == '/api/v1/tor/status' or current_path.startswith('/dissemination-governance/execution-reconciliation') else '' }}">Admin</summary>
                     {{ nav_link('/admin/users', 'Users') }}
                     {{ nav_link('/admin/memberships', 'Memberships') }}
                     {{ nav_link('/admin/audit', 'Audit') }}
+                    {{ nav_link('/dissemination-governance/execution-reconciliation', 'Execution Reconciliation') }}
                     {{ nav_link('/api/v1/admin/security/checklist', 'Security Checklist') }}
                     {{ nav_link('/api/v1/admin/certification/summary', 'Certification Summary') }}
                     {{ nav_link('/api/v1/admin/release-integrity/summary', 'Release Integrity') }}
