@@ -75,7 +75,6 @@ def reconcile_execution(
         "reconciliation_reason": normalized["reconciliation_reason"],
         "evidence_references": normalized["evidence_references"],
         "request_validation_sha256": validation["validation_sha256"],
-        "actor": str(actor or ""),
         "delegate_invoked": False,
         "automatic_retry": False,
     }
