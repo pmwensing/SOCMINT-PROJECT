@@ -62,12 +62,12 @@ def normalized_record_ids(
 
 def ensure_result_storage() -> None:
     database.ensure_configured()
+    database.AuditLog.__table__.create(bind=database.engine, checkfirst=True)
     GovernanceExecution.__table__.create(bind=database.engine, checkfirst=True)
     GovernanceExecutionResult.__table__.create(
         bind=database.engine,
         checkfirst=True,
     )
-    database.AuditLog.__table__.create(bind=database.engine, checkfirst=True)
 
 
 def execution_result_snapshot(
