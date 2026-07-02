@@ -48,16 +48,14 @@ def reconcile_execution(
     if detail is None:
         raise ExecutionNotFound(str(execution_id or ""))
     normalized = validation["normalized"]
-    if detail.get("state") != "uncertain":
-        raise ExecutionStateConflict(
-            f"expected uncertain, durable state is {detail.get('state')}"
-        )
-    if int(detail.get("state_version") or -1) != int(
-        normalized["expected_version"]
-    ):
-        raise ExecutionStateConflict(
-            "expected version does not match durable execution version"
-        )
+    existing_result = detail.get("result_envelope_exists") is True
+    if not existing_result:
+        if detail.get("state") != "uncertain":
+            raise ExecutionStateConflict("durable execution is not uncertain")
+        current_version = int(detail.get("state_version") or -1)
+        requested_version = int(normalized["expected_version"])
+        if current_version != requested_version:
+            raise ExecutionStateConflict("durable execution version changed")
 
     invocation_binding = detail.get("invocation_binding") or {}
     confirmation_issue_audit_id = invocation_binding.get(
@@ -105,7 +103,7 @@ def reconcile_execution(
             "validation_sha256": validation["validation_sha256"],
         },
         "reconciliation": result,
-        "execution_performed": True,
+        "execution_performed": result.get("created") is True,
         "delegate_invoked": False,
         "automatic_retry": False,
     }
