@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Mapping
 from copy import deepcopy
 from typing import Any, Callable
 
@@ -25,11 +26,30 @@ def _matches(value: Any, kind: str) -> bool:
     return False
 
 
+def _mapping_values(
+    value: Any,
+    field: str,
+    errors: list[dict[str, Any]],
+) -> dict[str, Any]:
+    if value is None:
+        return {}
+    if not isinstance(value, Mapping):
+        errors.append(
+            {
+                "key": "invalid_container_type",
+                "field": field,
+                "expected": "mapping",
+            }
+        )
+        return {}
+    return deepcopy(dict(value))
+
+
 def validate_action_payload(
     action: str,
     *,
-    targets: dict[str, Any] | None = None,
-    inputs: dict[str, Any] | None = None,
+    targets: Any = None,
+    inputs: Any = None,
 ) -> dict[str, Any]:
     action = str(action or "")
     contract = contract_for_action(action)
@@ -44,9 +64,9 @@ def validate_action_payload(
         }
         return {**result, "validation_sha256": _sha(result)}
 
-    target_values = deepcopy(dict(targets or {}))
-    input_values = deepcopy(dict(inputs or {}))
     errors: list[dict[str, Any]] = []
+    target_values = _mapping_values(targets, "targets", errors)
+    input_values = _mapping_values(inputs, "inputs", errors)
 
     for field in sorted(set(target_values) & set(input_values)):
         errors.append({"key": "field_supplied_twice", "field": field})
