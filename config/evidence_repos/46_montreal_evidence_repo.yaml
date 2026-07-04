@@ -1,0 +1,59 @@
+evidence_repo:
+  repo_full_name: pmwensing/46-montreal-evidence-private
+  role: manifest_index_review_export_layer
+  original_file_storage_by_default: false
+  write_manifests: true
+  write_hashes: true
+  write_derived_artifacts: true
+  write_redacted_exports: true
+  write_review_outputs: true
+  write_crawler_findings: true
+
+original_evidence_vaults:
+  local_primary:
+    id: LOCAL-PRIMARY-001
+    path: E:/46_Montreal_Evidence
+    role: primary original evidence vault
+    encrypted: true
+
+  cloud_storage:
+    - id: CLOUD-GDRIVE-001
+      provider: Google Drive
+      role: cloud original or backup evidence storage
+      access: private
+      store_share_links_in_manifest: false
+
+    - id: CLOUD-ONEDRIVE-001
+      provider: OneDrive
+      role: cloud original or backup evidence storage
+      access: private
+      store_share_links_in_manifest: false
+
+    - id: CLOUD-TERABOX-001
+      provider: TeraBox
+      role: cloud original or backup evidence storage
+      access: private
+      store_share_links_in_manifest: false
+
+original_file_policy:
+  github_original_file_write_requires_approval: true
+  privacy_review_required: true
+  repository_safety_review_required: true
+  hash_required: true
+  backup_verification_required: true
+  chain_of_custody_required: true
+
+manifest_files:
+  evidence_register: 00_manifest/EVIDENCE_REGISTER.csv
+  chain_of_custody: 00_manifest/CHAIN_OF_CUSTODY.csv
+  custody_events: 00_manifest/CHAIN_OF_CUSTODY_EVENTS.csv
+  local_file_index: 00_manifest/LOCAL_RAW_FILE_INDEX.csv
+  cloud_storage_register: 00_manifest/CLOUD_STORAGE_REGISTER.csv
+  evidence_location_map: 00_manifest/EVIDENCE_LOCATION_MAP.csv
+  backup_verification_log: 00_manifest/BACKUP_VERIFICATION_LOG.csv
+  sync_conflict_log: 00_manifest/SYNC_CONFLICT_LOG.csv
+  original_evidence_approval_log: 00_manifest/RAW_EVIDENCE_APPROVAL_LOG.csv
+  entity_register: 00_manifest/ENTITY_REGISTER.csv
+  source_register: 00_manifest/SOURCE_REGISTER.csv
+  disclosure_status: 00_manifest/DISCLOSURE_STATUS.csv
+  review_decisions: 00_manifest/REVIEW_DECISIONS.csv
