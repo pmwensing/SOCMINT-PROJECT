@@ -1,0 +1,75 @@
+search_pack:
+  id: 46_montreal_entity_aware_search_pack
+  case_id: case_46_montreal
+  purpose: Generate scoped searches for 46 Montreal and directly involved entities.
+
+primary_terms:
+  - "46 Montreal Street"
+  - "46 Montreal St"
+  - "46 Montreal"
+  - "46 Montréal"
+  - "46MONST"
+  - "B-46 Montreal"
+  - "Apt B" "46 Montreal"
+  - "Apartment B" "46 Montreal"
+  - "Room 3" "46 Montreal"
+
+known_identifiers:
+  - "C-6131"
+  - "240821-000468"
+  - "CEBD202505980-1"
+  - "226-022-2025"
+  - "Order to Remedy" "46 Montreal"
+  - "Order to Comply" "46 Montreal"
+  - "Property Standards" "46 Montreal"
+  - "Fire Inspection Order" "46 Montreal"
+
+authority_terms:
+  - "City of Kingston" "46 Montreal"
+  - "Property Standards" "46 Montreal"
+  - "Building Services" "46 Montreal"
+  - "Kingston Fire" "46 Montreal"
+  - "Kingston Fire and Rescue" "46 Montreal"
+  - "ESA" "46 Montreal"
+  - "Electrical Safety Authority" "46 Montreal"
+  - "OFM" "46 Montreal"
+  - "Office of the Fire Marshal" "46 Montreal"
+  - "LTB" "46 Montreal"
+  - "Landlord and Tenant Board" "46 Montreal"
+
+claim_event_terms:
+  - "fire" "46 Montreal"
+  - "lockout" "46 Montreal"
+  - "lock changed" "46 Montreal"
+  - "no key" "46 Montreal"
+  - "returned rent" "46 Montreal"
+  - "no heat" "46 Montreal"
+  - "bedbug" "46 Montreal"
+  - "cockroach" "46 Montreal"
+  - "rat" "46 Montreal"
+  - "stove insulation" "46 Montreal"
+  - "alarm beeping" "46 Montreal"
+  - "guest interference" "46 Montreal"
+  - "unsafe" "46 Montreal"
+  - "structural assessment" "46 Montreal"
+
+entity_query_templates:
+  - "{entity_name}" "46 Montreal"
+  - "{entity_name}" "46 Montreal Street"
+  - "{entity_name}" "46MONST"
+  - "{entity_business}" "46 Montreal"
+  - "{authority}" "46 Montreal"
+  - "{order_number}" "{entity_name}"
+
+negative_filters:
+  - "-71 Cowdy"
+  - "-71 Cowdy Street"
+  - "-81 Cowdy"
+  - "-Cowdy Street"
+
+rules:
+  candidate_entities_require_review: true
+  unrelated_entity_searches_blocked: true
+  public_record_discovery_only: true
+  no_account_bypass: true
+  human_review_before_export: true
