@@ -118,6 +118,37 @@ def test_attention_queue_omits_operator_inputs(monkeypatch):
     assert "secret" not in str(result)
 
 
+def test_reconciled_view_reports_closure_elapsed_time(monkeypatch):
+    uncertain_at = datetime(2026, 7, 19, 10, 0, tzinfo=timezone.utc)
+    reconciled_at = uncertain_at + timedelta(minutes=12)
+    monkeypatch.setattr(
+        observability,
+        "_execution_payloads",
+        lambda: [
+            _payload(
+                execution_id="reconciled",
+                state="reconciled",
+                state_version=3,
+                ledger_consistent=True,
+                result_envelope_exists=True,
+                invocation_binding={
+                    "confirmation_issue_audit_id": 1,
+                    "contract_validation_sha256": "d" * 64,
+                },
+                uncertain_outcome={"recorded_at": uncertain_at.isoformat()},
+                result_envelope={"result_id": "result-1"},
+                updated_at=reconciled_at.isoformat(),
+            )
+        ],
+    )
+    result = observability.reconciled_executions()
+    assert result["count"] == 1
+    assert result["executions"][0][
+        "uncertainty_to_reconciliation_seconds"
+    ] == 720
+    assert result["executions"][0]["observability"]["classification"] == "reconciled"
+
+
 def test_routes_are_administrator_only_and_get_only(monkeypatch):
     app = Flask(__name__)
     app.secret_key = "v35-5-route-test-secret"
