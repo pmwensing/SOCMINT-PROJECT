@@ -12,7 +12,7 @@ def _app(monkeypatch):
     monkeypatch.setattr(routes, "actor_is_administrator", lambda actor: actor == "admin")
     monkeypatch.setattr(
         routes,
-        "current_staged_records",
+        "current_staged_record_projections",
         lambda import_id=None: [
             {
                 "staged_record_id": "record-1",
@@ -33,8 +33,12 @@ def _app(monkeypatch):
     )
     monkeypatch.setattr(
         routes,
-        "find_staged_record",
-        lambda record_id: {"staged_record_id": record_id} if record_id == "record-1" else None,
+        "find_staged_record_projection",
+        lambda record_id: (
+            {"staged_record_id": record_id, "operational_import_id": "import-a"}
+            if record_id == "record-1"
+            else None
+        ),
     )
     monkeypatch.setattr(
         routes,
@@ -90,7 +94,9 @@ def test_v37_2_stage_filter_and_detail_routes(monkeypatch):
     )
     assert filtered.status_code == 200
     assert filtered.get_json()["count"] == 1
-    assert client.get("/api/v1/operational-import-records/record-1").status_code == 200
+    detail = client.get("/api/v1/operational-import-records/record-1")
+    assert detail.status_code == 200
+    assert detail.get_json()["operational_import_id"] == "import-a"
     assert client.get("/api/v1/operational-import-records/missing").status_code == 404
     assert client.get("/api/v1/operational-import-batches").status_code == 200
     assert client.get("/api/v1/operational-import-batches/batch-1").status_code == 200

@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from flask import jsonify, request, session
 
+from .operational_import_record_projection_v37_2 import (
+    current_staged_record_projections,
+    find_staged_record_projection,
+)
 from .operational_import_records_v37_2 import (
     current_batches,
-    current_staged_records,
     find_batch,
-    find_staged_record,
     stage_import_records,
 )
 from .user_account_workspace_v28_1 import actor_is_administrator
@@ -34,7 +36,7 @@ def register_operational_import_record_routes_v37_2(app):
             return error
         import_id = str(request.args.get("import_id") or "").strip() or None
         state = str(request.args.get("state") or "").strip()
-        items = current_staged_records(import_id)
+        items = current_staged_record_projections(import_id)
         if state:
             items = [item for item in items if item.get("initial_state") == state]
         return jsonify(
@@ -74,7 +76,7 @@ def register_operational_import_record_routes_v37_2(app):
         _, error = _authorized()
         if error:
             return error
-        item = find_staged_record(staged_record_id)
+        item = find_staged_record_projection(staged_record_id)
         if item is None:
             return jsonify({"error": "staged import record not found"}), 404
         return jsonify(item), 200
