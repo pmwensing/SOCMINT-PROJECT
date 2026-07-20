@@ -77,7 +77,7 @@ def test_v37_0_planning_documents_preserve_safety_boundaries():
         "tool export",
         "preserved artifact",
         "synthetic fixtures",
-        "no automatic observation promotion",
+        "no bulk automatic promotion",
     ):
         assert marker in roadmap
     for marker in (
