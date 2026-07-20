@@ -1,0 +1,76 @@
+public_discovery:
+  id: 46_montreal_public_record_discovery
+  case_id: case_46_montreal
+  module_name: Public Record and Deep-Index Discovery Layer
+  purpose: Find lawful public records, public documents, archived pages, and official-source references tied to 46 Montreal and directly involved entities.
+
+source_tiers:
+  tier_1_official:
+    - City of Kingston
+    - Kingston Fire and Rescue
+    - Property Standards
+    - Building Services
+    - Electrical Safety Authority
+    - Office of the Fire Marshal
+    - Ontario tribunals and LTB
+    - public business registries
+    - public meeting agendas or minutes when directly relevant
+
+  tier_2_media_archive:
+    - Kingstonist
+    - Global Kingston or CKWS
+    - The Whig-Standard
+    - CFRC
+    - Internet Archive or Wayback
+    - Common Crawl URL index
+
+  tier_3_public_document_discovery:
+    - public PDFs
+    - public document mirrors
+    - public notice pages
+    - public search-result snippets
+
+  tier_4_review_before_use:
+    - public forums
+    - public social pages
+    - paste-like public pages
+    - cached snippets
+
+crawler_gate:
+  allowed_scope_only: true
+  direct_entity_relevance_required: true
+  robots_check_required: true
+  terms_review_required: true
+  public_access_required: true
+  source_allowlist_required: true
+  rate_limit_required: true
+  no_login_required: true
+  no_paywall_bypass: true
+  no_captcha_bypass: true
+  no_private_account_scraping: true
+  no_unrelated_entity_expansion: true
+  human_review_required_before_dossier: true
+
+limits:
+  default_depth_limit: 2
+  default_max_pages: 100
+  default_delay_seconds: 2
+  concurrent_requests_per_domain: 1
+
+output_contract:
+  crawl_manifest: true
+  robots_record: true
+  source_record: true
+  content_hash: true
+  matched_terms: true
+  matched_entities: true
+  scope_status: true
+  review_required: true
+  evidence_repo_output_root: 10_crawler_findings
+
+rejection_rules:
+  reject_unrelated_addresses: true
+  reject_unreviewed_candidate_entities: true
+  reject_non_public_sources: true
+  reject_unscoped_collection: true
+  reject_circumvention: true

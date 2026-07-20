@@ -1,0 +1,129 @@
+case:
+  id: case_46_montreal
+  name: 46 Montreal Street Matter
+  jurisdiction: Kingston, Ontario
+  evidence_repo: pmwensing/46-montreal-evidence-private
+  scope_statement: >
+    Scope-locked to 46 Montreal Street and all entities directly involved
+    in the 46 Montreal matter.
+
+included_addresses:
+  - 46 Montreal Street
+  - 46 Montreal St
+  - 46 Montreal
+  - 46 Montréal
+  - 46MONST
+
+included_unit_context:
+  - Apt B
+  - Apartment B
+  - B-46 Montreal
+  - Room 3 when tied to 46 Montreal
+
+included_entity_scope:
+  people:
+    - tenants and applicants
+    - owners and landlords
+    - landlord representatives
+    - property managers
+    - superintendents
+    - contractors
+    - electricians
+    - inspectors
+    - city staff
+    - fire officials
+    - ESA contacts
+    - OFM contacts
+    - insurance and adjuster contacts
+    - LTB parties and witnesses
+    - occupants or guests when tied to 46 Montreal events
+  businesses:
+    - ownership entities
+    - property management entities
+    - contractor companies
+    - electrical companies
+    - cleaning companies
+    - pest-control companies
+    - repair companies
+    - insurance companies
+    - businesses operating at 46 Montreal when relevant
+  authorities:
+    - City of Kingston
+    - Property Standards
+    - Building Services
+    - Kingston Fire and Rescue
+    - Electrical Safety Authority
+    - Office of the Fire Marshal
+    - Landlord and Tenant Board
+  documents:
+    - city orders
+    - inspection reports
+    - fire inspection records
+    - ESA records
+    - OFM records
+    - structural or engineering reports
+    - LTB applications
+    - ACC orders
+    - hearing notices
+    - emails
+    - messages
+    - call records
+    - witness statements
+    - photos
+    - videos
+    - audio
+    - rent or payment records
+    - repair records
+    - access and entry records
+    - disclosure and service records
+
+allowed_entity_expansion:
+  - ownership or control of 46 Montreal
+  - management of 46 Montreal
+  - repair, inspection, enforcement, fire, electrical, structural, pest-control, cleaning, or maintenance activity at 46 Montreal
+  - communications about 46 Montreal
+  - documents, orders, notices, records, or filings about 46 Montreal
+  - relationships between entities where those relationships affect the 46 Montreal case
+  - witnesses or occupants only where their evidence relates to 46 Montreal
+
+prohibited_expansion:
+  - unrelated addresses
+  - unrelated personal history
+  - unrelated business activity
+  - unrelated tenant or landlord disputes
+  - unrelated social media
+  - unrelated private information
+  - unrelated properties unless directly connected to the 46 Montreal matter
+
+relocation_context:
+  address: 559 Macdonnel
+  role: suitable bungalow relocation
+  tone: positive_or_neutral
+  allowed_uses:
+    - suitable relocation
+    - accommodation
+    - mitigation
+    - housing continuity
+    - reduced ongoing damages
+    - good-faith landlord accommodation
+    - post-fire displacement remedy context
+  prohibited_uses:
+    - complaint location
+    - issue address
+    - adverse inference
+    - noise claim
+    - unrelated housing complaint
+    - unrelated event timeline
+
+excluded_addresses:
+  - 71 Cowdy
+  - 71 Cowdy Street
+  - 81 Cowdy
+  - Cowdy Street
+
+review_rules:
+  candidate_entities_require_review: true
+  ai_output_requires_human_review: true
+  export_requires_evidence_id: true
+  export_requires_hash: true
+  no_unscoped_export: true
