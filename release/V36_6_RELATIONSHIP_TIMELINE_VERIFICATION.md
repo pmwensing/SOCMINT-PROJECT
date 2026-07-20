@@ -45,6 +45,8 @@ Create source-grounded, time-bounded relationship and event assessments with exp
 
 Focused coverage includes time ordering, validity intervals, co-occurrence restrictions, verified-claim requirements, accepted-observation requirements, duplicate blocking, chronological entity filtering, administrator routes, analytic-review registration, and absence of graph or causation write routes.
 
+The final v36.6 head must pass CI, Full Verification, and the legacy runtime-readiness workflow after the pull request targets `master`. Validation from an earlier stacked-base merge ref is supporting evidence only and is not the final merge gate.
+
 ## Next action
 
 Implement v36.7 Versioned Dossier Synthesis over currently approved v30.6 contribution decisions and exact v36 assessment hashes without automatically exporting or publishing the dossier.
