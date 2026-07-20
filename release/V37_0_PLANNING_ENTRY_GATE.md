@@ -7,7 +7,7 @@ v37.0 is planning-only. It adds no service, route, migration, collection action,
 ## Required conditions before v37.1
 
 - v36 closure contract exists and records `v36_closed: true`;
-- the 46 Montreal case foundation is present on `master`;
+- the 46 Montreal case foundation is present on `master` through PR #306, merge `1448fc27e05eb144bf4bdebb83a7aaee6e824d8b`;
 - the v37 planning contract and roadmap are merged;
 - existing v29–v36 authorities remain the declared owners of artifacts, observations, identity, claims, relationships, dossiers, and exports;
 - synthetic fixtures are required for public CI;
