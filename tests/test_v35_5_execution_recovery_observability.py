@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from flask import Flask, session
+from flask import Flask
 
 from src.socmint import execution_recovery_observability_routes_v35_5 as routes
 from src.socmint import execution_recovery_observability_v35_5 as observability
@@ -121,6 +121,7 @@ def test_attention_queue_omits_operator_inputs(monkeypatch):
 def test_routes_are_administrator_only_and_get_only(monkeypatch):
     app = Flask(__name__)
     app.secret_key = "v35-5-route-test-secret"
+    app.add_url_rule("/login", endpoint="dashboard.login", view_func=lambda: "login")
     routes.register_execution_recovery_observability_routes_v35_5(app)
     monkeypatch.setattr(routes, "actor_is_administrator", lambda actor: actor == "admin")
     monkeypatch.setattr(
