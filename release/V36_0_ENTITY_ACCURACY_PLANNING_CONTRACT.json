@@ -1,0 +1,81 @@
+{
+  "schema": "socmint.v36.planning_contract.v36_0",
+  "version": "v36.0.0",
+  "program": "Entity Accuracy, Verification, and Dossier Synthesis",
+  "primary_workspace": "Entity Accuracy and Dossier Synthesis Workspace",
+  "production_objective": "Convert accepted SOCMINT and OSINT collection outputs into source-grounded, explainable, conflict-preserving, human-reviewed entity claims and versioned dossier contributions without allowing connectors, parsers, scoring code, or AI models to assign truth, merge identities, approve claims, or mutate dossiers automatically.",
+  "roadmap": [
+    {"slice": "v36.0", "title": "Planning and Compatibility Gate", "implemented": true},
+    {"slice": "v36.1", "title": "Source Registry and Capture Integrity", "implemented": false},
+    {"slice": "v36.2", "title": "Canonical Observation Contract", "implemented": false},
+    {"slice": "v36.3", "title": "Entity Candidate Resolution", "implemented": false},
+    {"slice": "v36.4", "title": "Source Independence Graph", "implemented": false},
+    {"slice": "v36.5", "title": "Claim Verification and Alternative Ranking", "implemented": false},
+    {"slice": "v36.6", "title": "Relationship and Timeline Verification", "implemented": false},
+    {"slice": "v36.7", "title": "Versioned Dossier Synthesis", "implemented": false},
+    {"slice": "v36.8", "title": "Entity Accuracy Workspace and Browser E2E", "implemented": false}
+  ],
+  "entry_gate": {
+    "planning_only": true,
+    "runtime_code_added": false,
+    "route_added": false,
+    "migration_added": false,
+    "v30_closed_baseline_required": true,
+    "v35_4_hardened_baseline_required": true,
+    "v35_program_closure_required_before_v36_1": true,
+    "v35_program_closure_satisfied": true,
+    "v35_closure_contract": "release/V35_6_PROGRAM_CLOSURE_CONTRACT.json",
+    "v35_final_runtime_merge_sha": "f1b750241d03217aed0cb2a2fa255c7c9e5f37ee",
+    "v35_closure_merge_sha": "f9a2af381f98e9919bc0913c7e67f3cc0b8deb22",
+    "status": "v36_0_entity_accuracy_planning_gate_defined_on_closed_v35_baseline"
+  },
+  "scope_boundaries": {
+    "replace_existing_spine": false,
+    "replace_existing_evidence_storage": false,
+    "replace_v30_analytic_review": false,
+    "replace_existing_dossier_export": false,
+    "automatic_truth_assignment": false,
+    "automatic_entity_merge": false,
+    "automatic_claim_approval": false,
+    "automatic_dossier_mutation": false,
+    "historical_audit_mutation": false,
+    "case_access_change": false,
+    "privacy_gate_bypass": false,
+    "private_source_authentication_bypass": false
+  },
+  "production_invariants": {
+    "connectors_write_evidence_and_observations_not_truth": true,
+    "raw_artifacts_remain_immutable_and_hash_addressable": true,
+    "identifiers_remain_reviewable_claims_until_approved": true,
+    "identity_confidence_is_separate_from_factual_support": true,
+    "dependent_sources_do_not_inflate_corroboration": true,
+    "contradictions_and_rejected_hypotheses_are_preserved": true,
+    "confidence_is_explainable_and_never_represented_as_truth": true,
+    "human_review_is_required_before_consequential_use": true,
+    "dossier_contribution_requires_a_separate_explicit_decision": true,
+    "every_dossier_statement_traces_to_observations_and_artifact_hashes": true,
+    "accuracy_snapshots_are_reproducible_projections_not_truth_records": true,
+    "privacy_purpose_scope_and_minimization_gates_are_enforced": true
+  },
+  "authoritative_reuse": {
+    "spine_pipeline": "Seed -> ConnectorRun -> RawArtifact -> Observation -> Correlation -> DossierAssertion -> Analyst Validation -> Dossier",
+    "evidence_and_observations": "existing storage and spine records",
+    "analytic_claims_and_reviews": "v30 append-only claims, linkages, conflicts, confidence assessments, human reviews, and dossier contributions",
+    "audit_history": "existing append-only AuditLog",
+    "entity_graph": "existing identity graph and merge-candidate workflow",
+    "dossier_outputs": "existing dossier builder, quality, traceability, export, manifest, and audit services",
+    "governance_execution": "closed v35 durable confirmation, execution, result, reconciliation, and recovery-observability controls"
+  },
+  "validation": {
+    "planning_contract": "pending_ci",
+    "focused": "pending_ci",
+    "full_suite": "pending_ci",
+    "lint": "pending_ci",
+    "ci": "pending_ci"
+  },
+  "closure_contract": {
+    "v36_closed": false,
+    "next_action": "implement_v36_1_source_registry_and_capture_integrity"
+  },
+  "next_action": "implement_v36_1_source_registry_and_capture_integrity"
+}
