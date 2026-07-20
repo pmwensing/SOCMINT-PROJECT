@@ -1,4 +1,4 @@
-name: SOCMINT v32.7 through v35.4 Browser E2E
+name: SOCMINT v32.7 through v35.5 Browser E2E
 
 on:
   pull_request:
@@ -16,6 +16,7 @@ on:
       - "scripts/run_v33_7_case_governance_browser_e2e.py"
       - "scripts/run_v34_7_governance_execution_browser_e2e.py"
       - "scripts/run_v35_4_execution_reconciliation_browser_e2e.py"
+      - "scripts/run_v35_5_execution_recovery_observability_browser_e2e.py"
       - "tests/test_v32*.py"
       - "tests/test_v33*.py"
       - "tests/test_v34*.py"
@@ -72,3 +73,6 @@ jobs:
 
       - name: Run v35.4 browser E2E
         run: python scripts/run_v35_4_execution_reconciliation_browser_e2e.py
+
+      - name: Run v35.5 browser E2E
+        run: python scripts/run_v35_5_execution_recovery_observability_browser_e2e.py
