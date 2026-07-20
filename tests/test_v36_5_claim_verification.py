@@ -159,7 +159,16 @@ def test_v36_5_ranks_competing_claims_and_detects_top_tie(monkeypatch, tmp_path)
     }
     _configure(monkeypatch, tmp_path, claims=claims)
     first = _assess("claim-1", temporal_relevance_score=90)
-    second = _assess("claim-2", temporal_relevance_score=50)
+    second = _assess(
+        "claim-2",
+        temporal_relevance_score=50,
+        limitations=[
+            "Stale source window.",
+            "Indirect publication chain.",
+            "Identity context requires further review.",
+            "No current first-party confirmation.",
+        ],
+    )
     current_first = verification.find_verification("claim-1")
     current_second = verification.find_verification("claim-2")
     assert first["alternative_group_id"] == second["alternative_group_id"]
