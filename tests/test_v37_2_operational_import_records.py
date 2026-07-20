@@ -42,12 +42,12 @@ def _configure(monkeypatch, *, batches=None, records=None, existing_batch=None):
     )
 
 
-def _stage(monkeypatch, records, **overrides):
+def _stage(monkeypatch, submitted_records, **overrides):
     _configure(monkeypatch, **overrides)
     return service.stage_import_records(
         actor="admin",
         import_id="import-a",
-        records=records,
+        records=submitted_records,
         adapter_diagnostics={
             "schema": "socmint.import_adapter_result.v37_2",
             "network_access_performed": False,
