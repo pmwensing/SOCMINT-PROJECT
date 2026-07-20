@@ -3,6 +3,9 @@ from __future__ import annotations
 from flask import jsonify, redirect, render_template, session, url_for
 
 from .analytic_review_workspace_v30_0 import build_analytic_review_workspace
+from .canonical_observation_routes_v36_2 import (
+    register_canonical_observation_routes_v36_2,
+)
 from .corroboration_claim_routes_v30_1 import register_corroboration_claim_routes_v30_1
 from .source_registry_routes_v36_1 import register_source_registry_routes_v36_1
 from .user_account_workspace_v28_1 import actor_is_administrator
@@ -49,4 +52,5 @@ def register_analytic_review_routes_v30_0(app):
 
     register_corroboration_claim_routes_v30_1(app)
     register_source_registry_routes_v36_1(app)
+    register_canonical_observation_routes_v36_2(app)
     return app
