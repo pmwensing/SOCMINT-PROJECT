@@ -1,0 +1,51 @@
+{
+  "schema": "socmint.v35.program_closure.v35_6",
+  "version": "v35.6.0",
+  "program": "Durable Action Orchestration, Audit Traceability, and Operational Recovery",
+  "status": "closed",
+  "closed_at": "2026-07-20",
+  "final_delivery": {
+    "pull_request": 289,
+    "validated_head_sha": "3916532caebf02ca9350ab098716215c83bf1b71",
+    "squash_merge_sha": "f1b750241d03217aed0cb2a2fa255c7c9e5f37ee"
+  },
+  "delivered_slices": [
+    {"slice": "v35.0", "capability": "planning baseline and production contract"},
+    {"slice": "v35.1", "capability": "durable confirmation and atomic replay ledger"},
+    {"slice": "v35.2", "capability": "versioned action contracts enforced before execution"},
+    {"slice": "v35.3", "capability": "atomic authoritative execution result envelopes"},
+    {"slice": "v35.4", "capability": "execution reconciliation operator control plane"},
+    {"slice": "v35.5", "capability": "read-only execution recovery observability"},
+    {"slice": "v35.6", "capability": "program closure and release evidence"}
+  ],
+  "roadmap_resolution": {
+    "safe_retry_controls_implemented": false,
+    "automatic_retry_implemented": false,
+    "reason": "The delivered program resolves uncertain outcomes through evidence-backed reconciliation and read-only observability. It does not add replay or retry controls.",
+    "integrated_browser_checkpoint": "completed_in_v35_5",
+    "planned_v35_7_separate_slice_required": false
+  },
+  "production_invariants": {
+    "v32_services_remain_authoritative": true,
+    "human_confirmation_remains_required": true,
+    "every_execution_has_durable_state": true,
+    "every_authoritative_result_has_an_atomic_envelope": true,
+    "uncertain_outcomes_require_evidence_backed_reconciliation": true,
+    "automatic_retry_remains_disabled": true,
+    "observability_is_read_only": true,
+    "historical_audit_records_are_append_only": true,
+    "operator_submitted_values_are_not_disclosed_in_diagnostics": true
+  },
+  "validation": {
+    "ci": {"run": 4187, "status": "success"},
+    "full_verification": {"run": 1066, "status": "success"},
+    "legacy_v12_10_19": {"run": 2399, "status": "success"},
+    "browser_e2e": {"run": 168, "status": "success"}
+  },
+  "closure": {
+    "v35_closed": true,
+    "runtime_work_remaining_in_v35": false,
+    "next_program": "v36 — Entity Accuracy, Verification, and Dossier Synthesis",
+    "next_action": "merge_v36_0_entity_accuracy_planning_gate"
+  }
+}
