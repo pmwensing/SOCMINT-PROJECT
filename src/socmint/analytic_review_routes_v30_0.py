@@ -11,6 +11,9 @@ from .claim_verification_routes_v36_5 import (
 )
 from .corroboration_claim_routes_v30_1 import register_corroboration_claim_routes_v30_1
 from .dossier_synthesis_routes_v36_7 import register_dossier_synthesis_routes_v36_7
+from .entity_accuracy_workspace_routes_v36_8 import (
+    register_entity_accuracy_workspace_routes_v36_8,
+)
 from .entity_candidate_resolution_routes_v36_3 import (
     register_entity_candidate_resolution_routes_v36_3,
 )
@@ -71,4 +74,5 @@ def register_analytic_review_routes_v30_0(app):
     register_claim_verification_routes_v36_5(app)
     register_relationship_timeline_routes_v36_6(app)
     register_dossier_synthesis_routes_v36_7(app)
+    register_entity_accuracy_workspace_routes_v36_8(app)
     return app
