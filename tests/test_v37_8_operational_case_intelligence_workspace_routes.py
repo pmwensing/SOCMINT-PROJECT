@@ -10,21 +10,18 @@ def _app(monkeypatch):
     app = Flask(__name__, template_folder=str(root / "src/socmint/templates"))
     app.secret_key = "v37-8-route-secret"
 
-    @app.get("/")
+    @app.get("/", endpoint="dashboard.index")
     def index():
         return "index"
 
-    @app.get("/login")
+    @app.get("/login", endpoint="dashboard.login")
     def login():
         return "login"
 
-    @app.get("/logout")
+    @app.get("/logout", endpoint="dashboard.logout")
     def logout():
         return "logout"
 
-    app.view_functions["dashboard.index"] = app.view_functions.pop("index")
-    app.view_functions["dashboard.login"] = app.view_functions.pop("login")
-    app.view_functions["dashboard.logout"] = app.view_functions.pop("logout")
     routes.register_operational_case_intelligence_workspace_routes_v37_8(app)
     monkeypatch.setattr(routes, "actor_is_administrator", lambda actor: actor == "admin")
     monkeypatch.setattr(
