@@ -35,14 +35,14 @@
     </table>
     <h2>Reconciliation closure history</h2>
     <table data-reconciled-executions="true">
-      <thead><tr><th>Execution</th><th>Case</th><th>Action</th><th>Updated</th></tr></thead>
+      <thead><tr><th>Execution</th><th>Case</th><th>Action</th><th>Updated</th><th>Elapsed seconds</th></tr></thead>
       <tbody>
         {% for item in reconciled.executions or [] %}
           <tr data-reconciled-execution-id="{{ item.execution_id }}">
-            <td>{{ item.execution_id }}</td><td>{{ item.case_id }}</td><td>{{ item.governance_action }}</td><td>{{ item.updated_at }}</td>
+            <td>{{ item.execution_id }}</td><td>{{ item.case_id }}</td><td>{{ item.governance_action }}</td><td>{{ item.updated_at }}</td><td>{{ item.uncertainty_to_reconciliation_seconds }}</td>
           </tr>
         {% else %}
-          <tr><td colspan="4">No reconciled executions found.</td></tr>
+          <tr><td colspan="5">No reconciled executions found.</td></tr>
         {% endfor %}
       </tbody>
     </table>
