@@ -11,6 +11,9 @@ from .case_governance_product_review_v33_7 import (
 from .execution_reconciliation_routes_v35_4 import (
     register_execution_reconciliation_routes_v35_4,
 )
+from .execution_recovery_observability_routes_v35_5 import (
+    register_execution_recovery_observability_routes_v35_5,
+)
 from .governance_action_routes_v34_2_6 import (
     register_governance_action_routes_v34_2_6,
 )
@@ -61,4 +64,5 @@ def register_case_governance_product_review_routes_v33_7(app):
     register_governance_action_routes_v34_2_6(app)
     register_governance_execution_product_review_routes_v34_7(app)
     register_execution_reconciliation_routes_v35_4(app)
+    register_execution_recovery_observability_routes_v35_5(app)
     return app
