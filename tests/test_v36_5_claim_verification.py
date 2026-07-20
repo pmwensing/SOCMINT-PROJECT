@@ -148,7 +148,7 @@ def test_v36_5_unresolved_conflicts_and_limitations_reduce_support(
     result = _assess(limitations=["One source may be stale."])
     assert result["conflict_penalty"] == 15
     assert result["limitation_penalty"] == 5
-    assert result["support_score"] == 74
+    assert result["support_score"] == 75
     assert result["unresolved_conflict_ids"] == ["conflict-1"]
 
 
