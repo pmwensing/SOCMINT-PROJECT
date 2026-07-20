@@ -12,7 +12,7 @@ Provide one administrator-only, read-only workspace that exposes source integrit
 - current integrity and review findings with next safe actions;
 - explicit administrator authorization;
 - explicit no-truth, no-automatic-merge, no-automatic-publication, and no-write markers;
-- analytic-review route-chain registration;
+- analytic-review route-chain registration through v36.8;
 - Selenium browser checkpoint;
 - combined v32 through v36 focused and browser workflow.
 
@@ -41,7 +41,7 @@ It also proves the absence of forms and merge, approval, export, publication, co
 
 ## Verification
 
-The combined browser workflow runs all focused v32 through v36 tests and all browser checkpoints through v36.8. Exact-head CI, Full Verification, legacy verification, and browser E2E are required before merge.
+The combined browser workflow runs all focused v32 through v36 tests and all browser checkpoints through v36.8. The final `master`-target head must pass CI, Full Verification, legacy runtime readiness, and browser E2E. Stacked-base checks are supporting evidence only.
 
 ## Next action
 
