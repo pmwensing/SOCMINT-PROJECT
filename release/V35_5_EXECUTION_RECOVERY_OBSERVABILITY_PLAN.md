@@ -80,4 +80,4 @@ Implemented coverage includes:
 - browser E2E proving the absence of forms and write controls;
 - inclusion in the focused v32-through-v35 browser workflow.
 
-Full CI, PostgreSQL concurrency coverage, migration smoke, backup/restore, production boot, legacy verification, and full-container verification remain authoritative release gates.
+Full CI, PostgreSQL coverage, migration smoke, backup/restore, production boot, legacy verification, and full-container verification remain authoritative release gates.
