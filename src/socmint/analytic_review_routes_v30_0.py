@@ -6,6 +6,9 @@ from .analytic_review_workspace_v30_0 import build_analytic_review_workspace
 from .canonical_observation_routes_v36_2 import (
     register_canonical_observation_routes_v36_2,
 )
+from .claim_verification_routes_v36_5 import (
+    register_claim_verification_routes_v36_5,
+)
 from .corroboration_claim_routes_v30_1 import register_corroboration_claim_routes_v30_1
 from .entity_candidate_resolution_routes_v36_3 import (
     register_entity_candidate_resolution_routes_v36_3,
@@ -61,4 +64,5 @@ def register_analytic_review_routes_v30_0(app):
     register_canonical_observation_routes_v36_2(app)
     register_entity_candidate_resolution_routes_v36_3(app)
     register_source_independence_routes_v36_4(app)
+    register_claim_verification_routes_v36_5(app)
     return app
