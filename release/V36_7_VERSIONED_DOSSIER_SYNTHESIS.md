@@ -18,7 +18,7 @@ Create reproducible, versioned dossier synthesis snapshots from currently approv
 - previous-snapshot ID and hash chaining;
 - coverage counts by section and support category;
 - administrator-only inventory, creation, detail, and latest-snapshot APIs;
-- analytic-review route integration.
+- analytic-review route integration through v36.7.
 
 ## Routes
 
@@ -39,6 +39,8 @@ Create reproducible, versioned dossier synthesis snapshots from currently approv
 ## Verification
 
 Focused coverage includes approved-only filtering, verification requirements, support-category partitioning, disputed-claim preservation, relationship bindings, manifest integrity, version sequencing, previous-snapshot chaining, administrator routes, latest-snapshot lookup, analytic-review registration, and static absence of export or publication calls.
+
+The final v36.7 head must pass CI, Full Verification, and the legacy runtime-readiness workflow after the pull request targets `master`. Earlier stacked-base checks are supporting evidence only.
 
 ## Next action
 
