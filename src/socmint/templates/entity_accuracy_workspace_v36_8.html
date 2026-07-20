@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block content %}
+<section
+  data-entity-accuracy-workspace="v36.8"
+  data-read-only="true"
+  data-automatic-truth-assignment="false"
+  data-automatic-entity-merge="false"
+  data-automatic-dossier-publication="false"
+  data-write-actions="none"
+>
+  <h1>Entity Accuracy Workspace</h1>
+  <p>Source-grounded entity analysis, verification, relationship history, and dossier-synthesis status.</p>
+
+  {% if payload.status == "forbidden" %}
+    <p data-workspace-forbidden="true">Administrator access is required.</p>
+  {% else %}
+    {% set summary = payload.summary or {} %}
+    <section data-workspace-summary="true">
+      <h2>Program summary</h2>
+      <dl>
+        <dt>Sources</dt><dd data-source-count>{{ summary.source_count or 0 }}</dd>
+        <dt>Canonical observations</dt><dd data-observation-count>{{ summary.canonical_observation_count or 0 }}</dd>
+        <dt>Entity candidates</dt><dd data-candidate-count>{{ summary.entity_candidate_count or 0 }}</dd>
+        <dt>Independence groups</dt><dd data-independence-count>{{ summary.source_independence_group_count or 0 }}</dd>
+        <dt>Claim verifications</dt><dd data-verification-count>{{ summary.claim_verification_count or 0 }}</dd>
+        <dt>Relationship/timeline assessments</dt><dd data-relationship-count>{{ summary.relationship_timeline_count or 0 }}</dd>
+        <dt>Dossier snapshots</dt><dd data-snapshot-count>{{ summary.dossier_snapshot_count or 0 }}</dd>
+      </dl>
+    </section>
+
+    <section data-integrity-findings="true">
+      <h2>Integrity and review findings</h2>
+      <table>
+        <thead><tr><th>Severity</th><th>Finding</th><th>Count</th><th>Next safe action</th></tr></thead>
+        <tbody>
+          {% for finding in payload.findings or [] %}
+            <tr data-finding-key="{{ finding.key }}" data-finding-severity="{{ finding.severity }}">
+              <td>{{ finding.severity }}</td>
+              <td>{{ finding.message }}</td>
+              <td>{{ finding.count }}</td>
+              <td>{{ finding.next_action }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4">No current integrity findings.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section data-source-inventory="true">
+      <h2>Source register</h2>
+      <table>
+        <thead><tr><th>Source</th><th>Type</th><th>Origin</th><th>Reliability assessed</th></tr></thead>
+        <tbody>
+          {% for item in payload.source_inventory or [] %}
+            <tr data-source-id="{{ item.source_id }}">
+              <td>{{ item.source_id }}</td><td>{{ item.source_type }}</td><td>{{ item.original_or_derived }}</td><td>{{ item.reliability_assessed }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4">No source records.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section data-observation-inventory="true">
+      <h2>Canonical observations</h2>
+      <table>
+        <thead><tr><th>Observation</th><th>Type</th><th>State</th><th>Confidence</th></tr></thead>
+        <tbody>
+          {% for item in payload.observation_inventory or [] %}
+            {% set observation = item.canonical_observation or {} %}
+            <tr data-observation-id="{{ item.canonical_observation_id }}">
+              <td>{{ item.canonical_observation_id }}</td><td>{{ observation.observation_type }}</td><td>{{ item.observation_state }}</td><td>{{ observation.extraction_confidence }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4">No canonical observations.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section data-candidate-inventory="true">
+      <h2>Entity candidates</h2>
+      <table>
+        <thead><tr><th>Candidate</th><th>Entities</th><th>Score</th><th>Recommendation</th><th>Decision</th></tr></thead>
+        <tbody>
+          {% for item in payload.entity_candidate_inventory or [] %}
+            {% set scoring = item.scoring or {} %}
+            {% set decision = item.current_decision or {} %}
+            <tr data-candidate-id="{{ item.candidate_id }}">
+              <td>{{ item.candidate_id }}</td><td>{{ item.entity_a_id }} ↔ {{ item.entity_b_id }}</td><td>{{ scoring.score }}</td><td>{{ scoring.recommendation }}</td><td>{{ decision.decision or "pending" }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5">No entity candidates.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section data-verification-inventory="true">
+      <h2>Claim verification and alternatives</h2>
+      <table>
+        <thead><tr><th>Claim</th><th>Support</th><th>Band</th><th>Rank</th><th>Most likely supported</th><th>Conflicts</th></tr></thead>
+        <tbody>
+          {% for item in payload.claim_verification_inventory or [] %}
+            {% set ranking = item.ranking or {} %}
+            <tr data-claim-id="{{ item.claim_id }}">
+              <td>{{ item.claim_id }}</td><td>{{ item.support_score }}</td><td>{{ item.confidence_band }}</td><td>{{ ranking.position }} / {{ ranking.candidate_count }}</td><td>{{ ranking.most_likely_supported }}</td><td>{{ (item.unresolved_conflict_ids or [])|length }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6">No claim verifications.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section data-relationship-inventory="true">
+      <h2>Relationship and timeline assessments</h2>
+      <table>
+        <thead><tr><th>Assessment</th><th>Relationship</th><th>Entities</th><th>Event time</th><th>Inference</th><th>Warning</th></tr></thead>
+        <tbody>
+          {% for item in payload.relationship_timeline_inventory or [] %}
+            {% set times = item.times or {} %}
+            <tr data-relationship-id="{{ item.relationship_timeline_assessment_id }}">
+              <td>{{ item.relationship_timeline_assessment_id }}</td><td>{{ item.relationship_type }}</td><td>{{ item.subject_entity_id }} → {{ item.object_entity_id }}</td><td>{{ times.event_time }}</td><td>{{ item.inference_class }}</td><td>{{ item.inference_warning }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6">No relationship assessments.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section data-snapshot-inventory="true">
+      <h2>Versioned dossier snapshots</h2>
+      <table>
+        <thead><tr><th>Snapshot</th><th>Entity</th><th>Version</th><th>Coverage</th><th>Manifest hash</th></tr></thead>
+        <tbody>
+          {% for item in payload.dossier_snapshot_inventory or [] %}
+            {% set coverage = item.coverage or {} %}
+            <tr data-snapshot-id="{{ item.dossier_synthesis_snapshot_id }}">
+              <td>{{ item.dossier_synthesis_snapshot_id }}</td><td>{{ item.display_label }}</td><td>{{ item.snapshot_version }}</td><td>{{ coverage.approved_contribution_count or 0 }} approved contributions</td><td>{{ item.integrity_manifest_sha256 }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5">No dossier synthesis snapshots.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <p data-workspace-safety-note="true">This workspace exposes no merge, approval, export, publication, collection, or dossier-mutation controls.</p>
+  {% endif %}
+</section>
+{% endblock %}
