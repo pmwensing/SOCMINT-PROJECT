@@ -6,6 +6,9 @@ from .analytic_review_workspace_v30_0 import build_analytic_review_workspace
 from .canonical_observation_routes_v36_2 import (
     register_canonical_observation_routes_v36_2,
 )
+from .case_import_pilot_routes_v37_3 import (
+    register_case_import_pilot_routes_v37_3,
+)
 from .claim_verification_routes_v36_5 import (
     register_claim_verification_routes_v36_5,
 )
@@ -83,4 +86,5 @@ def register_analytic_review_routes_v30_0(app):
     register_entity_accuracy_workspace_routes_v36_8(app)
     register_operational_import_routes_v37_1(app)
     register_operational_import_record_routes_v37_2(app)
+    register_case_import_pilot_routes_v37_3(app)
     return app
