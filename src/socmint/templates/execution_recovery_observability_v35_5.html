@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<section data-execution-recovery-observability="v35.5" data-read-only="true" data-automatic-retry="false" data-reconciliation-action="false" data-delegate-invocation="false">
+  <h1>Execution Recovery Observability</h1>
+  <p>Read-only durable execution health and closure information.</p>
+  {% if payload.status == "forbidden" %}
+    <p>Administrator access is required.</p>
+  {% else %}
+    {% set summary = payload.summary or {} %}
+    {% set attention = payload.attention or {} %}
+    {% set reconciled = payload.reconciled or {} %}
+    <h2>Recovery summary</h2>
+    <p>Total: <span data-summary-total>{{ summary.total or 0 }}</span></p>
+    <p>Needs attention: <span data-summary-attention>{{ summary.attention_count or 0 }}</span></p>
+    <ul data-summary-by-state>
+      {% for key, value in (summary.by_state or {}).items() %}
+        <li>{{ key }}: {{ value }}</li>
+      {% else %}
+        <li>No durable executions found.</li>
+      {% endfor %}
+    </ul>
+    <h2>Attention queue</h2>
+    <p>Age is a diagnostic signal only.</p>
+    <table data-attention-queue="true">
+      <thead><tr><th>Execution</th><th>Case</th><th>Action</th><th>State</th><th>Classification</th></tr></thead>
+      <tbody>
+        {% for item in attention.executions or [] %}
+          <tr data-execution-id="{{ item.execution_id }}">
+            <td>{{ item.execution_id }}</td><td>{{ item.case_id }}</td><td>{{ item.governance_action }}</td><td>{{ item.state }}</td><td>{{ (item.observability or {}).classification }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5">No attention items.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <h2>Reconciliation closure history</h2>
+    <table data-reconciled-executions="true">
+      <thead><tr><th>Execution</th><th>Case</th><th>Action</th><th>Updated</th></tr></thead>
+      <tbody>
+        {% for item in reconciled.executions or [] %}
+          <tr data-reconciled-execution-id="{{ item.execution_id }}">
+            <td>{{ item.execution_id }}</td><td>{{ item.case_id }}</td><td>{{ item.governance_action }}</td><td>{{ item.updated_at }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4">No reconciled executions found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p>This page does not provide write controls.</p>
+  {% endif %}
+</section>
+{% endblock %}
