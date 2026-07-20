@@ -43,6 +43,17 @@ def _age_seconds(updated_at: datetime | str | None, now: datetime) -> int | None
     return max(0, int((now - parsed).total_seconds()))
 
 
+def _elapsed_seconds(
+    start: datetime | str | None,
+    end: datetime | str | None,
+) -> int | None:
+    start_value = _as_aware(start)
+    end_value = _as_aware(end)
+    if start_value is None or end_value is None:
+        return None
+    return max(0, int((end_value - start_value).total_seconds()))
+
+
 def _age_bucket(age_seconds: int | None) -> str:
     if age_seconds is None:
         return "unknown"
@@ -97,10 +108,14 @@ def classify_execution(
         "uncertain",
         "reconciled",
     }
-    if requires_invocation_binding and not invocation.get("confirmation_issue_audit_id"):
+    if requires_invocation_binding and not invocation.get(
+        "confirmation_issue_audit_id"
+    ):
         findings.append("missing_confirmation_issuance_binding")
         classification = "integrity_alert"
-    if requires_invocation_binding and not invocation.get("contract_validation_sha256"):
+    if requires_invocation_binding and not invocation.get(
+        "contract_validation_sha256"
+    ):
         findings.append("missing_contract_validation_binding")
         classification = "integrity_alert"
 
@@ -117,13 +132,23 @@ def classify_execution(
         elif state == "uncertain" and not result_exists:
             findings.append("authoritative_outcome_requires_reconciliation")
             classification = "reconciliation_pending"
-        elif state == "pending" and age is not None and age > pending_threshold_seconds:
+        elif (
+            state == "pending"
+            and age is not None
+            and age > pending_threshold_seconds
+        ):
             findings.append("pending_threshold_exceeded")
             classification = "attention"
-        elif state == "running" and age is not None and age > running_threshold_seconds:
+        elif (
+            state == "running"
+            and age is not None
+            and age > running_threshold_seconds
+        ):
             findings.append("running_threshold_exceeded")
             classification = "attention"
-        elif state == "failed" and not str(payload.get("last_reason") or "").strip():
+        elif state == "failed" and not str(
+            payload.get("last_reason") or ""
+        ).strip():
             findings.append("failed_terminal_reason_missing")
             classification = "attention"
 
@@ -144,7 +169,10 @@ def _execution_payloads() -> list[dict[str, Any]]:
     try:
         rows = (
             session.query(GovernanceExecution)
-            .order_by(GovernanceExecution.updated_at.asc(), GovernanceExecution.id.asc())
+            .order_by(
+                GovernanceExecution.updated_at.asc(),
+                GovernanceExecution.id.asc(),
+            )
             .all()
         )
         return [_execution_payload(session, row) for row in rows]
@@ -176,7 +204,8 @@ def _observed_payloads(
 
 
 def _counter(items: list[dict[str, Any]], key) -> dict[str, int]:
-    return dict(sorted(Counter(str(key(item) or "unknown") for item in items).items()))
+    counter = Counter(str(key(item) or "unknown") for item in items)
+    return dict(sorted(counter.items()))
 
 
 def recovery_summary(
@@ -198,19 +227,35 @@ def recovery_summary(
         "by_state": _counter(items, lambda item: item.get("state")),
         "by_action": _counter(items, lambda item: item.get("governance_action")),
         "by_action_family": _counter(
-            items, lambda item: _action_family(item.get("governance_action"))
+            items,
+            lambda item: _action_family(item.get("governance_action")),
         ),
-        "by_delegate_service": _counter(items, lambda item: item.get("delegate_service")),
+        "by_delegate_service": _counter(
+            items,
+            lambda item: item.get("delegate_service"),
+        ),
         "by_case": _counter(items, lambda item: item.get("case_id")),
         "by_integrity": _counter(
-            items, lambda item: (item.get("observability") or {}).get("classification")
+            items,
+            lambda item: (item.get("observability") or {}).get(
+                "classification"
+            ),
         ),
         "by_age_bucket": _counter(
-            items, lambda item: (item.get("observability") or {}).get("age_bucket")
+            items,
+            lambda item: (item.get("observability") or {}).get("age_bucket"),
         ),
         "by_result_envelope": {
-            "present": sum(1 for item in items if item.get("result_envelope_exists") is True),
-            "absent": sum(1 for item in items if item.get("result_envelope_exists") is not True),
+            "present": sum(
+                1
+                for item in items
+                if item.get("result_envelope_exists") is True
+            ),
+            "absent": sum(
+                1
+                for item in items
+                if item.get("result_envelope_exists") is not True
+            ),
         },
         "attention_count": sum(
             1
@@ -261,7 +306,9 @@ def attention_queue(
             "state_version": item.get("state_version"),
             "last_reason": item.get("last_reason"),
             "updated_at": item.get("updated_at"),
-            "result_envelope_exists": item.get("result_envelope_exists") is True,
+            "result_envelope_exists": (
+                item.get("result_envelope_exists") is True
+            ),
             "observability": item.get("observability"),
         }
         for item in items[:safe_limit]
@@ -281,10 +328,20 @@ def attention_queue(
 
 def reconciled_executions(*, limit: int = 200) -> dict[str, Any]:
     safe_limit = max(1, min(int(limit), 500))
-    items = [item for item in _observed_payloads() if item.get("state") == "reconciled"]
-    items.sort(key=lambda item: str(item.get("updated_at") or ""), reverse=True)
+    items = [
+        item
+        for item in _observed_payloads()
+        if item.get("state") == "reconciled"
+    ]
+    items.sort(
+        key=lambda item: str(item.get("updated_at") or ""),
+        reverse=True,
+    )
     entries = []
     for item in items[:safe_limit]:
+        uncertain = item.get("uncertain_outcome") or {}
+        if not isinstance(uncertain, dict):
+            uncertain = {}
         entries.append(
             {
                 "execution_id": item.get("execution_id"),
@@ -294,12 +351,16 @@ def reconciled_executions(*, limit: int = 200) -> dict[str, Any]:
                 "state": item.get("state"),
                 "state_version": item.get("state_version"),
                 "invocation_binding": item.get("invocation_binding"),
-                "uncertain_outcome": item.get("uncertain_outcome"),
+                "uncertain_outcome": uncertain,
                 "result_envelope": item.get("result_envelope"),
                 "reconciliation_operator_metadata": item.get(
                     "reconciliation_operator_metadata"
                 ),
                 "updated_at": item.get("updated_at"),
+                "uncertainty_to_reconciliation_seconds": _elapsed_seconds(
+                    uncertain.get("recorded_at"),
+                    item.get("updated_at"),
+                ),
                 "observability": item.get("observability"),
             }
         )
