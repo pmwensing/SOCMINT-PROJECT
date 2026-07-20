@@ -1,0 +1,73 @@
+{
+  "schema": "socmint.v36.program_closure.v36_9",
+  "version": "v36.9.0",
+  "program": "Entity Accuracy, Verification, and Dossier Synthesis",
+  "status": "closed",
+  "closed_at": "2026-07-20",
+  "final_delivery": {
+    "pull_request": 304,
+    "validated_head_sha": "6aa600ea0623a1af52faad3955a521c22bdf9a09",
+    "merge_sha": "94bb889e3cda2e378a57190eac0d1a50714eb800"
+  },
+  "delivered_slices": [
+    {"slice": "v36.0", "capability": "planning, compatibility, schema ownership, and non-duplication gate"},
+    {"slice": "v36.1", "capability": "source registry, capture integrity, and claim-type reliability profiles"},
+    {"slice": "v36.2", "capability": "canonical observation envelopes and quarantine review"},
+    {"slice": "v36.3", "capability": "explainable entity candidate resolution with human decisions"},
+    {"slice": "v36.4", "capability": "source independence and dependency graph"},
+    {"slice": "v36.5", "capability": "dimensional claim verification and alternative ranking"},
+    {"slice": "v36.6", "capability": "source-grounded relationship and timeline verification"},
+    {"slice": "v36.7", "capability": "versioned approved-contribution dossier synthesis"},
+    {"slice": "v36.8", "capability": "integrated read-only entity accuracy workspace and browser E2E"},
+    {"slice": "v36.9", "capability": "program closure and release evidence"}
+  ],
+  "slice_merges": [
+    {"slice": "v36.0", "pull_request": 294, "merge_sha": "dfbaee61f65832f9475cd386dc74389f865e5248"},
+    {"slice": "v36.1", "pull_request": 295, "merge_sha": "80f395a93287dd19efade49e19b819675e5eb95d"},
+    {"slice": "v36.2", "pull_request": 296, "merge_sha": "3a9417ee804acbdefee507d630196d2cc58c3fb3"},
+    {"slice": "v36.3", "pull_request": 297, "merge_sha": "160c02e8a0b827dac20e212bed70bf1ee08f392a"},
+    {"slice": "v36.4", "pull_request": 298, "merge_sha": "a84c2bdd7a57af242203ab1eb9ca74ff1e3be7d5"},
+    {"slice": "v36.5", "pull_request": 299, "merge_sha": "5449c3e29ea5e4bba097dc2fb3f2055c48078dd8"},
+    {"slice": "v36.6", "pull_request": 300, "merge_sha": "47c1ad43079f59a2fc863aa190717cfdd2a599d4"},
+    {"slice": "v36.7", "pull_request": 303, "merge_sha": "8d4d5a301247ad45a0d6257acc92ef161100afdd"},
+    {"slice": "v36.8", "pull_request": 304, "merge_sha": "94bb889e3cda2e378a57190eac0d1a50714eb800"}
+  ],
+  "production_invariants": {
+    "existing_case_scope_and_privacy_controls_remain_authoritative": true,
+    "accepted_artifacts_and_append_only_audit_history_remain_authoritative": true,
+    "connectors_and_adapters_do_not_assign_truth": true,
+    "source_reliability_is_claim_type_specific_and_explainable": true,
+    "dependent_sources_do_not_inflate_corroboration": true,
+    "identity_confidence_is_separate_from_factual_support": true,
+    "contradictions_ties_and_rejected_hypotheses_are_preserved": true,
+    "human_analytic_review_remains_required_for_consequential_use": true,
+    "dossier_contribution_requires_a_separate_explicit_decision": true,
+    "dossier_snapshots_are_reproducible_projections_not_truth_records": true,
+    "existing_export_quality_approval_audit_and_manifest_gates_remain_authoritative": true,
+    "entity_accuracy_workspace_is_read_only": true
+  },
+  "prohibited_automation": {
+    "automatic_truth_assignment": false,
+    "automatic_entity_merge": false,
+    "automatic_claim_approval": false,
+    "automatic_human_review_completion": false,
+    "automatic_dossier_mutation": false,
+    "automatic_export": false,
+    "automatic_publication": false,
+    "hidden_collection": false,
+    "private_source_authentication_bypass": false
+  },
+  "validation": {
+    "ci": {"run": 4310, "status": "success"},
+    "full_verification": {"run": 1091, "status": "success"},
+    "legacy_v12_10_19": {"run": 2421, "status": "success"},
+    "browser_e2e": {"run": 172, "status": "success"}
+  },
+  "closure": {
+    "v36_closed": true,
+    "runtime_work_remaining_in_v36": false,
+    "schema_or_migration_work_remaining_in_v36": false,
+    "next_program": "unassigned",
+    "next_action": "define_the_next_program_planning_and_compatibility_gate_before_runtime_work"
+  }
+}
