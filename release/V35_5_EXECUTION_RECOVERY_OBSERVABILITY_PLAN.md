@@ -28,4 +28,4 @@ v35.5 does not invoke or resolve delegates; create, claim, transition, or reconc
 
 ## Verification
 
-Focused tests cover deterministic classifications, age buckets, integrity precedence, administrator authorization, GET-only routing, non-disclosure, closure elapsed-time calculation, and static no-write imports. Selenium E2E verifies the read-only workspace and absence of write controls. The existing CI, Full Verification, legacy verification, PostgreSQL, migration, backup/restore, production boot, and container gates remain authoritative.
+Focused tests cover deterministic classifications, age buckets, integrity precedence, administrator authorization, GET-only routing, non-disclosure, closure elapsed-time calculation, and static no-write imports. Selenium E2E verifies the read-only workspace and absence of write controls. The existing CI, Full Verification, legacy verification, PostgreSQL, migration, backup/restore, production boot, and container gates remain authoritative and must pass on the final head before merge.
