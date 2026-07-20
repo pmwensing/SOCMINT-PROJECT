@@ -14,12 +14,21 @@ def _app(monkeypatch):
         template_folder=str(root / "src/socmint/templates"),
     )
     app.secret_key = "v36-8-route-secret"
-
-    @app.get("/login")
-    def login():
-        return "login"
-
-    app.view_functions["dashboard.login"] = app.view_functions.pop("login")
+    app.add_url_rule(
+        "/",
+        endpoint="dashboard.index",
+        view_func=lambda: "index",
+    )
+    app.add_url_rule(
+        "/login",
+        endpoint="dashboard.login",
+        view_func=lambda: "login",
+    )
+    app.add_url_rule(
+        "/logout",
+        endpoint="dashboard.logout",
+        view_func=lambda: "logout",
+    )
     routes.register_entity_accuracy_workspace_routes_v36_8(app)
     monkeypatch.setattr(
         routes,
