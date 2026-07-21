@@ -185,7 +185,14 @@
     "next_action": "open_new_program_planning_gate_before_additional_runtime_work"
   },
   "closure_validation": {
-    "status": "pending_exact_head_validation",
+    "status": "complete",
+    "validated_checkpoint_head_sha": "854132c9e7442e1448610a6a9b97c04a78b8382a",
+    "ci_run": 4537,
+    "full_verification_run": 1197,
+    "legacy_readiness_run": 2494,
+    "combined_browser_e2e_run": 186,
+    "all_green": true,
+    "final_evidence_amendment_runtime_neutral": true,
     "required_workflows": [
       "CI",
       "SOCMINT Full Verification",
