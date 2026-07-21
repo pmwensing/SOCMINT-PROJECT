@@ -4,7 +4,7 @@ import datetime as dt
 import json
 from typing import Any
 
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 
 from . import database as db
 from .evidence_os import EVIDENCE_OS_SCHEMA, ensure_evidence_os_schema
@@ -69,20 +69,19 @@ def create_finding(
     """
     if classification not in _ALLOWED_CLASSIFICATIONS:
         raise ValueError("invalid finding classification")
-    if not observation_ids:
+    expected_ids = {int(value) for value in observation_ids}
+    if not expected_ids:
         raise ValueError("at least one observation is required")
     ensure_findings_schema()
     now = _now()
     session = db.Session()
     try:
-        rows = session.execute(
-            text("""
-                SELECT id, case_id FROM evidence_observations
-                WHERE id IN :ids
-            """).bindparams(ids=tuple(int(v) for v in observation_ids)),
-        ).mappings().all()
+        lookup = text("""
+            SELECT id, case_id FROM evidence_observations
+            WHERE id IN :ids
+        """).bindparams(bindparam("ids", expanding=True))
+        rows = session.execute(lookup, {"ids": sorted(expected_ids)}).mappings().all()
         found_ids = {int(row["id"]) for row in rows}
-        expected_ids = {int(v) for v in observation_ids}
         if found_ids != expected_ids:
             raise ValueError("one or more observations do not exist")
         if any(int(row["case_id"]) != int(case_id) for row in rows):
@@ -108,14 +107,14 @@ def create_finding(
             text("SELECT id FROM evidence_findings WHERE case_id=:case_id AND finding_key=:key"),
             {"case_id": int(case_id), "key": finding_key},
         ).scalar_one())
-        for observation_id in observation_ids:
+        for observation_id in sorted(expected_ids):
             session.execute(text("""
                 INSERT INTO finding_observations
                 (finding_id, observation_id, relationship, created_at)
                 VALUES (:finding_id, :observation_id, 'supports', :now)
             """), {
                 "finding_id": finding_id,
-                "observation_id": int(observation_id),
+                "observation_id": observation_id,
                 "now": now,
             })
         session.commit()
@@ -128,7 +127,11 @@ def create_finding(
     db.record_audit_event(
         action="evidence_finding_created",
         actor=actor,
-        details={"case_id": int(case_id), "finding_key": finding_key, "observation_ids": observation_ids},
+        details={
+            "case_id": int(case_id),
+            "finding_key": finding_key,
+            "observation_ids": sorted(expected_ids),
+        },
     )
     return {"schema": FINDINGS_SCHEMA, "finding": dict(row)}
 
