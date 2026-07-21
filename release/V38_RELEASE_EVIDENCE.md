@@ -66,6 +66,13 @@ No real case evidence, real third-party crawl, production live collection, crede
 
 The package introduces no runtime, route, migration, schema, network, or authority behavior.
 
-## Closure-head validation
+## Validated closure checkpoint
 
-Pending the first exact-head v38.9 closure run. This section and the machine-readable closure contract are amended with the final head and workflow numbers before merge.
+v38.9 closure checkpoint head `854132c9e7442e1448610a6a9b97c04a78b8382a` passed:
+
+- CI 4537 — success;
+- Full Verification 1197 — success;
+- legacy readiness 2494 — success;
+- combined v32 through v38 browser E2E 186 — success.
+
+This evidence amendment changes release documentation only. The resulting final PR head must independently pass the same four workflows before merge.
