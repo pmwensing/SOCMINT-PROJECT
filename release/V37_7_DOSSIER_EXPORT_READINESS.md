@@ -25,6 +25,10 @@ Record a controlled readiness projection for a current v36.7 dossier snapshot af
 - a ready record only authorizes submission to the existing export approval gate;
 - existing redaction, quality, approval, audit, bundle, manifest, export, and publication services remain authoritative.
 
+## Authoritative baseline
+
+Final release validation is performed with this slice targeting `master` after the v37.6 merge through PR #313 at `875a7c2456be8119bc4edef5e50e43a6fec58e25`.
+
 ## Next action
 
 Implement the integrated Operational Case Intelligence Workspace and browser E2E checkpoint, then close v37 only after exact-head release validation.
