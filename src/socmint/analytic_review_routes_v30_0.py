@@ -10,6 +10,7 @@ from .corroboration_claim_routes_v30_1 import register_corroboration_claim_route
 from .dossier_synthesis_routes_v36_7 import register_dossier_synthesis_routes_v36_7
 from .entity_accuracy_workspace_routes_v36_8 import register_entity_accuracy_workspace_routes_v36_8
 from .entity_candidate_resolution_routes_v36_3 import register_entity_candidate_resolution_routes_v36_3
+from .guided_analyst_workflow_routes_v37_5 import register_guided_analyst_workflow_routes_v37_5
 from .import_observation_promotion_routes_v37_4 import register_import_observation_promotion_routes_v37_4
 from .operational_import_record_routes_v37_2 import register_operational_import_record_routes_v37_2
 from .operational_import_routes_v37_1 import register_operational_import_routes_v37_1
@@ -71,4 +72,5 @@ def register_analytic_review_routes_v30_0(app):
     register_operational_import_record_routes_v37_2(app)
     register_case_import_pilot_routes_v37_3(app)
     register_import_observation_promotion_routes_v37_4(app)
+    register_guided_analyst_workflow_routes_v37_5(app)
     return app
