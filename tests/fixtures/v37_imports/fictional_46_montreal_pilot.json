@@ -1,0 +1,48 @@
+{
+  "records": [
+    {
+      "source_record_id": "pilot-direct",
+      "record_type": "document_reference",
+      "raw_value": "Inspection record for 46 Montreal Street",
+      "normalized_value": "inspection record 46 montreal street",
+      "observed_at": "2026-07-20T01:00:00Z",
+      "extraction_confidence": 0.95,
+      "context": {"synthetic_fixture": true},
+      "source_references": ["fixture://pilot-direct"],
+      "warnings": []
+    },
+    {
+      "source_record_id": "pilot-relocation",
+      "record_type": "relocation_context",
+      "raw_value": "559 Macdonnel suitable relocation and mitigation context",
+      "normalized_value": "559 macdonnel relocation mitigation",
+      "observed_at": "2026-07-20T01:01:00Z",
+      "extraction_confidence": 0.9,
+      "context": {"synthetic_fixture": true},
+      "source_references": ["fixture://pilot-relocation"],
+      "warnings": []
+    },
+    {
+      "source_record_id": "pilot-excluded",
+      "record_type": "unrelated_address",
+      "raw_value": "71 Cowdy unrelated maintenance issue",
+      "normalized_value": "71 cowdy unrelated issue",
+      "observed_at": "2026-07-20T01:02:00Z",
+      "extraction_confidence": 0.9,
+      "context": {"synthetic_fixture": true},
+      "source_references": ["fixture://pilot-excluded"],
+      "warnings": []
+    },
+    {
+      "source_record_id": "pilot-candidate",
+      "record_type": "entity_reference",
+      "raw_value": "Example Contractor Entity",
+      "normalized_value": "example contractor entity",
+      "observed_at": "2026-07-20T01:03:00Z",
+      "extraction_confidence": 0.8,
+      "context": {"synthetic_fixture": true},
+      "source_references": ["fixture://pilot-candidate"],
+      "warnings": []
+    }
+  ]
+}
