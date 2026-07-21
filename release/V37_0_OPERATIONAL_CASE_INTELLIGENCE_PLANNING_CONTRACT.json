@@ -1,0 +1,88 @@
+{
+  "schema": "socmint.v37.planning_contract.v37_0",
+  "version": "v37.0.0",
+  "program": "Operational Case Intelligence Pipeline",
+  "status": "planning_gate",
+  "planning_only": true,
+  "primary_workspace": "Operational Case Intelligence Workspace",
+  "production_objective": "Convert preserved, case-scoped tool exports into reviewable import records, accepted observations, verified entity intelligence, reproducible dossier snapshots, and controlled export-readiness packages without allowing adapters or automation to assign truth, merge entities, approve claims, or publish dossiers.",
+  "required_baselines": {
+    "v36_program_closed": true,
+    "v36_closure_contract": "release/V36_9_PROGRAM_CLOSURE_CONTRACT.json",
+    "case_foundation_paths_required": [
+      "config/cases/46_montreal.case.yaml",
+      "src/socmint/cases/entity_scope_filter.py",
+      "src/socmint/evidence_repo/hash_manifest.py",
+      "src/socmint/evidence_repo/location_map.py"
+    ]
+  },
+  "roadmap": [
+    {"slice": "v37.0", "capability": "planning, compatibility, privacy, schema ownership, and non-duplication gate"},
+    {"slice": "v37.1", "capability": "case-scoped universal import envelopes and adapter contract"},
+    {"slice": "v37.2", "capability": "immutable import manifests, artifact bindings, deterministic records, and quarantine"},
+    {"slice": "v37.3", "capability": "controlled 46 Montreal pilot and scope-aware review queue"},
+    {"slice": "v37.4", "capability": "analyst import review and explicit observation promotion"},
+    {"slice": "v37.5", "capability": "guided entity, claim, conflict, and alternative review orchestration"},
+    {"slice": "v37.6", "capability": "relationship and chronology assembly workflow"},
+    {"slice": "v37.7", "capability": "dossier snapshot review, redaction, and export-readiness preparation"},
+    {"slice": "v37.8", "capability": "integrated operations workspace and browser E2E"},
+    {"slice": "v37.9", "capability": "pilot evidence, release validation, and program closure"}
+  ],
+  "authoritative_reuse": {
+    "case_scope_and_privacy": "existing case, purpose, authorization, minimization, sensitive-context, retention, and privacy controls",
+    "collection_contracts": "v29 collection-job contracts",
+    "artifact_evidence": "v29 accepted evidence artifacts and append-only custody history",
+    "source_registry": "v36.1 source records and claim-type reliability profiles",
+    "canonical_observations": "v36.2 canonical observation envelopes and quarantine review",
+    "entity_resolution": "v36.3 candidate assessments and human decisions",
+    "source_independence": "v36.4 dependency assessments",
+    "claim_verification": "v36.5 dimensional verification and alternative ranking",
+    "relationships": "v36.6 relationship and timeline assessments",
+    "dossier_synthesis": "v36.7 versioned dossier snapshots",
+    "human_review": "v30.5 analytic review",
+    "dossier_contribution": "v30.6 contribution decisions",
+    "export_and_publication": "existing quality, redaction, approval, audit, bundle, manifest, export, and publication gates",
+    "audit": "append-only AuditLog"
+  },
+  "prohibited_duplication": {
+    "parallel_case_registry": false,
+    "second_artifact_vault": false,
+    "second_observation_authority": false,
+    "second_identity_graph": false,
+    "mutable_truth_table": false,
+    "alternate_dossier_pipeline": false,
+    "alternate_export_authority": false
+  },
+  "prohibited_automation": {
+    "adapter_truth_assignment": false,
+    "automatic_entity_merge": false,
+    "automatic_claim_approval": false,
+    "automatic_human_review_completion": false,
+    "automatic_dossier_mutation": false,
+    "automatic_export": false,
+    "automatic_publication": false,
+    "hidden_collection": false,
+    "private_source_authentication_bypass": false,
+    "credential_or_captcha_bypass": false
+  },
+  "production_invariants": {
+    "raw_export_preserved_before_normalization": true,
+    "every_import_requires_case_purpose_operator_and_artifact": true,
+    "original_filename_and_sha256_recorded": true,
+    "adapter_name_and_version_recorded": true,
+    "repeated_imports_are_deterministic_and_idempotent": true,
+    "duplicates_do_not_inflate_observation_or_corroboration_counts": true,
+    "quarantined_records_cannot_support_claims": true,
+    "public_repository_uses_synthetic_fixtures_only": true,
+    "sensitive_case_evidence_stays_in_approved_private_storage": true,
+    "human_review_required_for_entity_claim_and_dossier_decisions": true,
+    "export_readiness_is_not_export_or_publication": true,
+    "all consequential events_are_append_only_and_hash_bound": true
+  },
+  "runtime_gate": {
+    "runtime_implemented_in_v37_0": false,
+    "migration_implemented_in_v37_0": false,
+    "runtime_allowed_after_v37_0_merge": true,
+    "next_action": "implement_v37_1_case_scoped_import_envelopes"
+  }
+}
