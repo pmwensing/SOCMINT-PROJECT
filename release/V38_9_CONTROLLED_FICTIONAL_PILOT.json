@@ -1,0 +1,184 @@
+{
+  "schema": "socmint.v38.controlled_fictional_pilot.v38_9",
+  "version": "v38.9.0",
+  "program": "Lawful Public-Web Discovery and Capture",
+  "status": "passed",
+  "pilot_shape": "fictional 46 Montreal-shaped public-source workflow",
+  "execution_model": "deterministic repository fixtures, injected executors, temporary SQLite storage, and Chromium browser safety checks",
+  "validation_checkpoint": {
+    "head_sha": "66344973f22af9efa8aec70091c7b0e610a43710",
+    "ci_run": 4531,
+    "full_verification_run": 1194,
+    "legacy_readiness_run": 2491,
+    "combined_browser_e2e_run": 184,
+    "all_green": true
+  },
+  "scenarios": [
+    {
+      "key": "planning_and_dependency_order",
+      "status": "passed",
+      "proof_files": [
+        "tests/test_v38_0_lawful_public_web_discovery_planning_gate.py"
+      ],
+      "proves": [
+        "v38.1 through v38.4 have no live-network execution",
+        "synthetic capture governance precedes live adapters",
+        "Scrapy-compatible HTTP capture is no earlier than v38.5",
+        "Browsertrix is no earlier than v38.6"
+      ]
+    },
+    {
+      "key": "discovery_request_and_manifest",
+      "status": "passed",
+      "proof_files": [
+        "tests/test_v38_1_public_discovery_request.py"
+      ],
+      "proves": [
+        "case, purpose, operator, job, and policy bindings",
+        "deterministic manifest and idempotency",
+        "explicit resource limits",
+        "no network execution"
+      ]
+    },
+    {
+      "key": "policy_allow_and_block",
+      "status": "passed",
+      "proof_files": [
+        "tests/test_v38_2_public_discovery_policy_gate.py"
+      ],
+      "proves": [
+        "source allowlist",
+        "case and entity relevance",
+        "robots and terms decisions",
+        "public-access controls",
+        "login, paywall, CAPTCHA, private-account, leak, dump, Tor, and scope blockers",
+        "resource-limit enforcement"
+      ]
+    },
+    {
+      "key": "offline_passive_archive_discovery",
+      "status": "passed",
+      "proof_files": [
+        "tests/test_v38_3_passive_archive_discovery.py"
+      ],
+      "proves": [
+        "Common Crawl and Internet Archive provider normalization",
+        "candidate-only status",
+        "duplicate detection",
+        "malformed-record quarantine",
+        "no DNS or HTTP request"
+      ]
+    },
+    {
+      "key": "synthetic_capture_and_provenance",
+      "status": "passed",
+      "proof_files": [
+        "tests/test_v38_4_synthetic_capture_provenance.py"
+      ],
+      "proves": [
+        "HTML, PDF, WARC or WACZ, and screenshot evidence roles",
+        "deterministic SHA-256 and provenance manifests",
+        "separate v29 artifact registration and human acceptance",
+        "v36 source registration",
+        "explicit v37 import-envelope handoff",
+        "duplicate and quarantine non-inflation"
+      ]
+    },
+    {
+      "key": "strict_public_http_capture",
+      "status": "passed",
+      "proof_files": [
+        "tests/test_v38_5_public_http_crawler.py"
+      ],
+      "proves": [
+        "explicit operator execution",
+        "current gate binding",
+        "domain, redirect, content, size, rate, and scope limits",
+        "no credentials, cookies, arbitrary off-domain following, or automatic retry"
+      ]
+    },
+    {
+      "key": "browsertrix_preservation_and_execution",
+      "status": "passed",
+      "proof_files": [
+        "tests/test_v38_6_browsertrix_preservation.py",
+        "tests/test_v38_6_1_browsertrix_execution.py",
+        "tests/test_v38_6_2_browsertrix_container_runtime.py",
+        "tests/test_v38_6_3_browsertrix_deployment_certification.py",
+        "tests/test_v38_6_4_browsertrix_production_enablement.py"
+      ],
+      "proves": [
+        "WACZ, screenshot or screenshot-WARC, and JSON or JSONL metadata validation",
+        "fixed executable and pinned image",
+        "disabled-by-default container runtime",
+        "fictional .test deployment certification and blocked .invalid egress probe",
+        "time-bounded certification-bound single-use production enablement",
+        "v35 durable replay protection",
+        "failed and uncertain outcomes are never automatically replayed"
+      ]
+    },
+    {
+      "key": "duplicate_change_relevance_and_handoff_triage",
+      "status": "passed",
+      "proof_files": [
+        "tests/test_v38_7_public_capture_triage.py"
+      ],
+      "proves": [
+        "exact-hash duplicate suppression",
+        "mirror proposals require separate v36.4 confirmation",
+        "canonical recapture and hash-change summaries",
+        "no factual significance or causation assignment",
+        "explicit relevance classification",
+        "explicit selected-primary v37 handoff without record staging or observation promotion"
+      ]
+    },
+    {
+      "key": "integrated_workspace_and_browser_safety",
+      "status": "passed",
+      "proof_files": [
+        "tests/test_v38_8_public_discovery_capture_workspace.py",
+        "tests/test_v38_8_public_discovery_capture_workspace_routes.py",
+        "scripts/run_v38_8_public_discovery_capture_browser_e2e.py"
+      ],
+      "proves": [
+        "administrator-only HTML and JSON GET routes",
+        "safe projections only",
+        "blocked, review-pending, active-enablement, and uncertain states remain visible",
+        "no raw content, credentials, cookies, confirmation hashes, private storage paths, or runtime commands",
+        "no form, button, POST route, or mutation control",
+        "no collection, retry, artifact acceptance, independence assessment, observation promotion, truth, merge, claim, dossier, staging, export, or publication bypass"
+      ]
+    }
+  ],
+  "pilot_invariants": {
+    "real_case_evidence_used": false,
+    "real_third_party_crawl_performed": false,
+    "private_account_accessed": false,
+    "credentials_used": false,
+    "cookies_used": false,
+    "robots_or_terms_bypassed": false,
+    "authentication_paywall_or_captcha_bypassed": false,
+    "dark_web_or_tor_used": false,
+    "automatic_scope_expansion_performed": false,
+    "automatic_retry_performed": false,
+    "automatic_artifact_acceptance_performed": false,
+    "automatic_source_independence_assessment_performed": false,
+    "automatic_observation_promotion_performed": false,
+    "truth_assigned": false,
+    "entity_merged": false,
+    "claim_approved": false,
+    "dossier_mutated": false,
+    "import_records_staged_automatically": false,
+    "export_created": false,
+    "published": false
+  },
+  "result": {
+    "pre_live_network_governance_proven": true,
+    "live_http_controls_proven_with_fictional_or_injected_execution": true,
+    "browsertrix_deployment_and_enablement_controls_proven_with_fictional_or_injected_execution": true,
+    "capture_provenance_and_handoff_proven": true,
+    "duplicate_change_and_relevance_controls_proven": true,
+    "read_only_workspace_and_browser_safety_proven": true,
+    "production_live_collection_performed_by_pilot": false
+  }
+}
