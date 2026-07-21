@@ -14,6 +14,7 @@ from .guided_analyst_workflow_routes_v37_5 import register_guided_analyst_workfl
 from .import_observation_promotion_routes_v37_4 import register_import_observation_promotion_routes_v37_4
 from .operational_import_record_routes_v37_2 import register_operational_import_record_routes_v37_2
 from .operational_import_routes_v37_1 import register_operational_import_routes_v37_1
+from .relationship_chronology_workflow_routes_v37_6 import register_relationship_chronology_workflow_routes_v37_6
 from .relationship_timeline_routes_v36_6 import register_relationship_timeline_routes_v36_6
 from .source_independence_routes_v36_4 import register_source_independence_routes_v36_4
 from .source_registry_routes_v36_1 import register_source_registry_routes_v36_1
@@ -73,4 +74,5 @@ def register_analytic_review_routes_v30_0(app):
     register_case_import_pilot_routes_v37_3(app)
     register_import_observation_promotion_routes_v37_4(app)
     register_guided_analyst_workflow_routes_v37_5(app)
+    register_relationship_chronology_workflow_routes_v37_6(app)
     return app
