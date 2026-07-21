@@ -78,7 +78,17 @@ The program preserves:
 - no private-account, credentialed, paywalled, CAPTCHA-protected, Tor, dark-web, leak, dump, or circumvention workflow;
 - no automatic scope expansion or arbitrary off-domain following;
 - no automatic retry of failed or uncertain external effects;
-- no automatic artifact acceptance, source-independence assessment, observation promotion, truth assignment, entity merge, claim approval, dossier mutation, import staging, export, or publication;
+- no automatic artifact acceptance;
+- no automatic source-independence assessment;
+- no automatic observation promotion;
+- no automatic truth assignment;
+- no automatic entity merge;
+- no automatic claim approval;
+- no automatic dossier mutation;
+- no automatic import staging;
+- no automatic export;
+- no automatic publication;
+- there is no automatic export or publication path;
 - duplicate, mirror, archive, and recapture copies do not inflate support;
 - hash-level changes do not assign textual meaning, significance, causation, intent, or misconduct;
 - real captures remain in approved private storage;
