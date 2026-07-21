@@ -26,9 +26,9 @@
     {"slice": "v38.1", "capability": "case-scoped discovery request and crawl-manifest contract bound to v29 jobs and policies"},
     {"slice": "v38.2", "capability": "source allowlist, direct-relevance, robots, terms, public-access, rejected-query, and resource-limit evaluation"},
     {"slice": "v38.3", "capability": "passive Common Crawl and Internet Archive index discovery with candidate-URL review"},
-    {"slice": "v38.4", "capability": "operator-triggered official/public HTTP crawler adapter with strict scope, rate, depth, redirect, and content controls"},
-    {"slice": "v38.5", "capability": "operator-triggered Browsertrix capture for approved JavaScript-heavy public pages with WARC/WACZ and screenshot preservation"},
-    {"slice": "v38.6", "capability": "capture acceptance, v29 artifact ingestion, v36 source registration, and complete provenance manifests"},
+    {"slice": "v38.4", "capability": "synthetic capture envelope, provenance manifest, v29 artifact acceptance, v36 source registration, and v37 handoff proof with no live-network execution"},
+    {"slice": "v38.5", "capability": "operator-triggered official/public HTTP crawler adapter with strict scope, rate, depth, redirect, and content controls"},
+    {"slice": "v38.6", "capability": "operator-triggered Browsertrix capture for approved JavaScript-heavy public pages with WARC/WACZ and screenshot preservation"},
     {"slice": "v38.7", "capability": "duplicate, mirror, change, relevance, and scope triage with explicit handoff to v37 imports"},
     {"slice": "v38.8", "capability": "integrated public-discovery workspace, execution/recovery visibility, and browser E2E safety proof"},
     {"slice": "v38.9", "capability": "controlled fictional 46 Montreal pilot, exact release evidence, and program closure"}
@@ -94,6 +94,7 @@
     "robots_terms_and_public_access_are_checked_before_fetch": true,
     "rate_depth_page_domain_and_redirect_limits_are_explicit": true,
     "passive_archive_index_discovery_precedes_active_capture_when_available": true,
+    "synthetic_capture_provenance_is_proven_before_any_live_network_adapter": true,
     "every_fetch_records_requested_final_and_redirect_urls": true,
     "every_capture_records_status_headers_times_adapter_version_and_content_sha256": true,
     "captured_content_enters_the_existing_v29_artifact_authority": true,
@@ -105,6 +106,24 @@
     "real_case_captures_remain_in_approved_private_storage": true,
     "human_review_is_required_before_observation_claim_dossier_or_export_use": true,
     "all_consequential_events_are_append_only_and_hash_bound": true
+  },
+  "live_network_execution_gate": {
+    "live_network_allowed_in_v38_1": false,
+    "live_network_allowed_in_v38_2": false,
+    "live_network_allowed_in_v38_3": false,
+    "live_network_allowed_in_v38_4": false,
+    "synthetic_capture_provenance_gate_slice": "v38.4",
+    "scrapy_live_network_earliest_slice": "v38.5",
+    "browsertrix_live_network_earliest_slice": "v38.6",
+    "required_v38_4_proofs": [
+      "synthetic_capture_envelope",
+      "deterministic_content_sha256",
+      "provenance_manifest",
+      "accepted_v29_artifact_binding",
+      "registered_v36_source_binding",
+      "explicit_v37_import_handoff",
+      "duplicate_and_quarantine_non_inflation"
+    ]
   },
   "runtime_gate": {
     "runtime_implemented_in_v38_0": false,
