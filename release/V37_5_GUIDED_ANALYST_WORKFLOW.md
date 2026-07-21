@@ -21,6 +21,10 @@ Provide one read-only analyst composition over operational imports, scope review
 - v30.6 remains the dossier-contribution gate;
 - all specialized write actions remain separate explicit services.
 
+## Authoritative baseline
+
+Final release validation is performed with this slice targeting `master` after the v37.4 merge through PR #311 at `37bac6f3e4b21d5c506a676f73dcdd3af0b95e27`.
+
 ## Next action
 
 Implement relationship/chronology review and controlled dossier export-readiness preparation.
