@@ -25,6 +25,10 @@ Promote one explicitly reviewed staged import record at a time through the exist
 - authoritative artifact and observation validation remains in v29;
 - canonical observation registration remains a separate v36.2 action.
 
+## Authoritative baseline
+
+Final release validation is performed with this slice targeting `master` after the v37.3 merge through PR #310 at `30c320577ca90e0f7751e1b978890fb9839ce141`.
+
 ## Next action
 
 Implement the guided analyst workflow over imports, review decisions, promotions, entity candidates, claims, conflicts, verification, relationships, and dossier snapshots.
