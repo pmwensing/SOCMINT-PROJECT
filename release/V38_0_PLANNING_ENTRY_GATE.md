@@ -26,12 +26,32 @@ v38.0 is planning-only. It adds no service, route, migration, network request, a
 - Cowdy-only issue collection and unrelated entity expansion remain blocked;
 - private login, cookies, credentials, paywall or CAPTCHA bypass, credential/leak/dump hunting, Tor, and hidden services remain prohibited;
 - passive archive/index discovery returns candidates, not evidence or facts;
-- active crawl and browser capture are separate explicit operator actions;
 - every accepted capture enters the existing v29 artifact authority before v36 source registration;
 - every downstream candidate enters the existing v37 import and review pipeline;
 - mirrors, duplicates, archive copies, and recaptures cannot inflate support;
 - failed, blocked, or uncertain executions are never silently retried;
 - no discovery result assigns truth, causation, intent, identity, claim status, dossier eligibility, export approval, or publication approval.
+
+## Mandatory pre-live-network sequence
+
+The initial implementation order is fixed:
+
+`v38.1 discovery request → v38.2 policy gate → v38.3 passive discovery → v38.4 synthetic capture/provenance pilot`
+
+v38.1 through v38.4 must not create or enable a live third-party crawler or browser-capture path.
+
+Before any live-network adapter is eligible, v38.4 must prove with synthetic fixtures:
+
+- capture-envelope completeness;
+- deterministic content SHA-256;
+- requested, final, and redirect URL provenance;
+- response and adapter metadata;
+- accepted v29 artifact binding;
+- registered v36 source binding;
+- duplicate and quarantine non-inflation;
+- explicit v37 import handoff without automatic observation promotion.
+
+Scrapy live-network execution is eligible no earlier than v38.5. Browsertrix live-network execution is eligible no earlier than v38.6. Both remain subject to the v38.2 gate and explicit operator action.
 
 ## First runtime slice
 
