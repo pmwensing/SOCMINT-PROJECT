@@ -100,7 +100,7 @@ It excludes private accounts, authenticated areas, paywalled or CAPTCHA-protecte
 
 ### v38.9 — Controlled pilot, release evidence, and closure
 
-- run a fictional 46 Montreal-shaped public-source pilot using deterministic local HTTP/archive fixtures only;
+- run a fictional 46 Montreal-shaped public-source pilot using synthetic local HTTP/archive fixtures and deterministic mock responses only;
 - prove allow, block, robots, terms, redirect, rate, duplicate, change, capture, artifact, source, and v37 handoff paths;
 - record exact merge and validation evidence;
 - require CI, Full Verification, legacy readiness, PostgreSQL/migration/backup/boot checks, and combined browser E2E;
