@@ -40,13 +40,24 @@
 - one deterministic discovery-request and crawl-manifest contract bound to the existing v29 job and policy authorities;
 - executable source/scope/robots/terms/query/resource-limit decisions before any network action;
 - passive Common Crawl and Internet Archive candidate discovery;
-- an official/public HTTP crawler adapter with strict limits and complete request/response provenance;
-- Browsertrix WARC/WACZ and screenshot preservation for explicitly approved public pages;
-- direct ingestion of captures into the existing v29 artifact authority and v36 source registry;
+- a synthetic capture/provenance pilot proving capture envelopes, hashes, accepted v29 artifact bindings, v36 source registration, duplicate/quarantine controls, and explicit v37 handoff before live collection exists;
+- an official/public HTTP crawler adapter with strict limits and complete request/response provenance, eligible only after the synthetic governance proof;
+- Browsertrix WARC/WACZ and screenshot preservation for explicitly approved public pages, eligible only after the synthetic governance proof;
 - mirror, duplicate, recapture, and change triage without corroboration inflation;
 - explicit handoff of reviewed candidates to the existing v37 import workflow;
 - one public-discovery workspace with execution, recovery, capture, provenance, and handoff visibility;
 - end-to-end browser proof that blocked or unreviewed collection cannot execute.
+
+## Required dependency order
+
+1. v38.1 discovery request and crawl manifest;
+2. v38.2 policy, source, scope, robots, terms, query, and resource gate;
+3. v38.3 passive archive/index discovery;
+4. v38.4 synthetic capture governance, artifact acceptance, source registration, and import handoff proof;
+5. v38.5 Scrapy-compatible live public HTTP collection;
+6. v38.6 Browsertrix live public-page preservation.
+
+No live-network crawler or browser-capture path is eligible before v38.4 is merged and green.
 
 ## Non-goals
 
