@@ -1,0 +1,196 @@
+{
+  "schema": "socmint.v38.program_closure.v38_9",
+  "version": "v38.9.0",
+  "program": "Lawful Public-Web Discovery and Capture",
+  "status": "closed",
+  "closure_only": true,
+  "runtime_added_in_v38_9": false,
+  "route_added_in_v38_9": false,
+  "migration_added_in_v38_9": false,
+  "network_behavior_changed_in_v38_9": false,
+  "authority_changed_in_v38_9": false,
+  "foundation": {
+    "v37_closure_merge_sha": "46d52560ea8dcd3bd5255b4afa63453c79fbb5fe",
+    "v38_planning_pr": 317,
+    "v38_planning_merge_sha": "959afa3de67c881874d93ec96221268f6618e89d"
+  },
+  "slice_merge_ledger": [
+    {
+      "slice": "v38.0",
+      "pr": 317,
+      "head_sha": "71c03b9700eb30eafe2c156c1f559c37732b75fa",
+      "merge_sha": "959afa3de67c881874d93ec96221268f6618e89d",
+      "capability": "planning, compatibility, ownership, safety, and dependency-order gate"
+    },
+    {
+      "slice": "v38.1",
+      "pr": 318,
+      "head_sha": "f82a35318d14b6ba7afbfee020d8fe9611e50a49",
+      "merge_sha": "53a56d3bd2afed719fc731611eb33f0e68571219",
+      "capability": "case-scoped discovery request and crawl manifest"
+    },
+    {
+      "slice": "v38.2",
+      "pr": 319,
+      "head_sha": "d72f25bf63f3a31fd7c35366cec1c328c3b675e3",
+      "merge_sha": "843ca3d070f0e77cbf9513014e5ca631bd2f51ce",
+      "capability": "source, scope, robots, terms, public-access, query, and resource gate"
+    },
+    {
+      "slice": "v38.3",
+      "pr": 320,
+      "head_sha": "5a75fed4c88d87b2a664107145d00792b7560d53",
+      "merge_sha": "f8534ed721e4b529715ba02a49024c2ab62ef5d5",
+      "capability": "offline passive Common Crawl and Internet Archive candidate discovery"
+    },
+    {
+      "slice": "v38.4",
+      "pr": 321,
+      "head_sha": "0cdb87661f5963ef225385663c680539f7a547c0",
+      "merge_sha": "e67a145454b80ad194e6a9a133d75ebc7b101529",
+      "capability": "synthetic capture provenance, artifact acceptance, source registration, and import handoff proof"
+    },
+    {
+      "slice": "v38.5",
+      "pr": 322,
+      "head_sha": "72634e46386bb15bf9ca519b263597e3c941c79e",
+      "merge_sha": "c94e1060538799f596048cbf02ffb28a88e2891f",
+      "capability": "strict operator-confirmed official and public HTTP capture"
+    },
+    {
+      "slice": "v38.6",
+      "pr": 323,
+      "head_sha": "93ac0ece408a20764854c7ee4d87437f4c3e8a48",
+      "merge_sha": "a022236a3fd7da8d4c5b730506aa1e682246d70f",
+      "capability": "Browsertrix preservation request and result validation"
+    },
+    {
+      "slice": "v38.6.1",
+      "pr": 324,
+      "head_sha": "7824ea418ba42c22cc8616e3538e9b3eda3c1011",
+      "merge_sha": "a129f7e9e1411584bf25b5d623a0546fd2a67138",
+      "capability": "controlled Browsertrix execution gate"
+    },
+    {
+      "slice": "v38.6.2",
+      "pr": 325,
+      "head_sha": "efc26e26ea401bbdd71557ae583c04f5137e5b68",
+      "merge_sha": "6e9ee7c2392ce0de1df702cb75895604d22e7de8",
+      "capability": "disabled-by-default pinned Browsertrix container runtime"
+    },
+    {
+      "slice": "v38.6.3",
+      "pr": 326,
+      "head_sha": "c72675f95e7642c59f5303d1ea5c23b80dc8ee5c",
+      "merge_sha": "80c9871ab9c05f7e666b161c00e77ab4bb562865",
+      "capability": "deployment-only Browsertrix certification gate"
+    },
+    {
+      "slice": "v38.6.4",
+      "pr": 328,
+      "head_sha": "668224ae72dd662412c3041c43c4a5230846da56",
+      "merge_sha": "9a84eb269661a95fd041aabe0b411140a9b0a2aa",
+      "capability": "certification-bound, time-bounded, single-use production enablement"
+    },
+    {
+      "slice": "v38.7",
+      "pr": 329,
+      "head_sha": "7bb167e81fda6f56a7f6d43a86038fa9d51f7ac2",
+      "merge_sha": "3613c6d4d31ee1e76985240a423ad21d194f1555",
+      "capability": "duplicate, mirror, recapture, change, relevance, and v37 handoff triage"
+    },
+    {
+      "slice": "v38.8",
+      "pr": 330,
+      "head_sha": "66344973f22af9efa8aec70091c7b0e610a43710",
+      "merge_sha": "d5c18c1784144ac9b0343185508fc3987ea85aa8",
+      "capability": "integrated read-only Public Discovery and Capture Workspace and browser safety proof"
+    }
+  ],
+  "final_delivery": {
+    "slice": "v38.8",
+    "pr": 330,
+    "head_sha": "66344973f22af9efa8aec70091c7b0e610a43710",
+    "merge_sha": "d5c18c1784144ac9b0343185508fc3987ea85aa8",
+    "validation": {
+      "ci_run": 4531,
+      "full_verification_run": 1194,
+      "legacy_readiness_run": 2491,
+      "combined_browser_e2e_run": 184,
+      "all_green": true
+    }
+  },
+  "controlled_pilot": {
+    "contract": "release/V38_9_CONTROLLED_FICTIONAL_PILOT.json",
+    "status": "passed",
+    "real_case_evidence_used": false,
+    "real_third_party_crawl_performed": false,
+    "production_live_collection_performed": false
+  },
+  "authoritative_reuse_preserved": {
+    "v29_collection_jobs_policies_adapters_artifacts_and_quality": true,
+    "v35_durable_execution_reconciliation_and_recovery": true,
+    "v36_source_provenance_independence_entity_claim_relationship_and_dossier_authorities": true,
+    "v37_import_review_promotion_chronology_and_dossier_readiness": true,
+    "existing_redaction_export_and_publication_gates": true
+  },
+  "program_invariants": {
+    "case_purpose_operator_and_collection_job_required": true,
+    "current_policy_gate_required_before_execution": true,
+    "public_allowlisted_sources_only": true,
+    "robots_terms_and_public_access_checked": true,
+    "explicit_domain_rate_depth_page_redirect_content_and_size_limits": true,
+    "operator_confirmation_required_for_live_execution": true,
+    "browsertrix_runtime_disabled_by_default": true,
+    "deployment_certification_uses_fictional_test_target_and_blocked_external_probe": true,
+    "production_enablement_is_certification_bound_time_bounded_single_use_and_revocable": true,
+    "failed_and_uncertain_execution_not_automatically_replayed": true,
+    "accepted_v29_artifact_required_before_v36_source_registration": true,
+    "explicit_v37_import_handoff_required": true,
+    "duplicates_mirrors_and_recaptures_do_not_inflate_support": true,
+    "hash_changes_assign_no_factual_significance_or_causation": true,
+    "workspace_is_admin_only_read_only_and_safe_projection_only": true,
+    "real_case_captures_remain_in_approved_private_storage": true,
+    "public_repository_uses_fictional_and_synthetic_fixtures_only": true,
+    "all_consequential_records_are_append_only_and_hash_bound": true
+  },
+  "prohibited_automation": {
+    "unapproved_collection": false,
+    "hidden_collection": false,
+    "automatic_scope_expansion": false,
+    "arbitrary_off_domain_following": false,
+    "private_account_login": false,
+    "authentication_paywall_captcha_robots_or_terms_bypass": false,
+    "credential_leak_dump_or_dark_web_hunting": false,
+    "automatic_retry": false,
+    "automatic_artifact_acceptance": false,
+    "automatic_source_independence_assessment": false,
+    "automatic_observation_promotion": false,
+    "automatic_truth_assignment": false,
+    "automatic_entity_merge": false,
+    "automatic_claim_approval": false,
+    "automatic_dossier_mutation": false,
+    "automatic_import_staging": false,
+    "automatic_export": false,
+    "automatic_publication": false
+  },
+  "closure": {
+    "v38_closed": true,
+    "planned_slices_complete": true,
+    "remaining_v38_runtime_work": false,
+    "remaining_v38_route_work": false,
+    "remaining_v38_schema_or_migration_work": false,
+    "remaining_v38_network_adapter_work": false,
+    "next_runtime_requires_new_planning_and_compatibility_gate": true,
+    "next_action": "open_new_program_planning_gate_before_additional_runtime_work"
+  },
+  "closure_validation": {
+    "status": "pending_exact_head_validation",
+    "required_workflows": [
+      "CI",
+      "SOCMINT Full Verification",
+      "SOCMINT v12.10.19 Verify",
+      "SOCMINT v32.7 through v38.8 Browser E2E"
+    ]
+  }
+}
