@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section
+    data-public-discovery-capture-workspace="v38.8"
+    data-read-only="true"
+    data-safe-projection-only="true"
+    data-raw-content-exposed="false"
+    data-credentials-exposed="false"
+    data-cookies-exposed="false"
+    data-private-storage-paths-exposed="false"
+    data-runtime-commands-exposed="false"
+    data-automatic-collection="false"
+    data-automatic-retry="false"
+    data-automatic-artifact-acceptance="false"
+    data-automatic-source-independence="false"
+    data-automatic-observation-promotion="false"
+    data-automatic-truth-assignment="false"
+    data-automatic-entity-merge="false"
+    data-automatic-claim-approval="false"
+    data-automatic-dossier-mutation="false"
+    data-automatic-import-staging="false"
+    data-automatic-export="false"
+    data-automatic-publication="false"
+    data-write-actions="none"
+    data-execution-recovery="true"
+    data-capture-provenance="true"
+    data-duplicate-change-triage="true"
+    data-v37-handoff-visibility="true"
+>
+    <h1>Public Discovery and Capture Workspace</h1>
+    <p><strong>Read-only integration surface.</strong> It exposes sanitized workflow status only. Collection, retry, artifact acceptance, source-independence assessment, observation promotion, truth assignment, entity merge, claim approval, dossier mutation, import staging, export, and publication actions are not available here.</p>
+
+    {% if payload.error %}
+    <p>{{ payload.error }}</p>
+    {% else %}
+    <section aria-labelledby="public-discovery-summary">
+        <h2 id="public-discovery-summary">Program summary</h2>
+        <dl>
+            {% for key, value in payload.summary.items() %}
+            <dt>{{ key | replace('_', ' ') | title }}</dt>
+            <dd>{{ value }}</dd>
+            {% endfor %}
+        </dl>
+    </section>
+
+    <section aria-labelledby="public-discovery-findings">
+        <h2 id="public-discovery-findings">Integrity and recovery findings</h2>
+        {% if payload.findings %}
+        <ul>
+            {% for finding in payload.findings %}
+            <li
+                data-finding-key="{{ finding.key }}"
+                data-finding-severity="{{ finding.severity }}"
+            >
+                <strong>{{ finding.key | replace('_', ' ') | title }}</strong>
+                — {{ finding.count }}. {{ finding.message }} Next: {{ finding.next_action }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No current integrity or recovery findings.</p>
+        {% endif %}
+    </section>
+
+    <section aria-labelledby="public-discovery-capabilities">
+        <h2 id="public-discovery-capabilities">Capability inventory</h2>
+        <ul>
+            {% for item in payload.capability_inventory %}
+            <li
+                data-capability-slice="{{ item.slice }}"
+                data-execution-mode="{{ item.execution_mode }}"
+            >
+                {{ item.slice }} — {{ item.capability }} — {{ item.execution_mode }}
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section aria-labelledby="public-discovery-gates">
+        <h2 id="public-discovery-gates">Discovery and policy gates</h2>
+        {% if payload.gate_decision_inventory %}
+        <ul>
+            {% for item in payload.gate_decision_inventory %}
+            <li
+                data-gate-decision="{{ item.decision }}"
+                data-live-network-eligible="{{ 'true' if item.live_network_eligible else 'false' }}"
+            >
+                {{ item.gate_decision_id }} — {{ item.decision }}
+                {% if item.decision_blockers %} — blockers: {{ item.decision_blockers | join(', ') }}{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No public-discovery gate records.</p>
+        {% endif %}
+    </section>
+
+    <section aria-labelledby="public-discovery-enablement">
+        <h2 id="public-discovery-enablement">Browsertrix production enablement</h2>
+        {% if payload.production_enablement_inventory %}
+        <ul>
+            {% for item in payload.production_enablement_inventory %}
+            <li
+                data-enablement-state="{{ item.enablement_state }}"
+                data-single-use="{{ 'true' if item.single_use else 'false' }}"
+                data-automatic-execution="{{ 'true' if item.automatic_execution else 'false' }}"
+                data-automatic-retry="{{ 'true' if item.automatic_retry else 'false' }}"
+            >
+                {{ item.production_enablement_id }} — {{ item.enablement_state }} — case {{ item.case_id }} — domain {{ item.approved_domain }} — expires {{ item.expires_at }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No Browsertrix production-enablement records.</p>
+        {% endif %}
+    </section>
+
+    <section aria-labelledby="public-discovery-triage">
+        <h2 id="public-discovery-triage">Capture duplicate, change, and relevance triage</h2>
+        {% if payload.capture_triage_inventory %}
+        <ul>
+            {% for item in payload.capture_triage_inventory %}
+            <li
+                data-capture-triage="{{ item.capture_triage_id }}"
+                data-factual-significance-assigned="{{ 'true' if item.factual_significance_assigned else 'false' }}"
+                data-causation-assigned="{{ 'true' if item.causation_assigned else 'false' }}"
+            >
+                {{ item.capture_triage_id }} — case {{ item.case_id }} — {{ item.counts.support_eligible | default(0) }} support-eligible — {{ item.unconfirmed_mirror_proposal_count }} mirror proposals awaiting separate confirmation
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No public-capture triage records.</p>
+        {% endif %}
+    </section>
+
+    <section aria-labelledby="public-discovery-recovery">
+        <h2 id="public-discovery-recovery">Uncertain execution recovery</h2>
+        {% if payload.uncertain_execution_inventory %}
+        <ul>
+            {% for item in payload.uncertain_execution_inventory %}
+            <li
+                data-execution-state="{{ item.state }}"
+                data-automatic-retry="{{ 'true' if item.automatic_retry else 'false' }}"
+                data-delegate-invocation-available="{{ 'true' if item.delegate_invocation_available else 'false' }}"
+            >
+                {{ item.execution_id }} — {{ item.governance_action }} — {{ item.state }} — ledger consistent: {{ item.ledger_consistent }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No uncertain execution outcomes. Automatic replay remains unavailable.</p>
+        {% endif %}
+    </section>
+    {% endif %}
+</section>
+{% endblock %}
