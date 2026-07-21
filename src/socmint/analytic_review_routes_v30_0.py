@@ -17,6 +17,9 @@ from .entity_accuracy_workspace_routes_v36_8 import (
 from .entity_candidate_resolution_routes_v36_3 import (
     register_entity_candidate_resolution_routes_v36_3,
 )
+from .operational_import_record_routes_v37_2 import (
+    register_operational_import_record_routes_v37_2,
+)
 from .operational_import_routes_v37_1 import (
     register_operational_import_routes_v37_1,
 )
@@ -79,4 +82,5 @@ def register_analytic_review_routes_v30_0(app):
     register_dossier_synthesis_routes_v36_7(app)
     register_entity_accuracy_workspace_routes_v36_8(app)
     register_operational_import_routes_v37_1(app)
+    register_operational_import_record_routes_v37_2(app)
     return app

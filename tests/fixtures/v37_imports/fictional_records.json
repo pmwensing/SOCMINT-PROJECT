@@ -1,0 +1,6 @@
+{
+  "records": [
+    {"record_id": "fixture-1", "entity": "Entity Alpha", "location": "Location One"},
+    {"record_id": "fixture-2", "entity": "Entity Beta", "location": "Location One"}
+  ]
+}
