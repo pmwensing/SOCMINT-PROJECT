@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section
+    data-operational-case-intelligence-workspace="v37.8"
+    data-read-only="true"
+    data-automatic-collection="false"
+    data-automatic-observation-promotion="false"
+    data-automatic-entity-merge="false"
+    data-automatic-claim-approval="false"
+    data-automatic-export="false"
+    data-automatic-publication="false"
+    data-write-actions="none"
+    data-import-workflow="true"
+    data-integrity-findings="true"
+    data-chronology="true"
+    data-export-readiness="true"
+>
+    <h1>Operational Case Intelligence Workspace</h1>
+    <p><strong>Read-only integration surface.</strong> No collection, automatic promotion, entity merge, claim approval, dossier mutation, export, or publication controls are exposed here.</p>
+
+    {% if payload.error %}
+    <p>{{ payload.error }}</p>
+    {% else %}
+    <section aria-labelledby="operational-summary">
+        <h2 id="operational-summary">Workflow summary</h2>
+        <dl>
+            {% for key, value in payload.summary.items() %}
+            <dt>{{ key | replace('_', ' ') | title }}</dt>
+            <dd>{{ value }}</dd>
+            {% endfor %}
+        </dl>
+    </section>
+
+    <section aria-labelledby="operational-findings">
+        <h2 id="operational-findings">Integrity and review findings</h2>
+        {% if payload.findings %}
+        <ul>
+            {% for finding in payload.findings %}
+            <li data-finding-key="{{ finding.key }}">
+                <strong>{{ finding.key | replace('_', ' ') | title }}</strong>
+                — {{ finding.message }} Next: {{ finding.next_action }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No current workflow findings.</p>
+        {% endif %}
+    </section>
+
+    <section aria-labelledby="operational-chronology">
+        <h2 id="operational-chronology">Chronology</h2>
+        <p>{{ payload.chronology.summary.entry_count | default(0) }} reviewed chronology entries.</p>
+        <ul>
+            {% for entry in payload.chronology.entries %}
+            <li data-chronology-entry="{{ entry.entry_type }}">
+                {{ entry.event_time }} — {{ entry.entry_type }}
+                {% if entry.inference_warning %} — {{ entry.inference_warning }}{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section aria-labelledby="operational-readiness">
+        <h2 id="operational-readiness">Dossier export readiness</h2>
+        {% if payload.export_readiness_inventory %}
+        <ul>
+            {% for item in payload.export_readiness_inventory %}
+            <li data-readiness-status="{{ item.readiness_status }}">
+                {{ item.dossier_synthesis_snapshot_id }} — {{ item.readiness_status }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No export-readiness records. Readiness does not create an export or publication.</p>
+        {% endif %}
+    </section>
+    {% endif %}
+</section>
+{% endblock %}
