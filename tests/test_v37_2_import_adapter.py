@@ -39,7 +39,7 @@ def test_v37_2_adapter_rejects_bad_contracts():
         parse_export_text("json", '{"not_records": true}')
     with pytest.raises(ValueError, match="line 2"):
         parse_export_text("jsonl", '{"a":1}\nnot-json')
-    with pytest.raises(ValueError, match="header"):
+    with pytest.raises(ValueError, match="required"):
         parse_export_text("csv", "")
     with pytest.raises(ValueError, match="table header"):
         parse_export_text("html", "<table><tr><th>a</th></tr></table>")
