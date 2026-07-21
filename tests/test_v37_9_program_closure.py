@@ -50,7 +50,7 @@ def test_v37_9_closure_documents_preserve_program_boundaries():
     evidence = EVIDENCE_PATH.read_text(encoding="utf-8").lower()
     for marker in (
         "operator-provided export",
-        "single-record",
+        "one accepted record at a time",
         "read-only",
         "no v37 runtime or schema work remains",
         "new planning and compatibility gate",
