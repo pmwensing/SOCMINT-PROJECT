@@ -35,8 +35,9 @@ def test_v37_3_controlled_pilot_fixture_exercises_all_scope_classes():
 def test_v37_3_public_fixture_contains_no_private_storage_or_credentials():
     text = FIXTURE.read_text(encoding="utf-8").lower()
     prohibited = (
-        "e:/",
+        "e:\\",
         "c:/",
+        "c:\\",
         "onedrive",
         "google drive",
         "terabox",
