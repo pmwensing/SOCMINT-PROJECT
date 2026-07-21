@@ -33,6 +33,33 @@ def test_v38_0_contract_is_planning_only_and_complete():
     )
 
 
+def test_v38_0_capture_governance_precedes_live_network_adapters():
+    contract = _contract()
+    roadmap = {item["slice"]: item["capability"] for item in contract["roadmap"]}
+    assert "synthetic capture envelope" in roadmap["v38.4"]
+    assert "v29 artifact acceptance" in roadmap["v38.4"]
+    assert "v36 source registration" in roadmap["v38.4"]
+    assert "no live-network execution" in roadmap["v38.4"]
+    assert "HTTP crawler adapter" in roadmap["v38.5"]
+    assert "Browsertrix capture" in roadmap["v38.6"]
+
+    live_gate = contract["live_network_execution_gate"]
+    for slice_name in ("v38_1", "v38_2", "v38_3", "v38_4"):
+        assert live_gate[f"live_network_allowed_in_{slice_name}"] is False
+    assert live_gate["synthetic_capture_provenance_gate_slice"] == "v38.4"
+    assert live_gate["scrapy_live_network_earliest_slice"] == "v38.5"
+    assert live_gate["browsertrix_live_network_earliest_slice"] == "v38.6"
+    assert {
+        "synthetic_capture_envelope",
+        "deterministic_content_sha256",
+        "provenance_manifest",
+        "accepted_v29_artifact_binding",
+        "registered_v36_source_binding",
+        "explicit_v37_import_handoff",
+        "duplicate_and_quarantine_non_inflation",
+    } == set(live_gate["required_v38_4_proofs"])
+
+
 def test_v38_0_contract_reuses_authorities_and_blocks_unsafe_automation():
     contract = _contract()
     required_authorities = {
@@ -92,9 +119,12 @@ def test_v38_0_planning_documents_preserve_scope_and_access_boundaries():
 
     for marker in (
         "passive archive",
+        "synthetic capture/provenance proof",
         "operator-triggered",
         "no arbitrary off-domain",
         "synthetic local http/archive fixtures",
+        "scrapy may receive a live-network path no earlier than v38.5",
+        "browsertrix may receive a live-network path no earlier than v38.6",
     ):
         assert marker in roadmap
 
@@ -120,6 +150,9 @@ def test_v38_0_planning_documents_preserve_scope_and_access_boundaries():
         "no url is fetched",
         "cowdy-only issue collection",
         "failed, blocked, or uncertain executions are never silently retried",
+        "v38.1 through v38.4 must not create or enable a live third-party crawler",
+        "scrapy live-network execution is eligible no earlier than v38.5",
+        "browsertrix live-network execution is eligible no earlier than v38.6",
         "implement_v38_1_discovery_request_and_crawl_manifest_gate",
     ):
         assert marker in gate
