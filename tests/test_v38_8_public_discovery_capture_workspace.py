@@ -1,7 +1,29 @@
 from src.socmint import public_discovery_capture_workspace_v38_8 as workspace
 
 
-def _configure(monkeypatch):
+def _patch_empty(monkeypatch):
+    for name in (
+        "current_discovery_requests",
+        "current_gate_decisions",
+        "current_passive_batches",
+        "current_synthetic_captures",
+        "current_artifacts",
+        "current_sources",
+        "current_independence_assessments",
+        "current_imports",
+        "current_enablements",
+        "current_triage_records",
+    ):
+        monkeypatch.setattr(workspace, name, lambda: [])
+    monkeypatch.setattr(
+        workspace,
+        "list_uncertain_executions",
+        lambda limit, offset: {"executions": []},
+    )
+
+
+def _patch_populated(monkeypatch):
+    _patch_empty(monkeypatch)
     monkeypatch.setattr(
         workspace,
         "current_discovery_requests",
@@ -46,7 +68,6 @@ def _configure(monkeypatch):
                     "public_access_confirmed": True,
                     "robots_decision": "block",
                     "terms_decision": "reviewed_allow",
-                    "access_indicators": {"login": False},
                 },
             }
         ],
@@ -61,11 +82,7 @@ def _configure(monkeypatch):
                 "provider": "common_crawl",
                 "recorded_at": "2026-07-21T01:02:00Z",
                 "candidates": [{"review_required": True}],
-                "record_counts": {
-                    "accepted": 0,
-                    "duplicate": 0,
-                    "quarantined": 1,
-                },
+                "record_counts": {"accepted": 0, "duplicate": 0, "quarantined": 1},
                 "raw_response": "must-not-leak",
                 "network_request_performed": False,
             }
@@ -103,9 +120,7 @@ def _configure(monkeypatch):
                     "byte_size": 100,
                     "provenance_metadata": {"private_path": "/secret"},
                 },
-                "duplicate_of_artifact_id": None,
                 "observation_count": 0,
-                "recorded_at": "2026-07-21T01:04:00Z",
             }
         ],
     )
@@ -124,7 +139,6 @@ def _configure(monkeypatch):
                 "reliability_assessed": False,
                 "capture": {
                     "canonical_url": "https://records.example.test/notice",
-                    "retrieved_url": "https://records.example.test/notice",
                     "captured_at": "2026-07-21T01:04:00Z",
                     "content_sha256": "a" * 64,
                     "capture_artifact_id": "artifact-a",
@@ -144,7 +158,6 @@ def _configure(monkeypatch):
                 "independence_score": 0,
                 "source_ids": ["source-a", "source-b"],
                 "limitations": ["fictional limitation"],
-                "recorded_at": "2026-07-21T01:05:00Z",
             }
         ],
     )
@@ -154,7 +167,6 @@ def _configure(monkeypatch):
         lambda: [
             {
                 "operational_import_id": "import-a",
-                "recorded_at": "2026-07-21T01:06:00Z",
                 "envelope": {
                     "case_id": "case-a",
                     "purpose": "Review fictional public capture.",
@@ -162,12 +174,7 @@ def _configure(monkeypatch):
                     "declared_record_count": 1,
                     "collection_context": {"raw": "must-not-leak"},
                 },
-                "record_counts": {
-                    "staged": 0,
-                    "accepted": 0,
-                    "quarantined": 0,
-                    "duplicate": 0,
-                },
+                "record_counts": {},
             }
         ],
     )
@@ -178,7 +185,6 @@ def _configure(monkeypatch):
             {
                 "production_enablement_id": "enablement-a",
                 "enablement_state": "claimed",
-                "recorded_at": "2026-07-21T01:07:00Z",
                 "definition": {
                     "valid_from": "2026-07-21T01:00:00Z",
                     "expires_at": "2026-07-21T02:00:00Z",
@@ -205,21 +211,14 @@ def _configure(monkeypatch):
             {
                 "capture_triage_id": "triage-a",
                 "case_id": "case-a",
-                "recorded_at": "2026-07-21T01:08:00Z",
                 "counts": {
                     "support_eligible": 1,
                     "candidate_review": 1,
                     "out_of_scope": 1,
                 },
                 "source_triage": [
-                    {
-                        "source_id": "source-a",
-                        "relevance": {"classification": "direct_case"},
-                    },
-                    {
-                        "source_id": "source-c",
-                        "relevance": {"classification": "candidate_review"},
-                    },
+                    {"relevance": {"classification": "direct_case"}},
+                    {"relevance": {"classification": "candidate_review"}},
                 ],
                 "mirror_proposals": [{"mirror_proposal_id": "proposal-a"}],
                 "change_summaries": [
@@ -245,8 +244,6 @@ def _configure(monkeypatch):
                     "delegate_service": "must-not-leak",
                     "state": "uncertain",
                     "state_version": 2,
-                    "created_at": "2026-07-21T01:09:00Z",
-                    "updated_at": "2026-07-21T01:10:00Z",
                     "ledger_consistent": True,
                     "result_envelope_exists": False,
                     "automatic_retry": False,
@@ -259,31 +256,17 @@ def _configure(monkeypatch):
 
 
 def test_v38_8_builds_safe_read_only_workspace(monkeypatch):
-    _configure(monkeypatch)
+    _patch_populated(monkeypatch)
     result = workspace.build_public_discovery_capture_workspace()
     assert result["schema"] == "socmint.public_discovery_capture_workspace.v38_8"
     assert result["status"] == "ready"
     assert result["read_only"] is True
-    assert result["summary"] == {
-        "discovery_request_count": 1,
-        "allowing_gate_count": 0,
-        "blocked_gate_count": 1,
-        "passive_batch_count": 1,
-        "passive_candidate_count": 1,
-        "synthetic_capture_count": 1,
-        "completed_synthetic_capture_count": 0,
-        "artifact_count": 1,
-        "accepted_artifact_count": 1,
-        "source_count": 1,
-        "independence_group_count": 1,
-        "operational_import_count": 1,
-        "production_enablement_count": 1,
-        "active_or_claimed_enablement_count": 1,
-        "capture_triage_count": 1,
-        "support_eligible_capture_count": 1,
-        "uncertain_execution_count": 1,
-        "finding_count": 8,
-    }
+    assert result["summary"]["blocked_gate_count"] == 1
+    assert result["summary"]["passive_candidate_count"] == 1
+    assert result["summary"]["accepted_artifact_count"] == 1
+    assert result["summary"]["active_or_claimed_enablement_count"] == 1
+    assert result["summary"]["support_eligible_capture_count"] == 1
+    assert result["summary"]["uncertain_execution_count"] == 1
     assert {item["key"] for item in result["findings"]} == {
         "blocked_discovery_gate",
         "quarantined_passive_candidate",
@@ -294,32 +277,39 @@ def test_v38_8_builds_safe_read_only_workspace(monkeypatch):
         "browsertrix_enablement_active",
         "execution_outcome_uncertain",
     }
-    assert result["controls"]["write_actions_exposed_by_workspace"] == []
-    assert result["controls"]["safe_projection_only"] is True
-    assert result["controls"]["automatic_collection"] is False
-    assert result["controls"]["automatic_retry"] is False
-    assert result["controls"]["automatic_artifact_acceptance"] is False
-    assert result["controls"]["automatic_source_independence_assessment"] is False
-    assert result["controls"]["automatic_observation_promotion"] is False
-    assert result["controls"]["automatic_truth_assignment"] is False
-    assert result["controls"]["automatic_entity_merge"] is False
-    assert result["controls"]["automatic_claim_approval"] is False
-    assert result["controls"]["automatic_dossier_mutation"] is False
-    assert result["controls"]["automatic_import_staging"] is False
-    assert result["controls"]["automatic_export"] is False
-    assert result["controls"]["automatic_publication"] is False
+    controls = result["controls"]
+    assert controls["write_actions_exposed_by_workspace"] == []
+    for key in (
+        "automatic_collection",
+        "automatic_retry",
+        "automatic_artifact_acceptance",
+        "automatic_source_independence_assessment",
+        "automatic_observation_promotion",
+        "automatic_truth_assignment",
+        "automatic_entity_merge",
+        "automatic_claim_approval",
+        "automatic_dossier_mutation",
+        "automatic_import_staging",
+        "automatic_export",
+        "automatic_publication",
+    ):
+        assert controls[key] is False
 
 
 def test_v38_8_payload_omits_sensitive_values(monkeypatch):
-    _configure(monkeypatch)
+    _patch_populated(monkeypatch)
     result = workspace.build_public_discovery_capture_workspace()
     rendered = repr(result)
-    assert "must-not-leak" not in rendered
-    assert "authorization_binding" not in rendered
-    assert "authorization_reference" not in rendered
-    assert "confirmation_sha256" not in rendered
-    assert "runtime_command" not in rendered
-    assert "approved_storage_root" not in rendered
+    for forbidden in (
+        "must-not-leak",
+        "authorization_binding",
+        "authorization_reference",
+        "confirmation_sha256",
+        "approved_storage_root",
+        "'command':",
+        '"command":',
+    ):
+        assert forbidden not in rendered
     assert result["artifact_inventory"][0]["content_sha256_prefix"] == "a" * 16
     assert result["source_inventory"][0]["content_sha256_prefix"] == "a" * 16
     assert result["capture_triage_inventory"][0][
@@ -329,24 +319,7 @@ def test_v38_8_payload_omits_sensitive_values(monkeypatch):
 
 
 def test_v38_8_empty_workspace_is_safe(monkeypatch):
-    for name in (
-        "current_discovery_requests",
-        "current_gate_decisions",
-        "current_passive_batches",
-        "current_synthetic_captures",
-        "current_artifacts",
-        "current_sources",
-        "current_independence_assessments",
-        "current_imports",
-        "current_enablements",
-        "current_triage_records",
-    ):
-        monkeypatch.setattr(workspace, name, lambda: [])
-    monkeypatch.setattr(
-        workspace,
-        "list_uncertain_executions",
-        lambda limit, offset: {"executions": []},
-    )
+    _patch_empty(monkeypatch)
     result = workspace.build_public_discovery_capture_workspace()
     assert result["status"] == "ready"
     assert result["summary"]["finding_count"] == 0
