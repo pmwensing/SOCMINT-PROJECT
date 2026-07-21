@@ -12,12 +12,30 @@ from .public_discovery_request_v38_1 import find_discovery_request
 
 SCHEMA = "socmint.browsertrix_preservation.v38_6"
 VERSION = "v38.6.0"
-REQUIRED_OUTPUT_ROLES = {"wacz", "screenshot", "crawl_metadata"}
+OUTPUT_PROFILE_VERSION = "v38.6.3"
+REQUIRED_OUTPUT_ROLES = {"wacz", "crawl_metadata"}
+SCREENSHOT_OUTPUT_ROLES = {"screenshot", "screenshot_archive"}
 ROLE_MEDIA_TYPES = {
     "wacz": {"application/wacz", "application/octet-stream"},
     "screenshot": {"image/png", "image/jpeg"},
-    "crawl_metadata": {"application/json"},
-    "warc": {"application/warc", "application/octet-stream"},
+    "screenshot_archive": {
+        "application/warc",
+        "application/gzip",
+        "application/x-gzip",
+        "application/octet-stream",
+    },
+    "crawl_metadata": {
+        "application/json",
+        "application/jsonl",
+        "application/ndjson",
+        "application/x-ndjson",
+    },
+    "warc": {
+        "application/warc",
+        "application/gzip",
+        "application/x-gzip",
+        "application/octet-stream",
+    },
 }
 
 
@@ -50,7 +68,9 @@ def _normalize_url(value: Any) -> str | None:
     if not host:
         return None
     authority = host if port is None else f"{host}:{port}"
-    return urlunsplit((parsed.scheme.lower(), authority, parsed.path or "/", parsed.query, ""))
+    return urlunsplit(
+        (parsed.scheme.lower(), authority, parsed.path or "/", parsed.query, "")
+    )
 
 
 def _time(value: Any) -> str | None:
@@ -104,7 +124,9 @@ def _limits(value: Any) -> tuple[dict[str, Any] | None, str | None]:
             "max_duration_seconds": int(value.get("max_duration_seconds")),
             "max_download_bytes": int(value.get("max_download_bytes")),
             "max_redirects": int(value.get("max_redirects")),
-            "navigation_timeout_seconds": int(value.get("navigation_timeout_seconds")),
+            "navigation_timeout_seconds": int(
+                value.get("navigation_timeout_seconds")
+            ),
             "max_screenshots": int(value.get("max_screenshots")),
             "concurrency": int(value.get("concurrency", 1)),
         }
@@ -187,7 +209,9 @@ def prepare_browsertrix_request(
     manifest = request.get("manifest") or {}
     approved_domains = {
         str(item).lower().rstrip(".")
-        for item in (gate.get("approved_domains") or manifest.get("approved_domains") or [])
+        for item in (
+            gate.get("approved_domains") or manifest.get("approved_domains") or []
+        )
         if _required(item)
     }
     if _host(normalized_url) not in approved_domains:
@@ -197,8 +221,15 @@ def prepare_browsertrix_request(
     if limit_error:
         return blocked(limit_error)
     assert limits is not None
-    allowed_types = sorted({_required(item).lower() for item in (allowed_content_types or []) if _required(item)})
-    if not allowed_types or any(item not in {"text/html", "application/pdf", "image/png", "image/jpeg"} for item in allowed_types):
+    allowed_types = sorted(
+        {
+            _required(item).lower()
+            for item in (allowed_content_types or [])
+            if _required(item)
+        }
+    )
+    permitted_types = {"text/html", "application/pdf", "image/png", "image/jpeg"}
+    if not allowed_types or any(item not in permitted_types for item in allowed_types):
         return blocked("allowed_content_types_invalid")
 
     envelope = {
@@ -260,8 +291,8 @@ def prepare_browsertrix_request(
 def _outputs(value: Any) -> tuple[list[dict[str, Any]] | None, str | None]:
     if not isinstance(value, list) or not value:
         return None, "preservation_outputs_required"
-    normalized = []
-    roles = set()
+    normalized: list[dict[str, Any]] = []
+    roles: set[str] = set()
     for item in value:
         if not isinstance(item, dict):
             return None, "preservation_output_invalid"
@@ -279,13 +310,25 @@ def _outputs(value: Any) -> tuple[list[dict[str, Any]] | None, str | None]:
             return None, "preservation_output_filename_invalid"
         if media_type not in ROLE_MEDIA_TYPES[role]:
             return None, "preservation_output_media_type_invalid"
-        if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+        if len(digest) != 64 or any(
+            char not in "0123456789abcdef" for char in digest
+        ):
             return None, "preservation_output_hash_invalid"
         if byte_size <= 0:
             return None, "preservation_output_size_invalid"
-        normalized.append({"role": role, "filename": filename, "media_type": media_type, "sha256": digest, "byte_size": byte_size})
+        normalized.append(
+            {
+                "role": role,
+                "filename": filename,
+                "media_type": media_type,
+                "sha256": digest,
+                "byte_size": byte_size,
+            }
+        )
         roles.add(role)
     if not REQUIRED_OUTPUT_ROLES.issubset(roles):
+        return None, "required_preservation_outputs_missing"
+    if not SCREENSHOT_OUTPUT_ROLES.intersection(roles):
         return None, "required_preservation_outputs_missing"
     return sorted(normalized, key=lambda item: item["role"]), None
 
@@ -308,9 +351,13 @@ def validate_browsertrix_result(
     outputs: list[dict[str, Any]] | None,
     completion_status: str,
 ) -> dict[str, Any]:
-    if not isinstance(prepared_request, dict) or prepared_request.get("status") != "browsertrix_request_prepared":
+    if not isinstance(prepared_request, dict) or prepared_request.get(
+        "status"
+    ) != "browsertrix_request_prepared":
         return blocked("prepared_browsertrix_request_required")
-    if prepared_request.get("browser_capture_request_id") != _required(browser_capture_request_id):
+    if prepared_request.get("browser_capture_request_id") != _required(
+        browser_capture_request_id
+    ):
         return blocked("browser_capture_request_binding_mismatch")
     if prepared_request.get("request_sha256") != _required(request_sha256):
         return blocked("browser_request_hash_mismatch")
@@ -318,12 +365,18 @@ def validate_browsertrix_result(
         return blocked("browser_execution_binding_mismatch")
     normalized_requested = _normalize_url(requested_url)
     normalized_final = _normalize_url(final_url)
-    if normalized_requested != prepared_request.get("requested_url") or normalized_final is None:
+    if (
+        normalized_requested != prepared_request.get("requested_url")
+        or normalized_final is None
+    ):
         return blocked("browser_result_url_binding_mismatch")
     if _host(normalized_final) != prepared_request.get("approved_domain"):
         return blocked("off_domain_browser_result_blocked")
     if completion_status != "completed":
-        return blocked("completed_browsertrix_result_required", completion_status=completion_status)
+        return blocked(
+            "completed_browsertrix_result_required",
+            completion_status=completion_status,
+        )
 
     start = _time(started_at)
     end = _time(completed_at)
@@ -342,14 +395,21 @@ def validate_browsertrix_result(
         return blocked("browser_page_limit_exceeded")
     if downloaded_bytes < 1 or downloaded_bytes > limits["max_download_bytes"]:
         return blocked("browser_download_limit_exceeded")
-    if not isinstance(redirect_chain, list) or len(redirect_chain) > limits["max_redirects"]:
+    if not isinstance(redirect_chain, list) or len(redirect_chain) > limits[
+        "max_redirects"
+    ]:
         return blocked("browser_redirect_limit_exceeded")
     for item in redirect_chain:
         if not isinstance(item, dict):
             return blocked("browser_redirect_chain_invalid")
         from_url = _normalize_url(item.get("from_url"))
         to_url = _normalize_url(item.get("to_url"))
-        if from_url is None or to_url is None or _host(from_url) != prepared_request["approved_domain"] or _host(to_url) != prepared_request["approved_domain"]:
+        if (
+            from_url is None
+            or to_url is None
+            or _host(from_url) != prepared_request["approved_domain"]
+            or _host(to_url) != prepared_request["approved_domain"]
+        ):
             return blocked("off_domain_browser_redirect_blocked")
 
     normalized_outputs, output_error = _outputs(outputs)
@@ -360,6 +420,7 @@ def validate_browsertrix_result(
     manifest = {
         "schema": SCHEMA,
         "version": VERSION,
+        "output_profile_version": OUTPUT_PROFILE_VERSION,
         "browser_capture_request_id": browser_capture_request_id,
         "request_sha256": request_sha256,
         "execution_id": execution_id,
