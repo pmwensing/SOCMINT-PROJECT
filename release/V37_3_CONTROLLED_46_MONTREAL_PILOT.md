@@ -29,6 +29,10 @@ Apply the rebuilt 46 Montreal case scope to fictional staged records and record 
 - out-of-scope records cannot be accepted;
 - relocation context cannot be used as issue-claim support.
 
+## Authoritative baseline
+
+Final release validation is performed with this slice targeting `master` after the v37.2 merge through PR #309 at `c942d7b67376867acd64beb6e940ba6bc864ed09`.
+
 ## Next action
 
 Implement v37.4 explicit one-record-at-a-time promotion into the existing v29 observation authority after a current accepted pilot review decision.
