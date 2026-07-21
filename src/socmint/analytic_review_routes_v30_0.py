@@ -7,6 +7,7 @@ from .canonical_observation_routes_v36_2 import register_canonical_observation_r
 from .case_import_pilot_routes_v37_3 import register_case_import_pilot_routes_v37_3
 from .claim_verification_routes_v36_5 import register_claim_verification_routes_v36_5
 from .corroboration_claim_routes_v30_1 import register_corroboration_claim_routes_v30_1
+from .dossier_export_readiness_routes_v37_7 import register_dossier_export_readiness_routes_v37_7
 from .dossier_synthesis_routes_v36_7 import register_dossier_synthesis_routes_v36_7
 from .entity_accuracy_workspace_routes_v36_8 import register_entity_accuracy_workspace_routes_v36_8
 from .entity_candidate_resolution_routes_v36_3 import register_entity_candidate_resolution_routes_v36_3
@@ -75,4 +76,5 @@ def register_analytic_review_routes_v30_0(app):
     register_import_observation_promotion_routes_v37_4(app)
     register_guided_analyst_workflow_routes_v37_5(app)
     register_relationship_chronology_workflow_routes_v37_6(app)
+    register_dossier_export_readiness_routes_v37_7(app)
     return app
