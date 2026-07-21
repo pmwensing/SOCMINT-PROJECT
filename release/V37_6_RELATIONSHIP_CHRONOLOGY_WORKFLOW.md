@@ -24,6 +24,10 @@ Assemble reviewed import observations and v36.6 relationship assessments into on
 - the chronology exposes no write actions;
 - v36.6 remains the relationship-assessment authority.
 
+## Authoritative baseline
+
+Final release validation is performed with this slice targeting `master` after the v37.5 merge through PR #312 at `a2abfd8407acbe64fcad19f5c7832be47ee5eea9`.
+
 ## Next action
 
 Implement controlled dossier snapshot review, redaction declarations, and export-readiness preparation without invoking export or publication services.
