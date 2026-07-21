@@ -1,0 +1,83 @@
+{
+  "schema": "socmint.v37.program_closure.v37_9",
+  "version": "v37.9.0",
+  "program": "Operational Case Intelligence Pipeline",
+  "status": "closed",
+  "closed_at": "2026-07-20",
+  "case_foundation": {
+    "pull_request": 306,
+    "merge_sha": "1448fc27e05eb144bf4bdebb83a7aaee6e824d8b"
+  },
+  "final_delivery": {
+    "pull_request": 315,
+    "validated_head_sha": "7bb00b7516c87af7d85128402d634609c5226efd",
+    "merge_sha": "a9e53695a2db374791904aa56f6264770058d387"
+  },
+  "delivered_slices": [
+    {"slice": "v37.0", "capability": "planning, compatibility, privacy, ownership, and non-duplication gate"},
+    {"slice": "v37.1", "capability": "case-scoped universal import envelopes"},
+    {"slice": "v37.2", "capability": "offline import adapters, deterministic staged records, duplicate detection, and quarantine"},
+    {"slice": "v37.3", "capability": "controlled fictional 46 Montreal pilot and scope review"},
+    {"slice": "v37.4", "capability": "explicit single-record promotion through the v29 observation authority"},
+    {"slice": "v37.5", "capability": "guided read-only analyst workflow"},
+    {"slice": "v37.6", "capability": "relationship and chronology workflow"},
+    {"slice": "v37.7", "capability": "controlled dossier export-readiness projection"},
+    {"slice": "v37.8", "capability": "integrated read-only workspace and browser E2E"},
+    {"slice": "v37.9", "capability": "program closure and release evidence"}
+  ],
+  "slice_merges": [
+    {"slice": "v37.0", "pull_request": 307, "merge_sha": "f8723b2c00feca2b3732f2d2c5f02f06fb3e3a4e"},
+    {"slice": "v37.1", "pull_request": 308, "merge_sha": "8f68cf779acef6a52da7272e4b4ad330759c72f0"},
+    {"slice": "v37.2", "pull_request": 309, "merge_sha": "c942d7b67376867acd64beb6e940ba6bc864ed09"},
+    {"slice": "v37.3", "pull_request": 310, "merge_sha": "30c320577ca90e0f7751e1b978890fb9839ce141"},
+    {"slice": "v37.4", "pull_request": 311, "merge_sha": "37bac6f3e4b21d5c506a676f73dcdd3af0b95e27"},
+    {"slice": "v37.5", "pull_request": 312, "merge_sha": "a2abfd8407acbe64fcad19f5c7832be47ee5eea9"},
+    {"slice": "v37.6", "pull_request": 313, "merge_sha": "875a7c2456be8119bc4edef5e50e43a6fec58e25"},
+    {"slice": "v37.7", "pull_request": 314, "merge_sha": "b14d570675fa8adbd15252f5af80e877ce378189"},
+    {"slice": "v37.8", "pull_request": 315, "merge_sha": "a9e53695a2db374791904aa56f6264770058d387"}
+  ],
+  "production_invariants": {
+    "existing_case_scope_privacy_and_authorization_controls_remain_authoritative": true,
+    "v29_collection_artifact_and_observation_authorities_remain_authoritative": true,
+    "v30_claim_review_conflict_and_contribution_authorities_remain_authoritative": true,
+    "v36_entity_accuracy_relationship_and_dossier_authorities_remain_authoritative": true,
+    "existing_redaction_quality_approval_export_and_publication_gates_remain_authoritative": true,
+    "imports_require_operator_provided_exports_and_accepted_artifact_hashes": true,
+    "import_adapters_are_offline_and_do_not_collect": true,
+    "raw_export_payloads_are_not_persisted_by_the_adapter_layer": true,
+    "repeated_imports_are_deterministic_and_idempotent": true,
+    "duplicates_and_quarantined_records_do_not_inflate_support": true,
+    "case_scope_and_relocation_context_remain_visible": true,
+    "observation_promotion_is_explicit_and_single_record": true,
+    "relationship_chronology_preserves_inference_and_temporal_context": true,
+    "export_readiness_is_not_export_or_publication": true,
+    "operational_case_intelligence_workspace_is_read_only": true,
+    "public_repository_uses_fictional_fixtures_only": true,
+    "consequential_events_are_append_only_and_hash_bound": true
+  },
+  "prohibited_automation": {
+    "automatic_collection": false,
+    "private_source_authentication_bypass": false,
+    "automatic_observation_promotion": false,
+    "automatic_truth_assignment": false,
+    "automatic_entity_merge": false,
+    "automatic_claim_approval": false,
+    "automatic_human_review_completion": false,
+    "automatic_dossier_mutation": false,
+    "automatic_export": false,
+    "automatic_publication": false
+  },
+  "validation": {
+    "ci": {"run": 4432, "status": "success"},
+    "full_verification": {"run": 1150, "status": "success"},
+    "legacy_v12_10_19": {"run": 2447, "status": "success"},
+    "browser_e2e": {"run": 180, "status": "success"}
+  },
+  "closure": {
+    "v37_closed": true,
+    "runtime_work_remaining_in_v37": false,
+    "schema_or_migration_work_remaining_in_v37": false,
+    "next_program": "unassigned",
+    "next_action": "define_the_next_program_planning_and_compatibility_gate_before_runtime_work"
+  }
+}
