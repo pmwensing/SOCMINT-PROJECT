@@ -1,0 +1,56 @@
+{
+  "schema": "socmint.v39.case_adapter_control_contract.v39_0",
+  "version": "v39.0.0",
+  "program": "46 Montreal Street Case Adapter Control Plane",
+  "status": "implementation",
+  "base_program": {
+    "v38_closed": true,
+    "v38_closure_merge_sha": "9142f25d7920da6e06698b6aab4d77e8d937d676"
+  },
+  "adapter": {
+    "key": "46_montreal_street",
+    "case_id": "46MONST",
+    "modes": ["off", "passive", "on"],
+    "default_mode": "passive",
+    "effective_mode_rule": "least_permissive_of_system_case_and_requested_mode",
+    "direct_off_to_on_allowed": false,
+    "on_requires_operator_confirmation": true,
+    "on_requires_approved_import_plan_sha256": true,
+    "controlled_import_requires_second_confirmation": true,
+    "controlled_import_requires_exact_plan_hash": true
+  },
+  "scope": {
+    "pre_fire_proceeding": true,
+    "post_fire_lockout_proceeding": true,
+    "cowdy_street": {
+      "upstairs_noise": true,
+      "water_leak": true,
+      "other_issues": false,
+      "landlord_adverse_characterization": false
+    }
+  },
+  "authoritative_reuse": {
+    "mode_history": "existing AuditLog",
+    "new_database_table_added": false,
+    "new_migration_added": false,
+    "new_route_added": false,
+    "new_evidence_authority_added": false,
+    "new_observation_authority_added": false,
+    "new_claim_authority_added": false,
+    "new_entity_authority_added": false,
+    "new_timeline_authority_added": false,
+    "new_dossier_authority_added": false,
+    "new_export_authority_added": false,
+    "new_publication_authority_added": false
+  },
+  "always_prohibited": [
+    "automatic_truth_assignment",
+    "automatic_claim_approval",
+    "automatic_entity_merge",
+    "automatic_dossier_mutation",
+    "automatic_publication",
+    "automatic_filing",
+    "uncontrolled_public_web_collection"
+  ],
+  "next_action": "implement_v39_1_passive_inventory_and_scope_classifier"
+}
